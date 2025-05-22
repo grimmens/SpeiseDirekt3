@@ -7,7 +7,7 @@
 @using SpeiseDirekt3.ServiceInterface
 @attribute [Authorize]
 
-<PageTitle>Kategorien</PageTitle>
+<PageTitle>Categories</PageTitle>
 
 <div class="container mt-5">
 
@@ -15,7 +15,7 @@
     <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
-                <a href="/menus">Menüs</a>
+                <a href="/menus">Menus</a>
             </li>
             <li class="breadcrumb-item active" aria-current="page">
                 @menu?.Name
@@ -23,17 +23,17 @@
         </ol>
     </nav>
 
-    <h1 class="mb-4 text-primary">📂 Kategorien</h1>
+    <h1 class="mb-4 text-primary">📂 Categories</h1>
 
     <!-- Link to Menu Items Page -->
     <div class="card border-0 bg-light mb-4">
         <div class="card-body d-flex justify-content-between align-items-center">
             <div>
-                <h5 class="card-title mb-0">🍽️ Menüeinträge verwalten</h5>
-                <small class="text-muted">Gehe zu den Menüeinträgen für <strong>@menu?.Name</strong>.</small>
+                <h5 class="card-title mb-0">🍽️ Manage Menu Items</h5>
+                <small class="text-muted">Go to the menu items for <strong>@menu?.Name</strong>.</small>
             </div>
             <a class="btn btn-outline-primary" href="@($"/menuitems/{MenuId}")">
-                ➡️ Menüeinträge anzeigen
+                ➡️ View Menu Items
             </a>
         </div>
     </div>
@@ -43,7 +43,7 @@
         <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Verfügbare Kategorien</h5>
+                    <h5 class="mb-0">Available Categories</h5>
                 </div>
                 <div class="card-body">
                     @if (Categories.Any())
@@ -52,7 +52,7 @@
                             <thead>
                                 <tr>
                                     <th>Name</th>
-                                    <th class="text-end">Aktion</th>
+                                    <th class="text-end">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -61,10 +61,10 @@
                                     <tr>
                                         <td>@item.Name</td>
                                         <td class="text-end">
-                                            <span><a class="btn btn-sm btn-primary" @onclick="() => EditCategory(item)">Bearbeiten</a></span>
+                                            <span><a class="btn btn-sm btn-primary" @onclick="() => EditCategory(item)">Edit</a></span>
                                             <button class="btn btn-sm btn-danger"
-                                            @onclick="() => DeleteCategory(item.Id)">
-                                                🗑️ Löschen
+                                                    @onclick="() => DeleteCategory(item.Id)">
+                                                🗑️ Delete
                                             </button>
                                         </td>
                                     </tr>
@@ -74,7 +74,7 @@
                     }
                     else
                     {
-                        <p class="text-muted">Keine Kategorien gefunden.</p>
+                        <p class="text-muted">No categories found.</p>
                     }
                 </div>
             </div>
@@ -84,20 +84,20 @@
         <div class="col-md-6 mb-4">
             <div class="card shadow-sm">
                 <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Neue Kategorie hinzufügen</h5>
+                    <h5 class="mb-0">Add New Category</h5>
                 </div>
                 <div class="card-body">
                     <EditForm @ref="editForm" EditContext="editContext" OnSubmit="SaveAsync">
                         <DataAnnotationsValidator />
 
                         <div class="form-floating mb-3">
-                            <InputText @bind-Value="Input.Name" id="Input.Name" class="form-control" placeholder="Name der Kategorie" />
-                            <label for="Input.Name">Kategoriename</label>
+                            <InputText @bind-Value="Input.Name" id="Input.Name" class="form-control" placeholder="Category name" />
+                            <label for="Input.Name">Category Name</label>
                             <ValidationMessage For="() => Input.Name" class="text-danger" />
                         </div>
 
                         <button type="submit" class="btn btn-success w-100">
-                            ➕ Kategorie hinzufügen
+                            ➕ Add Category
                         </button>
                     </EditForm>
                 </div>
@@ -110,8 +110,8 @@
         <div class="col-12">
             <div class="card border-0 mt-3">
                 <div class="card-body bg-light">
-                    <h5 class="card-title">📌 Hinweise</h5>
-                    <p class="card-text">Zeige hier etwas Nützliches an – vielleicht Tipps zu Kategorien, FAQs oder Statistiken.</p>
+                    <h5 class="card-title">📌 Notes</h5>
+                    <p class="card-text">Show something useful here – maybe tips on categories, FAQs, or statistics.</p>
                 </div>
             </div>
         </div>
@@ -166,7 +166,7 @@
         if (nameExists)
         {
             var messages = new ValidationMessageStore(editContext);
-            messages.Add(() => Input.Name, "Dieser Name existiert bereits.");
+            messages.Add(() => Input.Name, "This name already exists.");
             editContext.NotifyValidationStateChanged();
             StateHasChanged();
             return;
@@ -189,7 +189,7 @@
 
     async Task HandleOk(Category category)
     {
-        // Update-Logik hier
+        // Update logic here
         Context.Categories.Update(category);
         await Context.SaveChangesAsync();
         await LoadCategoriesAsync();
@@ -208,7 +208,7 @@
         var category = await Context.Categories.FindAsync(id);
         if (category is not null)
         {
-            var res = await NotificationService.ShowConfirmation(("Löschen", $"Soll die Kategorie „{category.Name}“ wirklich gelöscht werden?"));
+            var res = await NotificationService.ShowConfirmation(("Delete", $"Are you sure you want to delete the category \"{category.Name}\"?"));
             if (res)
             {
                 Context.Categories.Remove(category);

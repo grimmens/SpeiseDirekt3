@@ -7,8 +7,8 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="categoryEditModalLabel">Kategorie bearbeiten</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen" @onclick="Cancel"></button>
+                <h5 class="modal-title" id="categoryEditModalLabel">Edit Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="Cancel"></button>
             </div>
             <div class="modal-body">
                 <EditForm @ref=editForm EditContext="editContext" OnSubmit="OnSubmit">
@@ -17,13 +17,13 @@
 
                     <div class="form-floating mb-3">
                         <InputText @bind-Value="Input.Name" id="Category.Name" class="form-control" />
-                        <label for="Category.Name">Kategoriename</label>
+                        <label for="Category.Name">Category Name</label>
                         <ValidationMessage For="() => Input.Name" class="text-danger" />
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" @onclick="Cancel">Abbrechen</button>
-                        <button type="submit" class="btn btn-primary">Speichern</button>
+                        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </EditForm>
             </div>
@@ -52,7 +52,7 @@
         if (nameExists)
         {
             var messages = new ValidationMessageStore(editContext);
-            messages.Add(() => Input.Name, "Dieser name existiert bereits.");
+            messages.Add(() => Input.Name, "This name already exists.");
             editContext.NotifyValidationStateChanged();
             return;
         }

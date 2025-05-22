@@ -54,10 +54,11 @@ namespace SpeiseDirekt3.ServiceImplementation
                 context.SaveChanges();
                 for (int i = 0; i < 5; i++)
                 {
-                    string prompt = "einen fiktiven Kategorie eintrag für ein Restaurantmenü. " +
-                        "Gib eine kurze Bezeichnung einer Kategorie eines Restaurant-Menüs aus ein bis drei Wörter zurück" +
-                        "Gib ein JSON-Objekt mit dem Schlüssel 'Name' zurück.";
-                    
+                    string prompt = "Generate a fictitious category entry for a restaurant menu. " +
+                        "Return a short category name for a restaurant menu, one to three words. " +
+                        "Return a JSON object with the key 'Name'.";
+
+
                     string? result = null;
 
                     ChatResponse<JsonResult> aiResponse;
@@ -84,8 +85,11 @@ namespace SpeiseDirekt3.ServiceImplementation
                 while(retryQrMenuCreation)
                 try
                 {
-                    qrResponse = await _chatClient.GetResponseAsync<JsonResult>("Erzeuge einen Titel für ein QR-Code Menü nicht länger als 10 Wörter." + "Gib ein JSON-Objekt mit dem Schlüssel 'Name' zurück.");
-                    qrMenuTitle = qrResponse.Result.Name;
+                        qrResponse = await _chatClient.GetResponseAsync<JsonResult>(
+                            "Generate a title for a QR-code menu no longer than 10 words. " +
+                            "Return a JSON object with the key 'Name'."
+                        );
+                        qrMenuTitle = qrResponse.Result.Name;
                     retryQrMenuCreation = false;
                 } catch (Exception ex) 
                 {
@@ -116,22 +120,15 @@ namespace SpeiseDirekt3.ServiceImplementation
                     newMenuItems.Add(entry);
             });
 
-            //for(int i = 0; i < numberOfEntries; i++)
-            //{
-            //    var entry = await CreateMockMenuEntry(category);
-            //    if (entry != null)
-            //        newMenuItems.Add(entry);
-            //};
-
             return newMenuItems;
         }
 
 
         private async Task<MenuItem?> CreateMockMenuEntry(Category category)
         {
-            string prompt = $"Erstelle einen fiktiven Menüeintrag (deutsch) für ein Restaurant. " +
-                $"Gib ein JSON-Objekt mit den Schlüsseln 'Name', 'Description' und 'Allergens' zurück, das ein einzigartiges Gericht beschreibt. " +
-                $"Stelle sicher, dass das Gericht zur Kategorie {category.Name} passt. Allergene sind als eine Liste von Großbuchstaben zu beschreiben z.B. \"F, S, M\"  (F = Fisch, S = Schalenfrüchte, M = Milchprodukte).";
+            string prompt = $"Create a fictitious menu item (in German) for a restaurant. " +
+                $"Return a JSON object with the keys 'Name', 'Description', and 'Allergens' that describes a unique dish. " +
+                $"Ensure the dish fits the category {category.Name}. Allergens should be listed as uppercase letters, e.g. \"F, S, M\" (F = Fish, S = Shellfish, M = Dairy).";
 
 
             ChatResponse<MenuItemData> aiResponse;

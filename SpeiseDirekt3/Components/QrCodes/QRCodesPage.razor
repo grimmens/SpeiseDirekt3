@@ -11,37 +11,37 @@
 @attribute [Authorize]
 
 <div class="container">
-    <h3>QR-Codes</h3>
+    <h3>QR Codes</h3>
     <div class="buttons">
         @if (CanCreateQrCode)
         {
-            <button class="btn btn-success mb-3" @onclick="CreateNew">Neuen QR-Code erstellen</button>
+            <button class="btn btn-success mb-3" @onclick="CreateNew">Create New QR Code</button>
         }
         else
         {
-            <button class="btn btn-success mb-3" disabled>Neuen QR-Code erstellen</button>
-            <i>Es kann kein neuer QR-Code erstellt werden.</i>
+            <button class="btn btn-success mb-3" disabled>Create New QR Code</button>
+            <i>Cannot create a new QR code.</i>
         }
     </div>
 
     @if (codes == null)
     {
-        <p><em>Lädt...</em></p>
+        <p><em>Loading...</em></p>
     }
     else if (!codes.Any())
     {
-        <p>Keine QR-Codes definiert.</p>
+        <p>No QR codes defined.</p>
     }
     else
     {
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th>Titel</th>
-                    <th>Vorschau</th>
-                    <th>Menü</th>
-                    <th>Erstellt am</th>
-                    <th>Aktionen</th>
+                    <th>Title</th>
+                    <th>Preview</th>
+                    <th>Menu</th>
+                    <th>Created At</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,11 +63,11 @@
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-primary me-2"
                                         @onclick="() => Edit(cde.Id)">
-                                    Bearbeiten
+                                    Edit
                                 </button>
                                 <button class="btn btn-sm btn-danger"
                                         @onclick="() => Delete(cde.Id)">
-                                    Löschen
+                                    Delete
                                 </button>
                             </div>
                         </td>
@@ -102,8 +102,8 @@
         var code = await DbContext.QRCodes.FindAsync(id);
         if (code == null) return;
 
-        if (await NotificationService.ShowConfirmation(("QR-Code löschen",
-                $"Möchten Sie den QR-Code für „{code.Menu.Name}“ wirklich löschen?")))
+        if (await NotificationService.ShowConfirmation(("Delete QR Code",
+                $"Are you sure you want to delete the QR code for “{code.Menu.Name}”?")))
         {
             DbContext.QRCodes.Remove(code);
             await DbContext.SaveChangesAsync();
@@ -113,7 +113,7 @@
         await base.ReloadAuthState();
     }
 
-    // Generiert die URL, auf die der QR-Code verweist:
+    // Generates the URL that the QR code points to:
     string GetQrUrl(Guid qrId)
         => $"{NavManager.BaseUri}qr/{qrId}";
 }

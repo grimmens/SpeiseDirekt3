@@ -9,17 +9,17 @@
 @attribute [Authorize]
 
 <div class="container mt-5">
-    <h3>Verfügbare Menüs</h3>
+    <h3>Available Menus</h3>
 
-    <button class="btn btn-success mb-3" @onclick="CreateNewMenu">Menü hinzufügen</button>
+    <button class="btn btn-success mb-3" @onclick="CreateNewMenu">Add Menu</button>
 
     @if (menus == null)
     {
-        <p><em>Lädt...</em></p>
+        <p><em>Loading...</em></p>
     }
     else if (!menus.Any())
     {
-        <p>Keine Menüs verfügbar.</p>
+        <p>No menus available.</p>
     }
     else
     {
@@ -27,10 +27,10 @@
             <thead class="thead-dark">
                 <tr>
                     <th>Name</th>
-                    <th>Beschreibung</th>
-                    <th>Design-Thema</th>
-                    <th>Zusätze</th>
-                    <th>Aktionen</th>
+                    <th>Description</th>
+                    <th>Theme</th>
+                    <th>Extras</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -43,12 +43,12 @@
                         <td>@menu.Description</td>
                         <td>@menu.Theme</td>
                         <td>
-                            <a class="btn btn-sm btn-outline-primary" href="@($"menuitems/{menu.Id}")">Menüelemente</a>
-                            <a class="btn btn-sm btn-outline-primary" href="@($"categories/{menu?.Id}")">Kategorien</a>
+                            <a class="btn btn-sm btn-outline-primary" href="@($"menuitems/{menu.Id}")">Menu Items</a>
+                            <a class="btn btn-sm btn-outline-primary" href="@($"categories/{menu?.Id}")">Categories</a>
                         </td>
                         <td>
-                            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditMenu(menu.Id)">Bearbeiten</button>
-                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteMenu(menu.Id)">Löschen</button>
+                            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditMenu(menu.Id)">Edit</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteMenu(menu.Id)">Delete</button>
                         </td>
                     </tr>
                 }
@@ -56,7 +56,6 @@
         </table>
     }
 </div>
-
 
 @code {
     private List<Menu> menus;

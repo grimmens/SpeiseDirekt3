@@ -9,11 +9,11 @@
 @attribute [Authorize]
 
 <div class="container mt-5">
-    <h3>Menü Details</h3>
+    <h3>Menu Details</h3>
 
     @if (menu == null)
     {
-        <p><em>Lädt...</em></p>
+        <p><em>Loading...</em></p>
     }
     else
     {
@@ -24,46 +24,46 @@
                     <td>@menu.Name</td>
                 </tr>
                 <tr>
-                    <th>Beschreibung</th>
+                    <th>Description</th>
                     <td>@menu.Description</td>
                 </tr>
                 <tr>
-                    <th>Design-Thema</th>
+                    <th>Theme</th>
                     <td>@menu.Theme</td>
                 </tr>
             </tbody>
         </table>
 
-        <!-- Karte für Menüeinträge -->
+        <!-- Card for Menu Items -->
         <div class="card border-0 bg-light mb-4">
             <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="card-title mb-0">🍽️ Menüeinträge verwalten</h5>
-                    <small class="text-muted">Gehe zu den Menüeinträgen für <strong>@menu?.Name</strong>.</small>
+                    <h5 class="card-title mb-0">🍽️ Manage Menu Items</h5>
+                    <small class="text-muted">Go to the menu items for <strong>@menu?.Name</strong>.</small>
                 </div>
                 <a class="btn btn-outline-primary" href="@($"/menuitems/{menu.Id}")">
-                    ➡️ Menüeinträge anzeigen
+                    ➡️ View Menu Items
                 </a>
             </div>
         </div>
 
-        <!-- Karte für Kategorien -->
+        <!-- Card for Categories -->
         <div class="card border-0 bg-light mb-4">
             <div class="card-body d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="card-title mb-0">📂 Kategorien verwalten</h5>
-                    <small class="text-muted">Gehe zu den Kategorien für <strong>@menu?.Name</strong>.</small>
+                    <h5 class="card-title mb-0">📂 Manage Categories</h5>
+                    <small class="text-muted">Go to the categories for <strong>@menu?.Name</strong>.</small>
                 </div>
                 <a class="btn btn-outline-primary" href="@($"categories/{menu?.Id}")">
-                    ➡️ Kategorien anzeigen
+                    ➡️ View Categories
                 </a>
             </div>
         </div>
 
-        <h5>Aktionen</h5>
+        <h5>Actions</h5>
         <div class="mb-3">
-            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditMenu(menu.Id)">Bearbeiten</button>
-            <button class="btn btn-sm btn-danger" @onclick="() => DeleteMenu(menu.Id)">Löschen</button>
+            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditMenu(menu.Id)">Edit</button>
+            <button class="btn btn-sm btn-danger" @onclick="() => DeleteMenu(menu.Id)">Delete</button>
         </div>
     }
 </div>
@@ -76,7 +76,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if(!Guid.TryParse(Id, out var idGuid))
+        if (!Guid.TryParse(Id, out var idGuid))
             NavManager.NavigateTo("/menus");
 
         menu = await DbContext.Menus
@@ -90,7 +90,7 @@
 
     private void EditMenu(Guid menuId)
     {
-        // Navigiert zur Bearbeitungsseite des Menüs
+        // Navigate to the menu edit page
         NavManager.NavigateTo($"/menu/edit/{menuId}");
     }
 
@@ -100,7 +100,7 @@
         if (menu != null)
         {
             var confirm = await NotificationService
-                .ShowConfirmation(("Löschen", $"Möchten Sie das Menü \"{menu.Name}\" wirklich löschen?"));
+                .ShowConfirmation(("Delete", $"Are you sure you want to delete the menu \"{menu.Name}\"?"));
 
             if (confirm)
             {
@@ -108,7 +108,7 @@
                 DbContext.Menus.Remove(menu);
                 await DbContext.SaveChangesAsync();
 
-                // Nach der Löschung zur Menüübersicht navigieren
+                // After deletion, navigate to the menus overview
                 NavManager.NavigateTo("/menus");
             }
         }

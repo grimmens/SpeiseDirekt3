@@ -8,9 +8,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="menuItemEditModalLabel">
-                    @(Input.Id == Guid.Empty ? "Neuen Menüpunkt hinzufügen" : "Menüpunkt bearbeiten")
+                    @(Input.Id == Guid.Empty ? "Add New Menu Item" : "Edit Menu Item")
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen" @onclick="Cancel"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="Cancel"></button>
             </div>
             <div class="modal-body">
                 <EditForm @ref="editForm" EditContext="editContext" OnSubmit="OnSubmit">
@@ -23,36 +23,36 @@
                     </div>
 
                     <div class="form-floating mb-3">
-                        <InputTextArea style="height:200px;" @bind-Value="Input.Description" id="MenuItem.Description" class="form-control"/>
-                        <label for="MenuItem.Description">Beschreibung</label>
+                        <InputTextArea style="height:200px;" @bind-Value="Input.Description" id="MenuItem.Description" class="form-control" />
+                        <label for="MenuItem.Description">Description</label>
                     </div>
 
                     <div class="form-floating mb-3">
                         <InputText @bind-Value="Input.Allergens" id="MenuItem.Allergens" class="form-control" />
-                        <label for="MenuItem.Allergens">Allergene</label>
+                        <label for="MenuItem.Allergens">Allergens</label>
                     </div>
 
                     <div class="form-floating mb-3">
                         <InputNumber @bind-Value="Input.Price" id="MenuItem.Price" class="form-control" />
-                        <label for="MenuItem.Price">Preis</label>
+                        <label for="MenuItem.Price">Price</label>
                         <ValidationMessage For="() => Input.Price" class="text-danger" />
                     </div>
 
                     <div class="form-floating mb-3">
                         <InputSelect @bind-Value="Input.CategoryId" class="form-select">
-                            <option value="">-- Kategorie wählen --</option>
+                            <option value="">-- Select Category --</option>
                             @foreach (var cat in Categories)
                             {
                                 <option value="@cat.Id">@cat.Name</option>
                             }
                         </InputSelect>
-                        <label for="MenuItem.CategoryId">Kategorie</label>
+                        <label for="MenuItem.CategoryId">Category</label>
                         <ValidationMessage For="() => Input.CategoryId" class="text-danger" />
                     </div>
 
                     <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" @onclick="Cancel">Abbrechen</button>
-                        <button type="submit" class="btn btn-primary">Speichern</button>
+                        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
                     </div>
                 </EditForm>
             </div>
@@ -66,7 +66,7 @@
     [Parameter] public EventCallback<MenuItem> OnOk { get; set; }
     [Parameter] public EventCallback OnCancel { get; set; }
     [Parameter] public List<Category> Categories { get; set; } = new();
-    [Parameter] public Category SelectedCategory{ get; set; }
+    [Parameter] public Category SelectedCategory { get; set; }
     [Inject] private ApplicationDbContext Context { get; set; }
 
     private EditContext editContext = new(new MenuItem());

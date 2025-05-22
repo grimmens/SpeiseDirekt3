@@ -6,16 +6,16 @@
 <div class="container">
     <div class="card shadow">
         <div class="card-header bg-success text-white">
-            <h4>Zeiteinträge</h4>
+            <h4>Time Entries</h4>
         </div>
         <div class="card-body">
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Menü</th>
-                        <th>Startzeit</th>
-                        <th>Endzeit</th>
-                        <th>Aktionen</th>
+                        <th>Menu</th>
+                        <th>Start Time</th>
+                        <th>End Time</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -24,7 +24,7 @@
                         <tr>
                             <td>
                                 <InputSelect @bind-Value="timeTableEntry.MenuId" class="form-select">
-                                    <option value="">-- Menü wählen --</option>
+                                    <option value="">-- Select Menu --</option>
                                     @foreach (var m in menus)
                                     {
                                         <option value="@m.Id">@m.Name</option>
@@ -38,7 +38,7 @@
                                 <InputTime @bind-Value="timeTableEntry.EndTime" class="form-control" />
                             </td>
                             <td>
-                                <a class="btn btn-danger" @onclick="() => RemoveTimeTableEntry(timeTableEntry)">Entfernen</a>
+                                <a class="btn btn-danger" @onclick="() => RemoveTimeTableEntry(timeTableEntry)">Remove</a>
                             </td>
                         </tr>
                     }
@@ -47,11 +47,10 @@
             @ChildContent
         </div>
         <div class="card-footer">
-            <a class="btn btn-primary" @onclick="AddTimeTableEntry">Zeiteintrag hinzufügen</a>
+            <a class="btn btn-primary" @onclick="AddTimeTableEntry">Add Time Entry</a>
         </div>
     </div>
 </div>
-
 
 @code {
     [Parameter] public RenderFragment ChildContent { get; set; }
