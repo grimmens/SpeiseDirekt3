@@ -7,25 +7,25 @@
 @using SpeiseDirekt3.ServiceInterface
 @attribute [Authorize]
 
-<PageTitle>Menüpunkte</PageTitle>
+<PageTitle>Menu Items</PageTitle>
 
 <div class="container mt-5">
     <!-- Breadcrumb -->
-    <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);" aria-label="Brotkrümelnavigation">
+    <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item">
-                <a href="/menus">Menüs</a>
+                <a href="/menus">Menus</a>
             </li>
             <li class="breadcrumb-item" aria-current="page">
                 <a href="@($"/categories/{Menu?.Id}")">@Menu?.Name</a>
             </li>
             <li class="breadcrumb-item" aria-current="page">
-                Menüpunkte
+                Menu Items
             </li>
         </ol>
     </nav>
 
-    <h1 class="mb-4 text-primary">🍽️ Menüpunkte für @Menu?.Name</h1>
+    <h1 class="mb-4 text-primary">🍽️ Menu Items for @Menu?.Name</h1>
 
     @if (Categories.Any())
     {
@@ -51,7 +51,7 @@
     }
     else
     {
-        <p class="text-muted">Keine Kategorien verfügbar. Bitte füge zuerst welche hinzu.</p>
+        <p class="text-muted">No categories available. Please add some first.</p>
     }
 </div>
 

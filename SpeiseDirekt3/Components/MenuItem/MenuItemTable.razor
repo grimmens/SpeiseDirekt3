@@ -9,13 +9,13 @@
 
 <div class="mb-4">
     <button @onclick="CreateNewMenuItem" class="btn btn-sm btn-success" disabled="@isWorking">
-        ➕ Neuer Menüeintrag
+        ➕ New Menu Entry
     </button>
     <button @onclick="CreateNewMenuEntries" class="btn btn-sm btn-primary" disabled="@isWorking">
-        🍽️✨ 10 KI-Menüpunkte generieren
+        🍽️✨ Generate 10 AI Menu Entries
     </button>
     <button type="button" class="btn btn-sm btn-secondary" @onclick="DeleteAll" disabled="@isWorking">
-        Alle löschen
+        Delete All
     </button>
 </div>
 
@@ -23,7 +23,7 @@
 {
     <div class="card shadow-sm mb-4">
         <div class="card-header bg-light">
-            <h5 class="mb-0">@Category.Name Menüpunkte</h5>
+            <h5 class="mb-0">@Category.Name Menu Items</h5>
         </div>
         <div class="card-body">
             @if (MenuItems.Any())
@@ -33,9 +33,9 @@
                         <thead>
                             <tr>
                                 <th>Name</th>
-                                <th>Preis</th>
-                                <th>Beschreibung</th>
-                                <th class="text-end">Aktionen</th>
+                                <th>Price</th>
+                                <th>Description</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -47,11 +47,11 @@
                                     <td class="text-wrap">@item.Description</td>
                                     <td class="text-end">
                                         <a class="btn btn-sm btn-secondary ml-1 mt-1" @onclick="() => EditMenuItem(item)">
-                                            Bearbeiten
+                                            Edit
                                         </a>
                                         <button class="btn btn-sm btn-danger mt-1 ml-1"
                                                 @onclick="() => DeleteMenuItem(item.Id)">
-                                            🗑️ Löschen
+                                            🗑️ Delete
                                         </button>
                                     </td>
                                 </tr>
@@ -66,7 +66,7 @@
             }
             else
             {
-                <p class="text-muted">Keine Menüpunkte in dieser Kategorie.</p>
+                <p class="text-muted">No menu items in this category.</p>
             }
         </div>
     </div>
@@ -78,7 +78,7 @@
 @code {
     [Parameter] public Category Category { get; set; }
     [Parameter] public List<Category> Categories { get; set; }
-    [Inject] private IMenuItemGenerator MenuItemGenerator{ get; set; }
+    [Inject] private IMenuItemGenerator MenuItemGenerator { get; set; }
 
 
     List<MenuItem> MenuItems = new();
