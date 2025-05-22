@@ -1,0 +1,119 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@500&family=Pacifico&display=swap');
+
+
+
+.menu {
+    background: linear-gradient(145deg, #ffe6f0, #e6f7ff);
+    font-family: var(--custom-font-family, 'Raleway', sans-serif);
+    color: var(--primary-color, #333);
+    margin: 0;
+    padding: 0;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 35px;
+    background-color: #ffffffee;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+}
+
+/* Responsive layout tweaks */
+@media (max-width: 768px) {
+    .menu {
+        margin: 20px 10px;
+        padding: 20px;
+        border-radius: 12px;
+    }
+
+    .category h2 {
+        font-size: 1.6rem;
+    }
+
+    .item-title {
+        font-size: 1.2rem;
+    }
+
+    .item-price {
+        font-size: 1rem;
+    }
+
+    .menu-item {
+        padding: 15px;
+    }
+}
+
+.category {
+    margin-bottom: 40px;
+    border-left: 5px solid var(--secondary-color, #ff69b4);
+    padding-left: 20px;
+}
+
+    .category h2 {
+        font-family: 'Pacifico', cursive;
+        font-size: 2.2rem;
+        color: var(--primary-color, #a52a2a);
+        margin-bottom: 15px;
+        text-shadow: 1px 1px var(--secondary-color, #ffa07a);
+    }
+
+.menu-items {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.menu-item {
+    margin-bottom: 20px;
+    padding: 20px;
+    background-color: #fffdfc;
+    border: 2px dashed var(--secondary-color, #ff69b4);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(255, 105, 180, 0.1);
+    transition: transform 0.2s ease, background-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .menu-item:hover {
+        transform: scale(1.02);
+        background-color: #fff0f6;
+    }
+
+/* New layout structure */
+.item-title {
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: var(--primary-color, #b22222);
+}
+
+.item-price {
+    font-size: 1.1rem;
+    color: var(--secondary-color, #cc3366);
+    font-style: italic;
+}
+
+.item-body {
+    font-size: 1rem;
+    color: #444;
+}
+
+    .item-body p {
+        margin: 0;
+    }
+
+.allergens {
+    margin-top: 5px;
+    font-size: 0.9rem;
+    color: var(--secondary-color, #cc6699);
+    font-style: italic;
+}
+
+.no-items {
+    font-style: italic;
+    color: var(--secondary-color, #cc6699);
+    padding: 10px;
+    background-color: #fff0f6;
+    border-left: 4px solid var(--secondary-color, #cc6699);
+    border-radius: 4px;
+}

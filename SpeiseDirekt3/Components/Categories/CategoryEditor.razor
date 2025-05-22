@@ -1,0 +1,78 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Data
+@using SpeiseDirekt3.Model
+@inject IJSRuntime JSRuntime
+
+<div class="modal fade" id="categoryEditModal" tabindex="-1" aria-labelledby="categoryEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoryEditModalLabel">Kategorie bearbeiten</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Schließen" @onclick="Cancel"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm @ref=editForm EditContext="editContext" OnSubmit="OnSubmit">
+                    <DataAnnotationsValidator />
+                    @* <ValidationSummary class="text-danger" /> *@
+
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.Name" id="Category.Name" class="form-control" />
+                        <label for="Category.Name">Kategoriename</label>
+                        <ValidationMessage For="() => Input.Name" class="text-danger" />
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" @onclick="Cancel">Abbrechen</button>
+                        <button type="submit" class="btn btn-primary">Speichern</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public Category Input { get; set; } = new();
+    [Parameter] public EventCallback<Category> OnOk { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Inject] private ApplicationDbContext Context { get; set; }
+
+    EditContext editContext = new EditContext(new Category());
+    EditForm editForm;
+
+    private async Task OnSubmit()
+    {
+        editContext = new EditContext(Input);
+        editForm.EditContext = editContext;
+        if (!editContext.Validate())
+            return;
+
+        var nameExists = await Context.Categories.Where(c => c.Id != Input.Id).AnyAsync(c => c.MenuId == Input.MenuId && c.Name == Input.Name);
+        if (nameExists)
+        {
+            var messages = new ValidationMessageStore(editContext);
+            messages.Add(() => Input.Name, "Dieser name existiert bereits.");
+            editContext.NotifyValidationStateChanged();
+            return;
+        }
+        await OnOk.InvokeAsync(Input);
+        await CloseModal();
+    }
+
+    public async Task ShowModal()
+    {
+        await JSRuntime.InvokeVoidAsync("openModal", "categoryEditModal");
+    }
+
+    private async Task CloseModal()
+    {
+        await JSRuntime.InvokeVoidAsync("hideModal", "categoryEditModal");
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+        await CloseModal();
+    }
+}

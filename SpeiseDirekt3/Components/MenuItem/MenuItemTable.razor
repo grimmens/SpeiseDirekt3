@@ -1,0 +1,199 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Components.Shared
+@using SpeiseDirekt3.Data
+@using SpeiseDirekt3.Model
+@using Microsoft.AspNetCore.Components.Forms
+@using SpeiseDirekt3.ServiceInterface
+@inject ApplicationDbContext Context
+@inject INotificationService NotificationService
+
+<div class="mb-4">
+    <button @onclick="CreateNewMenuItem" class="btn btn-sm btn-success" disabled="@isWorking">
+        ➕ Neuer Menüeintrag
+    </button>
+    <button @onclick="CreateNewMenuEntries" class="btn btn-sm btn-primary" disabled="@isWorking">
+        🍽️✨ 10 KI-Menüpunkte generieren
+    </button>
+    <button type="button" class="btn btn-sm btn-secondary" @onclick="DeleteAll" disabled="@isWorking">
+        Alle löschen
+    </button>
+</div>
+
+@if (Category != null)
+{
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-light">
+            <h5 class="mb-0">@Category.Name Menüpunkte</h5>
+        </div>
+        <div class="card-body">
+            @if (MenuItems.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Preis</th>
+                                <th>Beschreibung</th>
+                                <th class="text-end">Aktionen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in PagedMenuItems)
+                            {
+                                <tr>
+                                    <td class="text-wrap">@item.Name</td>
+                                    <td class="text-wrap">@item.Price.ToString("C")</td>
+                                    <td class="text-wrap">@item.Description</td>
+                                    <td class="text-end">
+                                        <a class="btn btn-sm btn-secondary ml-1 mt-1" @onclick="() => EditMenuItem(item)">
+                                            Bearbeiten
+                                        </a>
+                                        <button class="btn btn-sm btn-danger mt-1 ml-1"
+                                                @onclick="() => DeleteMenuItem(item.Id)">
+                                            🗑️ Löschen
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <PaginationComponent CurrentPage="@currentPage"
+                                     PageSize="@pageSize"
+                                     TotalNumberOfItems="@MenuItems.Count"
+                                     SetPage="@SetPageHandler" />
+            }
+            else
+            {
+                <p class="text-muted">Keine Menüpunkte in dieser Kategorie.</p>
+            }
+        </div>
+    </div>
+}
+
+<MenuItemEditor @ref="menuItemEditor" OnOk="HandleOk" OnCancel="HandleCancel" SelectedCategory="Category" Categories="Categories" />
+
+
+@code {
+    [Parameter] public Category Category { get; set; }
+    [Parameter] public List<Category> Categories { get; set; }
+    [Inject] private IMenuItemGenerator MenuItemGenerator{ get; set; }
+
+
+    List<MenuItem> MenuItems = new();
+    MenuItem Input = new();
+    EditContext editContext;
+    EditForm editForm;
+    MenuItemEditor menuItemEditor;
+
+    private bool isWorking;
+    // Pagination parameters.
+    private int currentPage = 1;
+    private int pageSize = 10;
+
+    // Return only the items for the current page.
+    private IEnumerable<MenuItem> PagedMenuItems =>
+        MenuItems.Skip((currentPage - 1) * pageSize).Take(pageSize);
+
+    // Update current page based on the pagination component's event.
+    private void SetPageHandler(int page)
+    {
+        currentPage = page;
+    }
+
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Category != null)
+        {
+            Input = new MenuItem { CategoryId = Category.Id };
+            editContext = new EditContext(Input);
+            await LoadItems();
+        }
+    }
+
+
+    async Task LoadItems()
+    {
+        MenuItems = await Context.MenuItems
+            .Where(m => m.CategoryId == Category.Id)
+            .ToListAsync();
+    }
+
+    async Task SaveAsync()
+    {
+        if (!editContext.Validate()) return;
+
+        Input.CategoryId = Category.Id;
+        Context.MenuItems.Add(Input);
+        await Context.SaveChangesAsync();
+
+        Input = new MenuItem { CategoryId = Category.Id };
+        editContext = new EditContext(Input);
+        await LoadItems();
+    }
+
+    async Task DeleteMenuItem(Guid id)
+    {
+        var item = await Context.MenuItems.FindAsync(id);
+        if (item != null)
+        {
+            var confirm = await NotificationService.ShowConfirmation(("Delete", $"Delete \"{item.Name}\"?"));
+            if (confirm)
+            {
+                Context.MenuItems.Remove(item);
+                await Context.SaveChangesAsync();
+                await LoadItems();
+            }
+        }
+    }
+
+    async Task CreateNewMenuItem()
+    {
+        // prepare a fresh model
+        menuItemEditor.Input = new MenuItem { CategoryId = Category.Id };
+        await menuItemEditor.ShowModal();
+    }
+
+    async void EditMenuItem(MenuItem item)
+    {
+        menuItemEditor.Input = item;
+        await menuItemEditor.ShowModal();
+    }
+
+    async Task HandleOk(MenuItem item)
+    {
+        if (item.Id == Guid.Empty)
+            Context.Add(item);
+        else
+            Context.MenuItems.Update(item);
+        await Context.SaveChangesAsync();
+        await LoadItems();
+    }
+
+    Task HandleCancel()
+    {
+        menuItemEditor.Input = new();
+        return Task.CompletedTask;
+    }
+
+    async Task CreateNewMenuEntries()
+    {
+        isWorking = true;
+        var newEntries = await MenuItemGenerator.CreateMockMenuEntriesAsync(Category, 10);
+        await Context.AddRangeAsync(newEntries);
+        await Context.SaveChangesAsync();
+        await LoadItems();
+        isWorking = false;
+    }
+
+    async Task DeleteAll()
+    {
+        isWorking = true;
+        Context.RemoveRange(Context.MenuItems.Where(e => e.CategoryId == Category.Id));
+        await Context.SaveChangesAsync();
+        await LoadItems();
+        isWorking = false;
+    }
+}

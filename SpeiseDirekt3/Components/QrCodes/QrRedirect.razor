@@ -1,0 +1,42 @@
+﻿@page "/qr/{QrId:guid}"
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.ServiceInterface
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavManager
+@layout MenuLayout
+
+@if (loading)
+{
+    <p>loading…</p>
+}
+else if (qr == null)
+{
+    <div class="alert alert-danger mt-5 text-center">
+        <h4>Invalid QR code</h4>
+        <p>This code does not exist or has been deleted.</p>
+        <a href="/" class="btn btn-primary">Go Home</a>
+    </div>
+} else if(menu != null)
+{
+    <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" />
+}
+@code {
+    [Parameter] public Guid QrId { get; set; }
+    [Inject] public IMenuService MenuService { get; set; }
+    private QRCode? qr;
+    private Menu? menu;
+    private bool loading = true;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        qr = await DbContext.QRCodes
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Where(q => q.Id == QrId)
+                .FirstOrDefaultAsync();
+        menu = await MenuService.GetMenuForQRCodeAsync(QrId);
+        loading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+}

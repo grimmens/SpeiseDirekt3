@@ -1,0 +1,29 @@
+﻿@using System
+
+<input type="time"
+       value="@FormattedTime"
+       @onchange="OnTimeChanged"
+       @attributes="AdditionalAttributes" />
+
+@code {
+    [Parameter]
+    public TimeOnly? Value { get; set; }
+
+    [Parameter]
+    public EventCallback<TimeOnly?> ValueChanged { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)]
+    public Dictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
+
+
+    private string FormattedTime => Value?.ToString("HH:mm");
+
+    private async Task OnTimeChanged(ChangeEventArgs e)
+    {
+        if (TimeOnly.TryParse(e.Value?.ToString(), out var newTime))
+        {
+            Value = newTime;
+            await ValueChanged.InvokeAsync(Value);
+        }
+    }
+}

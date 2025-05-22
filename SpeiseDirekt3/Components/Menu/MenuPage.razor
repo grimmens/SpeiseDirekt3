@@ -1,0 +1,101 @@
+﻿@page "/menus"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Model
+@using SpeiseDirekt3.ServiceInterface
+@inject ApplicationDbContext DbContext
+@inject INotificationService NotificationService
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+<div class="container mt-5">
+    <h3>Verfügbare Menüs</h3>
+
+    <button class="btn btn-success mb-3" @onclick="CreateNewMenu">Menü hinzufügen</button>
+
+    @if (menus == null)
+    {
+        <p><em>Lädt...</em></p>
+    }
+    else if (!menus.Any())
+    {
+        <p>Keine Menüs verfügbar.</p>
+    }
+    else
+    {
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Beschreibung</th>
+                    <th>Design-Thema</th>
+                    <th>Zusätze</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var menu in menus)
+                {
+                    <tr>
+                        <td>
+                            <a href="@($"/menu/details/{menu.Id}")">@menu.Name</a>
+                        </td>
+                        <td>@menu.Description</td>
+                        <td>@menu.Theme</td>
+                        <td>
+                            <a class="btn btn-sm btn-outline-primary" href="@($"menuitems/{menu.Id}")">Menüelemente</a>
+                            <a class="btn btn-sm btn-outline-primary" href="@($"categories/{menu?.Id}")">Kategorien</a>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditMenu(menu.Id)">Bearbeiten</button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteMenu(menu.Id)">Löschen</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+
+@code {
+    private List<Menu> menus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        menus = await DbContext.Menus.ToListAsync();
+    }
+
+    private void CreateNewMenu()
+    {
+        // Navigate to the "Add" page (no Id)
+        NavManager.NavigateTo("/menu/edit");
+    }
+
+    private void EditMenu(Guid menuId)
+    {
+        // Navigate to the "Edit" page for this menu
+        NavManager.NavigateTo($"/menu/edit/{menuId}");
+    }
+
+    private async Task DeleteMenu(Guid menuId)
+    {
+        var menu = await DbContext.Menus.FindAsync(menuId);
+        if (menu != null)
+        {
+            var confirm = await NotificationService
+                .ShowConfirmation(("Delete", $"Delete \"{menu.Name}\"?"));
+
+            if (confirm)
+            {
+                DbContext.QRCodes.RemoveRange(DbContext.QRCodes.Where(e => e.MenuId == menu.Id).ToList());
+                DbContext.Menus.Remove(menu);
+                await DbContext.SaveChangesAsync();
+
+                // Remove from local list to update UI instantly
+                menus.Remove(menu);
+                StateHasChanged();
+            }
+        }
+    }
+}

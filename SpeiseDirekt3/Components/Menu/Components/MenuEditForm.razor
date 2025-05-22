@@ -1,0 +1,147 @@
+﻿@page "/menu/edit/{Id:guid?}"
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Model
+@inject ApplicationDbContext Context
+@inject NavigationManager NavManager
+
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <h3>@(IsNew ? "Add New Menu" : "Edit Menu")</h3>
+            <EditForm EditContext="EditContext" OnValidSubmit="HandleValidSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Menu.Name" class="form-control" id="menuName" placeholder="Menu Name" />
+                    <label for="menuName">Menu Name</label>
+                    <ValidationMessage For="@(() => Menu.Name)" class="text-danger" />
+                </div>
+
+                <div class="form-floating mb-3">
+                    <InputText @bind-Value="Menu.Description" class="form-control" id="menuDesc" placeholder="Description" />
+                    <label for="menuDesc">Description</label>
+                </div>
+
+                <div class="d-flex align-items-center mb-3">
+                    <label class="form-label me-2" for="themeSelect">Design Theme</label>
+
+                    <button type="button" class="btn btn-outline-secondary me-1"
+                            @onclick="() => ChangeTheme(-1)">
+                        ←
+                    </button>
+
+                    <InputSelect @bind-Value="Menu.Theme"
+                                 class="form-select me-1"
+                                 id="themeSelect"
+                                 style="width: auto; display: inline-block;">
+                        @foreach (var theme in Enum.GetValues<DesignTheme>())
+                        {
+                            <option value="@theme">@theme</option>
+                        }
+                    </InputSelect>
+
+                    <button type="button" class="btn btn-outline-secondary"
+                            @onclick="() => ChangeTheme(+1)">
+                        →
+                    </button>
+                </div>
+
+                <div class="form-check mb-3">
+                    <InputCheckbox id="complexNavigation"
+                    class="form-check-input"
+                    @bind-Value="Menu.ComplexNavigation" />
+                    <label class="form-check-label" for="complexNavigation">
+                        Enable complex navigation (nested sub‑menus).
+                    </label>
+                    <ValidationMessage For="@(() => Menu.ComplexNavigation)" class="text-danger" />
+                </div>
+
+
+
+                <div class="d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </EditForm>
+        </div>
+        <div class="col-md-6">
+            @if (Menu != null)
+            { 
+                <h1>Preview</h1>
+                <MenuDisplayComponent Menu="Menu" />
+            }
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    private Menu Menu { get; set; } = new();
+    private EditContext EditContext { get; set; } = new EditContext(new Menu());
+    private bool IsNew => !Id.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsNew)
+        {
+            Menu = new Menu();
+        }
+        else
+        {
+            Menu = (await Context.Menus
+                .Include(e => e.Categories)
+                .ThenInclude(e => e.MenuItems)
+                .SingleOrDefaultAsync(e => e.Id == Id))
+               ?? throw new InvalidOperationException($"Menu '{Id}' not found.");
+        }
+
+
+        EditContext = new EditContext(Menu);
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // validate unique name
+        var nameExists = await Context.Menus
+            .Where(m => m.Id != Menu.Id)
+            .AnyAsync(m => m.Name == Menu.Name);
+
+        if (nameExists)
+        {
+            var messages = new ValidationMessageStore(EditContext);
+            messages.Add(() => Menu.Name, "This name already exists.");
+            EditContext.NotifyValidationStateChanged();
+            return;
+        }
+
+        if (IsNew)
+        {
+            Context.Menus.Add(Menu);
+        }
+        else
+        {
+            Context.Menus.Update(Menu);
+        }
+
+        await Context.SaveChangesAsync();
+        NavManager.NavigateTo("/menus");
+    }
+    void ChangeTheme(int direction)
+    {
+        // Get all theme values
+        var themes = Enum.GetValues<DesignTheme>().Cast<DesignTheme>().ToList();
+        var currentIndex = themes.IndexOf(Menu.Theme);
+
+        // Move forward/back, wrapping around
+        var nextIndex = (currentIndex + direction + themes.Count) % themes.Count;
+        Menu.Theme = themes[nextIndex];
+    }
+
+    private void Cancel()
+    {
+        NavManager.NavigateTo("/menus");
+    }
+}

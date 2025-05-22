@@ -1,0 +1,119 @@
+﻿@page "/qrcodes"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Model
+@using SpeiseDirekt3.ServiceInterface
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavManager
+@inject INotificationService NotificationService
+@inject IMenuItemGenerator MenuItemGenerator
+@inherits PaidTenantComponentBase
+@attribute [Authorize]
+
+<div class="container">
+    <h3>QR-Codes</h3>
+    <div class="buttons">
+        @if (CanCreateQrCode)
+        {
+            <button class="btn btn-success mb-3" @onclick="CreateNew">Neuen QR-Code erstellen</button>
+        }
+        else
+        {
+            <button class="btn btn-success mb-3" disabled>Neuen QR-Code erstellen</button>
+            <i>Es kann kein neuer QR-Code erstellt werden.</i>
+        }
+    </div>
+
+    @if (codes == null)
+    {
+        <p><em>Lädt...</em></p>
+    }
+    else if (!codes.Any())
+    {
+        <p>Keine QR-Codes definiert.</p>
+    }
+    else
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Titel</th>
+                    <th>Vorschau</th>
+                    <th>Menü</th>
+                    <th>Erstellt am</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cde in codes)
+                {
+                    <tr>
+                        <td>
+                            <a href="@($"qr/{cde.Id}")" target="_blank" rel="noopener noreferrer">
+                                @cde.Title <i class="bi bi-box-arrow-up-right ms-1"></i>
+                            </a>
+                        </td>
+                        <td>
+                            <QrCodePreview QrId="@cde.Id"
+                                           ThumbnailSize="80" />
+                        </td>
+                        <td>@cde.Menu?.Name</td>
+                        <td>@cde.CreatedAt.ToLocalTime().ToString("g")</td>
+                        <td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-primary me-2"
+                                        @onclick="() => Edit(cde.Id)">
+                                    Bearbeiten
+                                </button>
+                                <button class="btn btn-sm btn-danger"
+                                        @onclick="() => Delete(cde.Id)">
+                                    Löschen
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    private List<QRCode>? codes;
+
+    protected override async Task OnInitializedAsync()
+    {
+        codes = await DbContext.QRCodes
+            .Include(q => q.Menu)
+            .OrderByDescending(q => q.CreatedAt)
+            .ToListAsync();
+        await base.OnInitializedAsync();
+        InvokeAsync(StateHasChanged);
+    }
+
+    Task Create100Menus() => MenuItemGenerator.CreateMenus(async () => await OnInitializedAsync(), 10);
+
+    void CreateNew() => NavManager.NavigateTo("/qrcode/edit");
+
+    void Edit(Guid id) => NavManager.NavigateTo($"/qrcode/edit/{id}");
+
+    async Task Delete(Guid id)
+    {
+        var code = await DbContext.QRCodes.FindAsync(id);
+        if (code == null) return;
+
+        if (await NotificationService.ShowConfirmation(("QR-Code löschen",
+                $"Möchten Sie den QR-Code für „{code.Menu.Name}“ wirklich löschen?")))
+        {
+            DbContext.QRCodes.Remove(code);
+            await DbContext.SaveChangesAsync();
+            codes!.RemoveAll(q => q.Id == id);
+            StateHasChanged();
+        }
+        await base.ReloadAuthState();
+    }
+
+    // Generiert die URL, auf die der QR-Code verweist:
+    string GetQrUrl(Guid qrId)
+        => $"{NavManager.BaseUri}qr/{qrId}";
+}

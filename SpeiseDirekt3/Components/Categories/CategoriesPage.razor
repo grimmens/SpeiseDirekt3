@@ -1,0 +1,227 @@
+﻿@page "/Categories/{MenuId}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Data
+@using SpeiseDirekt3.Model
+@using SpeiseDirekt3.Infrastructure
+@using SpeiseDirekt3.ServiceInterface
+@attribute [Authorize]
+
+<PageTitle>Kategorien</PageTitle>
+
+<div class="container mt-5">
+
+    <!-- Breadcrumb -->
+    <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/menus">Menüs</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                @menu?.Name
+            </li>
+        </ol>
+    </nav>
+
+    <h1 class="mb-4 text-primary">📂 Kategorien</h1>
+
+    <!-- Link to Menu Items Page -->
+    <div class="card border-0 bg-light mb-4">
+        <div class="card-body d-flex justify-content-between align-items-center">
+            <div>
+                <h5 class="card-title mb-0">🍽️ Menüeinträge verwalten</h5>
+                <small class="text-muted">Gehe zu den Menüeinträgen für <strong>@menu?.Name</strong>.</small>
+            </div>
+            <a class="btn btn-outline-primary" href="@($"/menuitems/{MenuId}")">
+                ➡️ Menüeinträge anzeigen
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Categories List -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Verfügbare Kategorien</h5>
+                </div>
+                <div class="card-body">
+                    @if (Categories.Any())
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th class="text-end">Aktion</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Categories)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td class="text-end">
+                                            <span><a class="btn btn-sm btn-primary" @onclick="() => EditCategory(item)">Bearbeiten</a></span>
+                                            <button class="btn btn-sm btn-danger"
+                                            @onclick="() => DeleteCategory(item.Id)">
+                                                🗑️ Löschen
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Keine Kategorien gefunden.</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Category Form -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Neue Kategorie hinzufügen</h5>
+                </div>
+                <div class="card-body">
+                    <EditForm @ref="editForm" EditContext="editContext" OnSubmit="SaveAsync">
+                        <DataAnnotationsValidator />
+
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Input.Name" id="Input.Name" class="form-control" placeholder="Name der Kategorie" />
+                            <label for="Input.Name">Kategoriename</label>
+                            <ValidationMessage For="() => Input.Name" class="text-danger" />
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100">
+                            ➕ Kategorie hinzufügen
+                        </button>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Optional Right Section -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 mt-3">
+                <div class="card-body bg-light">
+                    <h5 class="card-title">📌 Hinweise</h5>
+                    <p class="card-text">Zeige hier etwas Nützliches an – vielleicht Tipps zu Kategorien, FAQs oder Statistiken.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Category Editor Modal -->
+<CategoryEditor @ref="categoryEditor" OnOk="HandleOk" OnCancel="HandleCancel" />
+
+@code {
+    [Parameter]
+    public string MenuId { get; set; }
+
+    [Inject]
+    public ApplicationDbContext Context { get; set; }
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+    [Inject]
+    public INotificationService NotificationService { get; set; }
+
+    ICollection<Category> Categories { get; set; } = [];
+
+    Category Input { get; set; } = new();
+    CategoryEditor categoryEditor;
+    EditContext editContext = new EditContext(new Category());
+    EditForm editForm;
+    Menu? menu;
+
+    protected override Task OnParametersSetAsync()
+    {
+        editContext = new EditContext(Input);
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategoriesAsync();
+        Input = new()
+            {
+                MenuId = new Guid(MenuId)
+            };
+    }
+
+    async Task SaveAsync()
+    {
+        editContext = new EditContext(Input);
+        editForm.EditContext = editContext;
+        if (!editContext.Validate())
+            return;
+
+        var nameExists = await Context.Categories.AnyAsync(c => c.MenuId == Guid.Parse(MenuId) && c.Name == Input.Name);
+        if (nameExists)
+        {
+            var messages = new ValidationMessageStore(editContext);
+            messages.Add(() => Input.Name, "Dieser Name existiert bereits.");
+            editContext.NotifyValidationStateChanged();
+            StateHasChanged();
+            return;
+        }
+
+        Context.Categories.Add(Input);
+        await Context.SaveChangesAsync();
+        Input = new()
+            {
+                MenuId = new Guid(MenuId)
+            };
+        await LoadCategoriesAsync();
+    }
+
+    async void EditCategory(Category category)
+    {
+        categoryEditor.Input = category;
+        await categoryEditor.ShowModal();
+    }
+
+    async Task HandleOk(Category category)
+    {
+        // Update-Logik hier
+        Context.Categories.Update(category);
+        await Context.SaveChangesAsync();
+        await LoadCategoriesAsync();
+    }
+
+    async Task HandleCancel()
+    {
+        categoryEditor.Input = new()
+            {
+                MenuId = new Guid(MenuId)
+            };
+    }
+
+    async Task DeleteCategory(Guid id)
+    {
+        var category = await Context.Categories.FindAsync(id);
+        if (category is not null)
+        {
+            var res = await NotificationService.ShowConfirmation(("Löschen", $"Soll die Kategorie „{category.Name}“ wirklich gelöscht werden?"));
+            if (res)
+            {
+                Context.Categories.Remove(category);
+                await Context.SaveChangesAsync();
+                await LoadCategoriesAsync();
+            }
+        }
+    }
+
+    async Task LoadCategoriesAsync()
+    {
+        menu = await Context.Menus.FindAsync(Guid.Parse(MenuId));
+        Categories = await Context.Categories.Where(e => e.MenuId == new Guid(MenuId)).ToListAsync();
+        InvokeAsync(StateHasChanged);
+    }
+}

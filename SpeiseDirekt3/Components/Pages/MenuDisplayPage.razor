@@ -1,0 +1,43 @@
+﻿@page "/menu/{MenuId:guid}"
+
+
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Model
+@rendermode @(InteractiveServer)
+@layout MenuLayout
+
+@if (MenuLoading)
+{
+    <p>Loading menu...</p>
+}
+else if (Menu == null)
+{
+    <div class="text-center mt-5">
+        <h2 class="text-danger">404 - Menu Not Found</h2>
+        <p class="text-muted">The menu you are looking for does not exist or has been deleted.</p>
+        <a class="btn btn-primary mt-3" href="/">Back to Home</a>
+    </div>
+}
+else
+{
+   <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="Menu" />
+}
+
+@code {
+    [Parameter] public Guid MenuId { get; set; }
+    [Inject] private ApplicationDbContext Context { get; set; }
+
+    private Menu? Menu { get; set; }
+    private bool MenuLoading { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Menu = await Context.Menus
+        .IgnoreQueryFilters()
+            .Include(m => m.Categories)!
+                .ThenInclude(c => c.MenuItems)
+            .FirstOrDefaultAsync(m => m.Id == MenuId);
+
+        MenuLoading = false;
+    }
+}

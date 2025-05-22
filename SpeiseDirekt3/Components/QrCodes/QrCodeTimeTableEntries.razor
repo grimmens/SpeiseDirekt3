@@ -1,0 +1,84 @@
+﻿@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Model
+@using Microsoft.AspNetCore.Components.Forms
+@inject ApplicationDbContext DbContext
+
+<div class="container">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">
+            <h4>Zeiteinträge</h4>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Menü</th>
+                        <th>Startzeit</th>
+                        <th>Endzeit</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var timeTableEntry in TimeTableEntries)
+                    {
+                        <tr>
+                            <td>
+                                <InputSelect @bind-Value="timeTableEntry.MenuId" class="form-select">
+                                    <option value="">-- Menü wählen --</option>
+                                    @foreach (var m in menus)
+                                    {
+                                        <option value="@m.Id">@m.Name</option>
+                                    }
+                                </InputSelect>
+                            </td>
+                            <td>
+                                <InputTime @bind-Value="timeTableEntry.StartTime" class="form-control" />
+                            </td>
+                            <td>
+                                <InputTime @bind-Value="timeTableEntry.EndTime" class="form-control" />
+                            </td>
+                            <td>
+                                <a class="btn btn-danger" @onclick="() => RemoveTimeTableEntry(timeTableEntry)">Entfernen</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @ChildContent
+        </div>
+        <div class="card-footer">
+            <a class="btn btn-primary" @onclick="AddTimeTableEntry">Zeiteintrag hinzufügen</a>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter, EditorRequired] public Guid QRCodeId { get; set; }
+    [Parameter] public ICollection<TimeTableEntry> TimeTableEntries { get; set; }
+    private List<Menu> menus = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        menus = await DbContext.Menus.OrderBy(m => m.Name).ToListAsync();
+    }
+
+    private void AddTimeTableEntry()
+    {
+        var newTimeTableEntry = new TimeTableEntry
+            {
+                MenuId = Guid.Empty, // Default to no menu selected
+                StartTime = TimeOnly.Parse("08:00:00"),
+                EndTime = TimeOnly.Parse("12:00:00"), // Default times
+                QRCodeId = QRCodeId
+            };
+
+        TimeTableEntries.Add(newTimeTableEntry);
+    }
+
+    private void RemoveTimeTableEntry(TimeTableEntry timeTableEntry)
+    {
+        TimeTableEntries.Remove(timeTableEntry);
+    }
+}

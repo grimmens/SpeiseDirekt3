@@ -1,0 +1,116 @@
+﻿@page "/menu/details/{id}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Model
+@using SpeiseDirekt3.ServiceInterface
+@inject ApplicationDbContext DbContext
+@inject INotificationService NotificationService
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+<div class="container mt-5">
+    <h3>Menü Details</h3>
+
+    @if (menu == null)
+    {
+        <p><em>Lädt...</em></p>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <tbody>
+                <tr>
+                    <th>Name</th>
+                    <td>@menu.Name</td>
+                </tr>
+                <tr>
+                    <th>Beschreibung</th>
+                    <td>@menu.Description</td>
+                </tr>
+                <tr>
+                    <th>Design-Thema</th>
+                    <td>@menu.Theme</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Karte für Menüeinträge -->
+        <div class="card border-0 bg-light mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">🍽️ Menüeinträge verwalten</h5>
+                    <small class="text-muted">Gehe zu den Menüeinträgen für <strong>@menu?.Name</strong>.</small>
+                </div>
+                <a class="btn btn-outline-primary" href="@($"/menuitems/{menu.Id}")">
+                    ➡️ Menüeinträge anzeigen
+                </a>
+            </div>
+        </div>
+
+        <!-- Karte für Kategorien -->
+        <div class="card border-0 bg-light mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="card-title mb-0">📂 Kategorien verwalten</h5>
+                    <small class="text-muted">Gehe zu den Kategorien für <strong>@menu?.Name</strong>.</small>
+                </div>
+                <a class="btn btn-outline-primary" href="@($"categories/{menu?.Id}")">
+                    ➡️ Kategorien anzeigen
+                </a>
+            </div>
+        </div>
+
+        <h5>Aktionen</h5>
+        <div class="mb-3">
+            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditMenu(menu.Id)">Bearbeiten</button>
+            <button class="btn btn-sm btn-danger" @onclick="() => DeleteMenu(menu.Id)">Löschen</button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public string Id { get; set; }
+
+    private Menu? menu;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if(!Guid.TryParse(Id, out var idGuid))
+            NavManager.NavigateTo("/menus");
+
+        menu = await DbContext.Menus
+            .FirstOrDefaultAsync(m => m.Id == idGuid);
+
+        if (menu == null)
+        {
+            NavManager.NavigateTo("/menus");
+        }
+    }
+
+    private void EditMenu(Guid menuId)
+    {
+        // Navigiert zur Bearbeitungsseite des Menüs
+        NavManager.NavigateTo($"/menu/edit/{menuId}");
+    }
+
+    private async Task DeleteMenu(Guid menuId)
+    {
+        var menu = await DbContext.Menus.FindAsync(menuId);
+        if (menu != null)
+        {
+            var confirm = await NotificationService
+                .ShowConfirmation(("Löschen", $"Möchten Sie das Menü \"{menu.Name}\" wirklich löschen?"));
+
+            if (confirm)
+            {
+                DbContext.QRCodes.RemoveRange(DbContext.QRCodes.Where(e => e.MenuId == menu.Id).ToList());
+                DbContext.Menus.Remove(menu);
+                await DbContext.SaveChangesAsync();
+
+                // Nach der Löschung zur Menüübersicht navigieren
+                NavManager.NavigateTo("/menus");
+            }
+        }
+    }
+}

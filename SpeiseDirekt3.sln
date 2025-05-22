@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35919.96
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeiseDirekt3", "SpeiseDirekt3\SpeiseDirekt3.csproj", "{97399B2C-EB6E-40F4-BD61-26E01F72BB13}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{97399B2C-EB6E-40F4-BD61-26E01F72BB13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97399B2C-EB6E-40F4-BD61-26E01F72BB13}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97399B2C-EB6E-40F4-BD61-26E01F72BB13}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97399B2C-EB6E-40F4-BD61-26E01F72BB13}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E7878DC2-5835-412D-8E50-608FE91514EC}
+	EndGlobalSection
+EndGlobal

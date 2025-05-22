@@ -1,0 +1,73 @@
+﻿@using SpeiseDirekt3.ServiceInterface
+@inject INotificationService NotificationService
+@inject IJSRuntime JSRuntime
+
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true" @onclick="@(async () => await HideModal(false))">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@title</h5>
+                <button id="cancelBtn2" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="() => HideModal(false)"></button>
+            </div>
+            <div class="modal-body">
+                @message
+            </div>
+            <div class="modal-footer">
+                <button id="cancelBtn" type="button" class="btn btn-secondary" @onclick="() => HideModal(false)">Abbrechen</button>
+                <button id="confirmBtn" type="button" class="btn btn-primary" @onclick="() => HideModal(true)">Ok</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string message;
+    private string title;
+    private bool isModalVisible = false;
+    private TaskCompletionSource<bool> tcs = new();
+    private object lockObj = new object();
+
+    protected override void OnInitialized()
+    {
+        NotificationService.OnConfirmationRequested += ShowModal;
+    }
+
+    public void Dispose()
+    {
+        NotificationService.OnConfirmationRequested -= ShowModal;
+    }
+
+    private Task<bool> ShowModal((string title, string message) tuple)
+    {
+        title = tuple.title;
+        message = tuple.message;
+        InvokeAsync(StateHasChanged);
+        if (isModalVisible)
+        {
+            return tcs.Task;
+        }
+        else
+        {
+            isModalVisible = true;
+        }
+        tcs = new();
+        // Show the modal using JavaScript interop
+        JSRuntime.InvokeVoidAsync("window.openModal", "confirmationModal");
+        return tcs.Task;
+    }
+
+
+    private async Task HideModal(bool arg)
+    {
+        if (isModalVisible)
+        {
+            isModalVisible = false;
+        }
+        else
+        {
+            return;
+        }
+        await JSRuntime.InvokeVoidAsync("window.hideModal", "confirmationModal");
+        tcs.SetResult(arg);
+    }
+}

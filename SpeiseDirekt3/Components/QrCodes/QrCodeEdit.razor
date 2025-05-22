@@ -1,0 +1,159 @@
+﻿@page "/qrcode/edit/{Id:guid?}"
+@using Microsoft.EntityFrameworkCore
+@using QRCoder
+@using SpeiseDirekt3.Model
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavManager
+
+
+<div class="container">
+    <!-- Breadcrumb -->
+    <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="/qrcodes">QR-Codes</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                @(IsNew ? "Neu" : "Bearbeiten")
+            </li>
+        </ol>
+    </nav>
+
+
+    <h3>@(IsNew ? "QR-Code erstellen" : "QR-Code bearbeiten")</h3>
+
+    <EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="form-floating mb-3">
+            <InputText @bind-Value="Item.Title"
+                       id="qrTitle"
+                       class="form-control"
+                       placeholder="QR-Code Titel" />
+            <label for="qrTitle">Titel</label>
+            <ValidationMessage For="@(() => Item.Title)" />
+        </div>
+
+
+
+        <div class="mb-3">
+            <div class="form-group">
+                <label>Soll das Menü nach einem Zeitplan abgespielt werden?</label>
+                <InputRadioGroup Name="FooBar" @bind-Value="@Item.IsTimeTableBased">
+                    <div>
+                        <InputRadio id="timetable" name="FooBar" Value="true" class="form-check-input" />
+                        <label class="form-check-label" for="timetable">Zeitplan basiert</label>
+                    </div>
+                    <div>
+                        <InputRadio id="einfach" name="FooBar" Value="false" class="form-check-input" />
+                        <label class="form-check-label" for="einfach">Einfach</label>
+                    </div>
+                </InputRadioGroup>
+            </div>
+        </div>
+        @if (Item.IsNotTimeTableBased)
+        {
+            <div class="mb-3">
+                <label for="menuSelect" class="form-label">Menü zuweisen</label>
+                <InputSelect @bind-Value="Item.MenuId" id="menuSelect" class="form-select">
+                    <option value="">-- Menü wählen --</option>
+                    @foreach (var m in menus)
+                    {
+                        <option value="@m.Id">@m.Name</option>
+                    }
+                </InputSelect>
+                <ValidationMessage For="@(() => Item.MenuId)" />
+            </div>
+        }
+        else
+        {
+            <div class="mb-4">
+                <QrCodeTimeTableEntries QRCodeId="@Item.Id" TimeTableEntries="@Item.TimeTableEntries">
+                    <ValidationMessage For="@(() => Item.TimeTableEntries)" />
+                </QrCodeTimeTableEntries>
+            </div>
+        }
+
+        <div class="mb-4">
+            <label class="form-label">QR-Vorschau</label><br />
+
+            @if (!string.IsNullOrEmpty(qrDataUrl))
+            {
+                <QrCodePreview QrId="@Item.Id"
+                               ThumbnailSize="100" />
+            }
+            else
+            {
+                <p class="text-muted">Wählen Sie ein Menü, um die Vorschau anzuzeigen</p>
+            }
+        </div>
+
+
+        <button type="button" class="btn btn-secondary me-2" @onclick="Cancel">Abbrechen</button>
+        <button type="submit" class="btn btn-primary">Speichern</button>
+    </EditForm>
+
+</div>
+
+@code {
+    [Parameter] public Guid? Id { get; set; }
+
+    private QRCode Item = new();
+    private EditContext editContext { get; set; } = new(new QRCode());
+    private List<Menu> menus = new();
+    private string qrDataUrl = "";
+    private bool IsNew => !Id.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        menus = await DbContext.Menus.OrderBy(m => m.Name).ToListAsync();
+
+        if (IsNew)
+        {
+            // // give it a code immediately so preview shows
+            Item.Id = Guid.NewGuid();
+        }
+        else
+        {
+            var existing = await DbContext.QRCodes.Include(e => e.TimeTableEntries).SingleOrDefaultAsync(e => e.Id == Id.Value);
+            if (existing != null)
+                Item = existing;
+        }
+        Item.TimeTableEntries = Item.TimeTableEntries?.OrderBy(e => e.StartTime).ToList();
+        editContext = new EditContext(Item);
+        editContext.OnFieldChanged += (_, __) => GeneratePreview();
+        GeneratePreview();
+    }
+
+    private void GeneratePreview()
+    {
+        if (Item.Id == Guid.Empty) { qrDataUrl = ""; return; }
+
+        var url = $"{NavManager.BaseUri}qr/{Item.Id}";
+        using var generator = new QRCodeGenerator();
+        using var data = generator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
+        using var png = new PngByteQRCode(data);
+        var bytes = png.GetGraphic(20);
+        qrDataUrl = $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (IsNew)
+        {
+            Item.Id = Guid.NewGuid();
+            Item.CreatedAt = DateTime.UtcNow;
+            DbContext.QRCodes.Add(Item);
+        }
+        else
+        {
+            DbContext.QRCodes.Update(Item);
+        }
+
+        await DbContext.SaveChangesAsync();
+        NavManager.NavigateTo("/qrcodes");
+    }
+
+    private void Cancel() => NavManager.NavigateTo("/qrcodes");
+}

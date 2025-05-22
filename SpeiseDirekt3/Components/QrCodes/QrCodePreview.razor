@@ -1,0 +1,78 @@
+﻿@using QRCoder
+@inject NavigationManager NavManager
+
+
+<div class="qr-preview">
+    @if (!string.IsNullOrEmpty(_dataUrl))
+    {
+        <img src="@_dataUrl"
+             alt="QR Code"
+             width="@ThumbnailSize"
+             style="cursor:pointer;"
+             data-bs-toggle="modal"
+             data-bs-target="#@ModalId" />
+    }
+    else
+    {
+        <p class="text-muted">Loading QR…</p>
+    }
+</div>
+
+<div class="modal fade" id="@ModalId" tabindex="-1" aria-labelledby="@($"{ModalId}Label")" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="@($"{ModalId}Label")">QR Code Preview</h5>
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="@_dataUrl"
+                     alt="QR Code Large"
+                     class="img-fluid" />
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// The QRCode record's Id.  Used to build the redirect URL: /qr/{QrId}.
+    /// </summary>
+    [Parameter, EditorRequired] public Guid QrId { get; set; }
+
+    /// <summary>
+    /// The HTML id for the modal.  Defaults to a random GUID-based id.
+    /// </summary>
+    public string ModalId { get; set; } = $"qrModal_{Guid.NewGuid():N}";
+
+    /// <summary>
+    /// Width in pixels for the thumbnail image.
+    /// </summary>
+    [Parameter] public int ThumbnailSize { get; set; } = 80;
+
+    private string _dataUrl = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        if (QrId != Guid.Empty)
+        {
+            _dataUrl = GenerateQrDataUrl();
+        }
+    }
+
+    private string GenerateQrDataUrl()
+    {
+        // URL that the QR should point to
+        var targetUrl = $"{NavManager.BaseUri}qr/{QrId}";
+
+        using var qrGen = new QRCodeGenerator();
+        using var qrData = qrGen.CreateQrCode(targetUrl, QRCodeGenerator.ECCLevel.Q);
+        using var png = new PngByteQRCode(qrData);
+        var bytes = png.GetGraphic(20);
+
+        return $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+    }
+}

@@ -1,0 +1,46 @@
+﻿<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+            <a class="page-link" @onclick="() => ChangePage(CurrentPage - 1)">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        @for (var i = 1; i <= TotalPages; i++)
+        {
+            <li class="page-item @(CurrentPage == i ? "active" : "")">
+                <a class="page-link" @onclick="() => ChangePage(i)">@i</a>
+            </li>
+        }
+        <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+            <a class="page-link" @onclick="() => ChangePage(CurrentPage + 1)">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+@code {
+    [Parameter]
+    public int CurrentPage { get; set; }
+
+    [Parameter]
+    public int PageSize { get; set; }
+
+    [Parameter]
+    public int TotalNumberOfItems { get; set; }
+
+    [Parameter]
+    public EventCallback<int> SetPage { get; set; }
+
+    // Calculate total pages based on PageSize and TotalNumberOfItems.
+    private int TotalPages => (int)Math.Ceiling((double)TotalNumberOfItems / PageSize);
+
+    private async Task ChangePage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+        {
+            // Notify the parent component of the page change.
+            await SetPage.InvokeAsync(page);
+        }
+    }
+}

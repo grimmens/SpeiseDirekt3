@@ -1,0 +1,124 @@
+﻿/* ========== Modern Dark Theme ========== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Rubik:wght@500;700&display=swap');
+
+:root {
+    --bg-page: #121212;
+    --bg-panel: #1e1e1e;
+    --text-main: #e0e0e0;
+    --text-muted: #a0a0a0;
+    --primary: #bb86fc;
+    --secondary: #03dac6;
+    --border: #272727;
+    --shadow: rgba(0, 0, 0, 0.7);
+    --headline-gradient: linear-gradient(90deg, #bb86fc, #03dac6);
+}
+
+.menu {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-page);
+    color: var(--text-main);
+    font-family: 'Inter', sans-serif;
+    max-width: 840px;
+    margin: 50px auto;
+    padding: 40px;
+    background: var(--bg-panel);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px var(--shadow);
+}
+
+.category {
+    margin-bottom: 50px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+    .category h2 {
+        font-family: 'Rubik', sans-serif;
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: var(--headline-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0 0 20px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
+
+.menu-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu-item {
+    background: #212121;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px var(--shadow);
+    padding: 24px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.item-title {
+    font-family: 'Rubik', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-align: center;
+}
+
+.item-price {
+    font-size: 1.2rem;
+    color: var(--secondary);
+    text-align: center;
+    font-weight: 500;
+}
+
+.item-body {
+    font-size: 1rem;
+    color: var(--text-muted);
+    text-align: left;
+}
+
+    .item-body p {
+        margin: 0;
+    }
+
+.allergens {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+    text-align: left;
+}
+
+.no-items {
+    background: #1b1b1b;
+    color: var(--secondary);
+    padding: 16px;
+    border-radius: 8px;
+    text-align: center;
+    font-style: italic;
+}
+
+/* Responsive tweaks */
+@media (max-width: 768px) {
+    .menu {
+        margin: 30px 20px;
+        padding: 30px;
+    }
+
+    .category h2 {
+        font-size: 2rem;
+    }
+
+    .item-title {
+        font-size: 1.4rem;
+    }
+
+    .item-price {
+        font-size: 1rem;
+    }
+}

@@ -1,0 +1,122 @@
+﻿@layout MenuLayout
+
+<HeadContent>
+    <link href="css/@(Menu.Theme.ToString().ToLower()).css" rel="stylesheet" />
+</HeadContent>
+@* style="--primary-color:@Menu.PrimaryColor;--secondary-color:@Menu.SecondaryColor;--custom-font-family:@Menu.FontFamily;" *@
+<div class="menu">
+    
+    @foreach (var category in DisplayCategories)
+    {
+        <div class="category">
+            <h2>@category.Name</h2>
+            <ul class="menu-items">
+                @if (category.MenuItems is not null && category.MenuItems.Any())
+                {
+                    @foreach (var item in category.MenuItems.OrderBy(mi => mi.Name))
+                    {
+                        <li class="menu-item">
+                            <div class="item-title">
+                                @item.Name
+                            </div>
+                            <div class="item-price">
+                                @item.Price.ToString("C")
+                            </div>
+                            <div class="item-body">
+                                <p>@item.Description</p>
+                                @if (!string.IsNullOrEmpty(item.Allergens))
+                                {
+                                    <div class="allergens">Allergene: @item.Allergens</div>
+                                }
+                            </div>
+                        </li>
+                    }
+                }
+                else
+                {
+                    <li class="no-items">No menu items available.</li>
+                }
+            </ul>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Menu Menu { get; set; } = new();
+
+    private IEnumerable<Category> DisplayCategories =>
+    Menu.Categories != null && Menu.Categories.Any()
+        ? Menu.Categories.OrderBy(c => c.Name)
+        : GetDefaultCategories();
+
+    private static IEnumerable<Category> GetDefaultCategories()
+    {
+        return new List<Category>
+    {
+        new Category
+        {
+            Name = "Starters",
+            MenuItems = new List<MenuItem>
+            {
+                new MenuItem
+                {
+                    Name = "Bruschetta",
+                    Price = 5.99m,
+                    Description = "Grilled bread rubbed with garlic and topped with diced tomatoes and basil.",
+                    Allergens = "Gluten, Garlic"
+                },
+                new MenuItem
+                {
+                    Name = "Stuffed Mushrooms",
+                    Price = 6.99m,
+                    Description = "Mushrooms filled with creamy cheese and herbs.",
+                    Allergens = "Dairy"
+                }
+            }
+        },
+        new Category
+        {
+            Name = "Mains",
+            MenuItems = new List<MenuItem>
+            {
+                new MenuItem
+                {
+                    Name = "Grilled Salmon",
+                    Price = 15.99m,
+                    Description = "Served with seasonal vegetables and lemon butter sauce.",
+                    Allergens = "Fish, Dairy"
+                },
+                new MenuItem
+                {
+                    Name = "Pasta Primavera",
+                    Price = 12.50m,
+                    Description = "Pasta tossed with fresh garden vegetables and olive oil.",
+                    Allergens = "Gluten"
+                }
+            }
+        },
+        new Category
+        {
+            Name = "Desserts",
+            MenuItems = new List<MenuItem>
+            {
+                new MenuItem
+                {
+                    Name = "Tiramisu",
+                    Price = 6.50m,
+                    Description = "Layers of coffee-soaked ladyfingers and mascarpone cream.",
+                    Allergens = "Gluten, Eggs, Dairy"
+                },
+                new MenuItem
+                {
+                    Name = "Fruit Salad",
+                    Price = 4.99m,
+                    Description = "A mix of fresh seasonal fruits.",
+                    Allergens = "None"
+                }
+            }
+        }
+    };
+    }
+
+}
