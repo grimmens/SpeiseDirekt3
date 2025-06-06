@@ -2,6 +2,10 @@
 
 Speise Direkt offers to directly see all meals in an online menu. There is a timetable to display different menus on different daytimes.
 
+### How to run
+To run the project the ef core database migration needs to be applied using `Database-Update` in the package-manager console in visual studio, or the cli command
+`dotnet ef database update`
+
 ## The Menus can be edited. For each category, several menu entries can be generated.
 - Change the theme of the menu.
 - Update the name of the menu
