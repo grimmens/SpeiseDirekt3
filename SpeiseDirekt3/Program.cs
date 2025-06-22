@@ -43,7 +43,7 @@ namespace SpeiseDirekt3
                     policy.Requirements.Add(new PaidTenantRequirement()));
             });
 
-            var connectionString = builder.Configuration.GetConnectionString("server2") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
             options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
@@ -53,7 +53,7 @@ namespace SpeiseDirekt3
 
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
+            builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
@@ -68,6 +68,7 @@ namespace SpeiseDirekt3
                     .Build();
             });
             builder.Services.AddTransient<IMenuItemGenerator, AiMenuItemGenerator>();
+            builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
             builder.Services.AddScoped<IAuthorizationHandler, PaidTenantHandler>();
 

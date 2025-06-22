@@ -1,5 +1,6 @@
 ﻿@page "/Categories/{MenuId}"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt3.Data
 @using SpeiseDirekt3.Model
@@ -9,117 +10,109 @@
 
 <PageTitle>Categories</PageTitle>
 
-<div class="container mt-5">
+<div class="max-w-6xl mx-auto p-6 space-y-8">
 
     <!-- Breadcrumb -->
-    <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-                <a href="/menus">Menus</a>
+    <nav class="text-sm text-gray-600" aria-label="breadcrumb">
+        <ol class="flex space-x-2">
+            <li>
+                <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
+                <span class="mx-2">/</span>
             </li>
-            <li class="breadcrumb-item active" aria-current="page">
-                @menu?.Name
-            </li>
+            <li class="text-gray-800">@menu?.Name</li>
         </ol>
     </nav>
 
-    <h1 class="mb-4 text-primary">📂 Categories</h1>
+    <h1 class="text-3xl font-bold text-blue-700">Categories</h1>
 
     <!-- Link to Menu Items Page -->
-    <div class="card border-0 bg-light mb-4">
-        <div class="card-body d-flex justify-content-between align-items-center">
-            <div>
-                <h5 class="card-title mb-0">🍽️ Manage Menu Items</h5>
-                <small class="text-muted">Go to the menu items for <strong>@menu?.Name</strong>.</small>
-            </div>
-            <a class="btn btn-outline-primary" href="@($"/menuitems/{MenuId}")">
-                ➡️ View Menu Items
-            </a>
+    <div class="bg-gray-100 rounded-lg shadow p-6 flex justify-between items-center">
+        <div>
+            <h2 class="text-lg font-semibold mb-1">🍽️ Manage Menu Items</h2>
+            <p class="text-sm text-gray-600">Go to the menu items for <strong>@menu?.Name</strong>.</p>
         </div>
+        <a class="inline-block px-4 py-2 border border-blue-600 text-blue-600 rounded hover:bg-blue-50 transition" href="@($"/menuitems/{MenuId}")">
+            ➡️ View Menu Items
+        </a>
     </div>
 
-    <div class="row">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
         <!-- Categories List -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Available Categories</h5>
-                </div>
-                <div class="card-body">
-                    @if (Categories.Any())
-                    {
-                        <table class="table table-striped">
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th class="text-end">Action</th>
+        <div class="bg-white rounded-lg shadow">
+            <div class="bg-blue-600 text-white rounded-t-lg px-4 py-3">
+                <h3 class="text-lg font-semibold">Available Categories</h3>
+            </div>
+            <div class="p-4">
+                @if (Categories.Any())
+                {
+                    <table class="w-full text-left border-separate border-spacing-y-2">
+                        <thead class="text-sm text-gray-500 uppercase">
+                            <tr>
+                                <th>Name</th>
+                                <th class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Categories)
+                            {
+                                <tr class="bg-gray-50 hover:bg-gray-100 rounded">
+                                    <td class="py-2 px-3">@item.Name</td>
+                                    <td class="py-2 px-3 text-right space-x-2">
+                                        <button class="text-white bg-blue-600 hover:bg-blue-700 px-3 py-1 rounded text-sm"
+                                                @onclick="() => EditCategory(item)">
+                                            Edit
+                                        </button>
+                                        <button class="text-white bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm"
+                                                @onclick="() => DeleteCategory(item.Id)">
+                                            🗑️ Delete
+                                        </button>
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var item in Categories)
-                                {
-                                    <tr>
-                                        <td>@item.Name</td>
-                                        <td class="text-end">
-                                            <span><a class="btn btn-sm btn-primary" @onclick="() => EditCategory(item)">Edit</a></span>
-                                            <button class="btn btn-sm btn-danger"
-                                                    @onclick="() => DeleteCategory(item.Id)">
-                                                🗑️ Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
-                    }
-                    else
-                    {
-                        <p class="text-muted">No categories found.</p>
-                    }
-                </div>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-gray-500">No categories found.</p>
+                }
             </div>
         </div>
 
         <!-- Add New Category Form -->
-        <div class="col-md-6 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">Add New Category</h5>
-                </div>
-                <div class="card-body">
-                    <EditForm @ref="editForm" EditContext="editContext" OnSubmit="SaveAsync">
-                        <DataAnnotationsValidator />
+        <div class="bg-white rounded-lg shadow">
+            <div class="bg-blue-600 text-white rounded-t-lg px-4 py-3">
+                <h3 class="text-lg font-semibold">Add New Category</h3>
+            </div>
+            <div class="p-4">
+                <EditForm @ref="editForm" EditContext="editContext" OnValidSubmit="SaveAsync">
+                    <DataAnnotationsValidator />
 
-                        <div class="form-floating mb-3">
-                            <InputText @bind-Value="Input.Name" id="Input.Name" class="form-control" placeholder="Category name" />
-                            <label for="Input.Name">Category Name</label>
-                            <ValidationMessage For="() => Input.Name" class="text-danger" />
-                        </div>
+                    <div class="mb-4">
+                        <label for="Input.Name" class="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                        <InputText @bind-Value="Input.Name" id="Input.Name" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm mt-1" />
+                    </div>
 
-                        <button type="submit" class="btn btn-success w-100">
-                            ➕ Add Category
-                        </button>
-                    </EditForm>
-                </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+                        ➕ Add Category
+                    </button>
+                </EditForm>
             </div>
         </div>
     </div>
 
     <!-- Optional Right Section -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 mt-3">
-                <div class="card-body bg-light">
-                    <h5 class="card-title">📌 Notes</h5>
-                    <p class="card-text">Show something useful here – maybe tips on categories, FAQs, or statistics.</p>
-                </div>
-            </div>
-        </div>
+    <div class="bg-gray-100 rounded-lg p-6 shadow mt-6">
+        <h3 class="text-lg font-semibold mb-2">📌 Notes</h3>
+        <p class="text-gray-700">Show something useful here – maybe tips on categories, FAQs, or statistics.</p>
     </div>
 </div>
 
 <!-- Category Editor Modal -->
 <CategoryEditor @ref="categoryEditor" OnOk="HandleOk" OnCancel="HandleCancel" />
+
 
 @code {
     [Parameter]
@@ -127,8 +120,8 @@
 
     [Inject]
     public ApplicationDbContext Context { get; set; }
-    [CascadingParameter]
-    private HttpContext HttpContext { get; set; } = default!;
+    [Inject]
+    public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
     [Inject]
     public INotificationService NotificationService { get; set; }
 
@@ -157,28 +150,58 @@
 
     async Task SaveAsync()
     {
-        editContext = new EditContext(Input);
-        editForm.EditContext = editContext;
-        if (!editContext.Validate())
-            return;
-
-        var nameExists = await Context.Categories.AnyAsync(c => c.MenuId == Guid.Parse(MenuId) && c.Name == Input.Name);
-        if (nameExists)
+        try
         {
+            editContext = new EditContext(Input);
+            editForm.EditContext = editContext;
+            if (!editContext.Validate())
+                return;
+
+            // Validate that we have a valid user context
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState?.User?.Identity?.IsAuthenticated != true)
+            {
+                var messages = new ValidationMessageStore(editContext);
+                messages.Add(() => Input.Name, "You must be logged in to add categories.");
+                editContext.NotifyValidationStateChanged();
+                StateHasChanged();
+                return;
+            }
+
+            var nameExists = await Context.Categories.AnyAsync(c => c.MenuId == Guid.Parse(MenuId) && c.Name == Input.Name);
+            if (nameExists)
+            {
+                var messages = new ValidationMessageStore(editContext);
+                messages.Add(() => Input.Name, "This name already exists.");
+                editContext.NotifyValidationStateChanged();
+                StateHasChanged();
+                return;
+            }
+
+            // Ensure the Input has the correct MenuId
+            Input.MenuId = new Guid(MenuId);
+
+            Context.Categories.Add(Input);
+            await Context.SaveChangesAsync();
+
+            // Category added successfully - reset form
+            Input = new()
+                {
+                    MenuId = new Guid(MenuId)
+                };
+            await LoadCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            // Show error in validation message
             var messages = new ValidationMessageStore(editContext);
-            messages.Add(() => Input.Name, "This name already exists.");
+            messages.Add(() => Input.Name, $"Error adding category: {ex.Message}");
             editContext.NotifyValidationStateChanged();
             StateHasChanged();
-            return;
-        }
 
-        Context.Categories.Add(Input);
-        await Context.SaveChangesAsync();
-        Input = new()
-            {
-                MenuId = new Guid(MenuId)
-            };
-        await LoadCategoriesAsync();
+            // Log the full exception for debugging
+            Console.WriteLine($"Error in SaveAsync: {ex}");
+        }
     }
 
     async void EditCategory(Category category)
@@ -189,10 +212,17 @@
 
     async Task HandleOk(Category category)
     {
-        // Update logic here
-        Context.Categories.Update(category);
-        await Context.SaveChangesAsync();
-        await LoadCategoriesAsync();
+        try
+        {
+            // Update logic here
+            Context.Categories.Update(category);
+            await Context.SaveChangesAsync();
+            await LoadCategoriesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating category: {ex}");
+        }
     }
 
     async Task HandleCancel()
@@ -205,16 +235,23 @@
 
     async Task DeleteCategory(Guid id)
     {
-        var category = await Context.Categories.FindAsync(id);
-        if (category is not null)
+        try
         {
-            var res = await NotificationService.ShowConfirmation(("Delete", $"Are you sure you want to delete the category \"{category.Name}\"?"));
-            if (res)
+            var category = await Context.Categories.FindAsync(id);
+            if (category is not null)
             {
-                Context.Categories.Remove(category);
-                await Context.SaveChangesAsync();
-                await LoadCategoriesAsync();
+                var res = await NotificationService.ShowConfirmation(("Delete", $"Are you sure you want to delete the category \"{category.Name}\"?"));
+                if (res)
+                {
+                    Context.Categories.Remove(category);
+                    await Context.SaveChangesAsync();
+                    await LoadCategoriesAsync();
+                }
             }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting category: {ex}");
         }
     }
 

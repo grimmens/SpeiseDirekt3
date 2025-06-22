@@ -8,52 +8,122 @@
 @inject NavigationManager NavManager
 @attribute [Authorize]
 
-<div class="container mt-5">
-    <h3>Available Menus</h3>
+<PageTitle>Menus - Speise-Direkt</PageTitle>
 
-    <button class="btn btn-success mb-3" @onclick="CreateNewMenu">Add Menu</button>
+<!-- Header Section -->
+<div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 font-display">Your Menus</h1>
+                <p class="mt-2 text-gray-600">Create and manage your restaurant's digital menus</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <button class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+                        @onclick="CreateNewMenu">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Create New Menu
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
+<!-- Content Section -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     @if (menus == null)
     {
-        <p><em>Loading...</em></p>
+        <!-- Loading State -->
+        <div class="flex items-center justify-center py-12">
+            <div class="flex items-center space-x-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span class="text-lg text-gray-600">Loading menus...</span>
+            </div>
+        </div>
     }
     else if (!menus.Any())
     {
-        <p>No menus available.</p>
+        <!-- Empty State -->
+        <div class="text-center py-12">
+            <div class="mx-auto h-24 w-24 text-gray-400 mb-6">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No menus yet</h3>
+            <p class="text-gray-600 mb-6">Get started by creating your first digital menu</p>
+            <button class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+                    @onclick="CreateNewMenu">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Create Your First Menu
+            </button>
+        </div>
     }
     else
     {
-        <table class="table table-bordered table-striped">
-            <thead class="thead-dark">
-                <tr>
-                    <th>Name</th>
-                    <th>Description</th>
-                    <th>Theme</th>
-                    <th>Extras</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var menu in menus)
-                {
-                    <tr>
-                        <td>
-                            <a href="@($"/menu/details/{menu.Id}")">@menu.Name</a>
-                        </td>
-                        <td>@menu.Description</td>
-                        <td>@menu.Theme</td>
-                        <td>
-                            <a class="btn btn-sm btn-outline-primary" href="@($"menuitems/{menu.Id}")">Menu Items</a>
-                            <a class="btn btn-sm btn-outline-primary" href="@($"categories/{menu?.Id}")">Categories</a>
-                        </td>
-                        <td>
-                            <button class="btn btn-sm btn-primary me-2" @onclick="() => EditMenu(menu.Id)">Edit</button>
-                            <button class="btn btn-sm btn-danger" @onclick="() => DeleteMenu(menu.Id)">Delete</button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        <!-- Menus Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+            @foreach (var menu in menus)
+            {
+                <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group">
+                    <!-- Card Header -->
+                    <div class="p-6 border-b border-gray-100">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                                    <a href="@($"/menu/details/{menu.Id}")" class="hover:underline">@menu.Name</a>
+                                </h3>
+                                <p class="text-gray-600 text-sm line-clamp-2">@menu.Description</p>
+                            </div>
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                @menu.Theme
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-6">
+                        <div class="flex flex-wrap gap-2 mb-4">
+                            <a href="@($"menuitems/{menu.Id}")"
+                               class="inline-flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                Menu Items
+                            </a>
+                            <a href="@($"categories/{menu?.Id}")"
+                               class="inline-flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                                </svg>
+                                Categories
+                            </a>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex space-x-3">
+                            <button class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                                    @onclick="() => EditMenu(menu.Id)">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                Edit
+                            </button>
+                            <button class="inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                                    @onclick="() => DeleteMenu(menu.Id)">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
     }
 </div>
 

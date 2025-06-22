@@ -10,73 +10,146 @@
 @inherits PaidTenantComponentBase
 @attribute [Authorize]
 
-<div class="container">
-    <h3>QR Codes</h3>
-    <div class="buttons">
-        @if (CanCreateQrCode)
-        {
-            <button class="btn btn-success mb-3" @onclick="CreateNew">Create New QR Code</button>
-        }
-        else
-        {
-            <button class="btn btn-success mb-3" disabled>Create New QR Code</button>
-            <i>Cannot create a new QR code.</i>
-        }
-    </div>
+<PageTitle>QR Codes - Speise-Direkt</PageTitle>
 
+<!-- Header Section -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+    <div class="p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 font-display">QR Codes</h1>
+                <p class="mt-2 text-gray-600">Generate and manage QR codes for your digital menus</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                @if (CanCreateQrCode)
+                {
+                    <button class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+                            @onclick="CreateNew">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                        </svg>
+                        Create New QR Code
+                    </button>
+                }
+                else
+                {
+                    <div class="text-center">
+                        <button class="inline-flex items-center px-6 py-3 bg-gray-400 text-white font-semibold rounded-lg cursor-not-allowed" disabled>
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                            Create New QR Code
+                        </button>
+                        <p class="mt-2 text-sm text-gray-500">Cannot create a new QR code at this time</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content Section -->
     @if (codes == null)
     {
-        <p><em>Loading...</em></p>
+        <!-- Loading State -->
+        <div class="flex items-center justify-center py-12">
+            <div class="flex items-center space-x-3">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span class="text-lg text-gray-600">Loading QR codes...</span>
+            </div>
+        </div>
     }
     else if (!codes.Any())
     {
-        <p>No QR codes defined.</p>
+        <!-- Empty State -->
+        <div class="text-center py-12">
+            <div class="mx-auto h-24 w-24 text-gray-400 mb-6">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">No QR codes yet</h3>
+            <p class="text-gray-600 mb-6">Create your first QR code to start sharing your digital menus</p>
+            @if (CanCreateQrCode)
+            {
+                <button class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+                        @onclick="CreateNew">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                    </svg>
+                    Create Your First QR Code
+                </button>
+            }
+        </div>
     }
     else
     {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Preview</th>
-                    <th>Menu</th>
-                    <th>Created At</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var cde in codes)
-                {
-                    <tr>
-                        <td>
-                            <a href="@($"qr/{cde.Id}")" target="_blank" rel="noopener noreferrer">
-                                @cde.Title <i class="bi bi-box-arrow-up-right ms-1"></i>
-                            </a>
-                        </td>
-                        <td>
-                            <QrCodePreview QrId="@cde.Id"
-                                           ThumbnailSize="80" />
-                        </td>
-                        <td>@cde.Menu?.Name</td>
-                        <td>@cde.CreatedAt.ToLocalTime().ToString("g")</td>
-                        <td>
-                            <div class="btn-group">
-                                <button class="btn btn-sm btn-primary me-2"
-                                        @onclick="() => Edit(cde.Id)">
-                                    Edit
-                                </button>
-                                <button class="btn btn-sm btn-danger"
-                                        @onclick="() => Delete(cde.Id)">
-                                    Delete
-                                </button>
+        <!-- QR Codes Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var qrCode in codes)
+            {
+                <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group">
+                    <!-- Card Header -->
+                    <div class="p-6 border-b border-gray-100">
+                        <div class="flex items-start justify-between mb-4">
+                            <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                                <a href="@($"qr/{qrCode.Id}")" target="_blank" rel="noopener noreferrer" class="hover:underline flex items-center">
+                                    @qrCode.Title
+                                    <svg class="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                </a>
+                            </h3>
+                        </div>
+
+                        <!-- QR Code Preview -->
+                        <div class="flex justify-center mb-4">
+                            <div class="p-3 bg-gray-50 rounded-lg">
+                                <QrCodePreview QrId="@qrCode.Id" ThumbnailSize="120" />
                             </div>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+                        </div>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="p-6">
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center text-sm">
+                                <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                </svg>
+                                <span class="text-gray-600">Menu:</span>
+                                <span class="ml-1 font-medium text-gray-900">@qrCode.Menu?.Name</span>
+                            </div>
+                            <div class="flex items-center text-sm">
+                                <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                <span class="text-gray-600">Created:</span>
+                                <span class="ml-1 text-gray-900">@qrCode.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex space-x-3">
+                            <button class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                                    @onclick="() => Edit(qrCode.Id)">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                Edit
+                            </button>
+                            <button class="inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
+                                    @onclick="() => Delete(qrCode.Id)">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
     }
-</div>
 
 @code {
     private List<QRCode>? codes;

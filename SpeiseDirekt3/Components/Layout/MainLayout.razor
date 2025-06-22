@@ -1,20 +1,85 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
+<div class="min-h-screen bg-gray-50 flex">
+    <!-- Sidebar -->
+    <div class="hidden lg:flex lg:flex-shrink-0">
+        <div class="flex flex-col w-64">
+            <div class="flex flex-col flex-grow bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 overflow-y-auto shadow-xl">
+                <NavMenu />
+            </div>
+        </div>
     </div>
 
-    <main>
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+    <!-- Mobile sidebar overlay -->
+    <div class="lg:hidden fixed inset-0 z-40 flex" id="mobile-sidebar" style="display: none;">
+        <div class="fixed inset-0 bg-gray-600 bg-opacity-75" onclick="toggleMobileSidebar()"></div>
+        <div class="relative flex-1 flex flex-col max-w-xs w-full bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 shadow-xl">
+            <div class="absolute top-0 right-0 -mr-12 pt-2">
+                <button type="button" class="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" onclick="toggleMobileSidebar()">
+                    <span class="sr-only">Close sidebar</span>
+                    <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <NavMenu />
+        </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Mobile header -->
+        <div class="lg:hidden bg-white shadow-sm border-b border-gray-200">
+            <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center">
+                    <button type="button" class="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" onclick="toggleMobileSidebar()">
+                        <span class="sr-only">Open sidebar</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                    <img src="image/speise-direkt.png" alt="Speise-Direkt Logo" class="ml-3 h-8 w-8" />
+                    <span class="ml-2 text-xl font-semibold text-gray-900">Speise-Direkt</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Page content -->
+        <main class="flex-1 relative overflow-y-auto focus:outline-none">
+            <div class="py-6">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    @Body
+                </div>
+            </div>
+        </main>
+    </div>
+
     <SpeiseDirekt3.Components.Shared.ConfirmationModal />
 </div>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+<!-- Error UI -->
+<div id="blazor-error-ui" class="fixed bottom-0 left-0 right-0 bg-yellow-100 border-t border-yellow-300 px-4 py-3 shadow-lg z-50 hidden">
+    <div class="flex items-center justify-between">
+        <div class="flex items-center">
+            <svg class="h-5 w-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+            </svg>
+            <span class="text-yellow-800 font-medium">An unhandled error has occurred.</span>
+        </div>
+        <div class="flex items-center space-x-2">
+            <a href="." class="text-yellow-800 hover:text-yellow-900 font-medium underline">Reload</a>
+            <button class="text-yellow-600 hover:text-yellow-800 font-bold text-lg" onclick="document.getElementById('blazor-error-ui').style.display='none'">×</button>
+        </div>
+    </div>
 </div>
+
+<script>
+    function toggleMobileSidebar() {
+        const sidebar = document.getElementById('mobile-sidebar');
+        if (sidebar.style.display === 'none' || sidebar.style.display === '') {
+            sidebar.style.display = 'flex';
+        } else {
+            sidebar.style.display = 'none';
+        }
+    }
+</script>

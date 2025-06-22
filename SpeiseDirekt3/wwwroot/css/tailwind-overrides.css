@@ -1,0 +1,278 @@
+/* Tailwind CSS Overrides and Custom Styles for Speise-Direkt */
+
+/* Custom animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-slideInRight {
+    animation: slideInRight 0.6s ease-out;
+}
+
+/* Custom gradient backgrounds */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.bg-gradient-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 50%, #1e40af 100%);
+}
+
+/* Custom shadows */
+.shadow-soft {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+}
+
+.shadow-medium {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.shadow-strong {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Custom text utilities */
+.text-gradient {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Custom button styles */
+.btn-primary-modern {
+    @apply inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200;
+}
+
+.btn-secondary-modern {
+    @apply inline-flex items-center px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200;
+}
+
+.btn-success-modern {
+    @apply inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200;
+}
+
+.btn-danger-modern {
+    @apply inline-flex items-center px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200;
+}
+
+/* Custom form styles */
+.form-input-modern {
+    @apply block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+}
+
+.form-label-modern {
+    @apply block text-sm font-medium text-gray-700 mb-2;
+}
+
+/* Custom card styles */
+.card-modern {
+    @apply bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden;
+}
+
+.card-header-modern {
+    @apply p-6 border-b border-gray-100;
+}
+
+.card-body-modern {
+    @apply p-6;
+}
+
+/* Navigation active states */
+.nav-link-active {
+    @apply bg-blue-800 text-white;
+}
+
+/* Blazor NavLink active state styling */
+a.active {
+    background-color: rgba(30, 64, 175, 0.8) !important;
+    color: white !important;
+}
+
+a.active svg {
+    color: white !important;
+}
+
+/* Account Management Navigation Active States */
+.manage-nav a.active {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    color: rgb(29, 78, 216) !important;
+    border-right: 2px solid rgb(59, 130, 246) !important;
+}
+
+.manage-nav a.active svg {
+    color: rgb(29, 78, 216) !important;
+}
+
+/* Status message styles */
+.status-message-success {
+    @apply bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg text-sm;
+}
+
+.status-message-error {
+    @apply bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm;
+}
+
+.status-message-warning {
+    @apply bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-3 rounded-lg text-sm;
+}
+
+.status-message-info {
+    @apply bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm;
+}
+
+/* Table styles */
+.table-modern {
+    @apply min-w-full divide-y divide-gray-200;
+}
+
+.table-header-modern {
+    @apply bg-gray-50;
+}
+
+.table-header-cell-modern {
+    @apply px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider;
+}
+
+.table-body-modern {
+    @apply bg-white divide-y divide-gray-200;
+}
+
+.table-cell-modern {
+    @apply px-6 py-4 whitespace-nowrap text-sm text-gray-900;
+}
+
+/* Loading spinner */
+.spinner-modern {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+    .mobile-padding {
+        @apply px-4;
+    }
+    
+    .mobile-text-sm {
+        @apply text-sm;
+    }
+}
+
+/* Custom scrollbar */
+.scrollbar-modern::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollbar-modern::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.scrollbar-modern::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.scrollbar-modern::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Focus states */
+.focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500;
+}
+
+/* Hover effects */
+.hover-lift {
+    @apply transform hover:-translate-y-1 transition-transform duration-200;
+}
+
+.hover-scale {
+    @apply transform hover:scale-105 transition-transform duration-200;
+}
+
+/* Glass morphism effect */
+.glass-effect {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+/* Custom spacing */
+.space-y-8 > * + * {
+    margin-top: 2rem;
+}
+
+.space-x-8 > * + * {
+    margin-left: 2rem;
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Override Bootstrap btn-success to use blue colors for consistency */
+.btn-success {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #2563eb;
+    --bs-btn-border-color: #2563eb;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #1d4ed8;
+    --bs-btn-hover-border-color: #1e40af;
+    --bs-btn-focus-shadow-rgb: 37, 99, 235;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #1e40af;
+    --bs-btn-active-border-color: #1e3a8a;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #2563eb;
+    --bs-btn-disabled-border-color: #2563eb;
+}
+
+/* Override card header bg-success to use blue */
+.card-header.bg-success {
+    background-color: #2563eb !important;
+}

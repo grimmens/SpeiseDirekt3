@@ -6,13 +6,22 @@
 @using SpeiseDirekt3.ServiceInterface
 @inject ApplicationDbContext Context
 @inject INotificationService NotificationService
+@inject IImageUploadService ImageUploadService
 
 <div class="mb-4">
-    <button @onclick="CreateNewMenuItem" class="btn btn-sm btn-success" disabled="@isWorking">
+    <button @onclick="CreateNewMenuItem" class="btn btn-sm btn-primary" disabled="@isWorking">
         ➕ New Menu Entry
     </button>
     <button @onclick="CreateNewMenuEntries" class="btn btn-sm btn-primary" disabled="@isWorking">
-        🍽️✨ Generate 10 AI Menu Entries
+        @if (isWorking)
+        {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <text>Generating...</text>
+        }
+        else
+        {
+            <text>🍽️✨ Generate Menu Items</text>
+        }
     </button>
     <button type="button" class="btn btn-sm btn-secondary" @onclick="DeleteAll" disabled="@isWorking">
         Delete All
@@ -21,52 +30,99 @@
 
 @if (Category != null)
 {
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-light">
-            <h5 class="mb-0">@Category.Name Menu Items</h5>
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+            <h5 class="text-xl font-bold text-white mb-0">@Category.Name Menu Items</h5>
         </div>
-        <div class="card-body">
+
+        <!-- Body -->
+        <div class="p-6">
             @if (MenuItems.Any())
             {
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
+                <!-- Modern Table -->
+                <div class="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
+                    <table class="min-w-full divide-y divide-gray-300">
+                        <thead class="bg-gray-50">
                             <tr>
-                                <th>Name</th>
-                                <th>Price</th>
-                                <th>Description</th>
-                                <th class="text-end">Actions</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="bg-white divide-y divide-gray-200">
                             @foreach (var item in PagedMenuItems)
                             {
-                                <tr>
-                                    <td class="text-wrap">@item.Name</td>
-                                    <td class="text-wrap">@item.Price.ToString("C")</td>
-                                    <td class="text-wrap">@item.Description</td>
-                                    <td class="text-end">
-                                        <a class="btn btn-sm btn-secondary ml-1 mt-1" @onclick="() => EditMenuItem(item)">
-                                            Edit
-                                        </a>
-                                        <button class="btn btn-sm btn-danger mt-1 ml-1"
-                                                @onclick="() => DeleteMenuItem(item.Id)">
-                                            🗑️ Delete
-                                        </button>
+                                <tr class="hover:bg-gray-50 transition-colors duration-200">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex-shrink-0">
+                                            <img src="@ImageUploadService.GetImageUrl(item.ImagePath)"
+                                                 alt="@item.Name"
+                                                 class="w-12 h-12 object-cover rounded-lg border border-gray-200" />
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-gray-900">@item.Name</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-semibold text-blue-600">@item.Price.ToString("C")</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="text-sm text-gray-600 max-w-xs truncate">@item.Description</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end space-x-2">
+                                            <button class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors duration-200"
+                                                    @onclick="() => EditMenuItem(item)">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                </svg>
+                                                Edit
+                                            </button>
+                                            <button class="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-md transition-colors duration-200"
+                                                    @onclick="() => DeleteMenuItem(item.Id)">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                </svg>
+                                                Delete
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             }
                         </tbody>
                     </table>
                 </div>
-                <PaginationComponent CurrentPage="@currentPage"
-                                     PageSize="@pageSize"
-                                     TotalNumberOfItems="@MenuItems.Count"
-                                     SetPage="@SetPageHandler" />
+
+                <!-- Pagination -->
+                <div class="mt-6">
+                    <PaginationComponent CurrentPage="@currentPage"
+                                         PageSize="@pageSize"
+                                         TotalNumberOfItems="@MenuItems.Count"
+                                         SetPage="@SetPageHandler" />
+                </div>
             }
             else
             {
-                <p class="text-muted">No menu items in this category.</p>
+                <!-- Empty State -->
+                <div class="text-center py-12">
+                    <div class="mx-auto h-16 w-16 text-gray-400 mb-4">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">No menu items</h3>
+                    <p class="text-gray-500 mb-6">Get started by adding your first menu item to this category.</p>
+                    <button class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+                            @onclick="CreateNewMenuItem">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Menu Item
+                    </button>
+                </div>
             }
         </div>
     </div>
@@ -181,11 +237,134 @@
     async Task CreateNewMenuEntries()
     {
         isWorking = true;
-        var newEntries = await MenuItemGenerator.CreateMockMenuEntriesAsync(Category, 10);
-        await Context.AddRangeAsync(newEntries);
-        await Context.SaveChangesAsync();
-        await LoadItems();
-        isWorking = false;
+        try
+        {
+            var newEntries = await MenuItemGenerator.CreateMockMenuEntriesAsync(Category, 10);
+            if (newEntries.Any())
+            {
+                await Context.AddRangeAsync(newEntries);
+                await Context.SaveChangesAsync();
+                await LoadItems();
+                Console.WriteLine($"Successfully generated {newEntries.Count()} AI menu items!");
+            }
+            else
+            {
+                Console.WriteLine("Warning: AI service is not available. Generating fallback menu items...");
+                await CreateFallbackMenuItems();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error generating AI menu entries: {ex.Message}");
+            Console.WriteLine("AI service unavailable. Generating fallback menu items...");
+            await CreateFallbackMenuItems();
+        }
+        finally
+        {
+            isWorking = false;
+        }
+    }
+
+    async Task CreateFallbackMenuItems()
+    {
+        try
+        {
+            var fallbackItems = GenerateFallbackMenuItems(Category, 5);
+            await Context.AddRangeAsync(fallbackItems);
+            await Context.SaveChangesAsync();
+            await LoadItems();
+            Console.WriteLine($"Generated {fallbackItems.Count} fallback menu items for category: {Category.Name}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating fallback menu items: {ex.Message}");
+        }
+    }
+
+    List<MenuItem> GenerateFallbackMenuItems(Category category, int count)
+    {
+        var items = new List<MenuItem>();
+        var random = new Random();
+
+        // Sample menu items based on category name
+        var sampleItems = GetSampleItemsForCategory(category.Name.ToLower());
+
+        for (int i = 0; i < count && i < sampleItems.Count; i++)
+        {
+            var sample = sampleItems[i];
+            items.Add(new MenuItem
+            {
+                Id = Guid.NewGuid(),
+                Name = sample.Name,
+                Description = sample.Description,
+                Allergens = sample.Allergens,
+                Price = (decimal)(random.NextDouble() * 15.0 + 5.0), // Random price between 5-20
+                CategoryId = category.Id
+            });
+        }
+
+        return items;
+    }
+
+    List<(string Name, string Description, string Allergens)> GetSampleItemsForCategory(string categoryName)
+    {
+        // Default items that work for most categories
+        var defaultItems = new List<(string, string, string)>
+        {
+            ("Klassisches Gericht", "Ein traditionelles und beliebtes Gericht", "G, M"),
+            ("Hausgemachte Spezialität", "Nach unserem besonderen Rezept zubereitet", "G"),
+            ("Saisonale Auswahl", "Mit frischen, saisonalen Zutaten", ""),
+            ("Chef's Empfehlung", "Vom Küchenchef persönlich empfohlen", "G, M"),
+            ("Regionale Köstlichkeit", "Mit lokalen Zutaten zubereitet", "M")
+        };
+
+        // Category-specific items
+        if (categoryName.Contains("vorspeise") || categoryName.Contains("starter"))
+        {
+            return new List<(string, string, string)>
+            {
+                ("Bruschetta", "Geröstetes Brot mit Tomaten und Basilikum", "G"),
+                ("Carpaccio", "Hauchdünn geschnittenes Rindfleisch", "M"),
+                ("Suppe des Tages", "Täglich wechselnde hausgemachte Suppe", ""),
+                ("Antipasti Teller", "Auswahl italienischer Vorspeisen", "G, M"),
+                ("Caesar Salad", "Klassischer Salat mit Parmesan", "G, M, E")
+            };
+        }
+        else if (categoryName.Contains("hauptgang") || categoryName.Contains("main"))
+        {
+            return new List<(string, string, string)>
+            {
+                ("Schnitzel Wiener Art", "Paniertes Kalbsschnitzel mit Zitrone", "G, E"),
+                ("Pasta Carbonara", "Spaghetti mit Speck und Ei", "G, M, E"),
+                ("Gegrilltes Lachs", "Mit Kräuterbutter und Gemüse", "F, M"),
+                ("Rinderfilet", "Medium gebraten mit Pfeffersauce", "M"),
+                ("Vegetarische Lasagne", "Mit Gemüse und Béchamelsauce", "G, M")
+            };
+        }
+        else if (categoryName.Contains("dessert") || categoryName.Contains("nachspeise"))
+        {
+            return new List<(string, string, string)>
+            {
+                ("Tiramisu", "Klassisches italienisches Dessert", "G, M, E"),
+                ("Schokoladenkuchen", "Warmer Kuchen mit Vanilleeis", "G, M, E"),
+                ("Panna Cotta", "Mit Beerensauce", "M"),
+                ("Apfelstrudel", "Mit Vanillesauce", "G, M, E"),
+                ("Eis-Variation", "Drei Kugeln nach Wahl", "M")
+            };
+        }
+        else if (categoryName.Contains("getränk") || categoryName.Contains("drink"))
+        {
+            return new List<(string, string, string)>
+            {
+                ("Hauswein", "Rotwein oder Weißwein", "S"),
+                ("Craft Beer", "Lokales Bier vom Fass", "G"),
+                ("Espresso", "Italienischer Kaffee", ""),
+                ("Frischer Orangensaft", "Täglich gepresst", ""),
+                ("Mineralwasser", "Still oder sprudelnd", "")
+            };
+        }
+
+        return defaultItems;
     }
 
     async Task DeleteAll()

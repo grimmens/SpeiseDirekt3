@@ -5,90 +5,183 @@
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
 
-<div class="container">
-    <!-- Breadcrumb -->
-    <nav style="--bs-breadcrumb-divider: url(&#34;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M2.5 0L1 1.5 3.5 4 1 6.5 2.5 8l4-4-4-4z' fill='%236c757d'/%3E%3C/svg%3E&#34;);" aria-label="breadcrumb">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item">
-                <a href="/qrcodes">QR Codes</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">
-                @(IsNew ? "New" : "Edit")
-            </li>
-        </ol>
-    </nav>
+<PageTitle>@(IsNew ? "Create QR Code" : "Edit QR Code") - Speise-Direkt</PageTitle>
 
-    <h3>@(IsNew ? "Create QR Code" : "Edit QR Code")</h3>
+<!-- QR Code Edit Page -->
+<!-- Header Section -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+    <div class="p-6">
+            <!-- Breadcrumb -->
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="/qrcodes" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                            </svg>
+                            QR Codes
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                            </svg>
+                            <span class="ml-1 text-sm font-medium text-gray-500">@(IsNew ? "Create" : "Edit")</span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
 
-    <EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <div class="form-floating mb-3">
-            <InputText @bind-Value="Item.Title"
-                       id="qrTitle"
-                       class="form-control"
-                       placeholder="QR Code Title" />
-            <label for="qrTitle">Title</label>
-            <ValidationMessage For="@(() => Item.Title)" />
-        </div>
-
-        <div class="mb-3">
-            <div class="form-group">
-                <label>Should the menu follow a schedule?</label>
-                <InputRadioGroup Name="displayMode" @bind-Value="@Item.IsTimeTableBased">
-                    <div>
-                        <InputRadio id="timetable" name="displayMode" Value="true" class="form-check-input" />
-                        <label class="form-check-label" for="timetable">Schedule-based</label>
+            <!-- Page Header -->
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                        </svg>
                     </div>
-                    <div>
-                        <InputRadio id="simple" name="displayMode" Value="false" class="form-check-input" />
-                        <label class="form-check-label" for="simple">Simple</label>
-                    </div>
-                </InputRadioGroup>
+                </div>
+                <div class="ml-4">
+                    <h1 class="text-3xl font-bold text-gray-900 font-display">@(IsNew ? "Create QR Code" : "Edit QR Code")</h1>
+                    <p class="mt-1 text-gray-600">@(IsNew ? "Generate a new QR code for your digital menu" : "Update your QR code settings")</p>
+                </div>
             </div>
         </div>
+    </div>
 
-        @if (Item.IsNotTimeTableBased)
-        {
-            <div class="mb-3">
-                <label for="menuSelect" class="form-label">Assign Menu</label>
-                <InputSelect @bind-Value="Item.MenuId" id="menuSelect" class="form-select">
-                    <option value="">-- Select Menu --</option>
-                    @foreach (var m in menus)
-                    {
-                        <option value="@m.Id">@m.Name</option>
-                    }
-                </InputSelect>
-                <ValidationMessage For="@(() => Item.MenuId)" />
+<!-- Content Section -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200">
+    <div class="p-8">
+        <EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit" class="space-y-8">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" />
+
+            <!-- QR Code Title -->
+            <div>
+                <label for="qrTitle" class="block text-sm font-medium text-gray-700 mb-2">QR Code Title</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                        </svg>
+                    </div>
+                    <InputText @bind-Value="Item.Title"
+                               id="qrTitle"
+                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                               placeholder="Enter a descriptive title for your QR code" />
+                </div>
+                <ValidationMessage For="@(() => Item.Title)" class="mt-1 text-sm text-red-600" />
+                <p class="mt-1 text-xs text-gray-500">This title will help you identify the QR code in your dashboard</p>
             </div>
-        }
-        else
-        {
-            <div class="mb-4">
-                <QrCodeTimeTableEntries QRCodeId="@Item.Id" TimeTableEntries="@Item.TimeTableEntries">
-                    <ValidationMessage For="@(() => Item.TimeTableEntries)" />
-                </QrCodeTimeTableEntries>
+
+            <!-- Display Mode Selection -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-4">Menu Display Mode</label>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <InputRadioGroup Name="displayMode" @bind-Value="@Item.IsTimeTableBased" class="space-y-4">
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <InputRadio id="simple" name="displayMode" Value="false" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
+                            </div>
+                            <div class="ml-3">
+                                <label for="simple" class="font-medium text-gray-900 cursor-pointer">Simple Menu</label>
+                                <p class="text-gray-500 text-sm">Display a single menu at all times</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <InputRadio id="timetable" name="displayMode" Value="true" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
+                            </div>
+                            <div class="ml-3">
+                                <label for="timetable" class="font-medium text-gray-900 cursor-pointer">Schedule-based Menu</label>
+                                <p class="text-gray-500 text-sm">Display different menus based on time schedules (breakfast, lunch, dinner)</p>
+                            </div>
+                        </div>
+                    </InputRadioGroup>
+                </div>
             </div>
-        }
 
-        <div class="mb-4">
-            <label class="form-label">QR Preview</label><br />
-
-            @if (!string.IsNullOrEmpty(qrDataUrl))
+            @if (Item.IsNotTimeTableBased)
             {
-                <QrCodePreview QrId="@Item.Id"
-                               ThumbnailSize="100" />
+                <!-- Simple Menu Selection -->
+                <div>
+                    <label for="menuSelect" class="block text-sm font-medium text-gray-700 mb-2">Select Menu</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                            </svg>
+                        </div>
+                        <InputSelect @bind-Value="Item.MenuId" id="menuSelect"
+                                     class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                            <option value="">-- Select a Menu --</option>
+                            @foreach (var m in menus)
+                            {
+                                <option value="@m.Id">@m.Name</option>
+                            }
+                        </InputSelect>
+                    </div>
+                    <ValidationMessage For="@(() => Item.MenuId)" class="mt-1 text-sm text-red-600" />
+                    <p class="mt-1 text-xs text-gray-500">Choose which menu will be displayed when customers scan this QR code</p>
+                </div>
             }
             else
             {
-                <p class="text-muted">Select a menu to display the preview</p>
+                <!-- Schedule-based Menu Configuration -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-4">Time-based Menu Schedule</label>
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <QrCodeTimeTableEntries QRCodeId="@Item.Id" TimeTableEntries="@Item.TimeTableEntries">
+                            <ValidationMessage For="@(() => Item.TimeTableEntries)" class="mt-1 text-sm text-red-600" />
+                        </QrCodeTimeTableEntries>
+                    </div>
+                </div>
             }
-        </div>
 
-        <button type="button" class="btn btn-secondary me-2" @onclick="Cancel">Cancel</button>
-        <button type="submit" class="btn btn-primary">Save</button>
-    </EditForm>
+            <!-- QR Code Preview -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-4">QR Code Preview</label>
+                <div class="bg-gray-50 rounded-lg p-6 text-center">
+                    @if (!string.IsNullOrEmpty(qrDataUrl))
+                    {
+                        <div class="inline-block p-4 bg-white rounded-lg shadow-sm">
+                            <QrCodePreview QrId="@Item.Id" ThumbnailSize="150" />
+                        </div>
+                        <p class="mt-3 text-sm text-gray-600">This is how your QR code will appear</p>
+                    }
+                    else
+                    {
+                        <div class="py-8">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                            </svg>
+                            <p class="mt-2 text-sm text-gray-500">Configure your menu settings to see the QR code preview</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                <button type="button"
+                        class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                        @onclick="Cancel">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    @(IsNew ? "Create QR Code" : "Save Changes")
+                </button>
+            </div>
+        </EditForm>
+    </div>
 </div>
 
 @code {
