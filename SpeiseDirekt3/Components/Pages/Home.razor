@@ -1,70 +1,104 @@
 ﻿@page "/"
-@using Microsoft.AspNetCore.Components.Authorization
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Home - Speise-Direkt</PageTitle>
 
-<div class="container py-5">
-    <div class="jumbotron bg-light p-5 rounded text-center">
-        <img src="image/speise-direkt.png" alt="Speise-Direkt Logo" class="mb-4" width="100" height="100" />
-        <h1 class="display-4">Speise-Direkt</h1>
-        <p class="lead">Effortlessly create menus and generate QR codes for your online menus.</p>
-        <hr class="my-4" />
-        <p>Speise-Direkt is an innovative online platform that enables restaurateurs to create digital menus in no time and link them with QR codes. With just a few clicks, you can design your menu online and give guests a modern, contactless way to access the dishes you offer.</p>
-    </div>
-
-    <section id="features" class="mt-5">
-        <h2>Product Features</h2>
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Menu Editor</h5>
-                        <p class="card-text">An intuitive editor for creating and customizing your menus.</p>
-                    </div>
+<!-- Hero Section -->
+<div class="relative bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 overflow-hidden">
+    <div class="absolute inset-0 bg-black opacity-20"></div>
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
+        <div class="text-center">
+            <div class="flex justify-center mb-8">
+                <div class="relative">
+                    <div class="absolute inset-0 bg-white rounded-full blur-xl opacity-20"></div>
+                    <img src="image/speise-direkt.png" alt="Speise-Direkt Logo" class="relative h-24 w-24 rounded-full shadow-2xl" />
                 </div>
             </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">QR Code Generator</h5>
-                        <p class="card-text">Automated generation and management of QR codes for each menu.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">Contactless Access</h5>
-                        <p class="card-text">Guests scan the code and access the digital menu directly.</p>
-                    </div>
-                </div>
+            <h1 class="text-5xl md:text-6xl font-bold text-white mb-6 font-display">
+                Speise-<span class="text-blue-300">Direkt</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+                Effortlessly create digital menus and generate QR codes for your restaurant.
+                Give your guests a modern, contactless dining experience.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="/menus" class="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Create Menu
+                </a>
+                <a href="/qrcodes" class="inline-flex items-center px-8 py-4 bg-transparent border-2 border-blue-300 text-blue-100 hover:bg-blue-300 hover:text-blue-900 font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                    </svg>
+                    Generate QR Codes
+                </a>
             </div>
         </div>
-    </section>
-
-    <section class="mt-5">
-        <h2>Documentation</h2>
-        <ul>
-            <li><a href="/docs/getting-started">Getting Started</a></li>
-            <li><a href="/docs/qr-generation">QR Code Integration</a></li>
-            <li><a href="/docs/api">API Reference</a></li>
-        </ul>
-    </section>
-
-    <section class="mt-5">
-        <h2>User Claims</h2>
-        <ul>
-            @foreach (var claim in AuthState.User.Claims)
-            {
-                <li>@claim.Type: @claim.Value</li>
-            }
-        </ul>
-    </section>
+    </div>
+    <!-- Decorative elements -->
+    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+    </div>
 </div>
 
-@code {
-    [CascadingParameter]
-    private Task<AuthenticationState> authenticationState { get; set; }
+<!-- Features Section -->
+<div class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4 font-display">Powerful Features</h2>
+            <p class="text-xl text-gray-600 max-w-2xl mx-auto">Everything you need to create professional digital menus and enhance your restaurant's customer experience.</p>
+        </div>
 
-    private AuthenticationState AuthState => authenticationState.Result;
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Menu Editor Card -->
+            <div class="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
+                <div class="p-8">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Menu Editor</h3>
+                    <p class="text-gray-600 leading-relaxed">An intuitive drag-and-drop editor for creating and customizing your menus with ease. Add items, categories, and descriptions effortlessly.</p>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+            </div>
+
+            <!-- QR Code Generator Card -->
+            <div class="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
+                <div class="p-8">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">QR Code Generator</h3>
+                    <p class="text-gray-600 leading-relaxed">Automated generation and management of QR codes for each menu. Customize designs and track scanning analytics in real-time.</p>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+            </div>
+
+            <!-- Contactless Access Card -->
+            <div class="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
+                <div class="p-8">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Contactless Access</h3>
+                    <p class="text-gray-600 leading-relaxed">Guests simply scan the QR code with their smartphone to access your digital menu instantly. No app downloads required.</p>
+                </div>
+                <div class="absolute inset-0 bg-gradient-to-br from-purple-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+@code {
+    // No additional code needed for this page
 }

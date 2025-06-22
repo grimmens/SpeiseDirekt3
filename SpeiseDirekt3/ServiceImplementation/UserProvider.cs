@@ -13,15 +13,23 @@ namespace SpeiseDirekt3.ServiceImplementation
 
         public string GetUserId()
         {
-            if (_accessor != null && _accessor.HttpContext != null)
+            try
             {
-                var identity = _accessor.HttpContext.User.Identity;
-                if (identity.IsAuthenticated)
+                if (_accessor?.HttpContext?.User?.Identity?.IsAuthenticated == true)
                 {
-                    return _accessor.HttpContext.User
-                        .FindFirst(ClaimTypes.NameIdentifier).Value.ToString();
+                    var userIdClaim = _accessor.HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+                    if (userIdClaim != null && !string.IsNullOrEmpty(userIdClaim.Value))
+                    {
+                        return userIdClaim.Value;
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                // Log the exception for debugging
+                Console.WriteLine($"Error getting user ID: {ex.Message}");
+            }
+
             return Guid.Empty.ToString();
         }
     }

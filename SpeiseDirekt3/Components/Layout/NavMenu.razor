@@ -2,81 +2,94 @@
 
 @inject NavigationManager NavigationManager
 
-@* <div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">Speise-direkt</a>
-    </div>
-</div>
- *@
-<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="">
-            <img src="image/speise-direkt.png" alt="Speise-direkt Logo" class="d-inline-block me-2" width="30" height="30" />
-            Speise-Direkt
-        </a>
-    </div>
+<!-- Brand Header -->
+<div class="flex items-center px-6 py-4 border-b border-blue-800">
+    <a href="" class="flex items-center space-x-3 text-white hover:text-blue-200 transition-colors duration-200">
+        <img src="image/speise-direkt.png" alt="Speise-Direkt Logo" class="h-8 w-8 rounded-lg" />
+        <span class="text-xl font-bold font-display">Speise-Direkt</span>
+    </a>
 </div>
 
 
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<!-- Navigation Menu -->
+<nav class="flex-1 px-4 py-6 space-y-2">
+    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
+             href="" Match="NavLinkMatch.All">
+        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        </svg>
+        Home
+    </NavLink>
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="menus">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Menus
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="qrcodes">
-                <span class="bi bi-qr-code" aria-hidden="true" style="top:-13px;"></span> QR Codes
-            </NavLink>
-        </div>
+    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
+             href="menus">
+        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+        Menus
+    </NavLink>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="auth">
-                <span class="bi bi-lock-nav-menu" aria-hidden="true"></span> Auth Required
-            </NavLink>
-        </div>
+    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
+             href="qrcodes">
+        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+        </svg>
+        QR Codes
+    </NavLink>
 
-        <AuthorizeView>
-            <Authorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Manage">
-                        <span class="bi bi-person-fill-nav-menu" aria-hidden="true"></span> @context.User.Identity?.Name
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <form action="Account/Logout" method="post">
-                        <AntiforgeryToken />
-                        <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                        <button type="submit" class="nav-link">
-                            <span class="bi bi-arrow-bar-left-nav-menu" aria-hidden="true"></span> Logout
-                        </button>
-                    </form>
-                </div>
-            </Authorized>
-            <NotAuthorized>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Register">
-                        <span class="bi bi-person-nav-menu" aria-hidden="true"></span> Register
-                    </NavLink>
-                </div>
-                <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="Account/Login">
-                        <span class="bi bi-person-badge-nav-menu" aria-hidden="true"></span> Login
-                    </NavLink>
-                </div>
-            </NotAuthorized>
-        </AuthorizeView>
-    </nav>
-</div>
+    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
+             href="auth">
+        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        Auth Required
+    </NavLink>
+
+    <!-- Divider -->
+    <div class="border-t border-blue-800 my-4"></div>
+
+    <!-- User Section -->
+    <AuthorizeView>
+        <Authorized>
+            <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
+                     href="Account/Manage">
+                <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span class="truncate">@context.User.Identity?.Name</span>
+            </NavLink>
+
+            <form action="Account/Logout" method="post" class="mt-2">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                <button type="submit" class="w-full flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-red-600 hover:text-white transition-all duration-200 group">
+                    <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                </button>
+            </form>
+        </Authorized>
+        <NotAuthorized>
+            <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
+                     href="Account/Register">
+                <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Register
+            </NavLink>
+
+            <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
+                     href="Account/Login">
+                <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Login
+            </NavLink>
+        </NotAuthorized>
+    </AuthorizeView>
+</nav>
 
 @code {
     private string? currentUrl;

@@ -49,14 +49,25 @@ namespace SpeiseDirekt3.Data
         {
             if (e.Entry.Entity is IAppUserEntity entity)
             {
-                switch (e.Entry.State)
+                var userId = userIdProvider.GetUserId();
+
+                // Only update if we have a valid user ID (not empty GUID)
+                if (!string.IsNullOrEmpty(userId) && Guid.TryParse(userId, out var parsedUserId) && parsedUserId != Guid.Empty)
                 {
-                    case EntityState.Modified:
-                        entity.ApplicationUserId = new Guid(userIdProvider.GetUserId());
-                        break;
-                    case EntityState.Added:
-                        entity.ApplicationUserId = new Guid(userIdProvider.GetUserId());
-                        break;
+                    switch (e.Entry.State)
+                    {
+                        case EntityState.Modified:
+                            entity.ApplicationUserId = parsedUserId;
+                            break;
+                        case EntityState.Added:
+                            entity.ApplicationUserId = parsedUserId;
+                            break;
+                    }
+                }
+                else
+                {
+                    // If we don't have a valid user ID, this is a problem
+                    throw new InvalidOperationException("Cannot save entity: User is not authenticated or user ID is invalid.");
                 }
             }
         }

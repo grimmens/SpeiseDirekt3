@@ -1,61 +1,133 @@
 ﻿@using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt3.Data
 @using SpeiseDirekt3.Model
+@using SpeiseDirekt3.ServiceInterface
+@using Microsoft.AspNetCore.Components.Forms
 @inject IJSRuntime JSRuntime
+@inject IImageUploadService ImageUploadService
 
-<div class="modal fade" id="menuItemEditModal" tabindex="-1" aria-labelledby="menuItemEditModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="menuItemEditModalLabel">
+<!-- Modern Modal Overlay -->
+<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 @(isVisible ? "" : "hidden")" id="menuItemEditModal">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4 rounded-t-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white">
                     @(Input.Id == Guid.Empty ? "Add New Menu Item" : "Edit Menu Item")
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="Cancel"></button>
+                </h3>
+                <button type="button" class="text-white hover:text-gray-200 transition-colors" @onclick="Cancel">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
             </div>
-            <div class="modal-body">
-                <EditForm @ref="editForm" EditContext="editContext" OnSubmit="OnSubmit">
-                    <DataAnnotationsValidator />
+        </div>
 
-                    <div class="form-floating mb-3">
-                        <InputText @bind-Value="Input.Name" id="MenuItem.Name" class="form-control" />
-                        <label for="MenuItem.Name">Name</label>
-                        <ValidationMessage For="() => Input.Name" class="text-danger" />
-                    </div>
+        <!-- Modal Body -->
+        <div class="p-6">
+            <EditForm @ref="editForm" EditContext="editContext" OnSubmit="OnSubmit" class="space-y-6">
+                <DataAnnotationsValidator />
 
-                    <div class="form-floating mb-3">
-                        <InputTextArea style="height:200px;" @bind-Value="Input.Description" id="MenuItem.Description" class="form-control" />
-                        <label for="MenuItem.Description">Description</label>
-                    </div>
+                <!-- Image Upload Section -->
+                <div class="space-y-4">
+                    <label class="block text-sm font-medium text-gray-700">Menu Item Image</label>
 
-                    <div class="form-floating mb-3">
-                        <InputText @bind-Value="Input.Allergens" id="MenuItem.Allergens" class="form-control" />
-                        <label for="MenuItem.Allergens">Allergens</label>
-                    </div>
-
-                    <div class="form-floating mb-3">
-                        <InputNumber @bind-Value="Input.Price" id="MenuItem.Price" class="form-control" />
-                        <label for="MenuItem.Price">Price</label>
-                        <ValidationMessage For="() => Input.Price" class="text-danger" />
-                    </div>
-
-                    <div class="form-floating mb-3">
-                        <InputSelect @bind-Value="Input.CategoryId" class="form-select">
-                            <option value="">-- Select Category --</option>
-                            @foreach (var cat in Categories)
+                    <!-- Current Image Preview -->
+                    <div class="flex items-center space-x-4">
+                        <div class="flex-shrink-0">
+                            <img src="@ImageUploadService.GetImageUrl(Input.ImagePath)"
+                                 alt="Menu item preview"
+                                 class="w-24 h-24 object-cover rounded-lg border border-gray-300" />
+                        </div>
+                        <div class="flex-1">
+                            <InputFile OnChange="HandleImageUpload"
+                                      accept="image/*"
+                                      class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                            <p class="mt-1 text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                            @if (imageUploadError != null)
                             {
-                                <option value="@cat.Id">@cat.Name</option>
+                                <p class="mt-1 text-xs text-red-600">@imageUploadError</p>
                             }
-                        </InputSelect>
-                        <label for="MenuItem.CategoryId">Category</label>
-                        <ValidationMessage For="() => Input.CategoryId" class="text-danger" />
+                        </div>
+                        @if (!string.IsNullOrEmpty(Input.ImagePath))
+                        {
+                            <button type="button" @onclick="RemoveImage"
+                                    class="px-3 py-1 text-sm text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50 transition-colors">
+                                Remove
+                            </button>
+                        }
                     </div>
+                </div>
 
-                    <div class="d-flex justify-content-between">
-                        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
-                        <button type="submit" class="btn btn-primary">Save</button>
-                    </div>
-                </EditForm>
-            </div>
+                <!-- Name Field -->
+                <div class="space-y-2">
+                    <label for="MenuItem.Name" class="block text-sm font-medium text-gray-700">Name *</label>
+                    <InputText @bind-Value="Input.Name" id="MenuItem.Name"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm" />
+                </div>
+
+                <!-- Description Field -->
+                <div class="space-y-2">
+                    <label for="MenuItem.Description" class="block text-sm font-medium text-gray-700">Description *</label>
+                    <InputTextArea @bind-Value="Input.Description" id="MenuItem.Description" rows="4"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" />
+                    <ValidationMessage For="() => Input.Description" class="text-red-600 text-sm" />
+                </div>
+
+                <!-- Allergens Field -->
+                <div class="space-y-2">
+                    <label for="MenuItem.Allergens" class="block text-sm font-medium text-gray-700">Allergens</label>
+                    <InputText @bind-Value="Input.Allergens" id="MenuItem.Allergens"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <p class="text-xs text-gray-500">e.g., Nuts, Dairy, Gluten</p>
+                </div>
+
+                <!-- Price Field -->
+                <div class="space-y-2">
+                    <label for="MenuItem.Price" class="block text-sm font-medium text-gray-700">Price *</label>
+                    <InputNumber @bind-Value="Input.Price" id="MenuItem.Price"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <ValidationMessage For="() => Input.Price" class="text-red-600 text-sm" />
+                </div>
+
+                <!-- Category Field -->
+                <div class="space-y-2">
+                    <label for="MenuItem.CategoryId" class="block text-sm font-medium text-gray-700">Category *</label>
+                    <InputSelect @bind-Value="Input.CategoryId"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="">-- Select Category --</option>
+                        @foreach (var cat in Categories)
+                        {
+                            <option value="@cat.Id">@cat.Name</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Input.CategoryId" class="text-red-600 text-sm" />
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                    <button type="button" @onclick="Cancel"
+                            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" disabled="@isUploading"
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center">
+                        @if (isUploading)
+                        {
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span>Saving</span>
+                        }
+                        else
+                        {
+                            <span>Save Menu Item</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
         </div>
     </div>
 </div>
@@ -71,38 +143,125 @@
 
     private EditContext editContext = new(new MenuItem());
     private EditForm editForm;
+    private bool isVisible = false;
+    private bool isUploading = false;
+    private string? imageUploadError = null;
+    private string? oldImagePath = null;
 
     protected override async Task OnInitializedAsync()
     {
-        Input.CategoryId = SelectedCategory.Id;
+        if (SelectedCategory != null)
+        {
+            Input.CategoryId = SelectedCategory.Id;
+        }
     }
 
     private async Task OnSubmit()
     {
+        if (isUploading) return;
+
         editContext = new EditContext(Input);
         editForm.EditContext = editContext;
 
         if (!editContext.Validate())
             return;
 
-        await OnOk.InvokeAsync(Input);
-        await CloseModal();
+        isUploading = true;
+        StateHasChanged();
+
+        try
+        {
+            await OnOk.InvokeAsync(Input);
+            await CloseModal();
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
     }
 
     public async Task ShowModal()
     {
         editContext = new EditContext(Input);
-        await JSRuntime.InvokeVoidAsync("openModal", "menuItemEditModal");
+        oldImagePath = Input.ImagePath; // Store original image path
+        imageUploadError = null;
+        isVisible = true;
+        StateHasChanged();
     }
 
     private async Task CloseModal()
     {
-        await JSRuntime.InvokeVoidAsync("hideModal", "menuItemEditModal");
+        isVisible = false;
+        StateHasChanged();
     }
 
     private async Task Cancel()
     {
+        // Restore original image path if it was changed
+        if (oldImagePath != Input.ImagePath && !string.IsNullOrEmpty(Input.ImagePath))
+        {
+            await ImageUploadService.DeleteImageAsync(Input.ImagePath);
+            Input.ImagePath = oldImagePath;
+        }
+
         await OnCancel.InvokeAsync();
         await CloseModal();
+    }
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        imageUploadError = null;
+        var file = e.File;
+
+        if (file == null) return;
+
+        if (!ImageUploadService.IsValidImageFile(file))
+        {
+            imageUploadError = "Please select a valid image file (JPG, PNG, GIF, WEBP) under 5MB.";
+            StateHasChanged();
+            return;
+        }
+
+        isUploading = true;
+        StateHasChanged();
+
+        try
+        {
+            // Delete old image if exists and it's different from the original
+            if (!string.IsNullOrEmpty(Input.ImagePath) && Input.ImagePath != oldImagePath)
+            {
+                await ImageUploadService.DeleteImageAsync(Input.ImagePath);
+            }
+
+            var imagePath = await ImageUploadService.UploadImageAsync(file);
+            if (imagePath != null)
+            {
+                Input.ImagePath = imagePath;
+            }
+            else
+            {
+                imageUploadError = "Failed to upload image. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            imageUploadError = $"Upload failed: {ex.Message}";
+        }
+        finally
+        {
+            isUploading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveImage()
+    {
+        if (!string.IsNullOrEmpty(Input.ImagePath) && Input.ImagePath != oldImagePath)
+        {
+            await ImageUploadService.DeleteImageAsync(Input.ImagePath);
+        }
+        Input.ImagePath = null;
+        StateHasChanged();
     }
 }

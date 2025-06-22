@@ -19,6 +19,7 @@ namespace SpeiseDirekt3.Model
         [Required]
         public Category? Category { get; set; }
         public Guid ApplicationUserId { get; set; }
+        public string? ImagePath { get; set; }
 
     }
 
