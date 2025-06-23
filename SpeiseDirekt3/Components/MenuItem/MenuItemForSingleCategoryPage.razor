@@ -1,0 +1,58 @@
+﻿@page "/MenuItems/Category/{CategoryId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Data
+@using SpeiseDirekt3.Model
+@using SpeiseDirekt3.ServiceInterface
+@attribute [Authorize]
+
+<PageTitle>Menu Items</PageTitle>
+
+<div class="container mt-5">
+    <!-- Tailwind Breadcrumb -->
+    <nav class="text-sm text-gray-600 mb-4" aria-label="breadcrumb">
+        <ol class="flex space-x-2">
+            <li>
+                <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
+                <span class="mx-2">/</span>
+            </li>
+            <li>
+                <a href="@($"/categories/{Menu?.Id}")" class="text-blue-600 hover:underline">@Menu?.Name</a>
+                <span class="mx-2">/</span>
+            </li>
+            <li class="text-gray-800">@Category?.Name</li>
+        </ol>
+    </nav>
+
+
+    <h1 class="mb-4 text-primary">🍽️ Menu Items for @Category?.Name</h1>
+
+    @if (Category != null)
+    {
+        <MenuItemTable Category="Category"
+                       Categories="@(new List<Category> { Category })" />
+    }
+    else
+    {
+        <p class="text-muted">Invalid category or no data found.</p>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid CategoryId { get; set; }
+
+    [Inject] public ApplicationDbContext Context { get; set; }
+    [Inject] public INotificationService NotificationService { get; set; }
+
+    public Category? Category { get; set; }
+    public Menu? Menu { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Category = await Context.Categories
+            .Include(c => c.Menu)
+            .FirstOrDefaultAsync(c => c.Id == CategoryId);
+
+        Menu = Category?.Menu;
+    }
+}
