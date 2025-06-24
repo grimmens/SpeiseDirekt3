@@ -45,6 +45,7 @@ namespace SpeiseDirekt3.Data
         public DbSet<QRCode> QRCodes { get; set; }
         public DbSet<TimeTableEntry> TimeTableEntries { get; set; }
         public DbSet<TenantSubscription> TenantSubscriptions { get; set; }
+        public DbSet<Image> Images { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
         {
             if (e.Entry.Entity is IAppUserEntity entity)

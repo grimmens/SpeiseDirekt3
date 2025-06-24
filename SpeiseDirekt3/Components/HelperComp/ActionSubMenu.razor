@@ -1,0 +1,88 @@
+﻿@inject IJSRuntime JS
+
+<div class="relative inline-block text-left" @ref="MenuRef">
+    <button @onclick="ToggleMenu"
+    class="rounded-md bg-slate-600 py-2 px-4 border border-transparent text-sm text-white transition-all shadow-md hover:shadow-lg focus:bg-slate-700 focus:shadow-none active:bg-slate-700 hover:bg-slate-700 active:shadow-none ml-2">
+        &#x22EE;
+    </button>
+
+    @if (menuOpen)
+    {
+        <ul role="menu"
+        class="absolute right-0 z-10 min-w-[180px] overflow-auto rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg shadow-sm focus:outline-none mt-2">
+            <li role="menuitem"
+            class="cursor-pointer text-slate-800 flex w-full text-sm items-center rounded-md p-2 transition-all hover:bg-slate-100"
+            @onclick="() => HandleAction(Edit)">
+                ✏️ @EditCaption
+            </li>
+            <li role="menuitem"
+                class="cursor-pointer text-white flex w-full text-sm items-center rounded-md p-2 transition-all bg-red-600 hover:bg-red-800"
+            @onclick="() => HandleAction(Delete)">
+                🗑️ Delete
+            </li>
+        </ul>
+    }
+</div>
+
+@code {
+    private ElementReference MenuRef;
+    private bool menuOpen = false;
+    private DotNetObjectReference<ActionSubMenu>? objRef;
+    private IJSObjectReference? jsModule;
+
+    [Parameter] public string EditCaption { get; set; } = "Rename";
+    [Parameter] public EventCallback Edit { get; set; }
+    [Parameter] public EventCallback Delete { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./Components/HelperComp/ActionSubMenu.razor.js");
+        }
+    }
+
+    private async void ToggleMenu()
+    {
+        menuOpen = !menuOpen;
+
+        if (menuOpen && jsModule is not null)
+        {
+            objRef = DotNetObjectReference.Create(this);
+            await jsModule.InvokeVoidAsync("registerOutsideClick", MenuRef, objRef);
+        }
+        else if (jsModule is not null)
+        {
+            await jsModule.InvokeVoidAsync("unregisterOutsideClick");
+        }
+    }
+
+    private async Task HandleAction(EventCallback action)
+    {
+        await action.InvokeAsync();
+        await CloseMenu();
+    }
+
+    [JSInvokable]
+    public async Task CloseMenu()
+    {
+        if (!menuOpen) return;
+        menuOpen = false;
+        if (jsModule is not null)
+        {
+            await jsModule.InvokeVoidAsync("unregisterOutsideClick");
+        }
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (jsModule is not null)
+        {
+            await jsModule.InvokeVoidAsync("unregisterOutsideClick");
+            await jsModule.DisposeAsync();
+        }
+
+        objRef?.Dispose();
+    }
+}

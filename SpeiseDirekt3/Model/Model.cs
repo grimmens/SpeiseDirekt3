@@ -167,6 +167,13 @@ namespace SpeiseDirekt3.Model
         }
     }
 
+    public class Image
+    {
+        public Guid Id { get; set; }
+        public byte[] Content { get; set; }
+        public string MimeType { get; set; }
+    }
+
     public class TenantSubscription
     {
         [Key]

@@ -24,8 +24,10 @@
         </ol>
     </nav>
 
-
-    <h1 class="mb-4 text-primary">🍽️ Menu Items for @Category?.Name</h1>
+    <h1 class="mb-6 text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        Menu Items for <span class="text-gray-800">@Category?.Name</span>
+    </h1>
+    <hr class="my-4">
 
     @if (Category != null)
     {
