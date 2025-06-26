@@ -35,7 +35,10 @@ namespace SpeiseDirekt3.ServiceImplementation
 
         public string GetImageUrl(string imagePath)
         {
-            return $"{imagePath}";
+            if (string.IsNullOrEmpty(imagePath))
+                return "/images/no-image-placeholder.svg"; // Default placeholder
+
+            return $"/{imagePath}";
         }
 
         public bool IsValidImageFile(IBrowserFile file)
