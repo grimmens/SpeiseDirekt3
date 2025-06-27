@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Components.Categories.Components
 @using SpeiseDirekt3.Data
 @using SpeiseDirekt3.Model
 @using SpeiseDirekt3.Infrastructure
@@ -26,18 +27,21 @@
     <h1 class="text-3xl font-bold text-blue-700">Categories</h1>
 
     <!-- Link to Menu Items Page -->
-    @* <div class="bg-gray-100 rounded-lg shadow p-6 flex justify-between items-center">
-        <div>
-            <h2 class="text-lg font-semibold mb-1">🍽️ Manage Menu Items</h2>
-            <p class="text-sm text-gray-600">Go to the menu items for <strong>@menu?.Name</strong>.</p>
+    @if (Categories.Any())
+    {
+        <div class="bg-gray-100 rounded-lg shadow p-6 flex justify-between items-center">
+            <div>
+                <h2 class="text-lg font-semibold mb-1">Manage Menu Items</h2>
+                <p class="text-sm text-gray-600">Go to the menu items for <strong>@menu?.Name</strong>.</p>
+            </div>
+            <a class="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200" href="@($"/menuitems/{MenuId}")">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+                View Menu Items
+            </a>
         </div>
-        <a class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200" href="@($"/menuitems/{MenuId}")">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>
-            View Menu Items
-        </a>
-    </div> *@
+    }
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
