@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SpeiseDirekt3.Data;
+using QRCoder;
 
 namespace SpeiseDirekt3.Controller
 {
@@ -27,6 +28,20 @@ namespace SpeiseDirekt3.Controller
                 return File(entity.Content, entity.MimeType);
             }
             return NotFound();
-        } 
+        }
+
+        [HttpGet("qr/{qrId}")]
+        [ResponseCache(Duration = 3600)]
+        public IActionResult GetQrCode([FromRoute] Guid qrId)
+        {
+            var targetUrl = $"{Request.Scheme}://{Request.Host}/qr/{qrId}";
+
+            using var qrGen = new QRCodeGenerator();
+            using var qrData = qrGen.CreateQrCode(targetUrl, QRCodeGenerator.ECCLevel.Q);
+            using var png = new PngByteQRCode(qrData);
+            var bytes = png.GetGraphic(20);
+
+            return File(bytes, "image/png");
+        }
     }
 }
