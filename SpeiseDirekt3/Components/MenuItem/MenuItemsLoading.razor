@@ -1,0 +1,52 @@
+﻿@page "/MenuItems/{MenuId}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Data
+@using SpeiseDirekt3.Model
+@attribute [Authorize]
+@inject NavigationManager Navigation
+
+<PageTitle>Loading...</PageTitle>
+
+@if (showNoCategories)
+{
+    <div class="container mt-5">
+        <div class="text-center">
+            <h3 class="text-muted">No categories available. Please add some first.</h3>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public string MenuId { get; set; }
+    [Inject] public ApplicationDbContext Context { get; set; }
+
+    private bool showNoCategories = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var menu = await Context.Menus.FindAsync(new Guid(MenuId));
+        
+        if (menu == null)
+        {
+            showNoCategories = true;
+            return;
+        }
+
+        var categories = await Context.Categories
+            .Where(c => c.MenuId == menu.Id)
+            .OrderBy(c => c.Name)
+            .ToListAsync();
+
+        if (!categories.Any())
+        {
+            showNoCategories = true;
+            return;
+        }
+
+        var firstCategory = categories.First();
+        Navigation.NavigateTo($"/MenuItems/Category/{firstCategory.Id}", replace: true);
+    }
+}

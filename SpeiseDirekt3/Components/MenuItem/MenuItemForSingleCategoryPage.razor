@@ -24,15 +24,11 @@
         </ol>
     </nav>
 
-    <h1 class="mb-6 text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-        Menu Items for <span class="text-gray-800">@Category?.Name</span>
-    </h1>
-    <hr class="my-4">
-
     @if (Category != null)
     {
-        <MenuItemTable Category="Category"
-                       Categories="@(new List<Category> { Category })" />
+        <CategoryDropdownHeadline Category="@Category"
+        Categories="@(Categories ?? [])"
+        CategoryChanged="OnCategoryChanged" />
     }
     else
     {
@@ -45,16 +41,27 @@
 
     [Inject] public ApplicationDbContext Context { get; set; }
     [Inject] public INotificationService NotificationService { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
 
+    public List<Category>? Categories { get; set; }
     public Category? Category { get; set; }
     public Menu? Menu { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         Category = await Context.Categories
             .Include(c => c.Menu)
             .FirstOrDefaultAsync(c => c.Id == CategoryId);
-
+        if(Category != null)
+        {
+            Categories ??= await Context.Categories
+                    .Where(e => e.MenuId == Category.MenuId).ToListAsync();
+        }
         Menu = Category?.Menu;
+    }
+
+    void OnCategoryChanged(Category category)
+    {
+        NavigationManager.NavigateTo($"/MenuItems/Category/{category.Id}");
     }
 }

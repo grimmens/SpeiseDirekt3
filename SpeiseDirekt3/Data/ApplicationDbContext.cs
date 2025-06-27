@@ -30,6 +30,7 @@ namespace SpeiseDirekt3.Data
             builder.Entity<Menu>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<QRCode>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<TimeTableEntry>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<CalendarEntry>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
 
             builder.Entity<ApplicationUser>()
                    .HasOne(u => u.TenantSubscription)
@@ -44,6 +45,7 @@ namespace SpeiseDirekt3.Data
         public DbSet<Menu> Menus { get; set; }
         public DbSet<QRCode> QRCodes { get; set; }
         public DbSet<TimeTableEntry> TimeTableEntries { get; set; }
+        public DbSet<CalendarEntry> CalendarEntries { get; set; }
         public DbSet<TenantSubscription> TenantSubscriptions { get; set; }
         public DbSet<Image> Images { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
