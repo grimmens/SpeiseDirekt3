@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeiseDirekt3.Data;
 
@@ -11,9 +12,11 @@ using SpeiseDirekt3.Data;
 namespace SpeiseDirekt3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250623220207_imagecontroller")]
+    partial class imagecontroller
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -220,39 +223,6 @@ namespace SpeiseDirekt3.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("SpeiseDirekt3.Model.CalendarEntry", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ApplicationUserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<DateOnly?>("EndDate")
-                        .HasColumnType("date");
-
-                    b.Property<Guid>("MenuId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("QRCodeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int?>("RecurringDayOfWeek")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("MenuId");
-
-                    b.HasIndex("QRCodeId");
-
-                    b.ToTable("CalendarEntries");
-                });
-
             modelBuilder.Entity("SpeiseDirekt3.Model.Category", b =>
                 {
                     b.Property<Guid>("Id")
@@ -377,9 +347,6 @@ namespace SpeiseDirekt3.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<bool>("IsCalendarBased")
-                        .HasColumnType("bit");
-
                     b.Property<bool>("IsTimeTableBased")
                         .HasColumnType("bit");
 
@@ -498,25 +465,6 @@ namespace SpeiseDirekt3.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("SpeiseDirekt3.Model.CalendarEntry", b =>
-                {
-                    b.HasOne("SpeiseDirekt3.Model.Menu", "Menu")
-                        .WithMany()
-                        .HasForeignKey("MenuId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SpeiseDirekt3.Model.QRCode", "QRCode")
-                        .WithMany("CalendarEntries")
-                        .HasForeignKey("QRCodeId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Menu");
-
-                    b.Navigation("QRCode");
-                });
-
             modelBuilder.Entity("SpeiseDirekt3.Model.Category", b =>
                 {
                     b.HasOne("SpeiseDirekt3.Model.Menu", "Menu")
@@ -595,8 +543,6 @@ namespace SpeiseDirekt3.Migrations
 
             modelBuilder.Entity("SpeiseDirekt3.Model.QRCode", b =>
                 {
-                    b.Navigation("CalendarEntries");
-
                     b.Navigation("TimeTableEntries");
                 });
 #pragma warning restore 612, 618

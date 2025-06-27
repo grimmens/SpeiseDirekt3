@@ -28,6 +28,7 @@ namespace SpeiseDirekt3
             builder.Services.AddScoped<IdentityUserAccessor>();
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+            builder.Services.AddScoped<IImageResizeService, ImageResizeService>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.ConfigureServices();
 
@@ -58,6 +59,8 @@ namespace SpeiseDirekt3
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
 
+            builder.Services.AddControllers();
+
             //Add required Services
 
             builder.Services.AddSingleton<IChatClient>(sp =>
@@ -68,7 +71,7 @@ namespace SpeiseDirekt3
                     .Build();
             });
             builder.Services.AddTransient<IMenuItemGenerator, AiMenuItemGenerator>();
-            builder.Services.AddScoped<IImageUploadService, ImageUploadService>();
+            builder.Services.AddScoped<IImageUploadService, ImageDatabaseUploadService>();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
             builder.Services.AddScoped<IAuthorizationHandler, PaidTenantHandler>();
 
@@ -91,6 +94,7 @@ namespace SpeiseDirekt3
 
             app.UseAntiforgery();
 
+            app.MapControllers();
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();

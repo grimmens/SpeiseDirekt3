@@ -1,11 +1,10 @@
-﻿@using QRCoder
-@inject NavigationManager NavManager
+﻿@inject NavigationManager NavManager
 
 
 <div class="qr-preview">
-    @if (!string.IsNullOrEmpty(_dataUrl))
+    @if (QrId != Guid.Empty)
     {
-        <img src="@_dataUrl"
+        <img src="@_imageUrl"
              alt="QR Code"
              width="@ThumbnailSize"
              style="cursor:pointer;"
@@ -29,7 +28,7 @@
                         aria-label="Close"></button>
             </div>
             <div class="modal-body text-center">
-                <img src="@_dataUrl"
+                <img src="@_imageUrl"
                      alt="QR Code Large"
                      class="img-fluid" />
             </div>
@@ -53,26 +52,5 @@
     /// </summary>
     [Parameter] public int ThumbnailSize { get; set; } = 80;
 
-    private string _dataUrl = string.Empty;
-
-    protected override void OnParametersSet()
-    {
-        if (QrId != Guid.Empty)
-        {
-            _dataUrl = GenerateQrDataUrl();
-        }
-    }
-
-    private string GenerateQrDataUrl()
-    {
-        // URL that the QR should point to
-        var targetUrl = $"{NavManager.BaseUri}qr/{QrId}";
-
-        using var qrGen = new QRCodeGenerator();
-        using var qrData = qrGen.CreateQrCode(targetUrl, QRCodeGenerator.ECCLevel.Q);
-        using var png = new PngByteQRCode(qrData);
-        var bytes = png.GetGraphic(20);
-
-        return $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
-    }
+    private string _imageUrl => $"{NavManager.BaseUri}Image/qr/{QrId}";
 }

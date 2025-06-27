@@ -1,40 +1,53 @@
 ﻿<nav aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
-        <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
-            <a class="page-link" @onclick="() => ChangePage(CurrentPage - 1)">
-                <span aria-hidden="true">&laquo;</span>
-            </a>
+    <ul class="flex justify-center space-x-1">
+        <li class="@(CurrentPage == 1 ? "opacity-50 cursor-not-allowed" : "")">
+            @if (CurrentPage > 1)
+            {
+                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight text-gray-700 bg-white border border-gray-400 rounded-l-lg hover:bg-gray-200 hover:text-gray-900 cursor-pointer" @onclick="() => ChangePage(CurrentPage - 1)">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            }
+            else
+            {
+                <span class="flex items-center justify-center px-3 py-2 text-sm leading-tight text-gray-400 bg-gray-100 border border-gray-300 rounded-l-lg pointer-events-none">
+                    <span aria-hidden="true">&laquo;</span>
+                </span>
+            }
         </li>
         @for (var i = 1; i <= TotalPages; i++)
         {
-            <li class="page-item @(CurrentPage == i ? "active" : "")">
-                <a class="page-link" @onclick="() => ChangePage(i)">@i</a>
+            var pageNumber = i; // Capture the current value of i
+            <li class="@(CurrentPage == pageNumber ? "" : "")">
+                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight @(CurrentPage == pageNumber ? "text-white bg-blue-600 border border-blue-600 hover:bg-blue-700 hover:border-blue-700" : "text-gray-700 bg-white border border-gray-400 hover:bg-gray-200 hover:text-gray-900") cursor-pointer" @onclick="() => ChangePage(pageNumber)">@pageNumber</a>
             </li>
         }
-        <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
-            <a class="page-link" @onclick="() => ChangePage(CurrentPage + 1)">
-                <span aria-hidden="true">&raquo;</span>
-            </a>
+        <li class="@(CurrentPage == TotalPages ? "opacity-50 cursor-not-allowed" : "")">
+            @if (CurrentPage < TotalPages)
+            {
+                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight text-gray-700 bg-white border border-gray-400 rounded-r-lg hover:bg-gray-200 hover:text-gray-900 cursor-pointer" @onclick="() => ChangePage(CurrentPage + 1)">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            }
+            else
+            {
+                <span class="flex items-center justify-center px-3 py-2 text-sm leading-tight text-gray-400 bg-gray-100 border border-gray-300 rounded-r-lg pointer-events-none">
+                    <span aria-hidden="true">&raquo;</span>
+                </span>
+            }
         </li>
     </ul>
 </nav>
-
 @code {
     [Parameter]
     public int CurrentPage { get; set; }
-
     [Parameter]
     public int PageSize { get; set; }
-
     [Parameter]
     public int TotalNumberOfItems { get; set; }
-
     [Parameter]
     public EventCallback<int> SetPage { get; set; }
-
     // Calculate total pages based on PageSize and TotalNumberOfItems.
     private int TotalPages => (int)Math.Ceiling((double)TotalNumberOfItems / PageSize);
-
     private async Task ChangePage(int page)
     {
         if (page >= 1 && page <= TotalPages)

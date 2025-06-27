@@ -16,7 +16,7 @@ namespace SpeiseDirekt3.ServiceImplementation
             _logger = logger;
         }
 
-        public async Task<string?> UploadImageAsync(IBrowserFile file, string folder = "menu-items")
+        public async Task<string?> UploadImageAsync(IBrowserFile file)
         {
             try
             {
@@ -27,7 +27,7 @@ namespace SpeiseDirekt3.ServiceImplementation
                 }
 
                 // Create upload directory if it doesn't exist
-                var uploadPath = Path.Combine(_environment.WebRootPath, "uploads", folder);
+                var uploadPath = Path.Combine(_environment.WebRootPath, "uploads", "menu-items");
                 Directory.CreateDirectory(uploadPath);
 
                 // Generate unique filename
@@ -40,7 +40,7 @@ namespace SpeiseDirekt3.ServiceImplementation
                 await file.OpenReadStream(MaxFileSize).CopyToAsync(stream);
 
                 // Return relative path for database storage
-                return $"uploads/{folder}/{fileName}";
+                return $"uploads/menu-items/{fileName}";
             }
             catch (Exception ex)
             {
