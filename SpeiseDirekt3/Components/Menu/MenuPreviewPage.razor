@@ -1,1 +1,54 @@
-﻿
+﻿@page "/menu/preview/{id}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Data
+@using SpeiseDirekt3.Model
+@inject ApplicationDbContext DbContext
+@inject NavigationManager NavManager
+@layout MenuLayout
+@attribute [Authorize]
+
+<!-- Content wrapper with top padding to account for fixed banner -->
+<div class="">
+
+@if (loading)
+{
+    <p>Loading menu...</p>
+}
+else if (menu == null)
+{
+    <div class="alert alert-danger mt-5 text-center">
+        <h4>Menu not found</h4>
+        <p>This menu does not exist or has been deleted.</p>
+        <a href="/" class="btn btn-primary">Go Home</a>
+    </div>
+}
+else
+{
+    <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" />
+}
+
+</div>
+
+@code {
+    [Parameter] public string Id { get; set; } = string.Empty;
+    
+    private Menu? menu;
+    private bool loading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Guid.TryParse(Id, out var menuId))
+        {
+            menu = await DbContext.Menus
+                .Include(m => m.Categories)
+                    .ThenInclude(c => c.MenuItems)
+                .AsNoTracking()
+                .Where(m => m.Id == menuId)
+                .FirstOrDefaultAsync();
+        }
+            
+        loading = false;
+        await InvokeAsync(StateHasChanged);
+    }
+}

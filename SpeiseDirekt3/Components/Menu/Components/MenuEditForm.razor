@@ -27,14 +27,14 @@
                     <label class="form-label me-2" for="themeSelect">Design Theme</label>
 
                     <button type="button" class="btn btn-outline-secondary me-1"
-                            @onclick="() => ChangeTheme(-1)">
+                    @onclick="() => ChangeTheme(-1)">
                         ←
                     </button>
 
                     <InputSelect @bind-Value="Menu.Theme"
-                                 class="form-select me-1"
-                                 id="themeSelect"
-                                 style="width: auto; display: inline-block;">
+                    class="form-select me-1"
+                    id="themeSelect"
+                    style="width: auto; display: inline-block;">
                         @foreach (var theme in Enum.GetValues<DesignTheme>())
                         {
                             <option value="@theme">@theme</option>
@@ -42,7 +42,7 @@
                     </InputSelect>
 
                     <button type="button" class="btn btn-outline-secondary"
-                            @onclick="() => ChangeTheme(+1)">
+                    @onclick="() => ChangeTheme(+1)">
                         →
                     </button>
                 </div>
@@ -67,9 +67,9 @@
         </div>
         <div class="col-md-6">
             @if (Menu != null)
-            { 
-                <h1>Preview</h1>
-                <MenuDisplayComponent Menu="Menu" />
+            {
+                <h1 class="text-2xl font-semibold text-gray-800 mb-4">Preview</h1>
+                <MenuDisplayComponent Preview="true" Menu="Menu" />
             }
         </div>
     </div>
