@@ -1,0 +1,81 @@
+﻿<div class="p-4 max-w-screen-md mx-auto">
+    <!-- Search Input -->
+    <div class="flex items-center bg-gray-100 px-4 py-2 rounded-full mb-6">
+        <button @onclick="CloseSearch" class="text-gray-500 mr-2">
+            <span class="material-icons">arrow_back</span>
+        </button>
+        <input type="text"
+               class="bg-transparent w-full outline-none text-gray-800"
+               placeholder="Search for items..."
+               @bind-value="SearchText"
+               @bind-value:event="oninput" />
+        <button @onclick="ClearSearch" class="text-gray-500">
+            <span class="material-icons">close</span>
+        </button>
+    </div>
+    <!-- Filtered Items -->
+    @if (FilteredCategories.Any())
+    {
+        @foreach (var category in FilteredCategories)
+        {
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">@category.Name</h3>
+                @foreach (var item in category.MenuItems!)
+                {
+                    <div class="flex items-center py-3 mb-2 cursor-pointer"
+                    @onclick="() => OnItemSelected.InvokeAsync(item)">
+                        @if (!string.IsNullOrWhiteSpace(item.ImagePath))
+                        {
+                            <img src="@item.ImagePath"
+                            alt="@item.Name"
+                            class="w-14 h-14 object-cover rounded-lg flex-shrink-0 mr-4" />
+                        }
+                        else
+                        {
+                            <!-- Grey placeholder block for items without images -->
+                            <div class="w-14 h-14 bg-gray-300 rounded-lg flex-shrink-0 mr-4"></div>
+                        }
+                        <span class="text-gray-900 text-base font-medium flex-1">@item.Name</span>
+                    </div>
+                }
+            </div>
+        }
+    }
+    else
+    {
+        <p class="text-gray-500">No matching items found.</p>
+    }
+</div>
+@code {
+    [Parameter] public Menu? Menu { get; set; }
+    [Parameter] public EventCallback<MenuItem> OnItemSelected { get; set; }
+    private string searchText;
+    private string SearchText {
+        get
+        {
+            return searchText;
+        }
+        set
+        {
+            searchText = value;
+        }
+    }
+    private void ClearSearch() => SearchText = "";
+    private void CloseSearch()
+    {
+        // Optional: trigger close or navigate back
+    }
+    private IEnumerable<Category> FilteredCategories =>
+        string.IsNullOrWhiteSpace(SearchText)
+            ? Menu?.Categories?.Where(c => c.MenuItems?.Any() == true) ?? Enumerable.Empty<Category>()
+            : Menu?.Categories?
+                .Select(c => new Category
+                    {
+                        Name = c.Name,
+                        MenuItems = c.MenuItems?
+                                    .Where(i => i.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                                                i.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase))
+                                .ToList()
+                    })
+                .Where(c => c.MenuItems != null && c.MenuItems.Any()) ?? Enumerable.Empty<Category>();
+}
