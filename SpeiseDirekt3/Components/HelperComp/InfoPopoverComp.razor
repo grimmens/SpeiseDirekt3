@@ -1,0 +1,45 @@
+﻿@inject IJSRuntime JS
+
+<span @ref="_iconRef"
+      class="bi bi-info-circle text-muted ms-1"
+      role="button"
+      tabindex="0"
+      @onclick="ShowPopover"
+      @onclick:preventDefault
+      data-bs-toggle="popover"
+      data-bs-trigger="focus"
+      data-bs-html="true"
+      data-bs-placement="right"
+      title=""
+      data-bs-content="">
+</span>
+
+<div style="display:none;" @ref="_contentRef">
+    @Content
+</div>
+
+@code {
+    private ElementReference _iconRef;
+    private ElementReference _contentRef;
+    private IJSObjectReference? _module;
+
+    [Parameter]
+    public RenderFragment? Content { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            
+                await JS.InvokeVoidAsync("initPopover", _iconRef, _contentRef);
+            
+        }
+    }
+
+    private async Task ShowPopover()
+    {
+        
+            await JS.InvokeVoidAsync("showPopover", _iconRef);
+        
+    }
+}

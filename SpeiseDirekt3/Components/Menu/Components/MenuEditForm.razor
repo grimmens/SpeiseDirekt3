@@ -22,7 +22,24 @@
                     <InputText @bind-Value="Menu.Description" class="form-control" id="menuDesc" placeholder="Description" />
                     <label for="menuDesc">Description</label>
                 </div>
-
+                <div class="mb-3">
+                    <label class="form-label" for="languageSelect">
+                        Language
+                        <SpeiseDirekt3.Components.HelperComp.InfoPopoverComp>
+                            <Content>
+                                This setting defines the language in which your menu content is written, and will be automatically translated from.
+                            </Content>
+                        </SpeiseDirekt3.Components.HelperComp.InfoPopoverComp>
+                    </label>
+                    <InputSelect @bind-Value="Menu.Language"
+                    class="form-select"
+                    id="languageSelect">
+                        @foreach (var language in Enum.GetValues<MenuLanguage>())
+                        {
+                            <option value="@language">@language</option>
+                        }
+                    </InputSelect>
+                </div>
                 <div class="d-flex align-items-center mb-3">
                     <label class="form-label me-2" for="themeSelect">Design Theme</label>
 
@@ -138,6 +155,17 @@
         // Move forward/back, wrapping around
         var nextIndex = (currentIndex + direction + themes.Count) % themes.Count;
         Menu.Theme = themes[nextIndex];
+    }
+
+    void ChangeLanguage(int direction)
+    {
+        // Get all theme values
+        var themes = Enum.GetValues<MenuLanguage>().Cast<MenuLanguage>().ToList();
+        var currentIndex = themes.IndexOf(Menu.Language);
+
+        // Move forward/back, wrapping around
+        var nextIndex = (currentIndex + direction + themes.Count) % themes.Count;
+        Menu.Language = themes[nextIndex];
     }
 
     private void Cancel()

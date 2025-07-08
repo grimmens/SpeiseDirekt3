@@ -5,6 +5,7 @@ using SpeiseDirekt3.Model;
 using SpeiseDirekt3.ServiceInterface;
 using SpeiseDirekt3.Components.Account;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Reflection.Emit;
 
 namespace SpeiseDirekt3.Data
 {
@@ -37,6 +38,13 @@ namespace SpeiseDirekt3.Data
                    .WithOne(ts => ts.Tenant)
                    .HasForeignKey<TenantSubscription>(ts => ts.TenantId)
                    .OnDelete(DeleteBehavior.Cascade);
+            builder.Entity<TranslationCache>(entity =>
+            {
+                entity.HasIndex(e => new { e.SourceLanguage, e.TargetLanguage });
+                entity.HasIndex(e => e.LastUsedAt);
+                entity.HasIndex(e => e.CreatedAt);
+            });
+
 
             base.OnModelCreating(builder);
         }
@@ -47,6 +55,7 @@ namespace SpeiseDirekt3.Data
         public DbSet<TimeTableEntry> TimeTableEntries { get; set; }
         public DbSet<CalendarEntry> CalendarEntries { get; set; }
         public DbSet<TenantSubscription> TenantSubscriptions { get; set; }
+        public DbSet<TranslationCache> TranslationCaches { get; set; }
         public DbSet<Image> Images { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
         {

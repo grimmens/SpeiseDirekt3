@@ -30,6 +30,17 @@ export function scrollToCategory(categoryName, showStickyNav) {
     }
 }
 
+export function scrollToAnyElement(element) {
+    if (element) {
+        const headerHeight = showStickyNav ? 60 : 0;
+        const elementPosition = element.offsetTop - headerHeight;
+        window.scrollTo({
+            top: elementPosition,
+            behavior: 'instant'
+        });
+    }
+}
+
 function handleScroll() {
     if (!dotNetRef || !categoryGridRef) return;
 
