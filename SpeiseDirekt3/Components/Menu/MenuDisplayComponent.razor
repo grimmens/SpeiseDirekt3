@@ -3,14 +3,9 @@
 
 @if (Menu != null)
 {
-    if (Menu.ComplexNavigation)
-    {
-        <ComplexMenuDisplayComp Preview="Preview" Menu="Menu" />
-    }
-    else
-    {
-        <SimpleMenuDisplayComp Menu="Menu" />
-    }
+    <ComplexMenuDisplayComp Preview="Preview" Menu="Menu" />
+    
+    @* <SimpleMenuDisplayComp Menu="Menu" /> *@
 }
 
 @code {

@@ -64,7 +64,6 @@ namespace SpeiseDirekt3.Model
         public string Description { get; set; } = string.Empty;
 
         public DesignTheme Theme { get; set; } = DesignTheme.Modern;
-        public bool ComplexNavigation { get; set; }
         public ICollection<Category>? Categories { get; set; }
         public Guid ApplicationUserId { get; set; }
         public MenuLanguage Language { get; set; } = MenuLanguage.German;

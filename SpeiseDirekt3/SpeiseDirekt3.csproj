@@ -6,7 +6,6 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>aspnet-SpeiseDirekt3-7fd3d807-af41-4c98-8305-01e41c8da8f8</UserSecretsId>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Azure.AI.Translation.Text" Version="1.0.0" />
     <PackageReference Include="BytexDigital.Blazor.Components.CookieConsent" Version="1.2.1" />
@@ -23,3 +22,4 @@
   </ItemGroup>
 
 </Project>
+

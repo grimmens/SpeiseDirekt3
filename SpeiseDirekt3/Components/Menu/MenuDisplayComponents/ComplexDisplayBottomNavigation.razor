@@ -8,13 +8,13 @@
                 </svg>
                 <span class="text-sm font-medium">Sprache</span>
             </button>
-            <button class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
+            @* <button class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
                 </svg>
                 <span class="text-sm font-medium">Filter</span>
-            </button>
-            <button class="p-2 text-gray-600 hover:text-gray-800 transition-colors">
+            </button> *@
+            <button class="p-2 text-gray-600 hover:text-gray-800 transition-colors" @onclick="TriggerShareLink">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
                 </svg>
@@ -28,7 +28,7 @@
             <button @onclick="() => showFilterModal = true" class="p-2 text-gray-600 hover:text-gray-800 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                 </svg>
             </button>
         </div>
@@ -44,9 +44,9 @@
 
             <!-- Search input -->
             <input type="text"
-                   class="w-full border px-3 py-2 mb-3 rounded"
-                   placeholder="Search..."
-                   @bind="languageSearch" />
+            class="w-full border px-3 py-2 mb-3 rounded"
+            placeholder="Search..."
+            @bind="languageSearch" />
 
             <!-- Filtered language list -->
             <ul>
@@ -54,7 +54,7 @@
                 {
                     <li class="mb-2">
                         <button class="w-full flex items-center gap-2 text-left px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded"
-                                @onclick="() => SelectLanguage(lang.Name)">
+                        @onclick="() => SelectLanguage(lang.Name)">
                             <span>@lang.Name</span>
                         </button>
                     </li>
@@ -63,7 +63,7 @@
 
             <!-- Close button -->
             <button class="mt-4 text-sm text-black-500 hover:text-black-800 bg-blue-200 p-2 rounded hover:bg-blue-300"
-                    @onclick="() => showLanguageMenu = false">
+            @onclick="() => showLanguageMenu = false">
                 Close
             </button>
         </div>
@@ -73,10 +73,10 @@
 {
     <div class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
         <div class="bg-white w-full max-w-screen-md max-h-[90vh] overflow-y-auto rounded-lg shadow-lg p-4">
-            <SearchForMenuItemsComp Menu="Menu" OnItemSelected="HandleMenuItemSelected" />
+            <SearchForMenuItemsComp Menu="Menu" OnItemSelected="HandleMenuItemSelected" OnAbort="HandleSearchClose" />
             <div class="flex justify-end mt-4">
                 <button class="text-sm text-gray-500 hover:text-gray-800 px-4 py-2 rounded border"
-                        @onclick="() => showFilterModal = false">
+                @onclick="() => showFilterModal = false">
                     Close
                 </button>
             </div>
@@ -91,8 +91,11 @@
     [Parameter] public EventCallback<string> OnFilterApplied { get; set; }
     [Parameter] public Menu? Menu { get; set; } // ← The menu to search in
     [Parameter] public EventCallback<MenuItem> OnMenuItemSelected { get; set; }
+    [Inject] private NavigationManager NavigationManager { get; set; }
+    [Inject] private IJSRuntime JS { get; set; }
     private bool showLanguageMenu = false;
     private string languageSearch = "";
+    private bool showFilterModal = false;
 
     private void ToggleLanguageMenu() => showLanguageMenu = !showLanguageMenu;
 
@@ -128,6 +131,12 @@
         }
     }
 
+    private async Task TriggerShareLink()
+    {
+        var uri = NavigationManager.Uri;
+        await JS.InvokeVoidAsync("shareLink", uri, "Check out this page!", "Shared from Blazor App");
+    }
+
     
 
     private async Task HandleMenuItemSelected(MenuItem item)
@@ -136,5 +145,9 @@
         await OnMenuItemSelected.InvokeAsync(item);
     }
 
-    private bool showFilterModal = false;
+    private async Task HandleSearchClose()
+    {
+        showFilterModal = false;
+    }
+
 }
