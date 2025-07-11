@@ -1,5 +1,4 @@
-﻿@page "/elissar-menu"
-@using Microsoft.AspNetCore.Components.Web
+﻿@using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
 @using SpeiseDirekt3.Model
 @layout MenuLayout
@@ -9,7 +8,7 @@
 <div class="relative min-h-screen bg-gray-50">
     @if (SelectedItem != null)
     {
-        <ComplexMenuDisplayMenuItemOverlayComp @bind-SelectedItem="SelectedItem" />
+        <ComplexMenuDisplayMenuItemOverlayComp SelectedItem="SelectedItem" SelectedItemChanged="e => SelectMenuItem(e)" />
     }
     <!-- Main Menu View -->
     <!-- Restaurant Header -->
@@ -53,15 +52,13 @@
                 }
             </div>
 
-            @if (Menu?.ComplexNavigation == true)
-            {
-                <button class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
-                    <span>mehr anzeigen</span>
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                </button>
-            }
+
+            <button class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
+                <span>mehr anzeigen</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -109,7 +106,7 @@
                             @foreach (var item in items)
                             {
                                 <div @ref="MenuItemReferences[item]" class="bg-white rounded-xl shadow-sm overflow-hidden cursor-pointer hover:shadow-md transition-all duration-200"
-                                @onclick="() => SelectedItem = item">
+                                     @onclick="() => SelectMenuItem(item)">
                                     <div class="aspect-square bg-gradient-to-br from-orange-100 to-green-100 relative overflow-hidden">
                                         @if (!string.IsNullOrEmpty(item.ImagePath))
                                         {
@@ -164,8 +161,8 @@
 </div>
 
 @code {
-    [Parameter] public Menu? Menu { get; set; }
-    [Parameter] public bool Preview { get; set; }
+        [Parameter] public Menu? Menu { get; set; }
+        [Parameter] public bool Preview { get; set; }
     private string activeCategory = "";
     private MenuItem? SelectedItem { get; set; }
     private bool showStickyNav = false;
@@ -203,7 +200,7 @@
     {
         if (firstRender && categories.Any())
         {
-            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/elissar-menu.js");
+            jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/complex-menu.js");
             dotNetRef = DotNetObjectReference.Create(this);
             await jsModule.InvokeVoidAsync("initialize", dotNetRef, categoryGridRef, categoryElements, categories.ToArray());
         }
@@ -248,13 +245,18 @@
         return category?.MenuItems?.ToList() ?? new List<MenuItem>();
     }
 
+
     private async Task SelectMenuItem(MenuItem? menuItem)
     {
+        SelectedItem = menuItem;
         if(menuItem != null)
         {
-            SelectedItem = menuItem;
             var elem = MenuItemReferences[menuItem];
-            await jsModule.InvokeVoidAsync("scrollToAnyElement", elem);
+            await jsModule.InvokeVoidAsync("modalHelpers.disableBodyScroll");
+            await jsModule.InvokeVoidAsync("scrollToAnyElement", elem, showStickyNav);
+        } else
+        {
+            await jsModule.InvokeVoidAsync("modalHelpers.enableBodyScroll");
         }
     }
 }

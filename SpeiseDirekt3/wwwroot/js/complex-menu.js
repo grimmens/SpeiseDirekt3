@@ -5,7 +5,10 @@ let categoryGridRef = null;
 let categoryElements = [];
 let categories = [];
 let scrollHandler = null;
-
+export let modalHelpers = {
+    disableBodyScroll: () => document.body.classList.add('overflow-hidden'),
+    enableBodyScroll: () => document.body.classList.remove('overflow-hidden')
+};
 export function initialize(dotNetReference, categoryGrid, categoryElementRefs, categoryNames) {
     dotNetRef = dotNetReference;
     categoryGridRef = categoryGrid;
@@ -30,13 +33,14 @@ export function scrollToCategory(categoryName, showStickyNav) {
     }
 }
 
-export function scrollToAnyElement(element) {
+
+export function scrollToAnyElement(element, showStickyNav) {
     if (element) {
         const headerHeight = showStickyNav ? 60 : 0;
         const elementPosition = element.offsetTop - headerHeight;
         window.scrollTo({
             top: elementPosition,
-            behavior: 'instant'
+            behavior: 'smooth'
         });
     }
 }

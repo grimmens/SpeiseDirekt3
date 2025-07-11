@@ -1,16 +1,15 @@
 ﻿<div class="p-4 max-w-screen-md mx-auto">
     <!-- Search Input -->
     <div class="flex items-center bg-gray-100 px-4 py-2 rounded-full mb-6">
-        <button @onclick="CloseSearch" class="text-gray-500 mr-2">
-            <span class="material-icons">arrow_back</span>
-        </button>
         <input type="text"
-               class="bg-transparent w-full outline-none text-gray-800"
-               placeholder="Search for items..."
-               @bind-value="SearchText"
-               @bind-value:event="oninput" />
+        class="bg-transparent w-full outline-none text-gray-800"
+        placeholder="Search for items..."
+        @bind-value="SearchText"
+        @bind-value:event="oninput" />
         <button @onclick="ClearSearch" class="text-gray-500">
-            <span class="material-icons">close</span>
+            <span class="material-symbols-outlined">
+                close
+            </span>
         </button>
     </div>
     <!-- Filtered Items -->
@@ -49,6 +48,7 @@
 @code {
     [Parameter] public Menu? Menu { get; set; }
     [Parameter] public EventCallback<MenuItem> OnItemSelected { get; set; }
+    [Parameter] public EventCallback OnAbort { get; set; }
     private string searchText;
     private string SearchText {
         get
@@ -63,7 +63,8 @@
     private void ClearSearch() => SearchText = "";
     private void CloseSearch()
     {
-        // Optional: trigger close or navigate back
+        if(OnAbort.HasDelegate)
+            OnAbort.InvokeAsync();
     }
     private IEnumerable<Category> FilteredCategories =>
         string.IsNullOrWhiteSpace(SearchText)

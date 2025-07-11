@@ -2,9 +2,11 @@
 @if (SelectedItem != null)
 {
     <!-- Modal Backdrop -->
-    <div class="fixed inset-0 z-[9999] bg-black bg-opacity-50 flex items-center justify-center" @onclick="CloseModal">
+    <div class="fixed inset-0 z-[9999] bg-black bg-opacity-50 overflow-y-auto" @onclick="CloseModal">
+        <div class="min-h-full flex flex-col items-center justify-start pt-[env(safe-area-inset-top,2rem)] " @onclick:stopPropagation>
+
         <!-- Modal Content -->
-        <div class="bg-white max-w-2xl w-full max-h-screen overflow-y-auto rounded-xl shadow-lg" style="max-width:500px;" @onclick:stopPropagation>
+            <div class="bg-white max-w-2xl w-full rounded-xl shadow-lg overflow-hidden" style="max-width:500px;" @onclick:stopPropagation>
 
             <!-- Header -->
             <div class="px-4 py-4 flex items-center justify-between border-b sticky top-0 bg-white z-10">
@@ -34,7 +36,7 @@
             </div>
 
             <!-- Item Details -->
-            <div class="p-6">
+            <div class="p-6 mb-4">
                 <div class="mb-4">
                     <span class="text-sm text-gray-500 uppercase tracking-wide">@(SelectedItem.Category?.Name ?? "KATEGORIE")</span>
                 </div>
@@ -53,6 +55,7 @@
             </div>
 
         </div>
+    </div>
     </div>
 }
 

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(rm:*)",
       "Bash(grep:*)",
-      "Bash(dotnet build)"
+      "Bash(dotnet build)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

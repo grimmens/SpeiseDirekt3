@@ -44,11 +44,11 @@ namespace SpeiseDirekt3
                     policy.Requirements.Add(new PaidTenantRequirement()));
             });
 
-            var connectionString = builder.Configuration.GetConnectionString("server2") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            var connectionString = builder.Configuration.GetConnectionString("server2") ?? throw new InvalidOperationException("Connection string 'server' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
-            options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            }, ServiceLifetime.Transient);
+                options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            });
 
             
 
