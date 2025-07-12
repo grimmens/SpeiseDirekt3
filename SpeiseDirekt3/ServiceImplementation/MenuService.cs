@@ -21,7 +21,7 @@ namespace SpeiseDirekt3.ServiceImplementation
             // QR-Code mitsamt Navigationen laden
             var qr = await _db.QRCodes
                 .IgnoreQueryFilters()
-                .AsSplitQuery()
+                .AsNoTracking()
                 .Include(q => q.Menu)
                 .ThenInclude(e => e.Categories)
                 .ThenInclude(e => e.MenuItems)
@@ -54,6 +54,7 @@ namespace SpeiseDirekt3.ServiceImplementation
         {
             return await _db.Menus
                 .IgnoreQueryFilters()
+                .AsNoTracking()
                 .Include(e => e.Categories)
                 .ThenInclude(e => e.MenuItems)
                 .SingleOrDefaultAsync(e => e.Id == menuId);

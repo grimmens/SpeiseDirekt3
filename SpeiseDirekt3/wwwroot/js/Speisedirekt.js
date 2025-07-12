@@ -27,9 +27,9 @@ window.shareLink = async (url, title, text) => {
             });
             console.log('Content shared successfully');
         } catch (error) {
-            console.log('Error sharing:', error);
+            //console.log('Error sharing:', error);
             // Fallback to copying to clipboard
-            fallbackShare(url);
+            //fallbackShare(url);
         }
     } else {
         // Fallback for desktop or unsupported browsers

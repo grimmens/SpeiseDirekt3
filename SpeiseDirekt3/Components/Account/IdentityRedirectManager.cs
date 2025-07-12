@@ -19,15 +19,42 @@ namespace SpeiseDirekt3.Components.Account
         public void RedirectTo(string? uri)
         {
             uri ??= "";
-
+            
             // Prevent open redirects.
             if (!Uri.IsWellFormedUriString(uri, UriKind.Relative))
             {
-                uri = navigationManager.ToBaseRelativePath(uri);
+                // Handle absolute URIs that might have different schemes
+                if (Uri.TryCreate(uri, UriKind.Absolute, out var absoluteUri))
+                {
+                    // Check if it's the same host but different scheme
+                    var baseUri = new Uri(navigationManager.BaseUri);
+                    if (absoluteUri.Host.Equals(baseUri.Host, StringComparison.OrdinalIgnoreCase))
+                    {
+                        // Use the path and query from the absolute URI
+                        uri = absoluteUri.PathAndQuery;
+                    }
+                    else
+                    {
+                        // External URL - redirect to home for security
+                        uri = "/";
+                    }
+                }
+                else
+                {
+                    // If it's not a well-formed relative URI and not a valid absolute URI,
+                    // try to convert it anyway (this was the original behavior)
+                    try
+                    {
+                        uri = navigationManager.ToBaseRelativePath(uri);
+                    }
+                    catch (ArgumentException)
+                    {
+                        // If conversion fails, redirect to home
+                        uri = "/";
+                    }
+                }
             }
-
-            // During static rendering, NavigateTo throws a NavigationException which is handled by the framework as a redirect.
-            // So as long as this is called from a statically rendered Identity component, the InvalidOperationException is never thrown.
+            
             navigationManager.NavigateTo(uri);
             throw new InvalidOperationException($"{nameof(IdentityRedirectManager)} can only be used during static rendering.");
         }

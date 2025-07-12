@@ -1,6 +1,6 @@
 ﻿@using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt3.Data
-@inject ApplicationDbContext Context
+@inject IServiceProvider ServiceProvider
 
 <span class="inline-flex items-center text-sm text-gray-600">
     @if (isLoading)
@@ -26,7 +26,9 @@
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
-        count = await Context.MenuItems.CountAsync(m => m.CategoryId == CategoryId);
+        using var scope = ServiceProvider.CreateScope();
+        using var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        count = await context.MenuItems.CountAsync(m => m.CategoryId == CategoryId);
         isLoading = false;
     }
 }
