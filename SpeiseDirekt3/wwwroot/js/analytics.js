@@ -53,6 +53,11 @@ const commonOptions = {
 };
 
 function renderAnalyticsCharts(userTrafficData, menuTrafficData, menuItemTrafficData) {
+    console.log('renderAnalyticsCharts called with data:');
+    console.log('userTrafficData:', userTrafficData);
+    console.log('menuTrafficData:', menuTrafficData);
+    console.log('menuItemTrafficData:', menuItemTrafficData);
+
     renderUserTrafficChart(userTrafficData);
     renderMenuTrafficChart(menuTrafficData);
     renderMenuItemTrafficChart(menuItemTrafficData);
@@ -93,7 +98,10 @@ function renderUserTrafficChart(userTrafficData) {
 
     const datasets = topUsers.map((user, index) => ({
         label: `User ${user.sessionId.substring(0, 8)}...`,
-        data: user.data.map((d, idx) => ({ x: idx, y: d.count })),
+        data: user.data.map(d => ({
+            x: new Date(d.date).getTime(),
+            y: d.count
+        })),
         borderColor: borderColors[index % borderColors.length],
         backgroundColor: colors[index % colors.length],
         tension: 0.4,
@@ -112,15 +120,34 @@ function renderUserTrafficChart(userTrafficData) {
                 title: {
                     display: true,
                     text: 'User Activity Over Time'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.dataset.label || '';
+                            const y = context.parsed.y;
+                            return `${label}: ${y}`;
+                        },
+                        title: function (context) {
+                            const x = context[0].parsed.x;
+                            return `Date: ${new Date(x).toLocaleDateString()}`;
+                        }
+                    }
                 }
             },
             scales: {
                 ...commonOptions.scales,
                 x: {
                     ...commonOptions.scales.x,
+                    type: 'linear',
                     title: {
                         display: true,
-                        text: 'Days'
+                        text: 'Date'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return new Date(value).toLocaleDateString();
+                        }
                     }
                 }
             }
@@ -161,7 +188,10 @@ function renderMenuTrafficChart(menuTrafficData) {
     // Prepare data
     const datasets = menuTrafficData.map((menu, index) => ({
         label: menu.menuName,
-        data: menu.data.map((d, idx) => ({ x: idx, y: d.count })),
+        data: menu.data.map(d => ({
+            x: new Date(d.date).getTime(),
+            y: d.count
+        })),
         borderColor: borderColors[index % borderColors.length],
         backgroundColor: colors[index % colors.length],
         tension: 0.4,
@@ -180,15 +210,34 @@ function renderMenuTrafficChart(menuTrafficData) {
                 title: {
                     display: true,
                     text: 'Menu Views Over Time'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.dataset.label || '';
+                            const y = context.parsed.y;
+                            return `${label}: ${y}`;
+                        },
+                        title: function (context) {
+                            const x = context[0].parsed.x;
+                            return `Date: ${new Date(x).toLocaleDateString()}`;
+                        }
+                    }
                 }
             },
             scales: {
                 ...commonOptions.scales,
                 x: {
                     ...commonOptions.scales.x,
+                    type: 'linear',
                     title: {
                         display: true,
-                        text: 'Days'
+                        text: 'Date'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return new Date(value).toLocaleDateString();
+                        }
                     }
                 }
             }
@@ -219,6 +268,19 @@ function renderMenuItemTrafficChart(menuItemTrafficData) {
                     title: {
                         display: true,
                         text: 'Menu Item Clicks Over Time - No Data'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const label = context.dataset.label || '';
+                                const y = context.parsed.y;
+                                return `${label}: ${y}`;
+                            },
+                            title: function (context) {
+                                const x = context[0].parsed.x;
+                                return `Date: ${new Date(x).toLocaleDateString()}`;
+                            }
+                        }
                     }
                 }
             }
@@ -231,7 +293,10 @@ function renderMenuItemTrafficChart(menuItemTrafficData) {
 
     const datasets = topItems.map((item, index) => ({
         label: item.menuItemName,
-        data: item.data.map((d, idx) => ({ x: idx, y: d.count })),
+        data: item.data.map(d => ({
+            x: new Date(d.date).getTime(),
+            y: d.count
+        })),
         borderColor: borderColors[index % borderColors.length],
         backgroundColor: colors[index % colors.length],
         tension: 0.4,
@@ -250,15 +315,34 @@ function renderMenuItemTrafficChart(menuItemTrafficData) {
                 title: {
                     display: true,
                     text: 'Menu Item Clicks Over Time'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const label = context.dataset.label || '';
+                            const y = context.parsed.y;
+                            return `${label}: ${y}`;
+                        },
+                        title: function (context) {
+                            const x = context[0].parsed.x;
+                            return `Date: ${new Date(x).toLocaleDateString()}`;
+                        }
+                    }
                 }
             },
             scales: {
                 ...commonOptions.scales,
                 x: {
                     ...commonOptions.scales.x,
+                    type: 'linear',
                     title: {
                         display: true,
-                        text: 'Days'
+                        text: 'Date'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return new Date(value).toLocaleDateString();
+                        }
                     }
                 }
             }

@@ -100,7 +100,7 @@ namespace SpeiseDirekt3.ServiceImplementation
                 Expires = DateTimeOffset.UtcNow.AddDays(30),
                 HttpOnly = true,
                 Secure = httpContext.Request.IsHttps,
-                SameSite = SameSiteMode.Lax
+                SameSite = SameSiteMode.Strict
             };
             
             httpContext.Response.Cookies.Append(sessionCookieName, newSessionId, cookieOptions);

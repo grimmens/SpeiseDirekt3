@@ -28,9 +28,13 @@
                         class="@GetTimeRangeButtonClass(TimeRange.Last7Days)">
                     Last 7 Days
                 </button>
-                <button @onclick="() => SetTimeRange(TimeRange.Last30Days)" 
+                <button @onclick="() => SetTimeRange(TimeRange.Last30Days)"
                         class="@GetTimeRangeButtonClass(TimeRange.Last30Days)">
                     Last 30 Days
+                </button>
+                <button @onclick="RenderCharts"
+                        class="px-4 py-2 text-sm font-medium rounded-lg bg-green-600 text-white hover:bg-green-700">
+                    Refresh Charts
                 </button>
             </div>
         </div>
@@ -137,6 +141,7 @@
 @code {
     private TimeRange selectedTimeRange = TimeRange.Last7Days;
     private bool isLoading = true;
+    private bool initialRenderComplete = false;
     
     private List<UserTrafficData> userTrafficData = new();
     private List<MenuTrafficData> menuTrafficData = new();
@@ -152,9 +157,18 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (firstRender && !initialRenderComplete)
         {
+            // Wait for initial data loading to complete
+            while (isLoading)
+            {
+                await Task.Delay(100);
+            }
+
+            // Add a small delay to ensure DOM is ready
+            await Task.Delay(200);
             await RenderCharts();
+            initialRenderComplete = true;
         }
     }
 
@@ -188,6 +202,10 @@
         {
             isLoading = false;
             StateHasChanged();
+
+            // Render charts after data is loaded and UI is updated
+            await Task.Delay(500); // Give more time for DOM to update
+            await RenderCharts();
         }
     }
 
@@ -195,8 +213,35 @@
     {
         if (!isLoading)
         {
-            await JSRuntime.InvokeVoidAsync("renderAnalyticsCharts", 
-                userTrafficData, menuTrafficData, menuItemTrafficData);
+            Console.WriteLine($"RenderCharts called with {userTrafficData.Count} users, {menuTrafficData.Count} menus, {menuItemTrafficData.Count} items");
+
+            // Debug: Print actual data
+            if (menuItemTrafficData?.Any() == true)
+            {
+                Console.WriteLine("MenuItemTrafficData details:");
+                foreach (var item in menuItemTrafficData.Take(2))
+                {
+                    Console.WriteLine($"  Item: {item.MenuItemName}, Data points: {item.Data?.Count ?? 0}");
+                    if (item.Data?.Any() == true)
+                    {
+                        foreach (var dataPoint in item.Data.Take(3))
+                        {
+                            Console.WriteLine($"    Date: {dataPoint.Date}, Count: {dataPoint.Count}");
+                        }
+                    }
+                }
+            }
+
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("renderAnalyticsCharts",
+                    userTrafficData, menuTrafficData, menuItemTrafficData);
+                Console.WriteLine("JSRuntime.InvokeVoidAsync completed successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error calling renderAnalyticsCharts: {ex.Message}");
+            }
         }
     }
 

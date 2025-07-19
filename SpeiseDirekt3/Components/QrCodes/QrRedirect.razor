@@ -4,6 +4,7 @@
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
 @inject ITrackingService TrackingService
+@inject IHttpContextAccessor HttpContextAccessor
 @layout MenuLayout
 
 @if (loading)
@@ -31,6 +32,7 @@ else if (qr == null)
 
     protected override async Task OnInitializedAsync()
     {
+        var isPreRendering = !HttpContextAccessor.HttpContext.Response.HasStarted;
         qr = await DbContext.QRCodes
                 .IgnoreQueryFilters()
                 .AsNoTracking()
@@ -42,7 +44,10 @@ else if (qr == null)
         if (menu != null)
         {
             var sessionId = TrackingService.GetOrCreateSessionId();
-            await TrackingService.RecordMenuViewAsync(sessionId, menu.Id, QrId);
+            if (isPreRendering)
+            {
+                await TrackingService.RecordMenuViewAsync(sessionId, menu.Id, QrId);
+            }
         }
 
         loading = false;
