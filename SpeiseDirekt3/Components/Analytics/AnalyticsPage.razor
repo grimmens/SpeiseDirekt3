@@ -1,0 +1,210 @@
+@page "/analytics"
+@using Microsoft.AspNetCore.Authorization
+@using SpeiseDirekt3.ServiceInterface
+@inject IAnalyticsService AnalyticsService
+@inject IJSRuntime JSRuntime
+@inherits PaidTenantComponentBase
+@attribute [Authorize]
+
+<PageTitle>Analytics - Speise-Direkt</PageTitle>
+
+<div class="container-fluid px-4 py-6">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Analytics Dashboard</h1>
+        <p class="text-gray-600">Track your menu performance and user engagement</p>
+    </div>
+
+    <!-- Time Range Selector -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <h2 class="text-lg font-semibold text-gray-900">Time Range</h2>
+            <div class="flex gap-2">
+                <button @onclick="() => SetTimeRange(TimeRange.Last24Hours)" 
+                        class="@GetTimeRangeButtonClass(TimeRange.Last24Hours)">
+                    Last 24 Hours
+                </button>
+                <button @onclick="() => SetTimeRange(TimeRange.Last7Days)" 
+                        class="@GetTimeRangeButtonClass(TimeRange.Last7Days)">
+                    Last 7 Days
+                </button>
+                <button @onclick="() => SetTimeRange(TimeRange.Last30Days)" 
+                        class="@GetTimeRangeButtonClass(TimeRange.Last30Days)">
+                    Last 30 Days
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="flex justify-center items-center py-12">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+    }
+    else
+    {
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+            <!-- Traffic per User Chart -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Traffic per User</h3>
+                    <div class="text-sm text-gray-500">
+                        @userTrafficData.Count users tracked
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="userTrafficChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Traffic per Menu Chart -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Traffic per Menu</h3>
+                    <div class="text-sm text-gray-500">
+                        @menuTrafficData.Count menus tracked
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="menuTrafficChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Traffic per Menu Item Chart -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 xl:col-span-2">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900">Traffic per Menu Item</h3>
+                    <div class="text-sm text-gray-500">
+                        @menuItemTrafficData.Count items tracked
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="menuItemTrafficChart" width="800" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Views</p>
+                        <p class="text-2xl font-bold text-gray-900">@totalViews</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Clicks</p>
+                        <p class="text-2xl font-bold text-gray-900">@totalClicks</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Unique Users</p>
+                        <p class="text-2xl font-bold text-gray-900">@userTrafficData.Count</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private TimeRange selectedTimeRange = TimeRange.Last7Days;
+    private bool isLoading = true;
+    
+    private List<UserTrafficData> userTrafficData = new();
+    private List<MenuTrafficData> menuTrafficData = new();
+    private List<MenuItemTrafficData> menuItemTrafficData = new();
+    
+    private int totalViews = 0;
+    private int totalClicks = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await RenderCharts();
+        }
+    }
+
+    private async Task SetTimeRange(TimeRange timeRange)
+    {
+        selectedTimeRange = timeRange;
+        await LoadData();
+        await RenderCharts();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        try
+        {
+            userTrafficData = await AnalyticsService.GetTrafficPerUserAsync(selectedTimeRange);
+            menuTrafficData = await AnalyticsService.GetTrafficPerMenuAsync(selectedTimeRange);
+            menuItemTrafficData = await AnalyticsService.GetTrafficPerMenuItemAsync(selectedTimeRange);
+
+            totalViews = menuTrafficData.Sum(m => m.TotalViews);
+            totalClicks = menuItemTrafficData.Sum(mi => mi.TotalClicks);
+        }
+        catch (Exception ex)
+        {
+            // Log error
+            Console.WriteLine($"Error loading analytics data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RenderCharts()
+    {
+        if (!isLoading)
+        {
+            await JSRuntime.InvokeVoidAsync("renderAnalyticsCharts", 
+                userTrafficData, menuTrafficData, menuItemTrafficData);
+        }
+    }
+
+    private string GetTimeRangeButtonClass(TimeRange timeRange)
+    {
+        var baseClass = "px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200";
+        return selectedTimeRange == timeRange
+            ? $"{baseClass} bg-blue-600 text-white"
+            : $"{baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200";
+    }
+}

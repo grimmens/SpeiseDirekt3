@@ -3,6 +3,7 @@
 @using SpeiseDirekt3.ServiceInterface
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
+@inject ITrackingService TrackingService
 @layout MenuLayout
 
 @if (loading)
@@ -36,6 +37,14 @@ else if (qr == null)
                 .Where(q => q.Id == QrId)
                 .FirstOrDefaultAsync();
         menu = await MenuService.GetMenuForQRCodeAsync(QrId);
+
+        // Track menu view if menu was found
+        if (menu != null)
+        {
+            var sessionId = TrackingService.GetOrCreateSessionId();
+            await TrackingService.RecordMenuViewAsync(sessionId, menu.Id, QrId);
+        }
+
         loading = false;
         await InvokeAsync(StateHasChanged);
     }

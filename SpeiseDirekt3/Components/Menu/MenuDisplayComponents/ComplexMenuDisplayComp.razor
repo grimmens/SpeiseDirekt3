@@ -1,8 +1,10 @@
 ﻿@using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
 @using SpeiseDirekt3.Model
+@using SpeiseDirekt3.ServiceInterface
 @layout MenuLayout
 @inject IJSRuntime JSRuntime
+@inject ITrackingService TrackingService
 
 
 <div class="relative min-h-screen bg-gray-50">
@@ -251,6 +253,13 @@
         SelectedItem = menuItem;
         if(menuItem != null)
         {
+            // Track menu item click
+            if (Menu != null && !Preview)
+            {
+                var sessionId = TrackingService.GetOrCreateSessionId();
+                await TrackingService.RecordMenuItemClickAsync(sessionId, menuItem.Id, Menu.Id);
+            }
+
             var elem = MenuItemReferences[menuItem];
             await jsModule.InvokeVoidAsync("modalHelpers.disableBodyScroll");
             await jsModule.InvokeVoidAsync("scrollToAnyElement", elem, showStickyNav);

@@ -12,6 +12,8 @@ namespace SpeiseDirekt3.Infrastructure
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IMenuService, MenuService>();
+            services.AddScoped<ITrackingService, TrackingService>();
+            services.AddScoped<IAnalyticsService, AnalyticsService>();
 
             services.AddCookieConsent(o =>
             {

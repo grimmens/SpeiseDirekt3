@@ -45,6 +45,45 @@ namespace SpeiseDirekt3.Data
                 entity.HasIndex(e => e.CreatedAt);
             });
 
+            // Configure tracking entities
+            builder.Entity<MenuView>(entity =>
+            {
+                entity.HasIndex(e => e.SessionId);
+                entity.HasIndex(e => e.MenuId);
+                entity.HasIndex(e => e.ViewedAt);
+                entity.HasIndex(e => new { e.SessionId, e.MenuId, e.ViewedAt });
+
+                // Configure foreign key relationships to avoid cascade conflicts
+                entity.HasOne(e => e.Menu)
+                      .WithMany()
+                      .HasForeignKey(e => e.MenuId)
+                      .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(e => e.QRCode)
+                      .WithMany()
+                      .HasForeignKey(e => e.QRCodeId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            builder.Entity<MenuItemClick>(entity =>
+            {
+                entity.HasIndex(e => e.SessionId);
+                entity.HasIndex(e => e.MenuItemId);
+                entity.HasIndex(e => e.MenuId);
+                entity.HasIndex(e => e.ClickedAt);
+                entity.HasIndex(e => new { e.SessionId, e.MenuItemId, e.ClickedAt });
+
+                // Configure foreign key relationships to avoid cascade conflicts
+                entity.HasOne(e => e.MenuItem)
+                      .WithMany()
+                      .HasForeignKey(e => e.MenuItemId)
+                      .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(e => e.Menu)
+                      .WithMany()
+                      .HasForeignKey(e => e.MenuId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
 
             base.OnModelCreating(builder);
         }
@@ -57,6 +96,8 @@ namespace SpeiseDirekt3.Data
         public DbSet<TenantSubscription> TenantSubscriptions { get; set; }
         public DbSet<TranslationCache> TranslationCaches { get; set; }
         public DbSet<Image> Images { get; set; }
+        public DbSet<MenuView> MenuViews { get; set; }
+        public DbSet<MenuItemClick> MenuItemClicks { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
         {
             if (e.Entry.Entity is IAppUserEntity entity)
