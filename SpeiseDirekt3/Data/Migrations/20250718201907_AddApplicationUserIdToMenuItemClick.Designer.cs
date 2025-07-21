@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SpeiseDirekt3.Data;
 
@@ -11,9 +12,11 @@ using SpeiseDirekt3.Data;
 namespace SpeiseDirekt3.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250718201907_AddApplicationUserIdToMenuItemClick")]
+    partial class AddApplicationUserIdToMenuItemClick
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -371,6 +374,9 @@ namespace SpeiseDirekt3.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("ClickedAt")
                         .HasColumnType("datetime2");
 
@@ -402,6 +408,8 @@ namespace SpeiseDirekt3.Migrations
                     b.HasIndex("MenuItemId");
 
                     b.HasIndex("SessionId");
+
+                    b.HasIndex("Id", "ApplicationUserId");
 
                     b.HasIndex("SessionId", "MenuItemId", "ClickedAt");
 

@@ -34,7 +34,7 @@ namespace SpeiseDirekt3.Model
     {
         public Guid Id { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Name is required.")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
    
         public ICollection<MenuItem>? MenuItems { get; set; }
         [ForeignKey(nameof(Menu))]
@@ -169,6 +169,57 @@ namespace SpeiseDirekt3.Model
         public DateTime LastUsedAt { get; set; } = DateTime.UtcNow;
 
         public int UsageCount { get; set; } = 1;
+    }
+
+    // Tracking entities for analytics
+    public class MenuView
+    {
+        public Guid Id { get; set; }
+
+        [Required]
+        [StringLength(128)]
+        public string SessionId { get; set; } = string.Empty;
+
+        [ForeignKey(nameof(Menu))]
+        public Guid MenuId { get; set; }
+        public Menu? Menu { get; set; }
+
+        [ForeignKey(nameof(QRCode))]
+        public Guid? QRCodeId { get; set; }
+        public QRCode? QRCode { get; set; }
+
+        public DateTime ViewedAt { get; set; } = DateTime.UtcNow;
+
+        [StringLength(45)] // IPv6 max length
+        public string? IpAddress { get; set; }
+
+        [StringLength(500)]
+        public string? UserAgent { get; set; }
+    }
+
+    public class MenuItemClick
+    {
+        public Guid Id { get; set; }
+
+        [Required]
+        [StringLength(128)]
+        public string SessionId { get; set; } = string.Empty;
+
+        [ForeignKey(nameof(MenuItem))]
+        public Guid MenuItemId { get; set; }
+        public MenuItem? MenuItem { get; set; }
+
+        [ForeignKey(nameof(Menu))]
+        public Guid MenuId { get; set; }
+        public Menu? Menu { get; set; }
+
+        public DateTime ClickedAt { get; set; } = DateTime.UtcNow;
+
+        [StringLength(45)] // IPv6 max length
+        public string? IpAddress { get; set; }
+
+        [StringLength(500)]
+        public string? UserAgent { get; set; }
     }
 
     public class QRCode : IAppUserEntity, IValidatableObject
@@ -334,8 +385,8 @@ namespace SpeiseDirekt3.Model
     public class Image
     {
         public Guid Id { get; set; }
-        public byte[] Content { get; set; }
-        public string MimeType { get; set; }
+        public byte[] Content { get; set; } = Array.Empty<byte>();
+        public string MimeType { get; set; } = string.Empty;
     }
 
     public class TenantSubscription
