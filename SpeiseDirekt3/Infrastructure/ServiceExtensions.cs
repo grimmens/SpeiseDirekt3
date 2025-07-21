@@ -14,7 +14,6 @@ namespace SpeiseDirekt3.Infrastructure
             services.AddScoped<IMenuService, MenuService>();
             services.AddScoped<ITrackingService, TrackingService>();
             services.AddScoped<IAnalyticsService, AnalyticsService>();
-            services.AddScoped<IAnalyticsTestDataService, AnalyticsTestDataService>();
             services.AddHttpClient();
 
             services.AddCookieConsent(o =>
