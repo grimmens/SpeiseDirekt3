@@ -34,7 +34,7 @@ namespace SpeiseDirekt3.Model
     {
         public Guid Id { get; set; }
         [Required(AllowEmptyStrings = false, ErrorMessage = "Name is required.")]
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
    
         public ICollection<MenuItem>? MenuItems { get; set; }
         [ForeignKey(nameof(Menu))]
@@ -385,8 +385,8 @@ namespace SpeiseDirekt3.Model
     public class Image
     {
         public Guid Id { get; set; }
-        public byte[] Content { get; set; }
-        public string MimeType { get; set; }
+        public byte[] Content { get; set; } = Array.Empty<byte>();
+        public string MimeType { get; set; } = string.Empty;
     }
 
     public class TenantSubscription

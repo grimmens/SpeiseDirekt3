@@ -49,12 +49,12 @@ namespace SpeiseDirekt3.ServiceImplementation
             }
         }
 
-        public async Task<bool> DeleteImageAsync(string imagePath)
+        public Task<bool> DeleteImageAsync(string imagePath)
         {
             try
             {
                 if (string.IsNullOrEmpty(imagePath))
-                    return true;
+                    return Task.FromResult(true);
 
                 var fullPath = Path.Combine(_environment.WebRootPath, imagePath);
                 if (File.Exists(fullPath))
@@ -62,12 +62,12 @@ namespace SpeiseDirekt3.ServiceImplementation
                     File.Delete(fullPath);
                     _logger.LogInformation("Deleted image: {ImagePath}", imagePath);
                 }
-                return true;
+                return Task.FromResult(true);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting image: {ImagePath}", imagePath);
-                return false;
+                return Task.FromResult(false);
             }
         }
 

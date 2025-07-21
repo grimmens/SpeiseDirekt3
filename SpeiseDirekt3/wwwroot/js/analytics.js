@@ -33,7 +33,7 @@ const commonOptions = {
             position: 'top',
             labels: {
                 usePointStyle: true,
-                padding: 20
+                padding: 7
             }
         }
     },
@@ -52,18 +52,19 @@ const commonOptions = {
     }
 };
 
-function renderAnalyticsCharts(userTrafficData, menuTrafficData, menuItemTrafficData) {
+function renderAnalyticsCharts(userTrafficData, menuTrafficData, menuItemTrafficData, timeRange) {
     console.log('renderAnalyticsCharts called with data:');
     console.log('userTrafficData:', userTrafficData);
     console.log('menuTrafficData:', menuTrafficData);
     console.log('menuItemTrafficData:', menuItemTrafficData);
+    console.log('timeRange:', timeRange);
 
-    renderUserTrafficChart(userTrafficData);
-    renderMenuTrafficChart(menuTrafficData);
-    renderMenuItemTrafficChart(menuItemTrafficData);
+    renderUserTrafficChart(userTrafficData, timeRange);
+    renderMenuTrafficChart(menuTrafficData, timeRange);
+    renderMenuItemTrafficChart(menuItemTrafficData, timeRange);
 }
 
-function renderUserTrafficChart(userTrafficData) {
+function renderUserTrafficChart(userTrafficData, timeRange) {
     const ctx = document.getElementById('userTrafficChart');
     if (!ctx) return;
 
@@ -108,8 +109,39 @@ function renderUserTrafficChart(userTrafficData) {
         fill: false
     }));
 
+    // Configure X-axis based on time range
+
+    const xAxisConfig = {
+        type: 'time',
+        time: {
+            unit: timeRange === 'Last24Hours' ? 'hour' : 'day',
+            displayFormats: {
+                hour: 'HH:00',
+                day: 'MMM dd' // e.g. "Jul 20"
+            }
+        },
+        title: {
+            display: true,
+            text: timeRange === 'Last24Hours' ? 'Hour' : 'Date'
+        },
+        stacked: true,
+        ticks: {
+            source: 'auto'
+        }
+    };
+
+    const yAxisConfig = {
+        stacked: true,
+        beginAtZero: true,
+        title: {
+            display: true,
+            text: 'Count'
+        }
+    };
+
+
     userChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             datasets: datasets
         },
@@ -123,39 +155,47 @@ function renderUserTrafficChart(userTrafficData) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function (context) {
-                            const label = context.dataset.label || '';
-                            const y = context.parsed.y;
-                            return `${label}: ${y}`;
+                        title: function (tooltipItems) {
+                            const date = new Date(tooltipItems[0].parsed.x);
+
+                            if (timeRange === 'Last24Hours') {
+                                const startHour = new Date(date);
+                                startHour.setMinutes(0, 0, 0);
+
+                                const endHour = new Date(startHour);
+                                endHour.setHours(endHour.getHours() + 1);
+
+                                const pad = n => String(n).padStart(2, '0');
+
+                                const startTime = `${pad(startHour.getHours())}:00`;
+                                const endTime = `${pad(endHour.getHours())}:00`;
+
+                                return `${date.toLocaleDateString()} ${startTime} - ${endTime}`;
+                            } else {
+                                return date.toLocaleDateString(undefined, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                });
+                            }
                         },
-                        title: function (context) {
-                            const x = context[0].parsed.x;
-                            return `Date: ${new Date(x).toLocaleDateString()}`;
+                        label: function (tooltipItem) {
+                            return `${tooltipItem.dataset.label}: ${tooltipItem.parsed.y}`;
                         }
                     }
                 }
             },
             scales: {
                 ...commonOptions.scales,
-                x: {
-                    ...commonOptions.scales.x,
-                    type: 'linear',
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return new Date(value).toLocaleDateString();
-                        }
-                    }
-                }
+                x: xAxisConfig,
+                y: yAxisConfig
             }
         }
+
     });
 }
 
-function renderMenuTrafficChart(menuTrafficData) {
+function renderMenuTrafficChart(menuTrafficData, timeRange) {
     const ctx = document.getElementById('menuTrafficChart');
     if (!ctx) return;
 
@@ -167,7 +207,7 @@ function renderMenuTrafficChart(menuTrafficData) {
     // Handle empty data
     if (!menuTrafficData || menuTrafficData.length === 0) {
         menuChart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 datasets: []
             },
@@ -198,8 +238,37 @@ function renderMenuTrafficChart(menuTrafficData) {
         fill: false
     }));
 
+    // Configure X-axis based on time range
+    const xAxisConfig = {
+        type: 'time',
+        time: {
+            unit: timeRange === 'Last24Hours' ? 'hour' : 'day',
+            displayFormats: {
+                hour: 'HH:00',
+                day: 'MMM dd' // e.g. "Jul 20"
+            }
+        },
+        title: {
+            display: true,
+            text: timeRange === 'Last24Hours' ? 'Hour' : 'Date'
+        },
+        stacked: true,
+        ticks: {
+            source: 'auto'
+        }
+    };
+
+    const yAxisConfig = {
+        stacked: true,
+        beginAtZero: true,
+        title: {
+            display: true,
+            text: 'Count'
+        }
+    };
+
     menuChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             datasets: datasets
         },
@@ -213,39 +282,46 @@ function renderMenuTrafficChart(menuTrafficData) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function (context) {
-                            const label = context.dataset.label || '';
-                            const y = context.parsed.y;
-                            return `${label}: ${y}`;
+                        title: function (tooltipItems) {
+                            const date = new Date(tooltipItems[0].parsed.x);
+
+                            if (timeRange === 'Last24Hours') {
+                                const startHour = new Date(date);
+                                startHour.setMinutes(0, 0, 0);
+
+                                const endHour = new Date(startHour);
+                                endHour.setHours(endHour.getHours() + 1);
+
+                                const pad = n => String(n).padStart(2, '0');
+
+                                const startTime = `${pad(startHour.getHours())}:00`;
+                                const endTime = `${pad(endHour.getHours())}:00`;
+
+                                return `${date.toLocaleDateString()} ${startTime} - ${endTime}`;
+                            } else {
+                                return date.toLocaleDateString(undefined, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                });
+                            }
                         },
-                        title: function (context) {
-                            const x = context[0].parsed.x;
-                            return `Date: ${new Date(x).toLocaleDateString()}`;
+                        label: function (tooltipItem) {
+                            return `${tooltipItem.dataset.label}: ${tooltipItem.parsed.y}`;
                         }
                     }
                 }
             },
             scales: {
                 ...commonOptions.scales,
-                x: {
-                    ...commonOptions.scales.x,
-                    type: 'linear',
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return new Date(value).toLocaleDateString();
-                        }
-                    }
-                }
+                x: xAxisConfig,
+                y: yAxisConfig
             }
         }
     });
 }
 
-function renderMenuItemTrafficChart(menuItemTrafficData) {
+function renderMenuItemTrafficChart(menuItemTrafficData, timeRange) {
     const ctx = document.getElementById('menuItemTrafficChart');
     if (!ctx) return;
 
@@ -268,19 +344,6 @@ function renderMenuItemTrafficChart(menuItemTrafficData) {
                     title: {
                         display: true,
                         text: 'Menu Item Clicks Over Time - No Data'
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function (context) {
-                                const label = context.dataset.label || '';
-                                const y = context.parsed.y;
-                                return `${label}: ${y}`;
-                            },
-                            title: function (context) {
-                                const x = context[0].parsed.x;
-                                return `Date: ${new Date(x).toLocaleDateString()}`;
-                            }
-                        }
                     }
                 }
             }
@@ -303,8 +366,38 @@ function renderMenuItemTrafficChart(menuItemTrafficData) {
         fill: false
     }));
 
+    // Configure X-axis based on time range
+
+    const xAxisConfig = {
+        type: 'time',
+        time: {
+            unit: timeRange === 'Last24Hours' ? 'hour' : 'day',
+            displayFormats: {
+                hour: 'HH:00',
+                day: 'MMM dd' // e.g. "Jul 20"
+            }
+        },
+        title: {
+            display: true,
+            text: timeRange === 'Last24Hours' ? 'Hour' : 'Date'
+        },
+        stacked: true,
+        ticks: {
+            source: 'auto'
+        }
+    };
+
+    const yAxisConfig = {
+        stacked: true,
+        beginAtZero: true,
+        title: {
+            display: true,
+            text: 'Count'
+        }
+    };
+
     menuItemChart = new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             datasets: datasets
         },
@@ -318,33 +411,40 @@ function renderMenuItemTrafficChart(menuItemTrafficData) {
                 },
                 tooltip: {
                     callbacks: {
-                        label: function (context) {
-                            const label = context.dataset.label || '';
-                            const y = context.parsed.y;
-                            return `${label}: ${y}`;
+                        title: function (tooltipItems) {
+                            const date = new Date(tooltipItems[0].parsed.x);
+
+                            if (timeRange === 'Last24Hours') {
+                                const startHour = new Date(date);
+                                startHour.setMinutes(0, 0, 0);
+
+                                const endHour = new Date(startHour);
+                                endHour.setHours(endHour.getHours() + 1);
+
+                                const pad = n => String(n).padStart(2, '0');
+
+                                const startTime = `${pad(startHour.getHours())}:00`;
+                                const endTime = `${pad(endHour.getHours())}:00`;
+
+                                return `${date.toLocaleDateString()} ${startTime} - ${endTime}`;
+                            } else {
+                                return date.toLocaleDateString(undefined, {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                });
+                            }
                         },
-                        title: function (context) {
-                            const x = context[0].parsed.x;
-                            return `Date: ${new Date(x).toLocaleDateString()}`;
+                        label: function (tooltipItem) {
+                            return `${tooltipItem.dataset.label}: ${tooltipItem.parsed.y}`;
                         }
                     }
                 }
             },
             scales: {
                 ...commonOptions.scales,
-                x: {
-                    ...commonOptions.scales.x,
-                    type: 'linear',
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            return new Date(value).toLocaleDateString();
-                        }
-                    }
-                }
+                x: xAxisConfig,
+                y: yAxisConfig
             }
         }
     });

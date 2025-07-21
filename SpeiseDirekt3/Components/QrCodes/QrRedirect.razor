@@ -41,13 +41,10 @@ else if (qr == null)
         menu = await MenuService.GetMenuForQRCodeAsync(QrId);
 
         // Track menu view if menu was found
-        if (menu != null)
+        if (menu != null && isPreRendering)
         {
             var sessionId = TrackingService.GetOrCreateSessionId();
-            if (isPreRendering)
-            {
-                await TrackingService.RecordMenuViewAsync(sessionId, menu.Id, QrId);
-            }
+            await TrackingService.RecordMenuViewAsync(sessionId, menu.Id, QrId);
         }
 
         loading = false;

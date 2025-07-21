@@ -59,7 +59,7 @@
                     </div>
                 </div>
                 <div class="h-80">
-                    <canvas id="userTrafficChart" width="400" height="200"></canvas>
+                    <canvas id="userTrafficChart" width="400" height="400"></canvas>
                 </div>
             </div>
 
@@ -72,7 +72,7 @@
                     </div>
                 </div>
                 <div class="h-80">
-                    <canvas id="menuTrafficChart" width="400" height="200"></canvas>
+                    <canvas id="menuTrafficChart" width="400" height="400"></canvas>
                 </div>
             </div>
 
@@ -85,7 +85,7 @@
                     </div>
                 </div>
                 <div class="h-80">
-                    <canvas id="menuItemTrafficChart" width="800" height="200"></canvas>
+                    <canvas id="menuItemTrafficChart" width="800" height="400"></canvas>
                 </div>
             </div>
         </div>
@@ -142,11 +142,11 @@
     private TimeRange selectedTimeRange = TimeRange.Last7Days;
     private bool isLoading = true;
     private bool initialRenderComplete = false;
-    
+
     private List<UserTrafficData> userTrafficData = new();
     private List<MenuTrafficData> menuTrafficData = new();
     private List<MenuItemTrafficData> menuItemTrafficData = new();
-    
+
     private int totalViews = 0;
     private int totalClicks = 0;
 
@@ -235,7 +235,7 @@
             try
             {
                 await JSRuntime.InvokeVoidAsync("renderAnalyticsCharts",
-                    userTrafficData, menuTrafficData, menuItemTrafficData);
+                    userTrafficData, menuTrafficData, menuItemTrafficData, selectedTimeRange.ToString());
                 Console.WriteLine("JSRuntime.InvokeVoidAsync completed successfully");
             }
             catch (Exception ex)
