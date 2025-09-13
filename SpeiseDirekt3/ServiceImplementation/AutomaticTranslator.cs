@@ -63,6 +63,7 @@ namespace SpeiseDirekt3.ServiceImplementation
 
             try
             {
+                var translatedTexts = await TranslateTextsAsync(textsToTranslate, targetLanguage, sourceLanguage);
                 var translatedMenuItem = new MenuItem
                 {
                     Id = Guid.NewGuid(), // New ID for translated version
