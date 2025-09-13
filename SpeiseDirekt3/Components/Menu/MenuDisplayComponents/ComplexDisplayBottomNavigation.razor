@@ -6,7 +6,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-3a9 9 0 009-9 9 9 0 00-9 9v3z"></path>
                 </svg>
-                <span class="text-sm font-medium">Sprache</span>
+                <span class="text-sm font-medium">@(languages.FirstOrDefault(l => l.Language == CurrentLanguage)?.Flag) @(languages.FirstOrDefault(l => l.Language == CurrentLanguage)?.Name ?? "Sprache")</span>
             </button>
             @* <button class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,8 +64,9 @@
                 @foreach (var lang in FilteredLanguages)
                 {
                     <li class="mb-2">
-                        <button class="w-full flex items-center gap-2 text-left px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded"
-                        @onclick="() => SelectLanguage(lang.Name)">
+                        <button class="w-full flex items-center gap-2 text-left px-2 py-1 @(lang.Language == CurrentLanguage ? "bg-teal-600 text-white" : "bg-gray-200 hover:bg-gray-300") rounded"
+                        @onclick="() => SelectLanguage(lang.Language)">
+                            <span>@lang.Flag</span>
                             <span>@lang.Name</span>
                         </button>
                     </li>
@@ -100,8 +101,9 @@
 
 
 @code {
-    [Parameter] public EventCallback<string> OnLanguageSelected { get; set; }
+    [Parameter] public EventCallback<MenuLanguage> OnLanguageSelected { get; set; }
     [Parameter] public EventCallback<string> OnFilterApplied { get; set; }
+    [Parameter] public MenuLanguage CurrentLanguage { get; set; } = MenuLanguage.German;
     [Parameter] public Menu? Menu { get; set; } // ← The menu to search in
     [Parameter] public EventCallback<MenuItem> OnMenuItemSelected { get; set; }
     [Parameter] public EventCallback<bool> OnDisplayModeChanged { get; set; }
@@ -120,7 +122,7 @@
         await OnDisplayModeChanged.InvokeAsync(!IsGridMode);
     }
 
-    private async Task SelectLanguage(string language)
+    private async Task SelectLanguage(MenuLanguage language)
     {
         showLanguageMenu = false;
         await OnLanguageSelected.InvokeAsync(language);
@@ -128,13 +130,27 @@
 
     private List<LanguageOption> languages = new()
     {
-        new("English", "🇬🇧"),
-        new("German", "🇩🇪"),
-        new("French", "🇫🇷"),
-        new("Spanish", "🇪🇸"),
-        new("Italian", "🇮🇹"),
-        new("Turkish", "🇹🇷"),
-        new("Arabic", "🇸🇦"),
+        new(MenuLanguage.German, "Deutsch", "🇩🇪"),
+        new(MenuLanguage.English, "English", "🇬🇧"),
+        new(MenuLanguage.French, "Français", "🇫🇷"),
+        new(MenuLanguage.Spanish, "Español", "🇪🇸"),
+        new(MenuLanguage.Italian, "Italiano", "🇮🇹"),
+        new(MenuLanguage.Dutch, "Nederlands", "🇳🇱"),
+        new(MenuLanguage.Portuguese, "Português", "🇵🇹"),
+        new(MenuLanguage.Polish, "Polski", "🇵🇱"),
+        new(MenuLanguage.Czech, "Čeština", "🇨🇿"),
+        new(MenuLanguage.Hungarian, "Magyar", "🇭🇺"),
+        new(MenuLanguage.Croatian, "Hrvatski", "🇭🇷"),
+        new(MenuLanguage.Slovenian, "Slovenščina", "🇸🇮"),
+        new(MenuLanguage.Romanian, "Română", "🇷🇴"),
+        new(MenuLanguage.Bulgarian, "Български", "🇧🇬"),
+        new(MenuLanguage.Greek, "Ελληνικά", "🇬🇷"),
+        new(MenuLanguage.Russian, "Русский", "🇷🇺"),
+        new(MenuLanguage.Turkish, "Türkçe", "🇹🇷"),
+        new(MenuLanguage.Arabic, "العربية", "🇸🇦"),
+        new(MenuLanguage.Chinese, "中文", "🇨🇳"),
+        new(MenuLanguage.Japanese, "日本語", "🇯🇵"),
+        new(MenuLanguage.Korean, "한국어", "🇰🇷"),
     };
 
     private IEnumerable<LanguageOption> FilteredLanguages =>
@@ -142,11 +158,13 @@
 
     private class LanguageOption
     {
+        public MenuLanguage Language { get; }
         public string Name { get; }
         public string Flag { get; }
 
-        public LanguageOption(string name, string flag)
+        public LanguageOption(MenuLanguage language, string name, string flag)
         {
+            Language = language;
             Name = name;
             Flag = flag;
         }

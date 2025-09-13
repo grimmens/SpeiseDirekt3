@@ -5,6 +5,7 @@
 @layout MenuLayout
 @inject IJSRuntime JSRuntime
 @inject ITrackingService TrackingService
+@inject IAutomaticTranslator AutomaticTranslator
 
 
 <div class="relative min-h-screen bg-gray-50">
@@ -23,10 +24,10 @@
                     <div class="absolute top-1 left-1 w-1.5 h-1.5 bg-white rounded-full"></div>
                 </div>
             </div>
-            <h1 class="text-2xl font-bold tracking-wide">@Menu?.Name</h1>
-            @if (!string.IsNullOrEmpty(Menu?.Description))
+            <h1 class="text-2xl font-bold tracking-wide">@(GetDisplayMenuSync()?.Name)</h1>
+            @if (!string.IsNullOrEmpty(GetDisplayMenuSync()?.Description))
             {
-                <p class="text-sm text-white/80 mt-1">@Menu.Description</p>
+                <p class="text-sm text-white/80 mt-1">@(GetDisplayMenuSync()?.Description)</p>
             }
         </div>
     </div>
@@ -94,7 +95,7 @@
         }
         @foreach (var category in categories)
         {
-            var items = GetMenuItemsForCategory(category);
+            var items = GetMenuItemsForCategorySync(category);
             if (items.Any())
             {
                 var currentIndex = categoryIndex;
@@ -192,13 +193,14 @@
     </div>
     @if (!Preview)
     {
-        <ComplexDisplayBottomNavigation Menu="Menu" OnMenuItemSelected="SelectMenuItem" IsGridMode="isGridMode" OnDisplayModeChanged="HandleDisplayModeChanged" />
+        <ComplexDisplayBottomNavigation Menu="Menu" OnMenuItemSelected="SelectMenuItem" IsGridMode="isGridMode" OnDisplayModeChanged="HandleDisplayModeChanged" OnLanguageSelected="HandleLanguageChanged" CurrentLanguage="CurrentLanguage" />
     }
 </div>
 
 @code {
-        [Parameter] public Menu? Menu { get; set; }
-        [Parameter] public bool Preview { get; set; }
+    [Parameter] public Menu? Menu { get; set; }
+    [Parameter] public bool Preview { get; set; }
+    [Parameter] public MenuLanguage CurrentLanguage { get; set; } = MenuLanguage.German;
     private string activeCategory = "";
     private MenuItem? SelectedItem { get; set; }
     private bool showStickyNav = false;
@@ -213,13 +215,16 @@
     private ElementReference[] categoryElements = new ElementReference[20]; // Increased size for flexibility
 
     private List<string> categories = new();
+    private Menu? translatedMenu = null;
+    private bool isTranslating = false;
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         // Initialize categories and active category when Menu parameter changes
-        if (Menu?.Categories != null)
+        var menuToUse = await GetDisplayMenu();
+        if (menuToUse?.Categories != null)
         {
-            categories = Menu.Categories
+            categories = menuToUse.Categories
                 .Where(c => c.MenuItems?.Any() == true)
                 .Select(c => c.Name)
                 .ToList();
@@ -274,11 +279,12 @@
             : $"{baseClass} bg-gray-100 text-gray-700 hover:bg-gray-200";
     }
 
-    private List<MenuItem> GetMenuItemsForCategory(string categoryName)
+    private async Task<List<MenuItem>> GetMenuItemsForCategory(string categoryName)
     {
-        if (Menu?.Categories == null) return new List<MenuItem>();
+        var menuToUse = await GetDisplayMenu();
+        if (menuToUse?.Categories == null) return new List<MenuItem>();
 
-        var category = Menu.Categories.FirstOrDefault(c => c.Name == categoryName);
+        var category = menuToUse.Categories.FirstOrDefault(c => c.Name == categoryName);
         return category?.MenuItems?.ToList() ?? new List<MenuItem>();
     }
 
@@ -316,5 +322,138 @@
         return isGridMode 
             ? $"{baseClass} bg-white rounded-xl shadow-sm overflow-hidden"
             : $"{baseClass} bg-white rounded-lg shadow-sm p-4";
+    }
+
+    private async Task<Menu?> GetDisplayMenu()
+    {
+        if (Menu == null) return null;
+
+        // If current language matches menu language, return original menu
+        if (CurrentLanguage == Menu.Language)
+        {
+            return Menu;
+        }
+
+        // If we have a cached translated menu for the current language, return it
+        if (translatedMenu != null && 
+            translatedMenu.Language == CurrentLanguage && 
+            translatedMenu.Id == Menu.Id)
+        {
+            return translatedMenu;
+        }
+
+        // Need to translate the menu
+        if (!isTranslating)
+        {
+            isTranslating = true;
+            try
+            {
+                translatedMenu = await TranslateMenu(Menu, CurrentLanguage);
+            }
+            finally
+            {
+                isTranslating = false;
+            }
+        }
+
+        return translatedMenu ?? Menu;
+    }
+
+    private async Task<Menu> TranslateMenu(Menu originalMenu, MenuLanguage targetLanguage)
+    {
+        try
+        {
+            var translatedMenu = new Menu
+            {
+                Id = originalMenu.Id,
+                Name = await AutomaticTranslator.TranslateTextAsync(originalMenu.Name, targetLanguage, originalMenu.Language),
+                Description = await AutomaticTranslator.TranslateTextAsync(originalMenu.Description, targetLanguage, originalMenu.Language),
+                Theme = originalMenu.Theme,
+                ApplicationUserId = originalMenu.ApplicationUserId,
+                Language = targetLanguage,
+                Categories = new List<Category>()
+            };
+
+            if (originalMenu.Categories != null)
+            {
+                foreach (var category in originalMenu.Categories)
+                {
+                    var translatedCategory = await AutomaticTranslator.TranslateCategoryAsync(category, targetLanguage, originalMenu.Language);
+                    if(category.MenuItems?.Any() ?? false)
+                    {
+                        var translatedMenuItems = await AutomaticTranslator.TranslateMenuItemsAsync(category.MenuItems, targetLanguage, originalMenu.Language);
+                        translatedCategory.MenuItems = translatedMenuItems.ToList();
+                    }
+                    translatedMenu.Categories.Add(translatedCategory);
+                }
+            }
+
+            return translatedMenu;
+        }
+        catch (Exception ex)
+        {
+            // Log the error but return the original menu as fallback
+            Console.WriteLine($"Translation failed: {ex.Message}");
+            
+            // Return a copy of the original menu with updated language field
+            var fallbackMenu = new Menu
+            {
+                Id = originalMenu.Id,
+                Name = originalMenu.Name,
+                Description = originalMenu.Description,
+                Theme = originalMenu.Theme,
+                ApplicationUserId = originalMenu.ApplicationUserId,
+                Language = targetLanguage, // Mark as target language even though not translated
+                Categories = originalMenu.Categories?.ToList() ?? new List<Category>()
+            };
+            
+            return fallbackMenu;
+        }
+    }
+
+    private async Task HandleLanguageChanged(MenuLanguage newLanguage)
+    {
+        if (CurrentLanguage != newLanguage)
+        {
+            // Clear the translated menu cache when language changes
+            translatedMenu = null;
+            CurrentLanguage = newLanguage;
+            
+            // Re-initialize categories with new language
+            await OnParametersSetAsync();
+            
+            StateHasChanged();
+        }
+    }
+
+    private Menu? GetDisplayMenuSync()
+    {
+        if (Menu == null) return null;
+        
+        // If current language matches menu language, return original menu
+        if (CurrentLanguage == Menu.Language)
+        {
+            return Menu;
+        }
+
+        // Return cached translated menu if available
+        if (translatedMenu != null && 
+            translatedMenu.Language == CurrentLanguage && 
+            translatedMenu.Id == Menu.Id)
+        {
+            return translatedMenu;
+        }
+
+        // Return original menu if translation is not ready
+        return Menu;
+    }
+
+    private List<MenuItem> GetMenuItemsForCategorySync(string categoryName)
+    {
+        var menuToUse = GetDisplayMenuSync();
+        if (menuToUse?.Categories == null) return new List<MenuItem>();
+
+        var category = menuToUse.Categories.FirstOrDefault(c => c.Name == categoryName);
+        return category?.MenuItems?.ToList() ?? new List<MenuItem>();
     }
 }

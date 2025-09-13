@@ -50,7 +50,10 @@ namespace SpeiseDirekt3
                 options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             });
 
-            
+            builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+            {
+                options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            }, ServiceLifetime.Scoped);
 
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
@@ -74,6 +77,20 @@ namespace SpeiseDirekt3
             builder.Services.AddScoped<IImageUploadService, ImageDatabaseUploadService>();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
             builder.Services.AddScoped<IAuthorizationHandler, PaidTenantHandler>();
+            
+            // Memory cache for translation caching
+            builder.Services.AddMemoryCache();
+            
+            // Translation services
+            builder.Services.AddScoped<ITranslationApiService>(serviceProvider =>
+            {
+                var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+                var apiKey = configuration["AzureTranslator:ApiKey"];
+                var region = configuration["AzureTranslator:Region"];
+
+                return new AzureTranslationApiService(apiKey, region);
+            });
+            builder.Services.AddScoped<IAutomaticTranslator, AutomaticTranslator>();
 
 
             var app = builder.Build();

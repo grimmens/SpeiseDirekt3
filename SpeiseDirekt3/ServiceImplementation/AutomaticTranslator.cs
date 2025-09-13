@@ -3,12 +3,12 @@ using Microsoft.Extensions.Caching.Memory;
 using SpeiseDirekt3.Data;
 using SpeiseDirekt3.Model;
 using SpeiseDirekt3.ServiceInterface;
+using System.Collections.Concurrent;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace SpeiseDirekt3.ServiceImplementation
 {
-    // Enhanced implementation with caching and database storage
     public class AutomaticTranslator : IAutomaticTranslator
     {
         private readonly ITranslationApiService _translationApiService;
@@ -16,10 +16,14 @@ namespace SpeiseDirekt3.ServiceImplementation
         private readonly IMemoryCache _memoryCache;
         private readonly IDbContextFactory<ApplicationDbContext> _dbContextFactory;
 
-        // Cache expiration time for in-memory cache
+        // Batch processing to reduce API calls and database queries
+        private readonly int _maxBatchSize = 100;
         private readonly TimeSpan _cacheExpiration = TimeSpan.FromHours(24);
 
-        // Map MenuLanguage enum to language codes that translation services expect
+        // Connection pooling and parallel processing limits
+        private readonly SemaphoreSlim _apiSemaphore = new(10); // Limit concurrent API calls
+        private readonly SemaphoreSlim _dbSemaphore = new(50);  // Limit concurrent DB operations
+
         private readonly Dictionary<MenuLanguage, string> _languageCodes = new()
         {
             { MenuLanguage.German, "de" },
@@ -63,25 +67,33 @@ namespace SpeiseDirekt3.ServiceImplementation
 
             try
             {
+                // Batch translate all text fields at once
+                var textsToTranslate = new List<string>
+                {
+                    menuItem.Name ?? string.Empty,
+                    menuItem.Description ?? string.Empty,
+                    menuItem.Allergens ?? string.Empty
+                }.Where(t => !string.IsNullOrWhiteSpace(t)).ToList();
+
                 var translatedTexts = await TranslateTextsAsync(textsToTranslate, targetLanguage, sourceLanguage);
+
                 var translatedMenuItem = new MenuItem
                 {
-                    Id = Guid.NewGuid(), // New ID for translated version
-                    Name = await TranslateTextAsync(menuItem.Name, targetLanguage, sourceLanguage),
-                    Description = await TranslateTextAsync(menuItem.Description, targetLanguage, sourceLanguage),
-                    Allergens = await TranslateTextAsync(menuItem.Allergens, targetLanguage, sourceLanguage),
-                    Price = menuItem.Price, // Price remains the same
-                    CategoryId = menuItem.CategoryId, // Keep same category reference
-                    ApplicationUserId = menuItem.ApplicationUserId, // Keep same user
-                    ImagePath = menuItem.ImagePath // Keep same image
+                    Id = Guid.NewGuid(),
+                    Name = translatedTexts.GetValueOrDefault(menuItem.Name) ?? menuItem.Name,
+                    Description = translatedTexts.GetValueOrDefault(menuItem.Description) ?? menuItem.Description,
+                    Allergens = translatedTexts.GetValueOrDefault(menuItem.Allergens) ?? menuItem.Allergens,
+                    Price = menuItem.Price,
+                    CategoryId = menuItem.CategoryId,
+                    ApplicationUserId = menuItem.ApplicationUserId,
+                    ImagePath = menuItem.ImagePath
                 };
 
-                _logger.LogInformation("Successfully translated MenuItem '{Name}' to {TargetLanguage}", menuItem.Name, targetLanguage);
                 return translatedMenuItem;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to translate MenuItem '{Name}' to {TargetLanguage}", menuItem.Name, targetLanguage);
+                _logger.LogError(ex, "Failed to translate MenuItem '{Name}'", menuItem.Name);
                 throw;
             }
         }
@@ -92,21 +104,19 @@ namespace SpeiseDirekt3.ServiceImplementation
 
             try
             {
-                var translatedCategory = new Category
-                {
-                    Id = Guid.NewGuid(), // New ID for translated version
-                    Name = await TranslateTextAsync(category.Name, targetLanguage, sourceLanguage),
-                    MenuId = category.MenuId, // Keep same menu reference
-                    ApplicationUserId = category.ApplicationUserId // Keep same user
-                    // Note: MenuItems collection would need to be translated separately if needed
-                };
+                var translatedName = await TranslateTextAsync(category.Name, targetLanguage, sourceLanguage);
 
-                _logger.LogInformation("Successfully translated Category '{Name}' to {TargetLanguage}", category.Name, targetLanguage);
-                return translatedCategory;
+                return new Category
+                {
+                    Id = Guid.NewGuid(),
+                    Name = translatedName,
+                    MenuId = category.MenuId,
+                    ApplicationUserId = category.ApplicationUserId
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to translate Category '{Name}' to {TargetLanguage}", category.Name, targetLanguage);
+                _logger.LogError(ex, "Failed to translate Category '{Name}'", category.Name);
                 throw;
             }
         }
@@ -115,12 +125,37 @@ namespace SpeiseDirekt3.ServiceImplementation
         {
             if (menuItems == null) throw new ArgumentNullException(nameof(menuItems));
 
-            var translatedItems = new List<MenuItem>();
+            var menuItemsList = menuItems.ToList();
+            if (!menuItemsList.Any()) return Enumerable.Empty<MenuItem>();
 
-            foreach (var menuItem in menuItems)
+            // Collect all unique texts that need translation
+            var uniqueTexts = new HashSet<string>();
+            foreach (var item in menuItemsList)
             {
-                var translatedItem = await TranslateMenuItemAsync(menuItem, targetLanguage, sourceLanguage);
-                translatedItems.Add(translatedItem);
+                if (!string.IsNullOrWhiteSpace(item.Name)) uniqueTexts.Add(item.Name);
+                if (!string.IsNullOrWhiteSpace(item.Description)) uniqueTexts.Add(item.Description);
+                if (!string.IsNullOrWhiteSpace(item.Allergens)) uniqueTexts.Add(item.Allergens);
+            }
+
+            // Batch translate all unique texts
+            var translations = await TranslateTextsAsync(uniqueTexts, targetLanguage, sourceLanguage);
+
+            // Apply translations to all menu items
+            var translatedItems = new List<MenuItem>();
+            foreach (var menuItem in menuItemsList)
+            {
+                var translatedMenuItem = new MenuItem
+                {
+                    Id = Guid.NewGuid(),
+                    Name = translations.GetValueOrDefault(menuItem.Name) ?? menuItem.Name,
+                    Description = translations.GetValueOrDefault(menuItem.Description) ?? menuItem.Description,
+                    Allergens = translations.GetValueOrDefault(menuItem.Allergens) ?? menuItem.Allergens,
+                    Price = menuItem.Price,
+                    CategoryId = menuItem.CategoryId,
+                    ApplicationUserId = menuItem.ApplicationUserId,
+                    ImagePath = menuItem.ImagePath
+                };
+                translatedItems.Add(translatedMenuItem);
             }
 
             return translatedItems;
@@ -130,102 +165,191 @@ namespace SpeiseDirekt3.ServiceImplementation
         {
             if (categories == null) throw new ArgumentNullException(nameof(categories));
 
-            var translatedCategories = new List<Category>();
+            var categoriesList = categories.ToList();
+            if (!categoriesList.Any()) return Enumerable.Empty<Category>();
 
-            foreach (var category in categories)
+            // Collect all category names for batch translation
+            var categoryNames = categoriesList
+                .Where(c => !string.IsNullOrWhiteSpace(c.Name))
+                .Select(c => c.Name)
+                .Distinct()
+                .ToList();
+
+            var translations = await TranslateTextsAsync(categoryNames, targetLanguage, sourceLanguage);
+
+            // Apply translations
+            var translatedCategories = categoriesList.Select(category => new Category
             {
-                var translatedCategory = await TranslateCategoryAsync(category, targetLanguage, sourceLanguage);
-                translatedCategories.Add(translatedCategory);
-            }
+                Id = Guid.NewGuid(),
+                Name = translations.GetValueOrDefault(category.Name) ?? category.Name,
+                MenuId = category.MenuId,
+                ApplicationUserId = category.ApplicationUserId
+            }).ToList();
 
             return translatedCategories;
+        }
+
+        // NEW: Batch translation method - the key performance improvement
+        public async Task<Dictionary<string, string>> TranslateTextsAsync(IEnumerable<string> texts, MenuLanguage targetLanguage, MenuLanguage? sourceLanguage = null)
+        {
+            var textsList = texts.Where(t => !string.IsNullOrWhiteSpace(t)).Distinct().ToList();
+            if (!textsList.Any()) return new Dictionary<string, string>();
+
+            var effectiveSourceLanguage = sourceLanguage ?? MenuLanguage.German;
+            if (effectiveSourceLanguage == targetLanguage)
+            {
+                return textsList.ToDictionary(t => t, t => t);
+            }
+
+            var results = new ConcurrentDictionary<string, string>();
+
+            // Step 1: Check memory cache for all texts
+            var uncachedTexts = new List<string>();
+            foreach (var text in textsList)
+            {
+                var cacheKey = GenerateCacheKey(text, effectiveSourceLanguage, targetLanguage);
+                if (_memoryCache.TryGetValue(cacheKey, out string? cachedTranslation) && !string.IsNullOrEmpty(cachedTranslation))
+                {
+                    results[text] = cachedTranslation;
+                }
+                else
+                {
+                    uncachedTexts.Add(text);
+                }
+            }
+
+            if (!uncachedTexts.Any()) return results.ToDictionary();
+
+            // Step 2: Batch check database cache
+            var dbTranslations = await GetTranslationsFromDatabaseAsync(uncachedTexts, effectiveSourceLanguage, targetLanguage);
+
+            var textsNeedingApiTranslation = new List<string>();
+            foreach (var text in uncachedTexts)
+            {
+                if (dbTranslations.TryGetValue(text, out var dbTranslation))
+                {
+                    results[text] = dbTranslation;
+                    // Cache in memory for next time
+                    var cacheKey = GenerateCacheKey(text, effectiveSourceLanguage, targetLanguage);
+                    _memoryCache.Set(cacheKey, dbTranslation, _cacheExpiration);
+                }
+                else
+                {
+                    textsNeedingApiTranslation.Add(text);
+                }
+            }
+
+            if (!textsNeedingApiTranslation.Any()) return results.ToDictionary();
+
+            // Step 3: Batch API translation with concurrency control
+            await ProcessApiTranslationsAsync(textsNeedingApiTranslation, effectiveSourceLanguage, targetLanguage, results);
+
+            return results.ToDictionary();
+        }
+
+        private async Task ProcessApiTranslationsAsync(List<string> texts, MenuLanguage sourceLanguage, MenuLanguage targetLanguage, ConcurrentDictionary<string, string> results)
+        {
+            var targetCode = GetLanguageCode(targetLanguage);
+            var sourceCode = GetLanguageCode(sourceLanguage);
+
+            // Process in batches to avoid overwhelming the API
+            var batches = texts.Chunk(_maxBatchSize).ToList();
+
+            var tasks = batches.Select(async batch =>
+            {
+                await _apiSemaphore.WaitAsync();
+                try
+                {
+                    // If your translation service supports batch translation, use it here
+                    // Otherwise, process the batch with controlled concurrency
+                    var batchTasks = batch.Select(async text =>
+                    {
+                        try
+                        {
+                            var translatedText = await _translationApiService.TranslateAsync(text, targetCode, sourceCode);
+                            results[text] = translatedText;
+
+                            // Store in cache asynchronously without awaiting
+                            _ = Task.Run(async () => await StoreTranslationAsync(text, translatedText, sourceLanguage, targetLanguage));
+
+                            return (text, translatedText);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Failed to translate text: {Text}", text);
+                            results[text] = text; // Fallback to original text
+                            return (text, text);
+                        }
+                    });
+
+                    await Task.WhenAll(batchTasks);
+                }
+                finally
+                {
+                    _apiSemaphore.Release();
+                }
+            });
+
+            await Task.WhenAll(tasks);
+        }
+
+        // Optimized database operations
+        private async Task<Dictionary<string, string>> GetTranslationsFromDatabaseAsync(List<string> texts, MenuLanguage sourceLanguage, MenuLanguage targetLanguage)
+        {
+            if (!texts.Any()) return new Dictionary<string, string>();
+
+            await _dbSemaphore.WaitAsync();
+            try
+            {
+                using var context = await _dbContextFactory.CreateDbContextAsync();
+
+                var cacheKeys = texts.Select(text => GenerateCacheKey(text, sourceLanguage, targetLanguage)).ToList();
+
+                var dbResults = await context.TranslationCaches
+                    .Where(tc => cacheKeys.Contains(tc.Id))
+                    .ToDictionaryAsync(tc => tc.SourceText, tc => tc.TranslatedText);
+
+                // Update usage stats in background
+                _ = Task.Run(async () => await UpdateUsageStatsAsync(cacheKeys));
+
+                return dbResults;
+            }
+            finally
+            {
+                _dbSemaphore.Release();
+            }
+        }
+
+        private async Task UpdateUsageStatsAsync(List<string> cacheKeys)
+        {
+            try
+            {
+                await _dbSemaphore.WaitAsync();
+                using var context = await _dbContextFactory.CreateDbContextAsync();
+
+                // Batch update usage stats
+                await context.TranslationCaches
+                    .Where(tc => cacheKeys.Contains(tc.Id))
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(tc => tc.LastUsedAt, DateTime.UtcNow)
+                        .SetProperty(tc => tc.UsageCount, tc => tc.UsageCount + 1));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to update translation usage stats");
+            }
+            finally
+            {
+                _dbSemaphore.Release();
+            }
         }
 
         public async Task<string> TranslateTextAsync(string text, MenuLanguage targetLanguage, MenuLanguage? sourceLanguage = null)
         {
             if (string.IsNullOrWhiteSpace(text)) return text;
 
-            // Default source language to German if not specified
-            var effectiveSourceLanguage = sourceLanguage ?? MenuLanguage.German;
-
-            // If source and target are the same, no translation needed
-            if (effectiveSourceLanguage == targetLanguage) return text;
-
-            try
-            {
-                // Step 1: Check in-memory cache first
-                var cacheKey = GenerateCacheKey(text, effectiveSourceLanguage, targetLanguage);
-
-                if (_memoryCache.TryGetValue(cacheKey, out string? cachedTranslation) && !string.IsNullOrEmpty(cachedTranslation))
-                {
-                    _logger.LogDebug("Translation found in memory cache for key: {CacheKey}", cacheKey);
-                    await UpdateUsageStatsAsync(cacheKey);
-                    return cachedTranslation;
-                }
-
-                // Step 2: Check database cache
-                var dbTranslation = await GetTranslationFromDatabaseAsync(text, effectiveSourceLanguage, targetLanguage);
-                if (dbTranslation != null)
-                {
-                    _logger.LogDebug("Translation found in database cache for: {Text}", text);
-
-                    // Store in memory cache for faster access next time
-                    _memoryCache.Set(cacheKey, dbTranslation.TranslatedText, _cacheExpiration);
-
-                    await UpdateUsageStatsAsync(cacheKey, dbTranslation);
-                    return dbTranslation.TranslatedText;
-                }
-
-                // Step 3: Call translation API service
-                _logger.LogDebug("No cached translation found, calling translation API for: {Text}", text);
-
-                var targetCode = GetLanguageCode(targetLanguage);
-                var sourceCode = GetLanguageCode(effectiveSourceLanguage);
-
-                var translatedText = await _translationApiService.TranslateAsync(text, targetCode, sourceCode);
-
-                // Step 4: Store the translation in both caches
-                await StoreTranslationAsync(text, translatedText, effectiveSourceLanguage, targetLanguage);
-
-                _logger.LogInformation("Successfully translated and cached text from {SourceLang} to {TargetLang}",
-                    effectiveSourceLanguage, targetLanguage);
-
-                return translatedText;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to translate text to {TargetLanguage}", targetLanguage);
-                throw;
-            }
-        }
-
-        private string GenerateCacheKey(string text, MenuLanguage sourceLanguage, MenuLanguage targetLanguage)
-        {
-            // Create a consistent hash for the cache key
-            var input = $"{text}|{sourceLanguage}|{targetLanguage}";
-            using var sha256 = SHA256.Create();
-            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
-
-            // Convert to hex string (64 characters) instead of base64 (88 characters)
-            // This is more efficient for database storage and indexing
-            return Convert.ToHexString(hashBytes).ToLowerInvariant();
-        }
-
-        private async Task<TranslationCache?> GetTranslationFromDatabaseAsync(string text, MenuLanguage sourceLanguage, MenuLanguage targetLanguage)
-        {
-            try
-            {
-                using var context = await _dbContextFactory.CreateDbContextAsync();
-                var cacheKey = GenerateCacheKey(text, sourceLanguage, targetLanguage);
-
-                return await context.TranslationCaches
-                    .FirstOrDefaultAsync(tc => tc.Id == cacheKey);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to retrieve translation from database");
-                return null;
-            }
+            var translations = await TranslateTextsAsync(new[] { text }, targetLanguage, sourceLanguage);
+            return translations.GetValueOrDefault(text, text);
         }
 
         private async Task StoreTranslationAsync(string sourceText, string translatedText, MenuLanguage sourceLanguage, MenuLanguage targetLanguage)
@@ -237,7 +361,7 @@ namespace SpeiseDirekt3.ServiceImplementation
                 // Store in memory cache
                 _memoryCache.Set(cacheKey, translatedText, _cacheExpiration);
 
-                // Store in database
+                // Store in database - simple approach to avoid conflicts
                 using var context = await _dbContextFactory.CreateDbContextAsync();
 
                 var translationCache = new TranslationCache
@@ -254,59 +378,48 @@ namespace SpeiseDirekt3.ServiceImplementation
 
                 context.TranslationCaches.Add(translationCache);
                 await context.SaveChangesAsync();
-
-                _logger.LogDebug("Stored translation in database with key: {CacheKey}", cacheKey);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to store translation in database");
-                // Don't throw here - translation was successful, just caching failed
-            }
-        }
-
-        private async Task UpdateUsageStatsAsync(string cacheKey, TranslationCache? dbTranslation = null)
-        {
-            try
-            {
-                using var context = await _dbContextFactory.CreateDbContextAsync();
-
-                var translation = dbTranslation ?? await context.TranslationCaches.FindAsync(cacheKey);
-                if (translation != null)
+                // Ignore conflicts - translation already exists, which is fine
+                if (!ex.Message.Contains("duplicate key") && !ex.Message.Contains("UNIQUE constraint"))
                 {
-                    translation.LastUsedAt = DateTime.UtcNow;
-                    translation.UsageCount++;
-
-                    if (dbTranslation == null) // Only update if we fetched it ourselves
-                    {
-                        context.TranslationCaches.Update(translation);
-                        await context.SaveChangesAsync();
-                    }
+                    _logger.LogError(ex, "Failed to store translation in database");
                 }
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Failed to update translation usage stats");
-                // Don't throw - this is just for statistics
-            }
         }
 
-        public IEnumerable<MenuLanguage> GetSupportedLanguages()
+        private string GenerateCacheKey(string text, MenuLanguage sourceLanguage, MenuLanguage targetLanguage)
         {
-            return _languageCodes.Keys;
+            var input = $"{text}|{sourceLanguage}|{targetLanguage}";
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(input));
+            return Convert.ToHexString(hashBytes).ToLowerInvariant();
         }
 
-        public bool IsLanguageSupported(MenuLanguage language)
-        {
-            return _languageCodes.ContainsKey(language);
-        }
+        public IEnumerable<MenuLanguage> GetSupportedLanguages() => _languageCodes.Keys;
+        public bool IsLanguageSupported(MenuLanguage language) => _languageCodes.ContainsKey(language);
 
         private string GetLanguageCode(MenuLanguage language)
         {
             if (!_languageCodes.TryGetValue(language, out var code))
-            {
                 throw new NotSupportedException($"Language {language} is not supported for translation.");
-            }
             return code;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _apiSemaphore?.Dispose();
+                _dbSemaphore?.Dispose();
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
     }
 }
