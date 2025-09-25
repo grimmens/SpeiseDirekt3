@@ -1,4 +1,5 @@
-﻿@page "/menu/preview/{id}/{Lang?}"
+﻿@page "/menu/preview/{id}/{Language?}"
+@page "/menu/preview/{id}"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @inject ApplicationDbContext DbContext
@@ -37,7 +38,7 @@
     private Menu? menu;
     private bool loading = true;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         if (Guid.TryParse(Id, out var menuId))
         {
@@ -50,7 +51,7 @@
             menu = await queryable
                 .FirstOrDefaultAsync();
             if (menu != null
-                && Enum.TryParse<MenuLanguage>(Language, out var lang))
+                && Enum.TryParse<MenuLanguage>(Language, true, out var lang))
             {
                 menu = await GetDisplayMenu(menu!, lang);
             }
