@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.JSInterop;
 using SpeiseDirekt3.Data;
 using SpeiseDirekt3.Model;
 using SpeiseDirekt3.ServiceInterface;
@@ -10,12 +11,14 @@ namespace SpeiseDirekt3.ServiceImplementation
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<TrackingService> _logger;
+        private readonly IJSRuntime runtime;
 
-        public TrackingService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, ILogger<TrackingService> logger)
+        public TrackingService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, ILogger<TrackingService> logger, IJSRuntime runtime)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
+            this.runtime = runtime;
         }
 
         public async Task RecordMenuViewAsync(string sessionId, Guid menuId, Guid? qrCodeId = null, string? ipAddress = null, string? userAgent = null)
@@ -74,7 +77,7 @@ namespace SpeiseDirekt3.ServiceImplementation
             }
         }
 
-        public string GetOrCreateSessionId()
+        public async Task<string> GetOrCreateSessionId()
         {
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext == null)
@@ -103,9 +106,28 @@ namespace SpeiseDirekt3.ServiceImplementation
                 SameSite = SameSiteMode.Lax
             };
             
-            httpContext.Response.Cookies.Append(sessionCookieName, newSessionId, cookieOptions);
-            
-            return newSessionId;
+            if(httpContext.Response.HasStarted == false)
+                httpContext.Response.Cookies.Append(sessionCookieName, newSessionId, cookieOptions);
+            else
+            {
+                // Response has started, use JavaScript to set cookie
+                try
+                {
+                    var expires = DateTimeOffset.UtcNow.AddDays(30).ToString("R"); // RFC 1123 format
+                    var secure = httpContext.Request.IsHttps ? "; Secure" : "";
+                    var cookieValue = $"{sessionCookieName}={newSessionId}; expires={expires}; path=/; SameSite=Lax{secure}";
+
+                    await this.runtime.InvokeVoidAsync("eval", $"document.cookie = '{cookieValue}';");
+                }
+                catch (Exception ex)
+                {
+                    // Handle JS runtime errors (e.g., during prerendering)
+                    // Log the exception if needed
+                    // The session ID will still be returned and can be used for this request
+                }
+            }
+
+                return newSessionId;
         }
 
         private string? GetClientIpAddress()

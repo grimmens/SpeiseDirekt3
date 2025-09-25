@@ -28,6 +28,6 @@ namespace SpeiseDirekt3.ServiceInterface
         /// Gets or creates a session ID for tracking
         /// </summary>
         /// <returns>Session ID string</returns>
-        string GetOrCreateSessionId();
+        Task<string> GetOrCreateSessionId();
     }
 }
