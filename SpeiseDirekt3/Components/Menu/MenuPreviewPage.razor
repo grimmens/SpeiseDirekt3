@@ -1,10 +1,11 @@
-﻿@page "/menu/preview/{id}"
+﻿@page "/menu/preview/{id}/{Lang?}"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
-@using SpeiseDirekt3.Data
-@using SpeiseDirekt3.Model
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
+@inject IAutomaticTranslator AutomaticTranslator
+@inject ILogger<MenuPreviewPage> Logger
+
 @layout MenuLayout
 
 <!-- Content wrapper with top padding to account for fixed banner -->
@@ -31,6 +32,7 @@
 
 @code {
     [Parameter] public string Id { get; set; } = string.Empty;
+    [Parameter] public string? Language { get; set; } = string.Empty;
 
     private Menu? menu;
     private bool loading = true;
@@ -39,16 +41,89 @@
     {
         if (Guid.TryParse(Id, out var menuId))
         {
-            menu = await DbContext.Menus
+            var queryable = DbContext.Menus
                 .IgnoreQueryFilters()
                 .Include(m => m.Categories)
-                    .ThenInclude(c => c.MenuItems)
+                .ThenInclude(c => c.MenuItems)
                 .AsNoTracking()
-                .Where(m => m.Id == menuId)
+                .Where(m => m.Id == menuId);
+            menu = await queryable
                 .FirstOrDefaultAsync();
+            if (menu != null
+                && Enum.TryParse<MenuLanguage>(Language, out var lang))
+            {
+                menu = await GetDisplayMenu(menu!, lang);
+            }
         }
-            
+
         loading = false;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task<Menu?> GetDisplayMenu(Menu menu, MenuLanguage targetLanguage)
+    {
+        if (menu == null) return null;
+
+        // If current language matches menu language, return original menu
+        if (targetLanguage == menu.Language)
+        {
+            return menu;
+        }
+        Menu? translatedMenu = null;
+        // Need to translate the menu
+        translatedMenu = await TranslateMenu(menu, targetLanguage);
+        
+
+        return (translatedMenu ?? menu);
+    }
+
+    private async Task<Menu> TranslateMenu(Menu originalMenu, MenuLanguage targetLanguage)
+    {
+        try
+        {
+            var translatedMenu = new Menu
+            {
+                Id = originalMenu.Id,
+                Name = await AutomaticTranslator.TranslateTextAsync(originalMenu.Name, targetLanguage, originalMenu.Language),
+                Description = await AutomaticTranslator.TranslateTextAsync(originalMenu.Description, targetLanguage, originalMenu.Language),
+                Theme = originalMenu.Theme,
+                ApplicationUserId = originalMenu.ApplicationUserId,
+                Language = targetLanguage,
+                Categories = new List<Category>()
+            };
+
+            if (originalMenu.Categories != null)
+            {
+                foreach (var category in originalMenu.Categories)
+                {
+                    var translatedCategory = await AutomaticTranslator.TranslateCategoryAsync(category, targetLanguage, originalMenu.Language);
+                    if (category.MenuItems?.Any() ?? false)
+                    {
+                        var translatedMenuItems = await AutomaticTranslator.TranslateMenuItemsAsync(category.MenuItems, targetLanguage, originalMenu.Language);
+                        translatedCategory.MenuItems = translatedMenuItems.ToList();
+                    }
+                    translatedMenu.Categories.Add(translatedCategory);
+                }
+            }
+
+            return translatedMenu;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error while translating");
+            // Return a copy of the original menu with updated language field
+            var fallbackMenu = new Menu
+            {
+                Id = originalMenu.Id,
+                Name = originalMenu.Name,
+                Description = originalMenu.Description,
+                Theme = originalMenu.Theme,
+                ApplicationUserId = originalMenu.ApplicationUserId,
+                Language = targetLanguage, // Mark as target language even though not translated
+                Categories = originalMenu.Categories?.ToList() ?? new List<Category>()
+            };
+
+            return fallbackMenu;
+        }
     }
 }

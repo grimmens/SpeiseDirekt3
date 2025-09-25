@@ -54,14 +54,6 @@
                     <p class="text-gray-500">Keine Kategorien verfügbar</p>
                 }
             </div>
-
-
-            <button class="flex items-center gap-2 text-gray-600 hover:text-gray-800 transition-colors">
-                <span>mehr anzeigen</span>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </button>
         </div>
     </div>
 
@@ -297,7 +289,7 @@
             // Track menu item click
             if (Menu != null && !Preview)
             {
-                var sessionId = TrackingService.GetOrCreateSessionId();
+                var sessionId = await TrackingService.GetOrCreateSessionId();
                 await TrackingService.RecordMenuItemClickAsync(sessionId, menuItem.Id, Menu.Id);
             }
 
