@@ -1,5 +1,4 @@
-﻿// wwwroot/js/elissar-menu.js
-
+﻿
 let dotNetRef = null;
 let categoryGridRef = null;
 let categoryElements = [];

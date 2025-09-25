@@ -26,7 +26,7 @@
     }
     else
     {
-        <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" />
+        <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" CurrentLanguage="currentLanguage" @key="menu" />
     }
 
 </div>
@@ -37,6 +37,7 @@
 
     private Menu? menu;
     private bool loading = true;
+    private MenuLanguage currentLanguage = MenuLanguage.German;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -53,7 +54,12 @@
             if (menu != null
                 && Enum.TryParse<MenuLanguage>(Language, true, out var lang))
             {
+                currentLanguage = lang;
                 menu = await GetDisplayMenu(menu!, lang);
+            }
+            else if (menu != null)
+            {
+                currentLanguage = menu.Language;
             }
         }
 
