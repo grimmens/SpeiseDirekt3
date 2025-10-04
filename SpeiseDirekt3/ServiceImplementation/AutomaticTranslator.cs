@@ -108,7 +108,7 @@ namespace SpeiseDirekt3.ServiceImplementation
 
                 return new Category
                 {
-                    Id = Guid.NewGuid(),
+                    Id = category.Id,
                     Name = translatedName,
                     MenuId = category.MenuId,
                     ApplicationUserId = category.ApplicationUserId

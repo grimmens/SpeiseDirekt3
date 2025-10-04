@@ -79,7 +79,7 @@
         Menu? translatedMenu = null;
         // Need to translate the menu
         translatedMenu = await TranslateMenu(menu, targetLanguage);
-        
+
 
         return (translatedMenu ?? menu);
     }
@@ -106,8 +106,13 @@
                     var translatedCategory = await AutomaticTranslator.TranslateCategoryAsync(category, targetLanguage, originalMenu.Language);
                     if (category.MenuItems?.Any() ?? false)
                     {
-                        var translatedMenuItems = await AutomaticTranslator.TranslateMenuItemsAsync(category.MenuItems, targetLanguage, originalMenu.Language);
-                        translatedCategory.MenuItems = translatedMenuItems.ToList();
+                        var translatedMenuItems = (await AutomaticTranslator.TranslateMenuItemsAsync(category.MenuItems, targetLanguage, originalMenu.Language)).ToList();
+                        foreach(var translatedMenuItem in translatedMenuItems)
+                        {
+                            translatedMenuItem.Category = translatedCategory;
+                            translatedMenuItem.CategoryId = translatedCategory.Id;
+                        }
+                        translatedCategory.MenuItems = translatedMenuItems;
                     }
                     translatedMenu.Categories.Add(translatedCategory);
                 }
