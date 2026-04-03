@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Primitives;
 using SpeiseDirekt3.Components.Account.Pages;
 using SpeiseDirekt3.Components.Account.Pages.Manage;
-using SpeiseDirekt3.Data;
+using SpeiseDirekt.Data;
 
 namespace Microsoft.AspNetCore.Routing
 {

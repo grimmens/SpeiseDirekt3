@@ -1,0 +1,19 @@
+﻿using SpeiseDirekt.ServiceInterface;
+using SpeiseDirekt.ServiceImplementation;
+
+namespace SpeiseDirekt.Infrastructure
+{
+    public static class ServiceExtensions
+    {
+        public static void ConfigureServices(this IServiceCollection services)
+        {
+            services.AddScoped<IUserIdProvider, UserIdProvider>();
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IMenuService, MenuService>();
+            services.AddScoped<ITrackingService, TrackingService>();
+            services.AddScoped<IAnalyticsService, AnalyticsService>();
+            services.AddHttpClient();
+        }
+    }
+}

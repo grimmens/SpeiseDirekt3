@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
-using SpeiseDirekt3.Data;
+using SpeiseDirekt.Data;
 
 namespace SpeiseDirekt3.Components.Account
 {

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using SpeiseDirekt3.Data;
+using SpeiseDirekt.Data;
 using QRCoder;
 
 namespace SpeiseDirekt3.Controller
