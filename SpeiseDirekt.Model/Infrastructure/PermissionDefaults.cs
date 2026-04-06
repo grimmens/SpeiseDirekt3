@@ -12,6 +12,7 @@ public static class PermissionDefaults
         Permission.MenuItemsView | Permission.MenuItemsCreate | Permission.MenuItemsEdit | Permission.MenuItemsDelete |
         Permission.AllergensView | Permission.AllergensCreate | Permission.AllergensEdit | Permission.AllergensDelete |
         Permission.QrCodesView | Permission.QrCodesCreate | Permission.QrCodesEdit | Permission.QrCodesDelete |
+        Permission.MenuCombosView | Permission.MenuCombosCreate | Permission.MenuCombosEdit | Permission.MenuCombosDelete |
         Permission.AnalyticsView |
         Permission.UsersView | Permission.UsersCreate | Permission.UsersEdit;
 

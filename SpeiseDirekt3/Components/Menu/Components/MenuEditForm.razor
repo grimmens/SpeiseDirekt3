@@ -1,4 +1,4 @@
-﻿@page "/menu/edit/{Id:guid?}"
+@page "/menu/edit/{Id:guid?}"
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
@@ -6,26 +6,62 @@
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
 
+<PageTitle>@(IsNew ? "New Menu" : $"Edit {Menu.Name}") - Speise-Direkt</PageTitle>
 
-<div class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <h3>@(IsNew ? "Add New Menu" : "Edit Menu")</h3>
+<!-- Header -->
+<div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex items-center text-sm text-gray-500 mb-3">
+            <a href="menus" class="hover:text-blue-600 transition-colors">Menus</a>
+            @if (!IsNew)
+            {
+                <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+                <a href="@($"menudetail/{Id}")" class="hover:text-blue-600 transition-colors">@Menu.Name</a>
+            }
+            <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-gray-900 font-medium">@(IsNew ? "New Menu" : "Settings")</span>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+                <h1 class="text-3xl font-bold text-gray-900 font-display">@(IsNew ? "Create New Menu" : "Menu Settings")</h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Form Card -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-6">Menu Details</h2>
             <EditForm EditContext="EditContext" OnValidSubmit="HandleValidSubmit">
                 <DataAnnotationsValidator />
 
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Menu.Name" class="form-control" id="menuName" placeholder="Menu Name" />
-                    <label for="menuName">Menu Name</label>
-                    <ValidationMessage For="@(() => Menu.Name)" class="text-danger" />
+                <!-- Menu Name -->
+                <div class="mb-5">
+                    <label for="menuName" class="block text-sm font-medium text-gray-700 mb-1">Menu Name</label>
+                    <InputText @bind-Value="Menu.Name"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               id="menuName" placeholder="Enter menu name" />
+                    <ValidationMessage For="@(() => Menu.Name)" class="text-sm text-red-600 mt-1" />
                 </div>
 
-                <div class="form-floating mb-3">
-                    <InputText @bind-Value="Menu.Description" class="form-control" id="menuDesc" placeholder="Description" />
-                    <label for="menuDesc">Description</label>
+                <!-- Description -->
+                <div class="mb-5">
+                    <label for="menuDesc" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <InputText @bind-Value="Menu.Description"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               id="menuDesc" placeholder="Enter description" />
                 </div>
-                <div class="mb-3">
-                    <label class="form-label" for="languageSelect">
+
+                <!-- Language -->
+                <div class="mb-5">
+                    <label for="languageSelect" class="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
                         Language
                         <SpeiseDirekt3.Components.HelperComp.InfoPopoverComp>
                             <Content>
@@ -34,56 +70,74 @@
                         </SpeiseDirekt3.Components.HelperComp.InfoPopoverComp>
                     </label>
                     <InputSelect @bind-Value="Menu.Language"
-                    class="form-select"
-                    id="languageSelect">
+                                 class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                                 id="languageSelect">
                         @foreach (var language in Enum.GetValues<MenuLanguage>())
                         {
                             <option value="@language">@language</option>
                         }
                     </InputSelect>
                 </div>
-                <div class="d-flex align-items-center mb-3">
-                    <label class="form-label me-2" for="themeSelect">Design Theme</label>
 
-                    <button type="button" class="btn btn-outline-secondary me-1"
-                    @onclick="() => ChangeTheme(-1)">
-                        ←
-                    </button>
+                <!-- Design Theme -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Design Theme</label>
+                    <div class="flex items-center gap-2">
+                        <button type="button"
+                                class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                                @onclick="() => ChangeTheme(-1)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                            </svg>
+                        </button>
 
-                    <InputSelect @bind-Value="Menu.Theme"
-                    class="form-select me-1"
-                    id="themeSelect"
-                    style="width: auto; display: inline-block;">
-                        @foreach (var theme in Enum.GetValues<DesignTheme>())
-                        {
-                            <option value="@theme">@theme</option>
-                        }
-                    </InputSelect>
+                        <InputSelect @bind-Value="Menu.Theme"
+                                     class="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                                     id="themeSelect">
+                            @foreach (var theme in Enum.GetValues<DesignTheme>())
+                            {
+                                <option value="@theme">@theme</option>
+                            }
+                        </InputSelect>
 
-                    <button type="button" class="btn btn-outline-secondary"
-                    @onclick="() => ChangeTheme(+1)">
-                        →
-                    </button>
+                        <button type="button"
+                                class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                                @onclick="() => ChangeTheme(+1)">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
-
-
-                <div class="d-flex justify-content-between">
-                    <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <button type="button"
+                            class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+                            @onclick="Cancel">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="inline-flex items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        @(IsNew ? "Create Menu" : "Save Changes")
+                    </button>
                 </div>
             </EditForm>
         </div>
-        <div class="col-md-6">
+
+        <!-- Preview Card -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Preview</h2>
             @if (Menu != null)
             {
-                <h1 class="text-2xl font-semibold text-gray-800 mb-4">Preview</h1>
                 <MenuDisplayComponent Preview="true" Menu="Menu" />
             }
         </div>
     </div>
 </div>
-
 
 @code {
     [Parameter] public Guid? Id { get; set; }
@@ -114,13 +168,11 @@
                ?? throw new InvalidOperationException($"Menu '{Id}' not found.");
         }
 
-
         EditContext = new EditContext(Menu);
     }
 
     private async Task HandleValidSubmit()
     {
-        // validate unique name
         var nameExists = await Context.Menus
             .Where(m => m.Id != Menu.Id)
             .AnyAsync(m => m.Name == Menu.Name);
@@ -145,24 +197,19 @@
         await Context.SaveChangesAsync();
         NavManager.NavigateTo(IsNew ? "/menus" : $"/menudetail/{Menu.Id}");
     }
+
     void ChangeTheme(int direction)
     {
-        // Get all theme values
         var themes = Enum.GetValues<DesignTheme>().Cast<DesignTheme>().ToList();
         var currentIndex = themes.IndexOf(Menu.Theme);
-
-        // Move forward/back, wrapping around
         var nextIndex = (currentIndex + direction + themes.Count) % themes.Count;
         Menu.Theme = themes[nextIndex];
     }
 
     void ChangeLanguage(int direction)
     {
-        // Get all theme values
         var themes = Enum.GetValues<MenuLanguage>().Cast<MenuLanguage>().ToList();
         var currentIndex = themes.IndexOf(Menu.Language);
-
-        // Move forward/back, wrapping around
         var nextIndex = (currentIndex + direction + themes.Count) % themes.Count;
         Menu.Language = themes[nextIndex];
     }

@@ -78,7 +78,7 @@
     else
     {
         <!-- Stats Row -->
-        <div class="grid grid-cols-3 gap-4 mb-8">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
                 <div class="text-2xl font-bold text-gray-900">@categoryCount</div>
                 <div class="text-sm text-gray-500">Categories</div>
@@ -90,6 +90,10 @@
             <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
                 <div class="text-2xl font-bold text-gray-900">@allergenCount</div>
                 <div class="text-sm text-gray-500">Allergens</div>
+            </div>
+            <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+                <div class="text-2xl font-bold text-gray-900">@comboCount</div>
+                <div class="text-sm text-gray-500">Combos</div>
             </div>
         </div>
 
@@ -144,6 +148,22 @@
                 <p class="text-sm text-gray-600">Manage allergen information for your dishes</p>
             </a>
 
+            <!-- Combos -->
+            <a href="@($"combos/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+                <div class="flex items-center mb-3">
+                    <div class="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
+                        <svg class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">Combos</h3>
+                        <p class="text-sm text-gray-500">@comboCount combos</p>
+                    </div>
+                </div>
+                <p class="text-sm text-gray-600">Create combo offers for bundled deals</p>
+            </a>
+
             <!-- Settings -->
             <a href="@($"menu/edit/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
                 <div class="flex items-center mb-3">
@@ -189,9 +209,10 @@
     private int categoryCount;
     private int menuItemCount;
     private int allergenCount;
+    private int comboCount;
     private bool canEdit, canDelete;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         canEdit = await PermissionService.HasPermissionAsync(Permission.MenusEdit);
         canDelete = await PermissionService.HasPermissionAsync(Permission.MenusDelete);
@@ -201,6 +222,7 @@
             categoryCount = await DbContext.Categories.CountAsync(c => c.MenuId == MenuId);
             menuItemCount = await DbContext.MenuItems.CountAsync(mi => DbContext.Categories.Any(c => c.MenuId == MenuId && c.Id == mi.CategoryId));
             allergenCount = await DbContext.Allergens.CountAsync(a => a.MenuId == MenuId);
+            comboCount = await DbContext.MenuCombos.CountAsync(c => c.MenuId == MenuId);
         }
     }
 

@@ -11,19 +11,23 @@ namespace SpeiseDirekt.Infrastructure
             services.AddScoped<IUserIdProvider, UserIdProvider>();
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddScoped<INotificationService, NotificationService>();
-            services.AddScoped<IMenuService, MenuService>();
-            services.AddScoped<ITrackingService, TrackingService>();
-            services.AddScoped<IAnalyticsService, AnalyticsService>();
             services.AddScoped<IImageResizeService, ImageResizeService>();
-            services.AddScoped<IPermissionService, PermissionService>();
             services.AddHttpClient();
 
-            // Repositories
-            services.AddScoped<IMenuRepository, MenuRepository>();
-            services.AddScoped<ICategoryRepository, CategoryRepository>();
-            services.AddScoped<IMenuItemRepository, MenuItemRepository>();
-            services.AddScoped<IQrCodeRepository, QrCodeRepository>();
-            services.AddScoped<IImageRepository, ImageRepository>();
+            // Transient: services that depend on ApplicationDbContext
+            // (each component gets a fresh DbContext to avoid concurrent access issues in Blazor Server)
+            services.AddTransient<IMenuService, MenuService>();
+            services.AddTransient<ITrackingService, TrackingService>();
+            services.AddTransient<IAnalyticsService, AnalyticsService>();
+            services.AddTransient<IPermissionService, PermissionService>();
+
+            // Repositories (all depend on ApplicationDbContext)
+            services.AddTransient<IMenuRepository, MenuRepository>();
+            services.AddTransient<ICategoryRepository, CategoryRepository>();
+            services.AddTransient<IMenuItemRepository, MenuItemRepository>();
+            services.AddTransient<IQrCodeRepository, QrCodeRepository>();
+            services.AddTransient<IImageRepository, ImageRepository>();
+            services.AddTransient<IMenuComboRepository, MenuComboRepository>();
         }
     }
 }

@@ -47,6 +47,12 @@ public enum Permission : long
     QrCodesEdit = 1L << 18,
     QrCodesDelete = 1L << 19,
 
+    // Menu Combo permissions
+    MenuCombosView = 1L << 21,
+    MenuCombosCreate = 1L << 22,
+    MenuCombosEdit = 1L << 23,
+    MenuCombosDelete = 1L << 28,
+
     // Analytics
     AnalyticsView = 1L << 20,
 

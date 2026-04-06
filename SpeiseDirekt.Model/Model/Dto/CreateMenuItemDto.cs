@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -20,20 +20,5 @@ namespace SpeiseDirekt.Model
         public Category? Category { get; set; }
         public Guid ApplicationUserId { get; set; }
         public string? ImagePath { get; set; }
-
     }
-
-
-    public class BreadcrumbItem
-    {
-        public string Title { get; set; }
-        public string Link { get; set; }
-
-        public BreadcrumbItem(string title, string link)
-        {
-            Title = title;
-            Link = link;
-        }
-    }
-
 }

@@ -103,8 +103,11 @@ namespace SpeiseDirekt.ServiceImplementation
                 SameSite = SameSiteMode.Lax
             };
             
-            httpContext.Response.Cookies.Append(sessionCookieName, newSessionId, cookieOptions);
-            
+            if (!httpContext.Response.HasStarted)
+            {
+                httpContext.Response.Cookies.Append(sessionCookieName, newSessionId, cookieOptions);
+            }
+
             return newSessionId;
         }
 
