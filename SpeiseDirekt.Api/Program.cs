@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
+using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceInterface;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,6 +22,10 @@ builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
 
 // Application services
 builder.Services.ConfigureServices();
+
+// POS Stripe configuration (restaurant payments, not app subscription billing)
+builder.Services.Configure<PosStripeSettings>(
+    builder.Configuration.GetSection("PosStripe"));
 
 // Controllers, Swagger, Auth
 builder.Services.AddControllers()

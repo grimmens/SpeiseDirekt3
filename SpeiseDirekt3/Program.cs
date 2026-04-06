@@ -32,6 +32,10 @@ namespace SpeiseDirekt3
             builder.Services.AddHttpContextAccessor();
             builder.Services.ConfigureServices();
 
+            // POS Stripe configuration (restaurant payments, not app subscription billing)
+            builder.Services.Configure<SpeiseDirekt.Model.PosStripeSettings>(
+                builder.Configuration.GetSection("PosStripe"));
+
             builder.Services.AddCookieConsent(o =>
             {
                 o.Revision = 1;

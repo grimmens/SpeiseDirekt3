@@ -49,4 +49,26 @@ public static class PolicyNames
     // Delivery
     public const string CanViewDelivery = "CanViewDelivery";
     public const string CanManageDelivery = "CanManageDelivery";
+
+    // POS Orders (restaurant transactions)
+    public const string CanViewOrders = "CanViewOrders";
+    public const string CanCreateOrders = "CanCreateOrders";
+    public const string CanEditOrders = "CanEditOrders";
+    public const string CanDeleteOrders = "CanDeleteOrders";
+
+    // Tax Rates
+    public const string CanViewTaxRates = "CanViewTaxRates";
+    public const string CanCreateTaxRates = "CanCreateTaxRates";
+    public const string CanEditTaxRates = "CanEditTaxRates";
+    public const string CanDeleteTaxRates = "CanDeleteTaxRates";
+
+    // Discounts / Vouchers
+    public const string CanViewDiscounts = "CanViewDiscounts";
+    public const string CanCreateDiscounts = "CanCreateDiscounts";
+    public const string CanEditDiscounts = "CanEditDiscounts";
+    public const string CanDeleteDiscounts = "CanDeleteDiscounts";
+
+    // POS Payments (restaurant transactions, not app subscription billing)
+    public const string CanViewPosPayments = "CanViewPosPayments";
+    public const string CanManagePosPayments = "CanManagePosPayments";
 }
