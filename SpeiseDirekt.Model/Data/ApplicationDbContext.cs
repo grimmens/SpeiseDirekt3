@@ -32,6 +32,11 @@ namespace SpeiseDirekt.Data
             builder.Entity<Allergen>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<MenuCombo>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<MenuComboItem>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<Order>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<OrderItem>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<TaxRate>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<Discount>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<PosPayment>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
 
             // Allergen: many-to-many with MenuItem via join table
             builder.Entity<MenuItem>()
@@ -129,6 +134,62 @@ namespace SpeiseDirekt.Data
                       .OnDelete(DeleteBehavior.NoAction);
             });
 
+            // POS Order relationships
+            builder.Entity<Order>(entity =>
+            {
+                entity.HasIndex(e => new { e.ApplicationUserId, e.CreatedAt });
+                entity.HasIndex(e => e.OrderNumber);
+
+                entity.HasOne(e => e.Menu)
+                      .WithMany()
+                      .HasForeignKey(e => e.MenuId)
+                      .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(e => e.Discount)
+                      .WithMany()
+                      .HasForeignKey(e => e.DiscountId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            builder.Entity<OrderItem>(entity =>
+            {
+                entity.HasOne(e => e.Order)
+                      .WithMany(o => o.Items)
+                      .HasForeignKey(e => e.OrderId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.MenuItem)
+                      .WithMany()
+                      .HasForeignKey(e => e.MenuItemId)
+                      .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(e => e.MenuCombo)
+                      .WithMany()
+                      .HasForeignKey(e => e.MenuComboId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
+
+            builder.Entity<MenuItem>()
+                .HasOne(e => e.TaxRate)
+                .WithMany()
+                .HasForeignKey(e => e.TaxRateId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder.Entity<Discount>(entity =>
+            {
+                entity.HasIndex(e => new { e.Code, e.ApplicationUserId }).IsUnique();
+            });
+
+            builder.Entity<PosPayment>(entity =>
+            {
+                entity.HasIndex(e => e.StripeSessionId);
+
+                entity.HasOne(e => e.Order)
+                      .WithMany()
+                      .HasForeignKey(e => e.OrderId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
+
             // Self-referencing FK: sub-accounts point to owner
             builder.Entity<ApplicationUser>()
                 .HasOne(u => u.TenantOwner)
@@ -169,6 +230,11 @@ namespace SpeiseDirekt.Data
         public DbSet<TenantUser> TenantUsers { get; set; }
         public DbSet<MenuCombo> MenuCombos { get; set; }
         public DbSet<MenuComboItem> MenuComboItems { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderItem> OrderItems { get; set; }
+        public DbSet<TaxRate> TaxRates { get; set; }
+        public DbSet<Discount> Discounts { get; set; }
+        public DbSet<PosPayment> PosPayments { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
         {
             if (e.Entry.Entity is IAppUserEntity entity)

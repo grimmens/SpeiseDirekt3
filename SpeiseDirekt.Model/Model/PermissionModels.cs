@@ -68,6 +68,28 @@ public enum Permission : long
     // Delivery-specific
     DeliveryView = 1L << 32,
     DeliveryManage = 1L << 33,
+
+    // POS Orders
+    OrdersView = 1L << 34,
+    OrdersCreate = 1L << 35,
+    OrdersEdit = 1L << 36,
+    OrdersDelete = 1L << 37,
+
+    // Tax Rates
+    TaxRatesView = 1L << 38,
+    TaxRatesCreate = 1L << 39,
+    TaxRatesEdit = 1L << 40,
+    TaxRatesDelete = 1L << 41,
+
+    // Discounts / Vouchers
+    DiscountsView = 1L << 42,
+    DiscountsCreate = 1L << 43,
+    DiscountsEdit = 1L << 44,
+    DiscountsDelete = 1L << 45,
+
+    // POS Payments (restaurant transactions, not app subscription billing)
+    PosPaymentsView = 1L << 46,
+    PosPaymentsManage = 1L << 47,
 }
 
 public class TenantUser

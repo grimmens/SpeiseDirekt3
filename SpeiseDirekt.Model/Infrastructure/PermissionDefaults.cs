@@ -14,20 +14,27 @@ public static class PermissionDefaults
         Permission.QrCodesView | Permission.QrCodesCreate | Permission.QrCodesEdit | Permission.QrCodesDelete |
         Permission.MenuCombosView | Permission.MenuCombosCreate | Permission.MenuCombosEdit | Permission.MenuCombosDelete |
         Permission.AnalyticsView |
-        Permission.UsersView | Permission.UsersCreate | Permission.UsersEdit;
+        Permission.UsersView | Permission.UsersCreate | Permission.UsersEdit |
+        Permission.OrdersView | Permission.OrdersCreate | Permission.OrdersEdit | Permission.OrdersDelete |
+        Permission.TaxRatesView | Permission.TaxRatesCreate | Permission.TaxRatesEdit | Permission.TaxRatesDelete |
+        Permission.DiscountsView | Permission.DiscountsCreate | Permission.DiscountsEdit | Permission.DiscountsDelete |
+        Permission.PosPaymentsView;
 
     private static readonly Permission CashierPermissions =
         Permission.MenusView |
         Permission.CategoriesView |
         Permission.MenuItemsView | Permission.MenuItemsEdit |
         Permission.AllergensView |
-        Permission.QrCodesView;
+        Permission.QrCodesView |
+        Permission.OrdersView | Permission.OrdersCreate | Permission.OrdersEdit |
+        Permission.PosPaymentsView;
 
     private static readonly Permission EmployeePermissions =
         Permission.MenusView |
         Permission.CategoriesView |
         Permission.MenuItemsView |
-        Permission.AllergensView;
+        Permission.AllergensView |
+        Permission.OrdersView;
 
     private static readonly Permission DriverPermissions =
         Permission.MenusView |
