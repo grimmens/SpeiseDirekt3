@@ -13,7 +13,7 @@ public static class TestSeedData
     public static readonly Guid MenuItem2Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccd");
     public static readonly Guid MenuItem3Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccce");
 
-    // Allergen IDs (matching seeded data from DbContext)
+    // Allergen IDs (created per-menu, no longer globally seeded)
     public static readonly Guid AllergenGlutenId = Guid.Parse("a0000000-0000-0000-0000-000000000001");
     public static readonly Guid AllergenMilkId = Guid.Parse("a0000000-0000-0000-0000-000000000007");
     public static readonly Guid AllergenFishId = Guid.Parse("a0000000-0000-0000-0000-000000000004");
@@ -84,10 +84,32 @@ public static class TestSeedData
         };
         context.Categories.AddRange(category1, category2);
 
-        // Load seeded allergens
-        var glutenAllergen = context.Allergens.Find(AllergenGlutenId)!;
-        var milkAllergen = context.Allergens.Find(AllergenMilkId)!;
-        var fishAllergen = context.Allergens.Find(AllergenFishId)!;
+        // Create allergens per-menu (no longer globally seeded)
+        var glutenAllergen = new Allergen
+        {
+            Id = AllergenGlutenId,
+            Code = "A",
+            Name = "Gluten",
+            MenuId = Menu1Id,
+            ApplicationUserId = appUserId
+        };
+        var milkAllergen = new Allergen
+        {
+            Id = AllergenMilkId,
+            Code = "G",
+            Name = "Milk",
+            MenuId = Menu1Id,
+            ApplicationUserId = appUserId
+        };
+        var fishAllergen = new Allergen
+        {
+            Id = AllergenFishId,
+            Code = "D",
+            Name = "Fish",
+            MenuId = Menu2Id,
+            ApplicationUserId = appUserId
+        };
+        context.Allergens.AddRange(glutenAllergen, milkAllergen, fishAllergen);
 
         // MenuItems
         var menuItem1 = new MenuItem

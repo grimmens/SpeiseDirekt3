@@ -16,18 +16,17 @@ public class AllergensControllerTests : BaseIntegrationTest
     public AllergensControllerTests(CustomWebApplicationFactory factory) : base(factory) { }
 
     [Fact]
-    public async Task GetAll_ReturnsAll14EuAllergens()
+    public async Task GetAll_ReturnsSeededAllergens()
     {
         var response = await Client.GetAsync("/api/allergens");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var allergens = await response.Content.ReadFromJsonAsync<List<AllergenResponse>>(JsonOptions);
-        allergens.Should().HaveCount(14);
+        allergens.Should().HaveCount(3);
         allergens.Should().Contain(a => a.Code == "A" && a.Name == "Gluten");
         allergens.Should().Contain(a => a.Code == "D" && a.Name == "Fish");
         allergens.Should().Contain(a => a.Code == "G" && a.Name == "Milk");
-        allergens.Should().Contain(a => a.Code == "H" && a.Name == "Nuts");
     }
 
     [Fact]

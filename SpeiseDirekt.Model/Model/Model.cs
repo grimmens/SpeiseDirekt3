@@ -11,7 +11,7 @@ namespace SpeiseDirekt.Model
     {
         Guid ApplicationUserId { get; set; }
     }
-    public class Allergen
+    public class Allergen : IAppUserEntity
     {
         public Guid Id { get; set; }
         [Required, StringLength(5)]
@@ -19,6 +19,10 @@ namespace SpeiseDirekt.Model
         [Required, StringLength(100)]
         public string Name { get; set; } = string.Empty;
         public ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
+        [ForeignKey(nameof(Menu))]
+        public Guid MenuId { get; set; }
+        public Menu? Menu { get; set; }
+        public Guid ApplicationUserId { get; set; }
     }
 
     public class MenuItem : IAppUserEntity
@@ -74,6 +78,7 @@ namespace SpeiseDirekt.Model
 
         public DesignTheme Theme { get; set; } = DesignTheme.Modern;
         public ICollection<Category>? Categories { get; set; }
+        public ICollection<Allergen>? Allergens { get; set; }
         public Guid ApplicationUserId { get; set; }
         public MenuLanguage Language { get; set; } = MenuLanguage.German;
     }

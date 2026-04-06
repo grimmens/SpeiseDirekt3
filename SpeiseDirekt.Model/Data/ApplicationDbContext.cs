@@ -29,6 +29,7 @@ namespace SpeiseDirekt.Data
             builder.Entity<QRCode>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<TimeTableEntry>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<CalendarEntry>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<Allergen>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
 
             // Allergen: many-to-many with MenuItem via join table
             builder.Entity<MenuItem>()
@@ -38,26 +39,8 @@ namespace SpeiseDirekt.Data
 
             builder.Entity<Allergen>(entity =>
             {
-                entity.HasIndex(e => e.Code).IsUnique();
+                entity.HasIndex(e => new { e.Code, e.MenuId }).IsUnique();
             });
-
-            // Seed the 14 EU allergens
-            builder.Entity<Allergen>().HasData(
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000001"), Code = "A", Name = "Gluten" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000002"), Code = "B", Name = "Crustaceans" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000003"), Code = "C", Name = "Eggs" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000004"), Code = "D", Name = "Fish" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000005"), Code = "E", Name = "Peanuts" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000006"), Code = "F", Name = "Soybeans" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000007"), Code = "G", Name = "Milk" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000008"), Code = "H", Name = "Nuts" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000009"), Code = "I", Name = "Celery" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000a"), Code = "J", Name = "Mustard" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000b"), Code = "K", Name = "Sesame" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000c"), Code = "L", Name = "Sulphites" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000d"), Code = "M", Name = "Lupin" },
-                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000e"), Code = "N", Name = "Molluscs" }
-            );
 
             builder.Entity<ApplicationUser>()
                    .HasOne(u => u.TenantSubscription)
