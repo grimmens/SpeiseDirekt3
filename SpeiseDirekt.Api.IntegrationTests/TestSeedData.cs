@@ -16,6 +16,12 @@ public static class TestSeedData
     public static readonly Guid TimeTableEntryId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
     public static readonly Guid CalendarEntryId = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
     public static readonly Guid ImageId = Guid.Parse("99999999-9999-9999-9999-999999999999");
+    public static readonly Guid MenuView1Id = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    public static readonly Guid MenuView2Id = Guid.Parse("11111111-1111-1111-1111-111111111112");
+    public static readonly Guid MenuView3Id = Guid.Parse("11111111-1111-1111-1111-111111111113");
+    public static readonly Guid MenuItemClick1Id = Guid.Parse("22222222-2222-2222-2222-222222222221");
+    public static readonly Guid MenuItemClick2Id = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    public static readonly string TestSessionId = "test-session-001";
 
     public static async Task SeedAsync(ApplicationDbContext context, string userId)
     {
@@ -138,6 +144,63 @@ public static class TestSeedData
             QRCodeId = QrCodeId,
             ApplicationUserId = appUserId
         });
+
+        // MenuViews
+        context.MenuViews.AddRange(
+            new MenuView
+            {
+                Id = MenuView1Id,
+                SessionId = TestSessionId,
+                MenuId = Menu1Id,
+                QRCodeId = QrCodeId,
+                ViewedAt = DateTime.UtcNow.AddDays(-1),
+                IpAddress = "127.0.0.1",
+                UserAgent = "TestAgent/1.0"
+            },
+            new MenuView
+            {
+                Id = MenuView2Id,
+                SessionId = TestSessionId,
+                MenuId = Menu1Id,
+                QRCodeId = QrCodeId,
+                ViewedAt = DateTime.UtcNow.AddDays(-2),
+                IpAddress = "127.0.0.1",
+                UserAgent = "TestAgent/1.0"
+            },
+            new MenuView
+            {
+                Id = MenuView3Id,
+                SessionId = "test-session-002",
+                MenuId = Menu2Id,
+                ViewedAt = DateTime.UtcNow.AddDays(-3),
+                IpAddress = "192.168.1.1",
+                UserAgent = "TestAgent/2.0"
+            }
+        );
+
+        // MenuItemClicks
+        context.MenuItemClicks.AddRange(
+            new MenuItemClick
+            {
+                Id = MenuItemClick1Id,
+                SessionId = TestSessionId,
+                MenuItemId = MenuItem1Id,
+                MenuId = Menu1Id,
+                ClickedAt = DateTime.UtcNow.AddDays(-1),
+                IpAddress = "127.0.0.1",
+                UserAgent = "TestAgent/1.0"
+            },
+            new MenuItemClick
+            {
+                Id = MenuItemClick2Id,
+                SessionId = "test-session-002",
+                MenuItemId = MenuItem3Id,
+                MenuId = Menu2Id,
+                ClickedAt = DateTime.UtcNow.AddDays(-2),
+                IpAddress = "192.168.1.1",
+                UserAgent = "TestAgent/2.0"
+            }
+        );
 
         // Image
         context.Images.Add(new Image
