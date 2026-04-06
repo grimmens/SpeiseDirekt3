@@ -29,6 +29,11 @@ namespace SpeiseDirekt.Infrastructure
             services.AddTransient<IImageRepository, ImageRepository>();
             services.AddTransient<IMenuComboRepository, MenuComboRepository>();
 
+            // POS services (restaurant transactions, not app subscription billing)
+            services.AddTransient<IOrderService, OrderService>();
+            services.AddTransient<ITaxService, TaxService>();
+            services.AddTransient<IDiscountService, DiscountService>();
+
             // POS repositories (restaurant transactions, not app subscription billing)
             services.AddTransient<IOrderRepository, OrderRepository>();
             services.AddTransient<ITaxRateRepository, TaxRateRepository>();
