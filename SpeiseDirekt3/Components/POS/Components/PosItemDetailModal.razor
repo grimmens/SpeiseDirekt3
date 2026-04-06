@@ -14,39 +14,45 @@
                     <p class="text-amber-400 font-semibold">@Item.UnitPrice.ToString("C") each</p>
                     @if (Item.IsComboItem)
                     {
-                        <span class="inline-block mt-2 text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full font-medium">Part of Combo</span>
+                        <span class="inline-block mt-2 text-xs px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full font-medium">Combo — quantity fixed</span>
                     }
                 </div>
 
-                <!-- Quantity Selector -->
-                <div class="px-6 pb-6">
-                    <div class="flex items-center justify-center gap-6">
-                        <button class="w-14 h-14 bg-gray-700 hover:bg-gray-600 text-white text-2xl font-bold rounded-2xl transition-all active:scale-95 flex items-center justify-center"
-                                @onclick="Decrement">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4" />
-                            </svg>
-                        </button>
-                        <span class="text-4xl font-black text-white w-16 text-center">@quantity</span>
-                        <button class="w-14 h-14 bg-amber-500 hover:bg-amber-400 text-white text-2xl font-bold rounded-2xl transition-all active:scale-95 flex items-center justify-center"
-                                @onclick="Increment">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                            </svg>
-                        </button>
+                @if (!Item.IsComboItem)
+                {
+                    <!-- Quantity Selector (regular items only) -->
+                    <div class="px-6 pb-6">
+                        <div class="flex items-center justify-center gap-6">
+                            <button class="w-14 h-14 bg-gray-700 hover:bg-gray-600 text-white text-2xl font-bold rounded-2xl transition-all active:scale-95 flex items-center justify-center"
+                                    @onclick="Decrement">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4" />
+                                </svg>
+                            </button>
+                            <span class="text-4xl font-black text-white w-16 text-center">@quantity</span>
+                            <button class="w-14 h-14 bg-amber-500 hover:bg-amber-400 text-white text-2xl font-bold rounded-2xl transition-all active:scale-95 flex items-center justify-center"
+                                    @onclick="Increment">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="text-center text-gray-500 text-sm mt-2">Line total: @((Item.UnitPrice * quantity).ToString("C"))</p>
                     </div>
-                    <p class="text-center text-gray-500 text-sm mt-2">Line total: @((Item.UnitPrice * quantity).ToString("C"))</p>
-                </div>
+                }
 
                 <!-- Actions -->
                 <div class="px-6 pb-6 space-y-3">
-                    <button class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-white font-bold rounded-2xl transition-all active:scale-[0.98]"
-                            @onclick="Confirm">
-                        Update Quantity
-                    </button>
+                    @if (!Item.IsComboItem)
+                    {
+                        <button class="w-full py-4 bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-400 hover:to-indigo-400 text-white font-bold rounded-2xl transition-all active:scale-[0.98]"
+                                @onclick="Confirm">
+                            Update Quantity
+                        </button>
+                    }
                     <button class="w-full py-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium rounded-2xl transition-all"
                             @onclick="Remove">
-                        Remove from Order
+                        @(Item.IsComboItem ? "Remove Combo" : "Remove from Order")
                     </button>
                 </div>
             </div>

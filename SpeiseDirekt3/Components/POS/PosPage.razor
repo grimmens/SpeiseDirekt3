@@ -146,24 +146,78 @@
                 @if (cart.Items.Any())
                 {
                     <div class="divide-y divide-gray-700/40">
-                        @foreach (var item in cart.Items)
+                        @{ var rendered = new HashSet<int>(); }
+                        @for (var idx = 0; idx < cart.Items.Count; idx++)
                         {
-                            var cartItem = item;
-                            <button class="w-full px-6 py-4 flex items-center gap-3 hover:bg-gray-700/30 transition-colors text-left"
-                                    @onclick="() => OpenItemDetail(cartItem)">
-                                <div class="w-9 h-9 bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <span class="text-sm font-bold text-white">@cartItem.Quantity</span>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-white truncate">@cartItem.Name</p>
-                                    @if (cartItem.ComboId.HasValue)
+                            if (rendered.Contains(idx)) continue;
+                            rendered.Add(idx);
+                            var cartItem = cart.Items[idx];
+                            var itemIdx = idx;
+
+                            @if (cartItem.ComboId.HasValue && cartItem.IsComboTrigger)
+                            {
+                                // ── Combo group ──
+                                var comboId = cartItem.ComboId.Value;
+                                var subItems = new List<PosCartItem>();
+                                for (var j = idx + 1; j < cart.Items.Count; j++)
+                                {
+                                    if (cart.Items[j].ComboId == comboId && !cart.Items[j].IsComboTrigger)
                                     {
-                                        <span class="text-[10px] text-amber-400 font-medium">COMBO</span>
+                                        subItems.Add(cart.Items[j]);
+                                        rendered.Add(j);
                                     }
-                                    <p class="text-xs text-gray-500">@cartItem.UnitPrice.ToString("C") each</p>
+                                }
+                                var comboTotal = cartItem.LineTotal + subItems.Sum(s => s.LineTotal);
+
+                                <div class="px-6 py-4">
+                                    <!-- Combo header (tappable to remove entire combo) -->
+                                    <button class="w-full flex items-center gap-3 hover:bg-gray-700/30 rounded-xl -mx-2 px-2 py-1 transition-colors text-left"
+                                            @onclick="() => OpenComboDetail(itemIdx)">
+                                        <div class="w-9 h-9 bg-amber-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="text-sm font-medium text-white truncate">@cartItem.Name</p>
+                                            <span class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded-full font-semibold">COMBO</span>
+                                        </div>
+                                        <span class="text-sm font-semibold text-amber-400">@comboTotal.ToString("C")</span>
+                                    </button>
+                                    <!-- Sub-items (not individually editable) -->
+                                    <div class="ml-12 mt-2 space-y-1.5 border-l-2 border-gray-700 pl-3">
+                                        @foreach (var sub in subItems)
+                                        {
+                                            <div class="flex items-center justify-between">
+                                                <p class="text-xs text-gray-400">@sub.Name</p>
+                                                @if (sub.UnitPrice > 0)
+                                                {
+                                                    <span class="text-xs text-gray-500">@sub.UnitPrice.ToString("C")</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-xs text-green-500">included</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
                                 </div>
-                                <span class="text-sm font-semibold text-white">@cartItem.LineTotal.ToString("C")</span>
-                            </button>
+                            }
+                            else if (!cartItem.ComboId.HasValue)
+                            {
+                                // ── Regular item (tappable to edit quantity) ──
+                                <button class="w-full px-6 py-4 flex items-center gap-3 hover:bg-gray-700/30 transition-colors text-left"
+                                        @onclick="() => OpenItemDetail(itemIdx)">
+                                    <div class="w-9 h-9 bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
+                                        <span class="text-sm font-bold text-white">@cartItem.Quantity</span>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-white truncate">@cartItem.Name</p>
+                                        <p class="text-xs text-gray-500">@cartItem.UnitPrice.ToString("C") each</p>
+                                    </div>
+                                    <span class="text-sm font-semibold text-white">@cartItem.LineTotal.ToString("C")</span>
+                                </button>
+                            }
                         }
                     </div>
                 }
@@ -343,43 +397,82 @@
         return item.TaxRate?.Rate ?? defaultTaxRate;
     }
 
-    private void OpenItemDetail(PosCartItem cartItem)
+    private void OpenItemDetail(int index)
     {
-        // Create a proxy OrderItem for the detail modal
+        if (index < 0 || index >= cart.Items.Count) return;
+        var cartItem = cart.Items[index];
+
         selectedCartItemProxy = new OrderItem
         {
-            Id = Guid.NewGuid(), // Temporary ID for the modal
+            Id = Guid.NewGuid(),
             ItemName = cartItem.Name,
             UnitPrice = cartItem.UnitPrice,
             Quantity = cartItem.Quantity,
-            IsComboItem = cartItem.ComboId.HasValue,
+            IsComboItem = false,
             LineTotal = cartItem.LineTotal
         };
-        // Store reference to the actual cart item index
-        _editingCartIndex = cart.Items.IndexOf(cartItem);
+        _editingCartIndex = index;
+        itemDetailModal.Show();
+    }
+
+    private void OpenComboDetail(int triggerIndex)
+    {
+        if (triggerIndex < 0 || triggerIndex >= cart.Items.Count) return;
+        var triggerItem = cart.Items[triggerIndex];
+
+        // For combos, the detail modal shows the trigger but Remove deletes the whole combo
+        selectedCartItemProxy = new OrderItem
+        {
+            Id = Guid.NewGuid(),
+            ItemName = triggerItem.Name + " (Combo)",
+            UnitPrice = triggerItem.UnitPrice,
+            Quantity = 1,
+            IsComboItem = true,
+            LineTotal = triggerItem.LineTotal
+        };
+        _editingCartIndex = triggerIndex;
+        _editingIsCombo = true;
         itemDetailModal.Show();
     }
 
     private int _editingCartIndex = -1;
+    private bool _editingIsCombo;
 
     private void HandleQuantityChanged((Guid ItemId, int Quantity) result)
     {
-        if (_editingCartIndex >= 0 && _editingCartIndex < cart.Items.Count)
+        if (_editingCartIndex < 0 || _editingCartIndex >= cart.Items.Count) return;
+
+        // Combos cannot have quantity changed — only regular items
+        if (!_editingIsCombo)
         {
             cart.Items[_editingCartIndex].Quantity = result.Quantity;
             cart.Recalculate();
             _ = SaveCartToSession();
         }
+        _editingIsCombo = false;
     }
 
     private void HandleItemRemove(Guid itemId)
     {
-        if (_editingCartIndex >= 0 && _editingCartIndex < cart.Items.Count)
+        if (_editingCartIndex < 0 || _editingCartIndex >= cart.Items.Count) return;
+
+        if (_editingIsCombo)
+        {
+            // Remove entire combo group (trigger + all sub-items with same ComboId)
+            var comboId = cart.Items[_editingCartIndex].ComboId;
+            if (comboId.HasValue)
+            {
+                cart.Items.RemoveAll(i => i.ComboId == comboId);
+            }
+        }
+        else
         {
             cart.Items.RemoveAt(_editingCartIndex);
-            cart.Recalculate();
-            _ = SaveCartToSession();
         }
+
+        cart.Recalculate();
+        _ = SaveCartToSession();
+        _editingIsCombo = false;
     }
 
     private void ClearCart()
@@ -508,7 +601,8 @@
                 UnitPrice = price,
                 TaxRate = taxRate,
                 Quantity = 1,
-                ComboId = comboId
+                ComboId = comboId,
+                IsComboTrigger = isComboTrigger
             });
             Recalculate();
         }
@@ -530,6 +624,7 @@
         public decimal TaxRate { get; set; }
         public int Quantity { get; set; } = 1;
         public Guid? ComboId { get; set; }
+        public bool IsComboTrigger { get; set; }
         public decimal LineTotal { get; set; }
         public decimal TaxAmount { get; set; }
 
