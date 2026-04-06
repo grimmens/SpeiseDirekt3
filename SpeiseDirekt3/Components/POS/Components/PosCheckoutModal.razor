@@ -3,85 +3,111 @@
 @inject IPosPaymentService PaymentService
 @inject NavigationManager NavManager
 
-<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 @(isVisible ? "" : "hidden")">
-    <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full">
-        <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4 rounded-t-xl">
-            <h3 class="text-lg font-bold text-white">Checkout</h3>
-        </div>
-        <div class="p-6 space-y-6">
-            @if (Order != null)
-            {
-                <!-- Order Summary -->
-                <div class="space-y-2">
-                    <div class="flex justify-between text-sm text-gray-600">
+<!-- Fullscreen checkout overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center @(isVisible ? "" : "hidden")"
+     style="background: rgba(0,0,0,0.9); backdrop-filter: blur(12px);">
+    <div class="max-w-md w-full mx-4 animate-[scaleIn_0.2s_ease-out]">
+        @if (Order != null)
+        {
+            <div class="bg-gray-800 rounded-3xl overflow-hidden shadow-2xl">
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 text-center">
+                    <h2 class="text-2xl font-bold text-white">Checkout</h2>
+                    <p class="text-blue-200 text-sm mt-1">@Order.Items.Sum(i => i.Quantity) items in your order</p>
+                </div>
+
+                <!-- Order Items Summary -->
+                <div class="px-6 py-4 max-h-48 overflow-y-auto">
+                    @foreach (var item in Order.Items)
+                    {
+                        <div class="flex justify-between items-center py-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm text-gray-400">@item.Quantity x</span>
+                                <span class="text-sm text-white">@item.ItemName</span>
+                                @if (item.IsComboItem)
+                                {
+                                    <span class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded-full font-medium">COMBO</span>
+                                }
+                            </div>
+                            <span class="text-sm text-gray-300 font-medium">@item.LineTotal.ToString("C")</span>
+                        </div>
+                    }
+                </div>
+
+                <!-- Totals -->
+                <div class="px-6 py-4 border-t border-gray-700 space-y-2">
+                    <div class="flex justify-between text-sm text-gray-400">
                         <span>Subtotal</span>
                         <span>@Order.SubTotal.ToString("C")</span>
                     </div>
-                    <div class="flex justify-between text-sm text-gray-600">
+                    <div class="flex justify-between text-sm text-gray-400">
                         <span>Tax</span>
                         <span>@Order.TaxAmount.ToString("C")</span>
                     </div>
                     @if (Order.DiscountAmount > 0)
                     {
-                        <div class="flex justify-between text-sm text-green-600">
+                        <div class="flex justify-between text-sm text-green-400">
                             <span>Discount</span>
                             <span>-@Order.DiscountAmount.ToString("C")</span>
                         </div>
                     }
-                    <div class="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
+                    <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-gray-700">
                         <span>Total</span>
                         <span>@Order.GrandTotal.ToString("C")</span>
                     </div>
                 </div>
 
-                <!-- Payment Method -->
-                <div>
-                    <p class="text-sm font-medium text-gray-700 mb-2">Payment Method</p>
+                <!-- Payment Method Selection -->
+                <div class="px-6 py-4">
+                    <p class="text-xs text-gray-500 uppercase tracking-wider mb-3 font-semibold">Pay with</p>
                     <div class="grid grid-cols-2 gap-3">
-                        <button class="flex flex-col items-center p-4 rounded-lg border-2 transition-all @(selectedMethod == PosPaymentMethod.Cash ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300")"
+                        <button class="flex flex-col items-center p-5 rounded-2xl border-2 transition-all active:scale-[0.97] @(selectedMethod == PosPaymentMethod.Cash ? "border-green-500 bg-green-500/10" : "border-gray-700 bg-gray-700/50 hover:border-gray-600")"
                                 @onclick="() => selectedMethod = PosPaymentMethod.Cash">
-                            <svg class="w-8 h-8 mb-1 @(selectedMethod == PosPaymentMethod.Cash ? "text-blue-600" : "text-gray-400")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            <svg class="w-10 h-10 mb-2 @(selectedMethod == PosPaymentMethod.Cash ? "text-green-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
-                            <span class="text-sm font-medium @(selectedMethod == PosPaymentMethod.Cash ? "text-blue-700" : "text-gray-600")">Cash</span>
+                            <span class="text-sm font-semibold @(selectedMethod == PosPaymentMethod.Cash ? "text-green-400" : "text-gray-400")">Cash</span>
                         </button>
-                        <button class="flex flex-col items-center p-4 rounded-lg border-2 transition-all @(selectedMethod == PosPaymentMethod.Card ? "border-blue-600 bg-blue-50" : "border-gray-200 hover:border-gray-300")"
+                        <button class="flex flex-col items-center p-5 rounded-2xl border-2 transition-all active:scale-[0.97] @(selectedMethod == PosPaymentMethod.Card ? "border-blue-500 bg-blue-500/10" : "border-gray-700 bg-gray-700/50 hover:border-gray-600")"
                                 @onclick="() => selectedMethod = PosPaymentMethod.Card">
-                            <svg class="w-8 h-8 mb-1 @(selectedMethod == PosPaymentMethod.Card ? "text-blue-600" : "text-gray-400")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            <svg class="w-10 h-10 mb-2 @(selectedMethod == PosPaymentMethod.Card ? "text-blue-400" : "text-gray-500")" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                             </svg>
-                            <span class="text-sm font-medium @(selectedMethod == PosPaymentMethod.Card ? "text-blue-700" : "text-gray-600")">Card</span>
+                            <span class="text-sm font-semibold @(selectedMethod == PosPaymentMethod.Card ? "text-blue-400" : "text-gray-400")">Card</span>
                         </button>
                     </div>
                 </div>
 
                 @if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    <div class="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                    <div class="mx-6 mb-4 p-3 bg-red-500/20 border border-red-500/30 rounded-xl text-sm text-red-300 text-center">
                         @errorMessage
                     </div>
                 }
 
-                <!-- Actions -->
-                <div class="flex justify-between items-center pt-4 border-t border-gray-200">
-                    <button class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                            @onclick="Close" disabled="@isProcessing">
-                        Cancel
-                    </button>
-                    <button class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50"
+                <!-- Action Buttons -->
+                <div class="px-6 pb-6 space-y-3">
+                    <button class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white text-lg font-bold rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-green-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
                             @onclick="ProcessPayment" disabled="@isProcessing">
                         @if (isProcessing)
                         {
-                            <span>Processing...</span>
+                            <div class="flex items-center justify-center gap-2">
+                                <div class="animate-spin rounded-full h-5 w-5 border-2 border-white/30 border-t-white"></div>
+                                <span>Processing...</span>
+                            </div>
                         }
                         else
                         {
                             <span>Pay @Order.GrandTotal.ToString("C")</span>
                         }
                     </button>
+                    <button class="w-full py-3 text-gray-500 hover:text-gray-300 text-sm transition-colors"
+                            @onclick="Close" disabled="@isProcessing">
+                        Go Back
+                    </button>
                 </div>
-            }
-        </div>
+            </div>
+        }
     </div>
 </div>
 
@@ -128,10 +154,7 @@
                 var baseUrl = NavManager.BaseUri.TrimEnd('/');
                 var successUrl = $"{baseUrl}/pos/{Order.MenuId}?orderId={Order.Id}&result=success";
                 var cancelUrl = $"{baseUrl}/pos/{Order.MenuId}?orderId={Order.Id}&result=cancel";
-
-                var (_, checkoutUrl) = await PaymentService.CreateStripeCheckoutAsync(
-                    Order.Id, successUrl, cancelUrl);
-
+                var (_, checkoutUrl) = await PaymentService.CreateStripeCheckoutAsync(Order.Id, successUrl, cancelUrl);
                 NavManager.NavigateTo(checkoutUrl, forceLoad: true);
             }
         }

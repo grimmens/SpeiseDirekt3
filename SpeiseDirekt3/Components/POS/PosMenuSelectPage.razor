@@ -1,68 +1,68 @@
 @page "/pos"
+@page "/pos/kiosk"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
-@using SpeiseDirekt.ServiceInterface
+@layout PosLayout
 @inject ApplicationDbContext Context
-@inject IPermissionService PermissionService
 @inject NavigationManager NavManager
-@attribute [Authorize]
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
 
-<PageTitle>POS - Select Menu</PageTitle>
+<PageTitle>Order Here</PageTitle>
 
-<div class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <h1 class="text-3xl font-bold text-gray-900 font-display">Point of Sale</h1>
-        <p class="mt-1 text-gray-600">Select a menu to start taking orders.</p>
+<div class="flex-1 flex flex-col items-center justify-center px-6 py-12">
+    <!-- Logo / Welcome -->
+    <div class="text-center mb-12">
+        <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-xl shadow-amber-500/20">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+        </div>
+        <h1 class="text-4xl sm:text-5xl font-bold text-white font-display mb-3">Welcome</h1>
+        <p class="text-xl text-gray-400">Tap a menu to start your order</p>
     </div>
-</div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    @if (menus == null)
+    <!-- Menu Cards -->
+    @if (menus != null && menus.Any())
     {
-        <div class="flex items-center justify-center py-12">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <span class="ml-3 text-gray-600">Loading...</span>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl w-full">
+            @foreach (var menu in menus)
+            {
+                <button class="group relative overflow-hidden bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl p-8 text-left hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98]"
+                        @onclick="() => GoToMenu(menu.Id)">
+                    <div class="relative z-10">
+                        <h2 class="text-2xl font-bold text-white mb-2 group-hover:text-white">@menu.Name</h2>
+                        <p class="text-gray-400 group-hover:text-amber-100 text-sm">@menu.Description</p>
+                        <div class="mt-6 flex items-center text-amber-400 group-hover:text-white font-semibold">
+                            <span>Start Order</span>
+                            <svg class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </div>
+                    </div>
+                </button>
+            }
         </div>
     }
-    else if (!menus.Any())
+    else if (menus != null)
     {
-        <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
-            <h3 class="mt-2 text-sm font-semibold text-gray-900">No menus available</h3>
-            <p class="mt-1 text-sm text-gray-500">Create a menu first to use the POS.</p>
+        <div class="text-center text-gray-500">
+            <p class="text-lg">No menus available at this time.</p>
         </div>
     }
     else
     {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach (var menu in menus)
-            {
-                <a href="@($"pos/{menu.Id}")"
-                   class="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-300 transition-all duration-200">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">@menu.Name</h3>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
-                                @menu.Theme
-                            </span>
-                        </div>
-                    </div>
-                    <p class="text-sm text-gray-600">@menu.Description</p>
-                    <div class="mt-4 flex items-center text-sm text-blue-600 font-medium group-hover:text-blue-700">
-                        Open POS
-                        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </div>
-                </a>
-            }
+        <div class="flex items-center gap-3 text-gray-400">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-gray-600 border-t-amber-400"></div>
+            <span>Loading...</span>
         </div>
     }
+</div>
+
+<!-- Footer -->
+<div class="text-center py-4 text-gray-600 text-xs">
+    Powered by Speise-Direkt
 </div>
 
 @code {
@@ -70,11 +70,8 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (!await PermissionService.HasPermissionAsync(Permission.OrdersCreate))
-        {
-            NavManager.NavigateTo("/");
-            return;
-        }
-        menus = await Context.Menus.OrderBy(m => m.Name).ToListAsync();
+        menus = await Context.Menus.IgnoreQueryFilters().OrderBy(m => m.Name).ToListAsync();
     }
+
+    private void GoToMenu(Guid menuId) => NavManager.NavigateTo($"/pos/{menuId}");
 }
