@@ -109,4 +109,9 @@ public class QrCodeRepository : IQrCodeRepository
         await _db.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> MenuExistsAsync(Guid menuId)
+    {
+        return await _db.Menus.AnyAsync(m => m.Id == menuId);
+    }
 }

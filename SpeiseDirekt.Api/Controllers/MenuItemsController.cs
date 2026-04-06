@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Api.Dtos;
-using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
+using SpeiseDirekt.Repository;
 
 namespace SpeiseDirekt.Api.Controllers;
 
@@ -12,31 +11,24 @@ namespace SpeiseDirekt.Api.Controllers;
 [Authorize]
 public class MenuItemsController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IMenuItemRepository _menuItemRepository;
 
-    public MenuItemsController(ApplicationDbContext db)
+    public MenuItemsController(IMenuItemRepository menuItemRepository)
     {
-        _db = db;
+        _menuItemRepository = menuItemRepository;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<MenuItem>>> GetAll([FromQuery] Guid? categoryId)
     {
-        var query = _db.MenuItems.AsQueryable();
-
-        if (categoryId.HasValue)
-            query = query.Where(mi => mi.CategoryId == categoryId.Value);
-
-        var menuItems = await query.ToListAsync();
+        var menuItems = await _menuItemRepository.GetAllAsync(categoryId);
         return Ok(menuItems);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<MenuItem>> Get(Guid id)
     {
-        var menuItem = await _db.MenuItems
-            .Include(mi => mi.Category)
-            .FirstOrDefaultAsync(mi => mi.Id == id);
+        var menuItem = await _menuItemRepository.GetByIdAsync(id);
 
         if (menuItem is null)
             return NotFound();
@@ -47,7 +39,7 @@ public class MenuItemsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<MenuItem>> Create(MenuItemDto dto)
     {
-        var categoryExists = await _db.Categories.AnyAsync(c => c.Id == dto.CategoryId);
+        var categoryExists = await _menuItemRepository.CategoryExistsAsync(dto.CategoryId);
         if (!categoryExists)
             return BadRequest("The specified CategoryId does not reference an existing category.");
 
@@ -61,8 +53,7 @@ public class MenuItemsController : ControllerBase
             CategoryId = dto.CategoryId
         };
 
-        _db.MenuItems.Add(menuItem);
-        await _db.SaveChangesAsync();
+        await _menuItemRepository.CreateAsync(menuItem);
 
         return CreatedAtAction(nameof(Get), new { id = menuItem.Id }, menuItem);
     }
@@ -70,21 +61,21 @@ public class MenuItemsController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, MenuItemDto dto)
     {
-        var menuItem = await _db.MenuItems.FindAsync(id);
-        if (menuItem is null)
-            return NotFound();
-
-        var categoryExists = await _db.Categories.AnyAsync(c => c.Id == dto.CategoryId);
+        var categoryExists = await _menuItemRepository.CategoryExistsAsync(dto.CategoryId);
         if (!categoryExists)
             return BadRequest("The specified CategoryId does not reference an existing category.");
 
-        menuItem.Name = dto.Name;
-        menuItem.Description = dto.Description;
-        menuItem.Allergens = dto.Allergens;
-        menuItem.Price = dto.Price;
-        menuItem.CategoryId = dto.CategoryId;
+        var menuItem = await _menuItemRepository.UpdateAsync(id, mi =>
+        {
+            mi.Name = dto.Name;
+            mi.Description = dto.Description;
+            mi.Allergens = dto.Allergens;
+            mi.Price = dto.Price;
+            mi.CategoryId = dto.CategoryId;
+        });
 
-        await _db.SaveChangesAsync();
+        if (menuItem is null)
+            return NotFound();
 
         return Ok(menuItem);
     }
@@ -92,12 +83,9 @@ public class MenuItemsController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var menuItem = await _db.MenuItems.FindAsync(id);
-        if (menuItem is null)
+        var deleted = await _menuItemRepository.DeleteAsync(id);
+        if (!deleted)
             return NotFound();
-
-        _db.MenuItems.Remove(menuItem);
-        await _db.SaveChangesAsync();
 
         return NoContent();
     }

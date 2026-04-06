@@ -1,9 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Api.Dtos;
-using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
+using SpeiseDirekt.Repository;
 
 namespace SpeiseDirekt.Api.Controllers;
 
@@ -12,27 +11,24 @@ namespace SpeiseDirekt.Api.Controllers;
 [Authorize]
 public class MenusController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IMenuRepository _menuRepository;
 
-    public MenusController(ApplicationDbContext db)
+    public MenusController(IMenuRepository menuRepository)
     {
-        _db = db;
+        _menuRepository = menuRepository;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<Menu>>> GetAll()
     {
-        var menus = await _db.Menus.ToListAsync();
+        var menus = await _menuRepository.GetAllAsync();
         return Ok(menus);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<Menu>> Get(Guid id)
     {
-        var menu = await _db.Menus
-            .Include(m => m.Categories!)
-                .ThenInclude(c => c.MenuItems!)
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var menu = await _menuRepository.GetByIdAsync(id);
 
         if (menu is null)
             return NotFound();
@@ -52,8 +48,7 @@ public class MenusController : ControllerBase
             Language = dto.Language
         };
 
-        _db.Menus.Add(menu);
-        await _db.SaveChangesAsync();
+        await _menuRepository.CreateAsync(menu);
 
         return CreatedAtAction(nameof(Get), new { id = menu.Id }, menu);
     }
@@ -61,16 +56,16 @@ public class MenusController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, MenuDto dto)
     {
-        var menu = await _db.Menus.FindAsync(id);
+        var menu = await _menuRepository.UpdateAsync(id, m =>
+        {
+            m.Name = dto.Name;
+            m.Description = dto.Description;
+            m.Theme = dto.Theme;
+            m.Language = dto.Language;
+        });
+
         if (menu is null)
             return NotFound();
-
-        menu.Name = dto.Name;
-        menu.Description = dto.Description;
-        menu.Theme = dto.Theme;
-        menu.Language = dto.Language;
-
-        await _db.SaveChangesAsync();
 
         return Ok(menu);
     }
@@ -78,12 +73,9 @@ public class MenusController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var menu = await _db.Menus.FindAsync(id);
-        if (menu is null)
+        var deleted = await _menuRepository.DeleteAsync(id);
+        if (!deleted)
             return NotFound();
-
-        _db.Menus.Remove(menu);
-        await _db.SaveChangesAsync();
 
         return NoContent();
     }

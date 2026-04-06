@@ -13,4 +13,5 @@ public interface IQrCodeRepository
     Task<bool> RemoveTimeTableEntryAsync(Guid qrCodeId, Guid entryId);
     Task<CalendarEntry?> AddCalendarEntryAsync(Guid qrCodeId, CalendarEntry entry);
     Task<bool> RemoveCalendarEntryAsync(Guid qrCodeId, Guid entryId);
+    Task<bool> MenuExistsAsync(Guid menuId);
 }

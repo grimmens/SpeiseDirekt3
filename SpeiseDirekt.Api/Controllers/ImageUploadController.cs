@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
+using SpeiseDirekt.Repository;
 using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.Api.Controllers
@@ -15,12 +14,12 @@ namespace SpeiseDirekt.Api.Controllers
         private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
         private const long MaxFileSize = 5 * 1024 * 1024; // 5MB
 
-        private readonly ApplicationDbContext _db;
+        private readonly IImageRepository _imageRepository;
         private readonly IImageResizeService _imageResizeService;
 
-        public ImageUploadController(ApplicationDbContext db, IImageResizeService imageResizeService)
+        public ImageUploadController(IImageRepository imageRepository, IImageResizeService imageResizeService)
         {
-            _db = db;
+            _imageRepository = imageRepository;
             _imageResizeService = imageResizeService;
         }
 
@@ -48,8 +47,7 @@ namespace SpeiseDirekt.Api.Controllers
                 MimeType = file.ContentType
             };
 
-            _db.Images.Add(image);
-            await _db.SaveChangesAsync();
+            await _imageRepository.CreateAsync(image);
 
             return CreatedAtAction(nameof(GetImage), new { id = image.Id }, new
             {
@@ -61,12 +59,9 @@ namespace SpeiseDirekt.Api.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)
         {
-            var image = await _db.Images.FindAsync(id);
-            if (image == null)
+            var deleted = await _imageRepository.DeleteAsync(id);
+            if (!deleted)
                 return NotFound();
-
-            _db.Images.Remove(image);
-            await _db.SaveChangesAsync();
 
             return NoContent();
         }
@@ -76,7 +71,7 @@ namespace SpeiseDirekt.Api.Controllers
         [ResponseCache(Duration = 3600)]
         public async Task<ActionResult> GetImage(Guid id)
         {
-            var image = await _db.Images.FindAsync(id);
+            var image = await _imageRepository.GetByIdAsync(id);
             if (image == null)
                 return NotFound();
 

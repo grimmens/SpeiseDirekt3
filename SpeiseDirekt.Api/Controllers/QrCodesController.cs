@@ -1,10 +1,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Api.Dtos;
-using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
-using System.Security.Claims;
+using SpeiseDirekt.Repository;
 
 namespace SpeiseDirekt.Api.Controllers;
 
@@ -13,28 +11,24 @@ namespace SpeiseDirekt.Api.Controllers;
 [Authorize]
 public class QrCodesController : ControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IQrCodeRepository _qrCodeRepository;
 
-    public QrCodesController(ApplicationDbContext db)
+    public QrCodesController(IQrCodeRepository qrCodeRepository)
     {
-        _db = db;
+        _qrCodeRepository = qrCodeRepository;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<QRCode>>> GetAll()
     {
-        var qrCodes = await _db.QRCodes.ToListAsync();
+        var qrCodes = await _qrCodeRepository.GetAllAsync();
         return Ok(qrCodes);
     }
 
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<QRCode>> Get(Guid id)
     {
-        var qrCode = await _db.QRCodes
-            .Include(q => q.TimeTableEntries)
-            .Include(q => q.CalendarEntries)
-            .Include(q => q.Menu)
-            .FirstOrDefaultAsync(q => q.Id == id);
+        var qrCode = await _qrCodeRepository.GetByIdAsync(id);
 
         if (qrCode is null)
             return NotFound();
@@ -47,7 +41,7 @@ public class QrCodesController : ControllerBase
     {
         if (dto.MenuId.HasValue)
         {
-            var menuExists = await _db.Menus.AnyAsync(m => m.Id == dto.MenuId.Value);
+            var menuExists = await _qrCodeRepository.MenuExistsAsync(dto.MenuId.Value);
             if (!menuExists)
                 return BadRequest("The specified MenuId does not reference an existing menu.");
         }
@@ -62,8 +56,7 @@ public class QrCodesController : ControllerBase
             CreatedAt = DateTime.UtcNow
         };
 
-        _db.QRCodes.Add(qrCode);
-        await _db.SaveChangesAsync();
+        await _qrCodeRepository.CreateAsync(qrCode);
 
         return CreatedAtAction(nameof(Get), new { id = qrCode.Id }, qrCode);
     }
@@ -71,23 +64,23 @@ public class QrCodesController : ControllerBase
     [HttpPut("{id:guid}")]
     public async Task<IActionResult> Update(Guid id, QrCodeDto dto)
     {
-        var qrCode = await _db.QRCodes.FindAsync(id);
-        if (qrCode is null)
-            return NotFound();
-
         if (dto.MenuId.HasValue)
         {
-            var menuExists = await _db.Menus.AnyAsync(m => m.Id == dto.MenuId.Value);
+            var menuExists = await _qrCodeRepository.MenuExistsAsync(dto.MenuId.Value);
             if (!menuExists)
                 return BadRequest("The specified MenuId does not reference an existing menu.");
         }
 
-        qrCode.Title = dto.Title;
-        qrCode.MenuId = dto.MenuId;
-        qrCode.IsTimeTableBased = dto.IsTimeTableBased;
-        qrCode.IsCalendarBased = dto.IsCalendarBased;
+        var qrCode = await _qrCodeRepository.UpdateAsync(id, q =>
+        {
+            q.Title = dto.Title;
+            q.MenuId = dto.MenuId;
+            q.IsTimeTableBased = dto.IsTimeTableBased;
+            q.IsCalendarBased = dto.IsCalendarBased;
+        });
 
-        await _db.SaveChangesAsync();
+        if (qrCode is null)
+            return NotFound();
 
         return Ok(qrCode);
     }
@@ -95,16 +88,9 @@ public class QrCodesController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id)
     {
-        var qrCode = await _db.QRCodes
-            .Include(q => q.TimeTableEntries)
-            .Include(q => q.CalendarEntries)
-            .FirstOrDefaultAsync(q => q.Id == id);
-
-        if (qrCode is null)
+        var deleted = await _qrCodeRepository.DeleteAsync(id);
+        if (!deleted)
             return NotFound();
-
-        _db.QRCodes.Remove(qrCode);
-        await _db.SaveChangesAsync();
 
         return NoContent();
     }
@@ -112,11 +98,7 @@ public class QrCodesController : ControllerBase
     [HttpPost("{id:guid}/timetable-entries")]
     public async Task<ActionResult<TimeTableEntry>> AddTimeTableEntry(Guid id, TimeTableEntryDto dto)
     {
-        var qrCode = await _db.QRCodes.FindAsync(id);
-        if (qrCode is null)
-            return NotFound();
-
-        var menuExists = await _db.Menus.AnyAsync(m => m.Id == dto.MenuId);
+        var menuExists = await _qrCodeRepository.MenuExistsAsync(dto.MenuId);
         if (!menuExists)
             return BadRequest("The specified MenuId does not reference an existing menu.");
 
@@ -125,27 +107,22 @@ public class QrCodesController : ControllerBase
             Id = Guid.NewGuid(),
             StartTime = dto.StartTime,
             EndTime = dto.EndTime,
-            MenuId = dto.MenuId,
-            QRCodeId = id
+            MenuId = dto.MenuId
         };
 
-        _db.TimeTableEntries.Add(entry);
-        await _db.SaveChangesAsync();
+        var result = await _qrCodeRepository.AddTimeTableEntryAsync(id, entry);
+        if (result is null)
+            return NotFound();
 
-        return Created($"api/qrcodes/{id}/timetable-entries/{entry.Id}", entry);
+        return Created($"api/qrcodes/{id}/timetable-entries/{entry.Id}", result);
     }
 
     [HttpDelete("{id:guid}/timetable-entries/{entryId:guid}")]
     public async Task<IActionResult> RemoveTimeTableEntry(Guid id, Guid entryId)
     {
-        var entry = await _db.TimeTableEntries
-            .FirstOrDefaultAsync(e => e.Id == entryId && e.QRCodeId == id);
-
-        if (entry is null)
+        var removed = await _qrCodeRepository.RemoveTimeTableEntryAsync(id, entryId);
+        if (!removed)
             return NotFound();
-
-        _db.TimeTableEntries.Remove(entry);
-        await _db.SaveChangesAsync();
 
         return NoContent();
     }
@@ -153,11 +130,7 @@ public class QrCodesController : ControllerBase
     [HttpPost("{id:guid}/calendar-entries")]
     public async Task<ActionResult<CalendarEntry>> AddCalendarEntry(Guid id, CalendarEntryDto dto)
     {
-        var qrCode = await _db.QRCodes.FindAsync(id);
-        if (qrCode is null)
-            return NotFound();
-
-        var menuExists = await _db.Menus.AnyAsync(m => m.Id == dto.MenuId);
+        var menuExists = await _qrCodeRepository.MenuExistsAsync(dto.MenuId);
         if (!menuExists)
             return BadRequest("The specified MenuId does not reference an existing menu.");
 
@@ -167,27 +140,22 @@ public class QrCodesController : ControllerBase
             Date = dto.Date,
             EndDate = dto.EndDate,
             RecurringDayOfWeek = dto.RecurringDayOfWeek,
-            MenuId = dto.MenuId,
-            QRCodeId = id
+            MenuId = dto.MenuId
         };
 
-        _db.CalendarEntries.Add(entry);
-        await _db.SaveChangesAsync();
+        var result = await _qrCodeRepository.AddCalendarEntryAsync(id, entry);
+        if (result is null)
+            return NotFound();
 
-        return Created($"api/qrcodes/{id}/calendar-entries/{entry.Id}", entry);
+        return Created($"api/qrcodes/{id}/calendar-entries/{entry.Id}", result);
     }
 
     [HttpDelete("{id:guid}/calendar-entries/{entryId:guid}")]
     public async Task<IActionResult> RemoveCalendarEntry(Guid id, Guid entryId)
     {
-        var entry = await _db.CalendarEntries
-            .FirstOrDefaultAsync(e => e.Id == entryId && e.QRCodeId == id);
-
-        if (entry is null)
+        var removed = await _qrCodeRepository.RemoveCalendarEntryAsync(id, entryId);
+        if (!removed)
             return NotFound();
-
-        _db.CalendarEntries.Remove(entry);
-        await _db.SaveChangesAsync();
 
         return NoContent();
     }
