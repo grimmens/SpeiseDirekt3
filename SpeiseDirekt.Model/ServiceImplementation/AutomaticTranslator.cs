@@ -68,12 +68,18 @@ namespace SpeiseDirekt.ServiceImplementation
                     Id = Guid.NewGuid(), // New ID for translated version
                     Name = await TranslateTextAsync(menuItem.Name, targetLanguage, sourceLanguage),
                     Description = await TranslateTextAsync(menuItem.Description, targetLanguage, sourceLanguage),
-                    Allergens = menuItem.Allergens, // Allergens are code-based, no translation needed
+                    Allergens = new List<Allergen>(), // Will be populated below
                     Price = menuItem.Price, // Price remains the same
                     CategoryId = menuItem.CategoryId, // Keep same category reference
                     ApplicationUserId = menuItem.ApplicationUserId, // Keep same user
                     ImagePath = menuItem.ImagePath // Keep same image
                 };
+
+                // Translate allergen names
+                foreach (var allergen in menuItem.Allergens)
+                {
+                    translatedMenuItem.Allergens.Add(await TranslateAllergenAsync(allergen, targetLanguage, sourceLanguage));
+                }
 
                 _logger.LogInformation("Successfully translated MenuItem '{Name}' to {TargetLanguage}", menuItem.Name, targetLanguage);
                 return translatedMenuItem;
@@ -138,6 +144,47 @@ namespace SpeiseDirekt.ServiceImplementation
             }
 
             return translatedCategories;
+        }
+
+        public async Task<Allergen> TranslateAllergenAsync(Allergen allergen, MenuLanguage targetLanguage, MenuLanguage? sourceLanguage = null)
+        {
+            if (allergen == null) throw new ArgumentNullException(nameof(allergen));
+
+            try
+            {
+                var translatedAllergen = new Allergen
+                {
+                    Id = Guid.NewGuid(),
+                    Code = allergen.Code,
+                    Name = await TranslateTextAsync(allergen.Name, targetLanguage, sourceLanguage),
+                    MenuId = allergen.MenuId,
+                    ApplicationUserId = allergen.ApplicationUserId,
+                    MenuItems = new List<MenuItem>()
+                };
+
+                _logger.LogInformation("Successfully translated Allergen '{Name}' to {TargetLanguage}", allergen.Name, targetLanguage);
+                return translatedAllergen;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to translate Allergen '{Name}' to {TargetLanguage}", allergen.Name, targetLanguage);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<Allergen>> TranslateAllergensAsync(IEnumerable<Allergen> allergens, MenuLanguage targetLanguage, MenuLanguage? sourceLanguage = null)
+        {
+            if (allergens == null) throw new ArgumentNullException(nameof(allergens));
+
+            var translatedAllergens = new List<Allergen>();
+
+            foreach (var allergen in allergens)
+            {
+                var translatedAllergen = await TranslateAllergenAsync(allergen, targetLanguage, sourceLanguage);
+                translatedAllergens.Add(translatedAllergen);
+            }
+
+            return translatedAllergens;
         }
 
         public async Task<string> TranslateTextAsync(string text, MenuLanguage targetLanguage, MenuLanguage? sourceLanguage = null)

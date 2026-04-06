@@ -41,6 +41,16 @@ namespace SpeiseDirekt.ServiceInterface
         Task<IEnumerable<Category>> TranslateCategoriesAsync(IEnumerable<Category> categories, MenuLanguage targetLanguage, MenuLanguage? sourceLanguage = null);
 
         /// <summary>
+        /// Translates an Allergen to the specified target language
+        /// </summary>
+        Task<Allergen> TranslateAllergenAsync(Allergen allergen, MenuLanguage targetLanguage, MenuLanguage? sourceLanguage = null);
+
+        /// <summary>
+        /// Translates a collection of Allergens to the specified target language
+        /// </summary>
+        Task<IEnumerable<Allergen>> TranslateAllergensAsync(IEnumerable<Allergen> allergens, MenuLanguage targetLanguage, MenuLanguage? sourceLanguage = null);
+
+        /// <summary>
         /// Translates a single text string to the specified target language
         /// </summary>
         /// <param name="text">The text to translate</param>
