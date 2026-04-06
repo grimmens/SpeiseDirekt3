@@ -24,9 +24,9 @@
                             </div>
                             <div class="item-body">
                                 <p>@item.Description</p>
-                                @if (!string.IsNullOrEmpty(item.Allergens))
+                                @if (item.Allergens.Any())
                                 {
-                                    <div class="allergens">Allergene: @item.Allergens</div>
+                                    <div class="allergens">Allergene: @string.Join(", ", item.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</div>
                                 }
                             </div>
                         </li>

@@ -132,9 +132,9 @@
                                             <p class="text-gray-600 text-xs mb-3 line-clamp-2 leading-relaxed">@item.Description</p>
                                             <div class="flex justify-between items-center">
                                                 <span class="font-bold text-gray-900 text-sm">€ @item.Price.ToString("F2")</span>
-                                                @if (!string.IsNullOrEmpty(item.Allergens))
+                                                @if (item.Allergens.Any())
                                                 {
-                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-medium">@item.Allergens</span>
+                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-medium">@string.Join(", ", item.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</span>
                                                 }
                                             </div>
                                         </div>
@@ -164,9 +164,9 @@
                                                     <span class="font-bold text-gray-900 text-base ml-2">€ @item.Price.ToString("F2")</span>
                                                 </div>
                                                 <p class="text-gray-600 text-sm mb-2 line-clamp-2 leading-relaxed">@item.Description</p>
-                                                @if (!string.IsNullOrEmpty(item.Allergens))
+                                                @if (item.Allergens.Any())
                                                 {
-                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-medium">@item.Allergens</span>
+                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-medium">@string.Join(", ", item.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</span>
                                                 }
                                             </div>
                                         </div>

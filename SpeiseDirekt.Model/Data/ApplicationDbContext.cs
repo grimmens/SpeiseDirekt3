@@ -29,6 +29,22 @@ namespace SpeiseDirekt.Data
             builder.Entity<QRCode>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<TimeTableEntry>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<CalendarEntry>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<Allergen>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+
+            // Allergen: many-to-many with MenuItem via join table
+            builder.Entity<MenuItem>()
+                .HasMany(mi => mi.Allergens)
+                .WithMany(a => a.MenuItems)
+                .UsingEntity("MenuItemAllergen");
+
+            builder.Entity<Allergen>(entity =>
+            {
+                entity.HasIndex(e => new { e.Code, e.MenuId }).IsUnique();
+                entity.HasOne(e => e.Menu)
+                      .WithMany(m => m.Allergens)
+                      .HasForeignKey(e => e.MenuId)
+                      .OnDelete(DeleteBehavior.NoAction);
+            });
 
             builder.Entity<ApplicationUser>()
                    .HasOne(u => u.TenantSubscription)
@@ -82,8 +98,32 @@ namespace SpeiseDirekt.Data
                       .OnDelete(DeleteBehavior.NoAction);
             });
 
+            // Self-referencing FK: sub-accounts point to owner
+            builder.Entity<ApplicationUser>()
+                .HasOne(u => u.TenantOwner)
+                .WithMany()
+                .HasForeignKey(u => u.TenantOwnerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // TenantUser relationships
+            builder.Entity<TenantUser>(entity =>
+            {
+                entity.HasOne(tu => tu.ApplicationUser)
+                    .WithMany()
+                    .HasForeignKey(tu => tu.ApplicationUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(tu => tu.TenantOwner)
+                    .WithMany(u => u.TenantUsers)
+                    .HasForeignKey(tu => tu.TenantOwnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(tu => new { tu.ApplicationUserId, tu.TenantOwnerId }).IsUnique();
+            });
+
             base.OnModelCreating(builder);
         }
+        public DbSet<Allergen> Allergens { get; set; }
         public DbSet<MenuItem> MenuItems { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Menu> Menus { get; set; }
@@ -95,6 +135,7 @@ namespace SpeiseDirekt.Data
         public DbSet<Image> Images { get; set; }
         public DbSet<MenuView> MenuViews { get; set; }
         public DbSet<MenuItemClick> MenuItemClicks { get; set; }
+        public DbSet<TenantUser> TenantUsers { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
         {
             if (e.Entry.Entity is IAppUserEntity entity)

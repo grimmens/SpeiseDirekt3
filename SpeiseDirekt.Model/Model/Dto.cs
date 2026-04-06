@@ -11,7 +11,7 @@ namespace SpeiseDirekt.Model
         public string Name { get; set; } = string.Empty;
         [Required]
         public string Description { get; set; } = string.Empty;
-        public string Allergens { get; set; } = string.Empty;
+        public List<Guid> AllergenIds { get; set; } = new();
         [Precision(18, 2)]
         public decimal Price { get; set; }
         [ForeignKey(nameof(Category))]

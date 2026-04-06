@@ -1,0 +1,289 @@
+@page "/allergens/{MenuId}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Components.Allergens.Components
+@using SpeiseDirekt.Data
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.Infrastructure
+@using SpeiseDirekt.ServiceInterface
+@attribute [Authorize]
+
+<PageTitle>Allergens</PageTitle>
+
+<div class="max-w-6xl mx-auto p-6 space-y-8">
+
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-600" aria-label="breadcrumb">
+        <ol class="flex space-x-2">
+            <li>
+                <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
+                <span class="mx-2">/</span>
+            </li>
+            <li>
+                <a href="@($"/menudetail/{MenuId}")" class="text-blue-600 hover:underline">@menu?.Name</a>
+                <span class="mx-2">/</span>
+            </li>
+            <li class="text-gray-800">Allergens</li>
+        </ol>
+    </nav>
+
+    <h1 class="text-3xl font-bold text-blue-700">Allergens</h1>
+
+    <!-- Navigation Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-gray-100 rounded-lg shadow p-6 flex justify-between items-center">
+            <div>
+                <h2 class="text-lg font-semibold mb-1">Manage Categories</h2>
+                <p class="text-sm text-gray-600">Go to the categories for <strong>@menu?.Name</strong>.</p>
+            </div>
+            <a class="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200" href="@($"/Categories/{MenuId}")">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+                View Categories
+            </a>
+        </div>
+        <div class="bg-gray-100 rounded-lg shadow p-6 flex justify-between items-center">
+            <div>
+                <h2 class="text-lg font-semibold mb-1">Manage Menu Items</h2>
+                <p class="text-sm text-gray-600">Go to the menu items for <strong>@menu?.Name</strong>.</p>
+            </div>
+            <a class="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200" href="@($"/menuitems/{MenuId}")">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+                View Menu Items
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Allergens List -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="bg-blue-600 text-white rounded-t-lg px-4 py-3">
+                <h3 class="text-lg font-semibold">Available Allergens</h3>
+            </div>
+            <div class="p-4">
+                @if (Allergens.Any())
+                {
+                    <table class="w-full text-left border-separate border-spacing-y-2">
+                        <thead class="text-sm text-gray-500 uppercase">
+                            <tr>
+                                <th>Code</th>
+                                <th>Name</th>
+                                <th class="text-right">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Allergens)
+                            {
+                                <tr class="bg-gray-50 hover:bg-gray-100 rounded">
+                                    <td class="py-2 px-3 font-mono font-semibold">@item.Code</td>
+                                    <td class="py-2 px-3">@item.Name</td>
+                                    <td class="py-2 px-3 text-right space-x-2">
+                                        @if (canEdit || canDelete)
+                                        {
+                                            <SpeiseDirekt3.Components.HelperComp.ActionSubMenu Edit="canEdit ? () => EditAllergen(item) : null"
+                                                                                               Delete="canDelete ? () => DeleteAllergen(item.Id) : null" />
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <p class="text-gray-500">No allergens found.</p>
+                }
+            </div>
+        </div>
+
+        @if (canCreate)
+        {
+            <!-- Add New Allergen Form -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="bg-blue-600 text-white rounded-t-lg px-4 py-3">
+                    <h3 class="text-lg font-semibold">Add New Allergen</h3>
+                </div>
+                <div class="p-4">
+                    <EditForm @ref="editForm" EditContext="editContext" OnValidSubmit="SaveAsync">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-4">
+                            <label for="Input.Code" class="block text-sm font-medium text-gray-700 mb-1">Code</label>
+                            <InputText @bind-Value="Input.Code" id="Input.Code" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <ValidationMessage For="() => Input.Code" class="text-red-600 text-sm mt-1" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="Input.Name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                            <InputText @bind-Value="Input.Name" id="Input.Name" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm mt-1" />
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+                            Add Allergen
+                        </button>
+                    </EditForm>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Allergen Editor Modal -->
+<AllergenEditor @ref="allergenEditor" OnOk="HandleOk" OnCancel="HandleCancel" />
+
+
+@code {
+    [Parameter]
+    public string MenuId { get; set; }
+
+    [Inject]
+    public ApplicationDbContext Context { get; set; }
+    [Inject]
+    public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
+    [Inject]
+    public INotificationService NotificationService { get; set; }
+    [Inject]
+    public IPermissionService PermissionService { get; set; }
+
+    ICollection<Allergen> Allergens { get; set; } = [];
+    bool canCreate, canEdit, canDelete;
+
+    Allergen Input { get; set; } = new();
+    AllergenEditor allergenEditor;
+    EditContext editContext = new EditContext(new Allergen());
+    EditForm editForm;
+    Menu? menu;
+
+    protected override Task OnParametersSetAsync()
+    {
+        editContext = new EditContext(Input);
+        return Task.CompletedTask;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        canCreate = await PermissionService.HasPermissionAsync(Permission.AllergensCreate);
+        canEdit = await PermissionService.HasPermissionAsync(Permission.AllergensEdit);
+        canDelete = await PermissionService.HasPermissionAsync(Permission.AllergensDelete);
+        await LoadAllergensAsync();
+        Input = new()
+            {
+                MenuId = new Guid(MenuId)
+            };
+    }
+
+    async Task SaveAsync()
+    {
+        if (!canCreate) return;
+        try
+        {
+            editContext = new EditContext(Input);
+            editForm.EditContext = editContext;
+            if (!editContext.Validate())
+                return;
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState?.User?.Identity?.IsAuthenticated != true)
+            {
+                var messages = new ValidationMessageStore(editContext);
+                messages.Add(() => Input.Code, "You must be logged in to add allergens.");
+                editContext.NotifyValidationStateChanged();
+                StateHasChanged();
+                return;
+            }
+
+            var codeExists = await Context.Allergens.AnyAsync(a => a.MenuId == Guid.Parse(MenuId) && a.Code == Input.Code);
+            if (codeExists)
+            {
+                var messages = new ValidationMessageStore(editContext);
+                messages.Add(() => Input.Code, "This code already exists for this menu.");
+                editContext.NotifyValidationStateChanged();
+                StateHasChanged();
+                return;
+            }
+
+            Input.MenuId = new Guid(MenuId);
+
+            Context.Allergens.Add(Input);
+            await Context.SaveChangesAsync();
+
+            Input = new()
+                {
+                    MenuId = new Guid(MenuId)
+                };
+            await LoadAllergensAsync();
+        }
+        catch (Exception ex)
+        {
+            var messages = new ValidationMessageStore(editContext);
+            messages.Add(() => Input.Code, $"Error adding allergen: {ex.Message}");
+            editContext.NotifyValidationStateChanged();
+            StateHasChanged();
+            Console.WriteLine($"Error in SaveAsync: {ex}");
+        }
+    }
+
+    async void EditAllergen(Allergen allergen)
+    {
+        allergenEditor.Input = allergen;
+        await allergenEditor.ShowModal();
+    }
+
+    async Task HandleOk(Allergen allergen)
+    {
+        try
+        {
+            Context.Allergens.Update(allergen);
+            await Context.SaveChangesAsync();
+            await LoadAllergensAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating allergen: {ex}");
+        }
+    }
+
+    async Task HandleCancel()
+    {
+        allergenEditor.Input = new()
+            {
+                MenuId = new Guid(MenuId)
+            };
+    }
+
+    async Task DeleteAllergen(Guid id)
+    {
+        if (!canDelete) return;
+        try
+        {
+            var allergen = await Context.Allergens.FindAsync(id);
+            if (allergen is not null)
+            {
+                var res = await NotificationService.ShowConfirmation(("Delete", $"Are you sure you want to delete the allergen \"{allergen.Name}\"?"));
+                if (res)
+                {
+                    Context.Allergens.Remove(allergen);
+                    await Context.SaveChangesAsync();
+                    await LoadAllergensAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting allergen: {ex}");
+        }
+    }
+
+    async Task LoadAllergensAsync()
+    {
+        menu = await Context.Menus.FindAsync(Guid.Parse(MenuId));
+        Allergens = await Context.Allergens.Where(a => a.MenuId == Guid.Parse(MenuId)).OrderBy(a => a.Code).ToListAsync();
+        InvokeAsync(StateHasChanged);
+    }
+}

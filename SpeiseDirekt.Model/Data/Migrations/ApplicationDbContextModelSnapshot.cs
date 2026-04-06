@@ -17,10 +17,25 @@ namespace SpeiseDirekt.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.3")
+                .HasAnnotation("ProductVersion", "9.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("MenuItemAllergen", b =>
+                {
+                    b.Property<Guid>("AllergensId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MenuItemsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("AllergensId", "MenuItemsId");
+
+                    b.HasIndex("MenuItemsId");
+
+                    b.ToTable("MenuItemAllergen");
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -200,6 +215,9 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("TenantOwnerId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("bit");
 
@@ -217,7 +235,41 @@ namespace SpeiseDirekt.Data.Migrations
                         .HasDatabaseName("UserNameIndex")
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
+                    b.HasIndex("TenantOwnerId");
+
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("SpeiseDirekt.Model.Allergen", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(5)
+                        .HasColumnType("nvarchar(5)");
+
+                    b.Property<Guid>("MenuId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuId");
+
+                    b.HasIndex("Code", "MenuId")
+                        .IsUnique();
+
+                    b.ToTable("Allergens");
                 });
 
             modelBuilder.Entity("SpeiseDirekt.Model.CalendarEntry", b =>
@@ -330,10 +382,6 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("Allergens")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("ApplicationUserId")
                         .HasColumnType("uniqueidentifier");
@@ -492,6 +540,13 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Property<bool>("IsPaid")
                         .HasColumnType("bit");
 
+                    b.Property<int>("MaxUsers")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PlanName")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
                     b.Property<DateTime?>("SubscriptionEnd")
                         .HasColumnType("datetime2");
 
@@ -501,6 +556,46 @@ namespace SpeiseDirekt.Data.Migrations
                     b.HasKey("TenantId");
 
                     b.ToTable("TenantSubscriptions");
+                });
+
+            modelBuilder.Entity("SpeiseDirekt.Model.TenantUser", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ApplicationUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("Permissions")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Role")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TenantOwnerId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantOwnerId");
+
+                    b.HasIndex("ApplicationUserId", "TenantOwnerId")
+                        .IsUnique();
+
+                    b.ToTable("TenantUsers");
                 });
 
             modelBuilder.Entity("SpeiseDirekt.Model.TimeTableEntry", b =>
@@ -575,6 +670,21 @@ namespace SpeiseDirekt.Data.Migrations
                     b.ToTable("TranslationCaches");
                 });
 
+            modelBuilder.Entity("MenuItemAllergen", b =>
+                {
+                    b.HasOne("SpeiseDirekt.Model.Allergen", null)
+                        .WithMany()
+                        .HasForeignKey("AllergensId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SpeiseDirekt.Model.MenuItem", null)
+                        .WithMany()
+                        .HasForeignKey("MenuItemsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -624,6 +734,27 @@ namespace SpeiseDirekt.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("SpeiseDirekt.Data.ApplicationUser", b =>
+                {
+                    b.HasOne("SpeiseDirekt.Data.ApplicationUser", "TenantOwner")
+                        .WithMany()
+                        .HasForeignKey("TenantOwnerId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.Navigation("TenantOwner");
+                });
+
+            modelBuilder.Entity("SpeiseDirekt.Model.Allergen", b =>
+                {
+                    b.HasOne("SpeiseDirekt.Model.Menu", "Menu")
+                        .WithMany("Allergens")
+                        .HasForeignKey("MenuId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Menu");
                 });
 
             modelBuilder.Entity("SpeiseDirekt.Model.CalendarEntry", b =>
@@ -724,6 +855,25 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("SpeiseDirekt.Model.TenantUser", b =>
+                {
+                    b.HasOne("SpeiseDirekt.Data.ApplicationUser", "ApplicationUser")
+                        .WithMany()
+                        .HasForeignKey("ApplicationUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("SpeiseDirekt.Data.ApplicationUser", "TenantOwner")
+                        .WithMany("TenantUsers")
+                        .HasForeignKey("TenantOwnerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApplicationUser");
+
+                    b.Navigation("TenantOwner");
+                });
+
             modelBuilder.Entity("SpeiseDirekt.Model.TimeTableEntry", b =>
                 {
                     b.HasOne("SpeiseDirekt.Model.Menu", "Menu")
@@ -746,6 +896,8 @@ namespace SpeiseDirekt.Data.Migrations
             modelBuilder.Entity("SpeiseDirekt.Data.ApplicationUser", b =>
                 {
                     b.Navigation("TenantSubscription");
+
+                    b.Navigation("TenantUsers");
                 });
 
             modelBuilder.Entity("SpeiseDirekt.Model.Category", b =>
@@ -755,6 +907,8 @@ namespace SpeiseDirekt.Data.Migrations
 
             modelBuilder.Entity("SpeiseDirekt.Model.Menu", b =>
                 {
+                    b.Navigation("Allergens");
+
                     b.Navigation("Categories");
                 });
 

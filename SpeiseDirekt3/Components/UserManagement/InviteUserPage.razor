@@ -1,0 +1,168 @@
+@page "/users/invite"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@inject ApplicationDbContext DbContext
+@inject UserManager<ApplicationUser> UserManager
+@inject IUserIdProvider UserIdProvider
+@inject IPermissionService PermissionService
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+<PageTitle>Invite User - Speise-Direkt</PageTitle>
+
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-600 mb-6" aria-label="breadcrumb">
+        <ol class="flex space-x-2">
+            <li>
+                <a href="/users" class="text-blue-600 hover:underline">Team</a>
+                <span class="mx-2">/</span>
+            </li>
+            <li class="text-gray-800">Invite User</li>
+        </ol>
+    </nav>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-xl font-bold text-gray-900 mb-6">Invite New Team Member</h2>
+
+        @if (errorMessage != null)
+        {
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                @errorMessage
+            </div>
+        }
+
+        <EditForm Model="model" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <InputText @bind-Value="model.Email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="employee@example.com" />
+                    <ValidationMessage For="@(() => model.Email)" class="text-red-500 text-sm mt-1" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+                    <InputText @bind-Value="model.DisplayName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="John Doe" />
+                    <ValidationMessage For="@(() => model.DisplayName)" class="text-red-500 text-sm mt-1" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
+                    <InputText @bind-Value="model.Password" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Min. 8 characters" />
+                    <ValidationMessage For="@(() => model.Password)" class="text-red-500 text-sm mt-1" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                    <InputSelect @bind-Value="model.Role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        @foreach (var role in Enum.GetValues<TenantRole>())
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    </InputSelect>
+                </div>
+
+                <div class="flex justify-end gap-3 pt-4">
+                    <button type="button" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                            @onclick="Cancel">Cancel</button>
+                    <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                            disabled="@isSubmitting">
+                        @(isSubmitting ? "Creating..." : "Create Account")
+                    </button>
+                </div>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private InviteModel model = new();
+    private string? errorMessage;
+    private bool isSubmitting;
+
+    private class InviteModel
+    {
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.EmailAddress]
+        public string Email { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.StringLength(100)]
+        public string DisplayName { get; set; } = "";
+
+        [System.ComponentModel.DataAnnotations.Required, System.ComponentModel.DataAnnotations.MinLength(8)]
+        public string Password { get; set; } = "";
+
+        public TenantRole Role { get; set; } = TenantRole.Employee;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await PermissionService.HasPermissionAsync(Permission.UsersCreate))
+            NavManager.NavigateTo("/users");
+    }
+
+    private async Task HandleSubmit()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        try
+        {
+            var tenantOwnerId = UserIdProvider.GetUserId();
+
+            // Check user limit
+            var sub = await DbContext.TenantSubscriptions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.TenantId == tenantOwnerId);
+
+            var currentCount = await DbContext.TenantUsers.CountAsync(tu => tu.TenantOwnerId == tenantOwnerId && tu.IsActive);
+
+            if (sub != null && currentCount >= sub.MaxUsers)
+            {
+                errorMessage = $"User limit reached ({sub.MaxUsers}). Upgrade your plan to add more users.";
+                return;
+            }
+
+            // Create Identity user
+            var appUser = new ApplicationUser
+            {
+                UserName = model.Email,
+                Email = model.Email,
+                TenantOwnerId = tenantOwnerId
+            };
+
+            var result = await UserManager.CreateAsync(appUser, model.Password);
+            if (!result.Succeeded)
+            {
+                errorMessage = string.Join(" ", result.Errors.Select(e => e.Description));
+                return;
+            }
+
+            // Create TenantUser record
+            var tenantUser = new TenantUser
+            {
+                Id = Guid.NewGuid(),
+                ApplicationUserId = appUser.Id,
+                TenantOwnerId = tenantOwnerId,
+                Role = model.Role,
+                DisplayName = model.DisplayName,
+                IsActive = true
+            };
+
+            DbContext.TenantUsers.Add(tenantUser);
+            await DbContext.SaveChangesAsync();
+
+            NavManager.NavigateTo("/users");
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel() => NavManager.NavigateTo("/users");
+}

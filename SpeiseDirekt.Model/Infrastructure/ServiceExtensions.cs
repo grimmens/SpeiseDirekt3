@@ -1,4 +1,5 @@
-﻿using SpeiseDirekt.ServiceInterface;
+﻿using SpeiseDirekt.Repository;
+using SpeiseDirekt.ServiceInterface;
 using SpeiseDirekt.ServiceImplementation;
 
 namespace SpeiseDirekt.Infrastructure
@@ -13,7 +14,16 @@ namespace SpeiseDirekt.Infrastructure
             services.AddScoped<IMenuService, MenuService>();
             services.AddScoped<ITrackingService, TrackingService>();
             services.AddScoped<IAnalyticsService, AnalyticsService>();
+            services.AddScoped<IImageResizeService, ImageResizeService>();
+            services.AddScoped<IPermissionService, PermissionService>();
             services.AddHttpClient();
+
+            // Repositories
+            services.AddScoped<IMenuRepository, MenuRepository>();
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+            services.AddScoped<IQrCodeRepository, QrCodeRepository>();
+            services.AddScoped<IImageRepository, ImageRepository>();
         }
     }
 }

@@ -11,6 +11,20 @@ namespace SpeiseDirekt.Model
     {
         Guid ApplicationUserId { get; set; }
     }
+    public class Allergen : IAppUserEntity
+    {
+        public Guid Id { get; set; }
+        [Required, StringLength(5)]
+        public string Code { get; set; } = string.Empty;
+        [Required, StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+        public ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
+        [ForeignKey(nameof(Menu))]
+        public Guid MenuId { get; set; }
+        public Menu? Menu { get; set; }
+        public Guid ApplicationUserId { get; set; }
+    }
+
     public class MenuItem : IAppUserEntity
     {
         public Guid Id { get; set; }
@@ -18,7 +32,7 @@ namespace SpeiseDirekt.Model
         public string Name { get; set; } = string.Empty;
         [Required]
         public string Description { get; set; } = string.Empty;
-        public string Allergens { get; set; } = string.Empty;
+        public ICollection<Allergen> Allergens { get; set; } = new List<Allergen>();
         [Precision(18,2)]
         public decimal Price { get; set; }
         [ForeignKey(nameof(Category))]
@@ -64,6 +78,7 @@ namespace SpeiseDirekt.Model
 
         public DesignTheme Theme { get; set; } = DesignTheme.Modern;
         public ICollection<Category>? Categories { get; set; }
+        public ICollection<Allergen>? Allergens { get; set; }
         public Guid ApplicationUserId { get; set; }
         public MenuLanguage Language { get; set; } = MenuLanguage.German;
     }
@@ -396,6 +411,10 @@ namespace SpeiseDirekt.Model
         public bool IsPaid { get; set; } = false;
         public DateTime SubscriptionStart { get; set; } = DateTime.UtcNow;
         public DateTime? SubscriptionEnd { get; set; }
+        public int MaxUsers { get; set; } = 1;
+
+        [StringLength(50)]
+        public string? PlanName { get; set; }
     }
 
 }

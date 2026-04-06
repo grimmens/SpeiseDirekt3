@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Identity.Client;
 using SpeiseDirekt.Data;
@@ -15,7 +16,7 @@ namespace SpeiseDirekt.ServiceImplementation
     {
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public string Allergens { get; set; } = string.Empty;
+        public string AllergenCodes { get; set; } = string.Empty;
     }
 
     public class AiMenuItemGenerator : IMenuItemGenerator
@@ -127,8 +128,11 @@ namespace SpeiseDirekt.ServiceImplementation
         private async Task<MenuItem?> CreateMockMenuEntry(Category category)
         {
             string prompt = $"Create a fictitious menu item (in German) for a restaurant. " +
-                $"Return a JSON object with the keys 'Name', 'Description', and 'Allergens' that describes a unique dish. " +
-                $"Ensure the dish fits the category {category.Name}. Allergens should be listed as uppercase letters, e.g. \"F, S, M\" (F = Fish, S = Shellfish, M = Dairy).";
+                $"Return a JSON object with the keys 'Name', 'Description', and 'AllergenCodes' that describes a unique dish. " +
+                $"Ensure the dish fits the category {category.Name}. " +
+                $"AllergenCodes should be a comma-separated string of single letter codes from the EU 14 allergens: " +
+                $"A=Gluten, B=Crustaceans, C=Eggs, D=Fish, E=Peanuts, F=Soybeans, G=Milk, H=Nuts, I=Celery, J=Mustard, K=Sesame, L=Sulphites, M=Lupin, N=Molluscs. " +
+                $"Example: \"A, C, G\"";
 
 
             ChatResponse<MenuItemData> aiResponse;
@@ -142,29 +146,39 @@ namespace SpeiseDirekt.ServiceImplementation
                 return null;
             }
 
-            // Attempt to deserialize the AI response.
             MenuItemData? data = null;
             try
             {
                 data = aiResponse.Result;
-                //data = JsonSerializer.Deserialize<MenuItemData>(aiResponse.Text);
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error parsing AI response: {ex.Message}");
                 return null;
-
             }
 
+            // Resolve allergen codes to entities
+            var codes = data.AllergenCodes
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                .ToList();
 
-            // Create the MenuItem entity.
+            List<Allergen> allergens = new();
+            if (codes.Any())
+            {
+                using var scope = serviceProvider.CreateScope();
+                using var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                allergens = await context.Allergens
+                    .Where(a => codes.Contains(a.Code))
+                    .ToListAsync();
+            }
+
             var menuItem = new MenuItem
             {
                 Id = Guid.NewGuid(),
                 Name = data.Name,
                 Description = data.Description,
-                Allergens = data.Allergens,
-                Price = (decimal)(Random.Shared.NextDouble() * 20.0), // Example pricing logic.
+                Allergens = allergens,
+                Price = (decimal)(Random.Shared.NextDouble() * 20.0),
                 CategoryId = category.Id
             };
             return menuItem;

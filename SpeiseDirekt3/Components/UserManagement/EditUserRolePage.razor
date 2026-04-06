@@ -1,0 +1,248 @@
+@page "/users/edit/{UserId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Infrastructure
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@inject ApplicationDbContext DbContext
+@inject IUserIdProvider UserIdProvider
+@inject IPermissionService PermissionService
+@inject INotificationService NotificationService
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+<PageTitle>Edit User - Speise-Direkt</PageTitle>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-600 mb-6" aria-label="breadcrumb">
+        <ol class="flex space-x-2">
+            <li>
+                <a href="/users" class="text-blue-600 hover:underline">Team</a>
+                <span class="mx-2">/</span>
+            </li>
+            <li class="text-gray-800">Edit @(tenantUser?.DisplayName ?? "User")</li>
+        </ol>
+    </nav>
+
+    @if (tenantUser == null)
+    {
+        <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-6">
+            <!-- User Info Card -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">User Details</h2>
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <span class="text-gray-500">Name</span>
+                        <p class="font-medium text-gray-900">@tenantUser.DisplayName</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Email</span>
+                        <p class="font-medium text-gray-900">@(tenantUser.ApplicationUser?.Email ?? "—")</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Joined</span>
+                        <p class="font-medium text-gray-900">@tenantUser.CreatedAt.ToString("yyyy-MM-dd")</p>
+                    </div>
+                    <div>
+                        <span class="text-gray-500">Status</span>
+                        <p>
+                            @if (tenantUser.IsActive)
+                            {
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Inactive</span>
+                            }
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role Selection -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Role</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    @foreach (var role in Enum.GetValues<TenantRole>())
+                    {
+                        <button type="button"
+                                class="p-4 rounded-lg border-2 text-left transition-all @(tenantUser.Role == role ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300")"
+                                @onclick="() => SetRole(role)">
+                            <div class="font-medium text-gray-900">@role</div>
+                            <div class="text-xs text-gray-500 mt-1">@GetRoleDescription(role)</div>
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Permission Overrides -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-900">Permission Overrides</h2>
+                    <button type="button" class="text-sm text-blue-600 hover:underline" @onclick="ResetToDefaults">
+                        Reset to role defaults
+                    </button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Customize permissions beyond the role defaults.</p>
+
+                <div class="space-y-4">
+                    @foreach (var group in permissionGroups)
+                    {
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-700 mb-2">@group.Name</h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                @foreach (var perm in group.Permissions)
+                                {
+                                    <label class="flex items-center gap-2 text-sm cursor-pointer">
+                                        <input type="checkbox" checked="@HasPerm(perm.Value)"
+                                               @onchange="e => TogglePerm(perm.Value, (bool)(e.Value ?? false))"
+                                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                        @perm.Label
+                                    </label>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex justify-between">
+                <button type="button" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                        @onclick="ToggleActive">
+                    @(tenantUser.IsActive ? "Deactivate" : "Activate")
+                </button>
+                <div class="flex gap-3">
+                    <button type="button" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                            @onclick="Cancel">Cancel</button>
+                    <button type="button" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                            @onclick="Save">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid UserId { get; set; }
+
+    private TenantUser? tenantUser;
+    private Permission currentPermissions;
+
+    private record PermEntry(string Label, Permission Value);
+    private record PermGroup(string Name, PermEntry[] Permissions);
+
+    private static readonly PermGroup[] permissionGroups = new[]
+    {
+        new PermGroup("Menus", new[] {
+            new PermEntry("View", Permission.MenusView), new PermEntry("Create", Permission.MenusCreate),
+            new PermEntry("Edit", Permission.MenusEdit), new PermEntry("Delete", Permission.MenusDelete) }),
+        new PermGroup("Categories", new[] {
+            new PermEntry("View", Permission.CategoriesView), new PermEntry("Create", Permission.CategoriesCreate),
+            new PermEntry("Edit", Permission.CategoriesEdit), new PermEntry("Delete", Permission.CategoriesDelete) }),
+        new PermGroup("Menu Items", new[] {
+            new PermEntry("View", Permission.MenuItemsView), new PermEntry("Create", Permission.MenuItemsCreate),
+            new PermEntry("Edit", Permission.MenuItemsEdit), new PermEntry("Delete", Permission.MenuItemsDelete) }),
+        new PermGroup("Allergens", new[] {
+            new PermEntry("View", Permission.AllergensView), new PermEntry("Create", Permission.AllergensCreate),
+            new PermEntry("Edit", Permission.AllergensEdit), new PermEntry("Delete", Permission.AllergensDelete) }),
+        new PermGroup("QR Codes", new[] {
+            new PermEntry("View", Permission.QrCodesView), new PermEntry("Create", Permission.QrCodesCreate),
+            new PermEntry("Edit", Permission.QrCodesEdit), new PermEntry("Delete", Permission.QrCodesDelete) }),
+        new PermGroup("Analytics", new[] { new PermEntry("View", Permission.AnalyticsView) }),
+        new PermGroup("Users", new[] {
+            new PermEntry("View", Permission.UsersView), new PermEntry("Create", Permission.UsersCreate),
+            new PermEntry("Edit", Permission.UsersEdit), new PermEntry("Delete", Permission.UsersDelete) }),
+        new PermGroup("Delivery", new[] {
+            new PermEntry("View", Permission.DeliveryView), new PermEntry("Manage", Permission.DeliveryManage) }),
+        new PermGroup("Subscription", new[] { new PermEntry("Manage", Permission.SubscriptionManage) }),
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await PermissionService.HasPermissionAsync(Permission.UsersEdit))
+        {
+            NavManager.NavigateTo("/users");
+            return;
+        }
+
+        var tenantOwnerId = UserIdProvider.GetUserId();
+        tenantUser = await DbContext.TenantUsers
+            .Include(tu => tu.ApplicationUser)
+            .FirstOrDefaultAsync(tu => tu.Id == UserId && tu.TenantOwnerId == tenantOwnerId);
+
+        if (tenantUser != null)
+        {
+            currentPermissions = tenantUser.Permissions != Permission.None
+                ? tenantUser.Permissions
+                : PermissionDefaults.GetDefaultPermissions(tenantUser.Role);
+        }
+    }
+
+    private void SetRole(TenantRole role)
+    {
+        if (tenantUser == null) return;
+        tenantUser.Role = role;
+        currentPermissions = PermissionDefaults.GetDefaultPermissions(role);
+    }
+
+    private void ResetToDefaults()
+    {
+        if (tenantUser == null) return;
+        currentPermissions = PermissionDefaults.GetDefaultPermissions(tenantUser.Role);
+    }
+
+    private bool HasPerm(Permission perm) => (currentPermissions & perm) == perm;
+
+    private void TogglePerm(Permission perm, bool enabled)
+    {
+        if (enabled)
+            currentPermissions |= perm;
+        else
+            currentPermissions &= ~perm;
+    }
+
+    private async Task Save()
+    {
+        if (tenantUser == null) return;
+
+        var roleDefaults = PermissionDefaults.GetDefaultPermissions(tenantUser.Role);
+        tenantUser.Permissions = currentPermissions == roleDefaults ? Permission.None : currentPermissions;
+
+        await DbContext.SaveChangesAsync();
+        NavManager.NavigateTo("/users");
+    }
+
+    private async Task ToggleActive()
+    {
+        if (tenantUser == null) return;
+
+        var action = tenantUser.IsActive ? "Deactivate" : "Activate";
+        var confirm = await NotificationService.ShowConfirmation((action, $"{action} {tenantUser.DisplayName}?"));
+        if (confirm)
+        {
+            tenantUser.IsActive = !tenantUser.IsActive;
+            await DbContext.SaveChangesAsync();
+            StateHasChanged();
+        }
+    }
+
+    private void Cancel() => NavManager.NavigateTo("/users");
+
+    private static string GetRoleDescription(TenantRole role) => role switch
+    {
+        TenantRole.GeneralManager => "Full access to everything",
+        TenantRole.Manager => "Manage menus, categories, items",
+        TenantRole.Cashier => "View menus, limited editing",
+        TenantRole.Employee => "View only access",
+        TenantRole.Driver => "Delivery management access",
+        _ => ""
+    };
+}

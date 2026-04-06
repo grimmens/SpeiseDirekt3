@@ -26,8 +26,9 @@ public class PaidTenantHandler : AuthorizationHandler<PaidTenantRequirement>
         AuthorizationHandlerContext context,
         PaidTenantRequirement requirement)
     {
-        // 1) Get the current user’s ID
-        var tenantId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        // 1) Get the tenant owner’s ID (sub-accounts use TenantOwnerId claim)
+        var tenantId = context.User.FindFirstValue("TenantOwnerId")
+                    ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(tenantId))
             return;
 
