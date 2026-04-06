@@ -24,6 +24,7 @@ namespace SpeiseDirekt.Infrastructure
             services.AddScoped<IMenuItemRepository, MenuItemRepository>();
             services.AddScoped<IQrCodeRepository, QrCodeRepository>();
             services.AddScoped<IImageRepository, ImageRepository>();
+            services.AddScoped<IMenuComboRepository, MenuComboRepository>();
         }
     }
 }

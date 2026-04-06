@@ -1,0 +1,171 @@
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Model
+@using SpeiseDirekt3.Components.Shared
+
+<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 @(isVisible ? "" : "hidden")">
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4 rounded-t-xl">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xl font-bold text-white">
+                    @(Input.Id == Guid.Empty ? "Add New Combo" : "Edit Combo")
+                </h3>
+                <button type="button" class="text-white hover:text-gray-200 transition-colors" @onclick="Cancel">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6">
+            <EditForm EditContext="editContext" OnSubmit="OnSubmit" class="space-y-6">
+                <DataAnnotationsValidator />
+
+                <!-- Name -->
+                <div class="space-y-2">
+                    <label for="ComboName" class="block text-sm font-medium text-gray-700">Name *</label>
+                    <InputText @bind-Value="Input.Name" id="ComboName"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                               placeholder="e.g. Burger Combo" />
+                    <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm" />
+                </div>
+
+                <!-- Description -->
+                <div class="space-y-2">
+                    <label for="ComboDesc" class="block text-sm font-medium text-gray-700">Description</label>
+                    <InputText @bind-Value="Input.Description" id="ComboDesc"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                               placeholder="e.g. Burger with drink and side" />
+                </div>
+
+                <!-- Combo Price -->
+                <div class="space-y-2">
+                    <label for="ComboPrice" class="block text-sm font-medium text-gray-700">Combo Price *</label>
+                    <InputNumber @bind-Value="Input.ComboPrice" id="ComboPrice"
+                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                 placeholder="0.00" />
+                    <ValidationMessage For="() => Input.ComboPrice" class="text-red-600 text-sm" />
+                </div>
+
+                <!-- Trigger Menu Item -->
+                <div class="space-y-2">
+                    <label for="TriggerItem" class="block text-sm font-medium text-gray-700">Trigger Item *</label>
+                    <p class="text-xs text-gray-500">The item that triggers this combo offer when ordered.</p>
+                    <InputSelect @bind-Value="Input.TriggerMenuItemId" id="TriggerItem"
+                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                        <option value="@Guid.Empty">-- Select trigger item --</option>
+                        @foreach (var item in AvailableMenuItems)
+                        {
+                            <option value="@item.Id">@item.Name (@item.Price.ToString("C"))</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Input.TriggerMenuItemId" class="text-red-600 text-sm" />
+                </div>
+
+                <!-- Included Items -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Included Items *</label>
+                    <p class="text-xs text-gray-500">Search and select the items included in this combo.</p>
+                    <MultiSelectComboBox TItem="MenuItem"
+                                         Items="AvailableMenuItems"
+                                         SelectedItems="selectedMenuItems"
+                                         SelectedItemsChanged="OnSelectedItemsChanged"
+                                         SearchSelector="item => item.Name"
+                                         Placeholder="Search menu items...">
+                        <ItemTemplate Context="mi">
+                            @mi.Name
+                        </ItemTemplate>
+                        <SuggestionTemplate Context="mi">
+                            <div class="flex justify-between items-center w-full">
+                                <span>@mi.Name</span>
+                                <span class="text-xs text-gray-500 ml-2">@mi.Price.ToString("C")</span>
+                            </div>
+                        </SuggestionTemplate>
+                    </MultiSelectComboBox>
+                    @if (showItemsError)
+                    {
+                        <p class="text-red-600 text-sm">Select at least one included item.</p>
+                    }
+                </div>
+
+                <!-- Footer -->
+                <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                    <button type="button" @onclick="Cancel"
+                            class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                        @(Input.Id == Guid.Empty ? "Create Combo" : "Save Changes")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public MenuCombo Input { get; set; } = new();
+    [Parameter] public EventCallback<(MenuCombo Combo, List<Guid> ItemIds)> OnOk { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Parameter] public List<MenuItem> AvailableMenuItems { get; set; } = new();
+
+    private EditContext editContext = default!;
+    private bool isVisible;
+    private List<MenuItem> selectedMenuItems = new();
+    private bool showItemsError;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(Input);
+    }
+
+    public void ShowModal()
+    {
+        editContext = new EditContext(Input);
+        // Resolve selected items from existing combo items
+        var existingIds = Input.Items?.Select(i => i.MenuItemId).ToHashSet() ?? new();
+        selectedMenuItems = AvailableMenuItems.Where(mi => existingIds.Contains(mi.Id)).ToList();
+        showItemsError = false;
+        isVisible = true;
+        StateHasChanged();
+    }
+
+    private void OnSelectedItemsChanged(List<MenuItem> items)
+    {
+        selectedMenuItems = items;
+        showItemsError = false;
+    }
+
+    private async Task OnSubmit()
+    {
+        if (!editContext.Validate())
+            return;
+
+        if (Input.TriggerMenuItemId == Guid.Empty)
+        {
+            var messages = new ValidationMessageStore(editContext);
+            messages.Add(() => Input.TriggerMenuItemId, "Please select a trigger item.");
+            editContext.NotifyValidationStateChanged();
+            return;
+        }
+
+        if (!selectedMenuItems.Any())
+        {
+            showItemsError = true;
+            return;
+        }
+
+        isVisible = false;
+        await OnOk.InvokeAsync((Input, selectedMenuItems.Select(mi => mi.Id).ToList()));
+    }
+
+    private async Task Cancel()
+    {
+        isVisible = false;
+        await OnCancel.InvokeAsync();
+    }
+}

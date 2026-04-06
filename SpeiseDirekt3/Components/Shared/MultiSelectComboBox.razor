@@ -1,0 +1,224 @@
+@typeparam TItem
+@implements IDisposable
+
+<div class="relative" @ref="containerRef">
+    <!-- Selected Items + Input -->
+    <div class="flex flex-wrap items-center gap-1.5 min-h-[42px] px-3 py-1.5 border rounded-lg bg-white transition-colors cursor-text
+                @(isFocused ? "border-blue-500 ring-2 ring-blue-500/20" : "border-gray-300")"
+         @onclick="FocusInput">
+
+        @foreach (var item in SelectedItems)
+        {
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-blue-100 text-blue-800">
+                @ItemTemplate(item)
+                <button type="button" class="ml-0.5 text-blue-600 hover:text-blue-900 transition-colors" @onclick="() => RemoveItem(item)" @onclick:stopPropagation="true">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </span>
+        }
+
+        <input type="text"
+               @ref="inputRef"
+               value="@searchText"
+               @oninput="OnSearchInput"
+               @onfocus="OnFocus"
+               @onkeydown="OnKeyDown"
+               placeholder="@(SelectedItems.Any() ? "" : Placeholder)"
+               class="flex-1 min-w-[120px] border-none outline-none bg-transparent text-sm text-gray-900 placeholder-gray-400 p-0.5" />
+    </div>
+
+    <!-- Dropdown -->
+    @if (isOpen && filteredItems.Any())
+    {
+        <div class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+            @foreach (var (item, index) in filteredItems.Select((item, i) => (item, i)))
+            {
+                var isHighlighted = index == highlightedIndex;
+                <button type="button"
+                        class="w-full text-left px-3 py-2 text-sm transition-colors @(isHighlighted ? "bg-blue-50 text-blue-900" : "text-gray-700 hover:bg-gray-50")"
+                        @onclick="() => AddItem(item)"
+                        @onmouseenter="() => highlightedIndex = index">
+                    @SuggestionTemplate(item)
+                </button>
+            }
+        </div>
+    }
+    else if (isOpen && !string.IsNullOrEmpty(searchText))
+    {
+        <div class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg">
+            <div class="px-3 py-2 text-sm text-gray-500">No matches found</div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<TItem> Items { get; set; } = new();
+    [Parameter, EditorRequired] public List<TItem> SelectedItems { get; set; } = new();
+    [Parameter, EditorRequired] public EventCallback<List<TItem>> SelectedItemsChanged { get; set; }
+    [Parameter, EditorRequired] public Func<TItem, string> SearchSelector { get; set; } = default!;
+    [Parameter] public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
+    [Parameter] public RenderFragment<TItem> SuggestionTemplate { get; set; } = default!;
+    [Parameter] public string Placeholder { get; set; } = "Type to search...";
+
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    private ElementReference containerRef;
+    private ElementReference inputRef;
+    private string searchText = "";
+    private bool isOpen;
+    private bool isFocused;
+    private int highlightedIndex;
+    private List<TItem> filteredItems = new();
+    private IJSObjectReference? jsModule;
+    private DotNetObjectReference<MultiSelectComboBox<TItem>>? dotNetRef;
+
+    protected override void OnParametersSet()
+    {
+        // Default templates if not provided
+        ItemTemplate ??= (item) => (builder) =>
+        {
+            builder.AddContent(0, SearchSelector(item));
+        };
+        SuggestionTemplate ??= ItemTemplate;
+        UpdateFilteredItems();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            jsModule = await JS.InvokeAsync<IJSObjectReference>("eval", @"
+                (function() {
+                    const m = {};
+                    m.addClickOutside = function(el, dotNetRef) {
+                        const handler = function(e) {
+                            if (!el.contains(e.target)) {
+                                dotNetRef.invokeMethodAsync('OnClickOutside');
+                            }
+                        };
+                        document.addEventListener('mousedown', handler);
+                        el._clickOutsideHandler = handler;
+                    };
+                    m.removeClickOutside = function(el) {
+                        if (el._clickOutsideHandler) {
+                            document.removeEventListener('mousedown', el._clickOutsideHandler);
+                            delete el._clickOutsideHandler;
+                        }
+                    };
+                    m.focus = function(el) { el.focus(); };
+                    return m;
+                })()
+            ");
+            await jsModule.InvokeVoidAsync("addClickOutside", containerRef, dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public void OnClickOutside()
+    {
+        isOpen = false;
+        isFocused = false;
+        searchText = "";
+        StateHasChanged();
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchText = e.Value?.ToString() ?? "";
+        highlightedIndex = 0;
+        isOpen = true;
+        UpdateFilteredItems();
+    }
+
+    private void OnFocus()
+    {
+        isFocused = true;
+        isOpen = true;
+        UpdateFilteredItems();
+    }
+
+    private async Task FocusInput()
+    {
+        if (jsModule != null)
+            await jsModule.InvokeVoidAsync("focus", inputRef);
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "ArrowDown":
+                if (highlightedIndex < filteredItems.Count - 1)
+                    highlightedIndex++;
+                break;
+            case "ArrowUp":
+                if (highlightedIndex > 0)
+                    highlightedIndex--;
+                break;
+            case "Enter":
+                if (filteredItems.Any() && highlightedIndex >= 0 && highlightedIndex < filteredItems.Count)
+                    AddItem(filteredItems[highlightedIndex]);
+                break;
+            case "Backspace":
+                if (string.IsNullOrEmpty(searchText) && SelectedItems.Any())
+                    RemoveItem(SelectedItems.Last());
+                break;
+            case "Escape":
+                isOpen = false;
+                searchText = "";
+                break;
+        }
+    }
+
+    private async Task AddItem(TItem item)
+    {
+        if (!SelectedItems.Contains(item))
+        {
+            SelectedItems.Add(item);
+            await SelectedItemsChanged.InvokeAsync(SelectedItems);
+        }
+        searchText = "";
+        highlightedIndex = 0;
+        UpdateFilteredItems();
+    }
+
+    private async Task RemoveItem(TItem item)
+    {
+        SelectedItems.Remove(item);
+        await SelectedItemsChanged.InvokeAsync(SelectedItems);
+        UpdateFilteredItems();
+    }
+
+    private void UpdateFilteredItems()
+    {
+        var available = Items.Where(i => !SelectedItems.Contains(i));
+
+        if (!string.IsNullOrWhiteSpace(searchText))
+        {
+            available = available.Where(i =>
+                SearchSelector(i).Contains(searchText, StringComparison.OrdinalIgnoreCase));
+        }
+
+        filteredItems = available.ToList();
+
+        if (highlightedIndex >= filteredItems.Count)
+            highlightedIndex = Math.Max(0, filteredItems.Count - 1);
+    }
+
+    public void Dispose()
+    {
+        if (jsModule != null)
+        {
+            try
+            {
+                _ = jsModule.InvokeVoidAsync("removeClickOutside", containerRef);
+                _ = jsModule.DisposeAsync();
+            }
+            catch { }
+        }
+        dotNetRef?.Dispose();
+    }
+}

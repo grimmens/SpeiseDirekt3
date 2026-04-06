@@ -1,0 +1,256 @@
+@page "/combos/{MenuId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Components.MenuCombos.Components
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@inject ApplicationDbContext Context
+@inject INotificationService NotificationService
+@inject NavigationManager NavManager
+@inject IPermissionService PermissionService
+@attribute [Authorize]
+
+<PageTitle>Combos - @menu?.Name</PageTitle>
+
+<!-- Header -->
+<div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex items-center text-sm text-gray-500 mb-3">
+            <a href="menus" class="hover:text-blue-600 transition-colors">Menus</a>
+            <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <a href="@($"menudetail/{MenuId}")" class="hover:text-blue-600 transition-colors">@menu?.Name</a>
+            <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-gray-900 font-medium">Combos</span>
+        </div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 font-display">Combos</h1>
+                <p class="mt-1 text-gray-600">Create combo offers that customers see when ordering specific items.</p>
+            </div>
+            @if (canCreate)
+            {
+                <div class="mt-4 sm:mt-0">
+                    <button class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                            @onclick="CreateCombo">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        New Combo
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Content -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    @if (combos == null)
+    {
+        <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="ml-3 text-gray-600">Loading...</span>
+        </div>
+    }
+    else if (!combos.Any())
+    {
+        <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <h3 class="mt-2 text-sm font-semibold text-gray-900">No combos yet</h3>
+            <p class="mt-1 text-sm text-gray-500">Create a combo to offer customers bundled deals when they order specific items.</p>
+            @if (canCreate)
+            {
+                <div class="mt-6">
+                    <button class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                            @onclick="CreateCombo">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        New Combo
+                    </button>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <!-- Combos Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach (var combo in combos)
+            {
+                <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all duration-200">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">@combo.Name</h3>
+                            @if (!string.IsNullOrEmpty(combo.Description))
+                            {
+                                <p class="text-sm text-gray-500 mt-0.5">@combo.Description</p>
+                            }
+                        </div>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                            @combo.ComboPrice.ToString("C")
+                        </span>
+                    </div>
+
+                    <!-- Trigger Item -->
+                    <div class="mb-3">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Trigger Item</p>
+                        <div class="flex items-center gap-2">
+                            <div class="p-1 bg-orange-100 rounded">
+                                <svg class="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                            </div>
+                            <span class="text-sm text-gray-700">@combo.TriggerMenuItem?.Name</span>
+                        </div>
+                    </div>
+
+                    <!-- Included Items -->
+                    <div class="mb-4">
+                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Includes (@combo.Items.Count items)</p>
+                        <div class="flex flex-wrap gap-1">
+                            @foreach (var comboItem in combo.Items)
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                    @comboItem.MenuItem?.Name
+                                </span>
+                            }
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    @if (canEdit || canDelete)
+                    {
+                        <div class="flex gap-2 pt-3 border-t border-gray-100">
+                            @if (canEdit)
+                            {
+                                <button class="flex-1 inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors"
+                                        @onclick="() => EditCombo(combo)">
+                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Edit
+                                </button>
+                            }
+                            @if (canDelete)
+                            {
+                                <button class="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors"
+                                        @onclick="() => DeleteCombo(combo)">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Editor Modal -->
+<MenuComboEditor @ref="comboEditor" OnOk="HandleOk" OnCancel="HandleCancel" AvailableMenuItems="availableMenuItems" />
+
+@code {
+    [Parameter] public Guid MenuId { get; set; }
+
+    private Menu? menu;
+    private List<MenuCombo>? combos;
+    private List<MenuItem> availableMenuItems = new();
+    private MenuComboEditor comboEditor = default!;
+    private bool canCreate, canEdit, canDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canCreate = await PermissionService.HasPermissionAsync(Permission.MenuCombosCreate);
+        canEdit = await PermissionService.HasPermissionAsync(Permission.MenuCombosEdit);
+        canDelete = await PermissionService.HasPermissionAsync(Permission.MenuCombosDelete);
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        menu = await Context.Menus.FirstOrDefaultAsync(m => m.Id == MenuId);
+        combos = await Context.MenuCombos
+            .Include(c => c.TriggerMenuItem)
+            .Include(c => c.Items)
+                .ThenInclude(i => i.MenuItem)
+            .Where(c => c.MenuId == MenuId)
+            .ToListAsync();
+
+        availableMenuItems = await Context.MenuItems
+            .Include(mi => mi.Category)
+            .Where(mi => Context.Categories.Any(c => c.MenuId == MenuId && c.Id == mi.CategoryId))
+            .OrderBy(mi => mi.Name)
+            .ToListAsync();
+    }
+
+    private void CreateCombo()
+    {
+        comboEditor.Input = new MenuCombo { MenuId = MenuId };
+        comboEditor.ShowModal();
+    }
+
+    private void EditCombo(MenuCombo combo)
+    {
+        comboEditor.Input = combo;
+        comboEditor.ShowModal();
+    }
+
+    private async Task HandleOk((MenuCombo Combo, List<Guid> ItemIds) result)
+    {
+        var (combo, itemIds) = result;
+
+        if (combo.Id == Guid.Empty)
+        {
+            combo.Items = itemIds.Select(id => new MenuComboItem { MenuItemId = id }).ToList();
+            Context.MenuCombos.Add(combo);
+        }
+        else
+        {
+            // Remove old items, add new ones
+            var existing = await Context.MenuComboItems
+                .Where(i => i.MenuComboId == combo.Id)
+                .ToListAsync();
+            Context.MenuComboItems.RemoveRange(existing);
+
+            foreach (var itemId in itemIds)
+            {
+                Context.MenuComboItems.Add(new MenuComboItem
+                {
+                    MenuComboId = combo.Id,
+                    MenuItemId = itemId
+                });
+            }
+
+            Context.MenuCombos.Update(combo);
+        }
+
+        await Context.SaveChangesAsync();
+        await LoadDataAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private Task HandleCancel() => Task.CompletedTask;
+
+    private async Task DeleteCombo(MenuCombo combo)
+    {
+        if (!canDelete) return;
+
+        var confirm = await NotificationService.ShowConfirmation(("Delete", $"Delete combo \"{combo.Name}\"?"));
+        if (confirm)
+        {
+            Context.MenuCombos.Remove(combo);
+            await Context.SaveChangesAsync();
+            await LoadDataAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}
