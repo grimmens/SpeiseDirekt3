@@ -17,6 +17,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("traffic-per-user")]
+    [Authorize(Policy = "CanViewAnalytics")]
     public async Task<ActionResult<List<UserTrafficData>>> GetTrafficPerUser(
         [FromQuery] TimeRange timeRange = TimeRange.Last7Days)
     {
@@ -25,6 +26,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("traffic-per-menu")]
+    [Authorize(Policy = "CanViewAnalytics")]
     public async Task<ActionResult<List<MenuTrafficData>>> GetTrafficPerMenu(
         [FromQuery] TimeRange timeRange = TimeRange.Last7Days)
     {
@@ -33,6 +35,7 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet("traffic-per-menuitem")]
+    [Authorize(Policy = "CanViewAnalytics")]
     public async Task<ActionResult<List<MenuItemTrafficData>>> GetTrafficPerMenuItem(
         [FromQuery] TimeRange timeRange = TimeRange.Last7Days)
     {

@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
+using SpeiseDirekt.ServiceInterface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +30,15 @@ builder.Services.AddControllers()
     });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("PaidTenant", policy =>
+        policy.Requirements.Add(new PaidTenantRequirement()));
+    options.AddPermissionPolicies();
+});
+builder.Services.AddScoped<IAuthorizationHandler, PaidTenantHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation, TenantClaimsTransformation>();
 
 // CORS
 builder.Services.AddCors(options =>

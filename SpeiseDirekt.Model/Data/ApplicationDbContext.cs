@@ -98,6 +98,29 @@ namespace SpeiseDirekt.Data
                       .OnDelete(DeleteBehavior.NoAction);
             });
 
+            // Self-referencing FK: sub-accounts point to owner
+            builder.Entity<ApplicationUser>()
+                .HasOne(u => u.TenantOwner)
+                .WithMany()
+                .HasForeignKey(u => u.TenantOwnerId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            // TenantUser relationships
+            builder.Entity<TenantUser>(entity =>
+            {
+                entity.HasOne(tu => tu.ApplicationUser)
+                    .WithMany()
+                    .HasForeignKey(tu => tu.ApplicationUserId)
+                    .OnDelete(DeleteBehavior.NoAction);
+
+                entity.HasOne(tu => tu.TenantOwner)
+                    .WithMany(u => u.TenantUsers)
+                    .HasForeignKey(tu => tu.TenantOwnerId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(tu => new { tu.ApplicationUserId, tu.TenantOwnerId }).IsUnique();
+            });
+
             base.OnModelCreating(builder);
         }
         public DbSet<Allergen> Allergens { get; set; }
@@ -112,6 +135,7 @@ namespace SpeiseDirekt.Data
         public DbSet<Image> Images { get; set; }
         public DbSet<MenuView> MenuViews { get; set; }
         public DbSet<MenuItemClick> MenuItemClicks { get; set; }
+        public DbSet<TenantUser> TenantUsers { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
         {
             if (e.Entry.Entity is IAppUserEntity entity)

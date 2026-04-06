@@ -71,4 +71,5 @@ internal class TestUserIdProvider : IUserIdProvider
     private readonly string _userId;
     public TestUserIdProvider(string userId) => _userId = userId;
     public string GetUserId() => _userId;
+    public string GetActualUserId() => _userId;
 }

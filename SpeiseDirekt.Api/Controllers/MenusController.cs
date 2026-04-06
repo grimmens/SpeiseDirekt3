@@ -19,6 +19,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "CanViewMenus")]
     public async Task<ActionResult<List<Menu>>> GetAll()
     {
         var menus = await _menuRepository.GetAllAsync();
@@ -26,6 +27,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "CanViewMenus")]
     public async Task<ActionResult<Menu>> Get(Guid id)
     {
         var menu = await _menuRepository.GetByIdAsync(id);
@@ -37,6 +39,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "CanCreateMenus")]
     public async Task<ActionResult<Menu>> Create(MenuDto dto)
     {
         var menu = new Menu
@@ -54,6 +57,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "CanEditMenus")]
     public async Task<IActionResult> Update(Guid id, MenuDto dto)
     {
         var menu = await _menuRepository.UpdateAsync(id, m =>
@@ -71,6 +75,7 @@ public class MenusController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "CanDeleteMenus")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _menuRepository.DeleteAsync(id);

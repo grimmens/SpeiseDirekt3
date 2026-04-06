@@ -19,6 +19,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Policy = "CanViewCategories")]
     public async Task<ActionResult<List<Category>>> GetAll([FromQuery] Guid? menuId)
     {
         var categories = await _categoryRepository.GetAllAsync(menuId);
@@ -26,6 +27,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
+    [Authorize(Policy = "CanViewCategories")]
     public async Task<ActionResult<Category>> Get(Guid id)
     {
         var category = await _categoryRepository.GetByIdAsync(id);
@@ -37,6 +39,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Policy = "CanCreateCategories")]
     public async Task<ActionResult<Category>> Create(CategoryDto dto)
     {
         var menuExists = await _categoryRepository.MenuExistsAsync(dto.MenuId);
@@ -56,6 +59,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Policy = "CanEditCategories")]
     public async Task<IActionResult> Update(Guid id, CategoryDto dto)
     {
         var menuExists = await _categoryRepository.MenuExistsAsync(dto.MenuId);
@@ -75,6 +79,7 @@ public class CategoriesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Policy = "CanDeleteCategories")]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _categoryRepository.DeleteAsync(id);

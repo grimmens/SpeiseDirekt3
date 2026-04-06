@@ -57,6 +57,10 @@ public class MenuRepository : IMenuRepository
         var menuItemClicks = await _db.MenuItemClicks.Where(c => c.MenuId == id).ToListAsync();
         _db.MenuItemClicks.RemoveRange(menuItemClicks);
 
+        // Remove allergens (configured with NoAction FK)
+        var allergens = await _db.Allergens.Where(a => a.MenuId == id).ToListAsync();
+        _db.Allergens.RemoveRange(allergens);
+
         _db.Menus.Remove(menu);
         await _db.SaveChangesAsync();
         return true;

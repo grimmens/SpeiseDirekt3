@@ -103,6 +103,7 @@ namespace SpeiseDirekt3
             {
                 options.AddPolicy("PaidTenant", policy =>
                     policy.Requirements.Add(new PaidTenantRequirement()));
+                options.AddPermissionPolicies();
             });
 
             var connectionString = builder.Configuration.GetConnectionString("server") ?? throw new InvalidOperationException("Connection string 'server' not found.");
@@ -110,6 +111,10 @@ namespace SpeiseDirekt3
             {
                 options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             });
+            builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+            {
+                options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+            }, lifetime: ServiceLifetime.Scoped);
 
             
 
@@ -135,6 +140,8 @@ namespace SpeiseDirekt3
             builder.Services.AddScoped<IImageUploadService, ImageDatabaseUploadService>();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
             builder.Services.AddScoped<IAuthorizationHandler, PaidTenantHandler>();
+            builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
+            builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation, TenantClaimsTransformation>();
 
 
             var app = builder.Build();
