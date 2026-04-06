@@ -14,6 +14,7 @@ namespace SpeiseDirekt.Infrastructure
             services.AddScoped<IMenuService, MenuService>();
             services.AddScoped<ITrackingService, TrackingService>();
             services.AddScoped<IAnalyticsService, AnalyticsService>();
+            services.AddScoped<IImageResizeService, ImageResizeService>();
             services.AddHttpClient();
 
             // Repositories

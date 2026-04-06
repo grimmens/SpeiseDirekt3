@@ -50,9 +50,21 @@ public class CategoryRepository : ICategoryRepository
 
     public async Task<bool> DeleteAsync(Guid id)
     {
-        var category = await _db.Categories.FindAsync(id);
+        var category = await _db.Categories
+            .Include(c => c.MenuItems!)
+            .FirstOrDefaultAsync(c => c.Id == id);
         if (category is null)
             return false;
+
+        // Remove tracking records for child menu items (configured with NoAction FK)
+        if (category.MenuItems?.Count > 0)
+        {
+            var menuItemIds = category.MenuItems.Select(mi => mi.Id).ToList();
+            var clicks = await _db.MenuItemClicks
+                .Where(c => menuItemIds.Contains(c.MenuItemId))
+                .ToListAsync();
+            _db.MenuItemClicks.RemoveRange(clicks);
+        }
 
         _db.Categories.Remove(category);
         await _db.SaveChangesAsync();

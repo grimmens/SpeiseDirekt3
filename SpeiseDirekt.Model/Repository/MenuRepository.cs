@@ -50,6 +50,13 @@ public class MenuRepository : IMenuRepository
         if (menu is null)
             return false;
 
+        // Remove tracking records that reference this menu (configured with NoAction FK)
+        var menuViews = await _db.MenuViews.Where(v => v.MenuId == id).ToListAsync();
+        _db.MenuViews.RemoveRange(menuViews);
+
+        var menuItemClicks = await _db.MenuItemClicks.Where(c => c.MenuId == id).ToListAsync();
+        _db.MenuItemClicks.RemoveRange(menuItemClicks);
+
         _db.Menus.Remove(menu);
         await _db.SaveChangesAsync();
         return true;

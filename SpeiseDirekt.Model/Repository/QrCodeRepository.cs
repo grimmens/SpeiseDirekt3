@@ -55,6 +55,10 @@ public class QrCodeRepository : IQrCodeRepository
         if (qrCode is null)
             return false;
 
+        // Remove tracking records that reference this QR code (configured with NoAction FK)
+        var menuViews = await _db.MenuViews.Where(v => v.QRCodeId == id).ToListAsync();
+        _db.MenuViews.RemoveRange(menuViews);
+
         _db.QRCodes.Remove(qrCode);
         await _db.SaveChangesAsync();
         return true;
