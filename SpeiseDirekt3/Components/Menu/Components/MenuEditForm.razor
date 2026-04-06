@@ -134,7 +134,7 @@
         }
 
         await Context.SaveChangesAsync();
-        NavManager.NavigateTo(IsNew ? "/menus" : $"/menu/{Menu.Id}");
+        NavManager.NavigateTo(IsNew ? "/menus" : $"/menudetail/{Menu.Id}");
     }
     void ChangeTheme(int direction)
     {
@@ -160,6 +160,6 @@
 
     private void Cancel()
     {
-        NavManager.NavigateTo(IsNew ? "/menus" : $"/menu/{Id}");
+        NavManager.NavigateTo(IsNew ? "/menus" : $"/menudetail/{Id}");
     }
 }
