@@ -689,7 +689,7 @@ namespace SpeiseDirekt.Data.Migrations
                     b.HasOne("SpeiseDirekt.Model.Menu", "Menu")
                         .WithMany("Allergens")
                         .HasForeignKey("MenuId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Menu");

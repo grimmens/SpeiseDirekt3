@@ -12,7 +12,7 @@ using SpeiseDirekt.Data;
 namespace SpeiseDirekt.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260406134441_MakeAllergensPerMenu")]
+    [Migration("20260406142955_MakeAllergensPerMenu")]
     partial class MakeAllergensPerMenu
     {
         /// <inheritdoc />
@@ -692,7 +692,7 @@ namespace SpeiseDirekt.Data.Migrations
                     b.HasOne("SpeiseDirekt.Model.Menu", "Menu")
                         .WithMany("Allergens")
                         .HasForeignKey("MenuId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Menu");

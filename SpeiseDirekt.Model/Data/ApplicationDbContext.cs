@@ -40,6 +40,10 @@ namespace SpeiseDirekt.Data
             builder.Entity<Allergen>(entity =>
             {
                 entity.HasIndex(e => new { e.Code, e.MenuId }).IsUnique();
+                entity.HasOne(e => e.Menu)
+                      .WithMany(m => m.Allergens)
+                      .HasForeignKey(e => e.MenuId)
+                      .OnDelete(DeleteBehavior.NoAction);
             });
 
             builder.Entity<ApplicationUser>()

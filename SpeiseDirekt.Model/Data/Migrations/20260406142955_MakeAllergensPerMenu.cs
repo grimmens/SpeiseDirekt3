@@ -117,8 +117,7 @@ namespace SpeiseDirekt.Data.Migrations
                 table: "Allergens",
                 column: "MenuId",
                 principalTable: "Menus",
-                principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                principalColumn: "Id");
         }
 
         /// <inheritdoc />
