@@ -29,6 +29,13 @@ public static class TestSeedData
     public static readonly Guid DirectQrCodeId = Guid.Parse("dddddddd-dddd-dddd-dddd-ddddddddddde");
     public static readonly string TestSessionId = "test-session-001";
 
+    // POS seed data
+    public static readonly Guid TaxRateStandardId = Guid.Parse("77777777-7777-7777-7777-777777777701");
+    public static readonly Guid TaxRateReducedId = Guid.Parse("77777777-7777-7777-7777-777777777702");
+    public static readonly Guid DiscountId = Guid.Parse("88888888-8888-8888-8888-888888888801");
+    public static readonly Guid ComboId = Guid.Parse("66666666-6666-6666-6666-666666666601");
+    public static readonly Guid ComboItem1Id = Guid.Parse("66666666-6666-6666-6666-666666666602");
+
     public static async Task SeedAsync(ApplicationDbContext context, string userId)
     {
         var appUserId = Guid.Parse(userId);
@@ -248,6 +255,61 @@ public static class TestSeedData
                 UserAgent = "TestAgent/2.0"
             }
         );
+
+        // POS: Tax Rates
+        context.TaxRates.AddRange(
+            new TaxRate
+            {
+                Id = TaxRateStandardId,
+                Name = "Standard VAT",
+                Rate = 0.2000m,
+                IsDefault = true,
+                ApplicationUserId = appUserId
+            },
+            new TaxRate
+            {
+                Id = TaxRateReducedId,
+                Name = "Reduced VAT",
+                Rate = 0.1000m,
+                IsDefault = false,
+                ApplicationUserId = appUserId
+            }
+        );
+
+        // POS: Discount
+        context.Discounts.Add(new Discount
+        {
+            Id = DiscountId,
+            Code = "SAVE10",
+            Description = "10% off your order",
+            Type = DiscountType.Percentage,
+            Value = 10m,
+            MinOrderAmount = 5m,
+            IsActive = true,
+            MaxUses = 100,
+            CurrentUses = 0,
+            ApplicationUserId = appUserId
+        });
+
+        // POS: MenuCombo (Caesar Salad combo with Tomato Soup)
+        var combo = new MenuCombo
+        {
+            Id = ComboId,
+            Name = "Salad Combo",
+            Description = "Caesar Salad + Tomato Soup",
+            ComboPrice = 12.00m,
+            TriggerMenuItemId = MenuItem1Id,
+            MenuId = Menu1Id,
+            ApplicationUserId = appUserId
+        };
+        combo.Items.Add(new MenuComboItem
+        {
+            Id = ComboItem1Id,
+            MenuComboId = ComboId,
+            MenuItemId = MenuItem2Id,
+            ApplicationUserId = appUserId
+        });
+        context.MenuCombos.Add(combo);
 
         // Image
         context.Images.Add(new Image

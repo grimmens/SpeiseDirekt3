@@ -44,6 +44,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 options.UseSqlite(_connection);
             });
 
+            // Replace POS Stripe gateway with test double
+            var stripeDescriptor = services.SingleOrDefault(
+                d => d.ServiceType == typeof(IPosStripeGateway));
+            if (stripeDescriptor != null)
+                services.Remove(stripeDescriptor);
+            services.AddTransient<IPosStripeGateway, TestPosStripeGateway>();
+
             // Replace authentication with a test scheme that auto-succeeds
             services.AddAuthentication("TestScheme")
                 .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>("TestScheme", _ => { });
