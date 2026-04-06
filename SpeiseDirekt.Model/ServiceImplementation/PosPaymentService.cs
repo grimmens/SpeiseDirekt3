@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.Repository;
 using SpeiseDirekt.ServiceInterface;
@@ -7,34 +9,39 @@ namespace SpeiseDirekt.ServiceImplementation;
 
 /// <summary>
 /// Handles POS payment processing (restaurant transactions).
+/// Uses IgnoreQueryFilters for anonymous kiosk access.
 /// Not related to TenantSubscription (app feature billing).
 /// </summary>
 public class PosPaymentService : IPosPaymentService
 {
+    private readonly ApplicationDbContext _db;
     private readonly IPosPaymentRepository _paymentRepo;
-    private readonly IOrderRepository _orderRepo;
-    private readonly IOrderService _orderService;
     private readonly IPosStripeGateway _stripe;
     private readonly PosStripeSettings _settings;
 
     public PosPaymentService(
+        ApplicationDbContext db,
         IPosPaymentRepository paymentRepo,
-        IOrderRepository orderRepo,
-        IOrderService orderService,
         IPosStripeGateway stripe,
         IOptions<PosStripeSettings> settings)
     {
+        _db = db;
         _paymentRepo = paymentRepo;
-        _orderRepo = orderRepo;
-        _orderService = orderService;
         _stripe = stripe;
         _settings = settings.Value;
     }
 
+    private async Task<Order> GetOrderAsync(Guid orderId)
+    {
+        return await _db.Orders.IgnoreQueryFilters()
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new InvalidOperationException($"Order '{orderId}' not found.");
+    }
+
     public async Task<PosPayment> CreateCashPaymentAsync(Guid orderId)
     {
-        var order = await _orderRepo.GetByIdAsync(orderId)
-            ?? throw new InvalidOperationException($"Order '{orderId}' not found.");
+        var order = await GetOrderAsync(orderId);
 
         var payment = new PosPayment
         {
@@ -44,27 +51,28 @@ public class PosPaymentService : IPosPaymentService
             Status = PosPaymentStatus.Succeeded,
             PaymentMethod = PosPaymentMethod.Cash,
             IdempotencyKey = $"{orderId}:{Guid.NewGuid()}",
-            CompletedAt = DateTime.UtcNow
+            CompletedAt = DateTime.UtcNow,
+            ApplicationUserId = order.ApplicationUserId
         };
 
-        await _paymentRepo.CreateAsync(payment);
+        _db.PosPayments.Add(payment);
 
         // Advance order to Confirmed
         if (order.Status == OrderStatus.Draft)
-            await _orderService.ConfirmOrderAsync(orderId);
-
+        {
+            order.Status = OrderStatus.Confirmed;
+            order.UpdatedAt = DateTime.UtcNow;
+        }
         order.PaymentMethod = PosPaymentMethod.Cash;
-        await _orderRepo.UpdateAsync(orderId, _ => { });
 
+        await _db.SaveChangesAsync();
         return payment;
     }
 
     public async Task<(PosPayment Payment, string CheckoutUrl)> CreateStripeCheckoutAsync(
         Guid orderId, string successUrl, string cancelUrl)
     {
-        var order = await _orderRepo.GetByIdAsync(orderId)
-            ?? throw new InvalidOperationException($"Order '{orderId}' not found.");
-
+        var order = await GetOrderAsync(orderId);
         var idempotencyKey = $"{orderId}:{Guid.NewGuid()}";
 
         var payment = new PosPayment
@@ -74,10 +82,13 @@ public class PosPaymentService : IPosPaymentService
             Currency = _settings.Currency.ToUpperInvariant(),
             Status = PosPaymentStatus.Pending,
             PaymentMethod = PosPaymentMethod.Card,
-            IdempotencyKey = idempotencyKey
+            IdempotencyKey = idempotencyKey,
+            ApplicationUserId = order.ApplicationUserId
         };
 
-        await _paymentRepo.CreateAsync(payment);
+        _db.PosPayments.Add(payment);
+        order.PaymentMethod = PosPaymentMethod.Card;
+        await _db.SaveChangesAsync();
 
         var amountInCents = (long)(order.GrandTotal * 100);
         var metadata = new Dictionary<string, string>
@@ -87,18 +98,11 @@ public class PosPaymentService : IPosPaymentService
         };
 
         var (sessionId, url) = await _stripe.CreateCheckoutSessionAsync(
-            _settings.Currency,
-            amountInCents,
-            $"Order {order.OrderNumber}",
-            successUrl,
-            cancelUrl,
-            metadata,
-            idempotencyKey);
+            _settings.Currency, amountInCents, $"Order {order.OrderNumber}",
+            successUrl, cancelUrl, metadata, idempotencyKey);
 
-        await _paymentRepo.UpdateAsync(payment.Id, p => p.StripeSessionId = sessionId);
-
-        order.PaymentMethod = PosPaymentMethod.Card;
-        await _orderRepo.UpdateAsync(orderId, _ => { });
+        payment.StripeSessionId = sessionId;
+        await _db.SaveChangesAsync();
 
         return (payment, url);
     }
@@ -116,21 +120,20 @@ public class PosPaymentService : IPosPaymentService
             var payment = await _paymentRepo.GetByStripeSessionIdAsync(sessionId)
                 ?? throw new InvalidOperationException($"Payment with session '{sessionId}' not found.");
 
-            // Idempotency: skip if already succeeded
             if (payment.Status == PosPaymentStatus.Succeeded)
                 return payment;
 
-            await _paymentRepo.UpdateAsync(payment.Id, p =>
-            {
-                p.Status = PosPaymentStatus.Succeeded;
-                p.StripePaymentIntentId = data.GetValueOrDefault("PaymentIntentId");
-                p.CompletedAt = DateTime.UtcNow;
-            });
+            payment.Status = PosPaymentStatus.Succeeded;
+            payment.StripePaymentIntentId = data.GetValueOrDefault("PaymentIntentId");
+            payment.CompletedAt = DateTime.UtcNow;
 
-            // Advance order status
             if (payment.Order?.Status == OrderStatus.Draft)
-                await _orderService.ConfirmOrderAsync(payment.OrderId);
+            {
+                payment.Order.Status = OrderStatus.Confirmed;
+                payment.Order.UpdatedAt = DateTime.UtcNow;
+            }
 
+            await _db.SaveChangesAsync();
             return payment;
         }
 
@@ -141,11 +144,9 @@ public class PosPaymentService : IPosPaymentService
 
             if (payment != null && payment.Status == PosPaymentStatus.Pending)
             {
-                await _paymentRepo.UpdateAsync(payment.Id, p =>
-                {
-                    p.Status = PosPaymentStatus.Failed;
-                    p.FailureReason = "Checkout session expired.";
-                });
+                payment.Status = PosPaymentStatus.Failed;
+                payment.FailureReason = "Checkout session expired.";
+                await _db.SaveChangesAsync();
             }
 
             return payment!;
@@ -156,7 +157,9 @@ public class PosPaymentService : IPosPaymentService
 
     public async Task<PosPayment> RefundAsync(Guid paymentId, decimal? amount = null, string? reason = null)
     {
-        var payment = await _paymentRepo.GetByIdAsync(paymentId)
+        var payment = await _db.PosPayments.IgnoreQueryFilters()
+            .Include(p => p.Order)
+            .FirstOrDefaultAsync(p => p.Id == paymentId)
             ?? throw new InvalidOperationException($"Payment '{paymentId}' not found.");
 
         if (payment.Status != PosPaymentStatus.Succeeded)
@@ -169,37 +172,38 @@ public class PosPaymentService : IPosPaymentService
             var refundAmountInCents = (long)(refundAmount * 100);
             var refundId = await _stripe.CreateRefundAsync(
                 payment.StripePaymentIntentId, refundAmountInCents, reason);
-
-            await _paymentRepo.UpdateAsync(paymentId, p =>
-            {
-                p.StripeRefundId = refundId;
-                p.RefundAmount = refundAmount;
-                p.RefundReason = reason;
-                p.Status = refundAmount >= payment.Amount
-                    ? PosPaymentStatus.Refunded
-                    : PosPaymentStatus.PartiallyRefunded;
-            });
+            payment.StripeRefundId = refundId;
         }
-        else
+
+        payment.RefundAmount = refundAmount;
+        payment.RefundReason = reason;
+        payment.Status = refundAmount >= payment.Amount
+            ? PosPaymentStatus.Refunded
+            : PosPaymentStatus.PartiallyRefunded;
+
+        if (refundAmount >= payment.Amount && payment.Order != null)
         {
-            // Cash refund — just update the record
-            await _paymentRepo.UpdateAsync(paymentId, p =>
-            {
-                p.RefundAmount = refundAmount;
-                p.RefundReason = reason;
-                p.Status = refundAmount >= payment.Amount
-                    ? PosPaymentStatus.Refunded
-                    : PosPaymentStatus.PartiallyRefunded;
-            });
+            payment.Order.Status = OrderStatus.Cancelled;
+            payment.Order.CancelledAt = DateTime.UtcNow;
+            payment.Order.CancellationReason = reason ?? "Refunded";
+            payment.Order.UpdatedAt = DateTime.UtcNow;
         }
 
-        // Cancel the order if full refund
-        if (refundAmount >= payment.Amount)
-            await _orderService.CancelOrderAsync(payment.OrderId, reason ?? "Refunded");
-
-        return (await _paymentRepo.GetByIdAsync(paymentId))!;
+        await _db.SaveChangesAsync();
+        return payment;
     }
 
-    public Task<PosPayment?> GetByOrderIdAsync(Guid orderId) => _paymentRepo.GetByOrderIdAsync(orderId);
-    public Task<PosPayment?> GetByIdAsync(Guid paymentId) => _paymentRepo.GetByIdAsync(paymentId);
+    public async Task<PosPayment?> GetByOrderIdAsync(Guid orderId)
+    {
+        return await _db.PosPayments.IgnoreQueryFilters()
+            .Include(p => p.Order)
+            .FirstOrDefaultAsync(p => p.OrderId == orderId);
+    }
+
+    public async Task<PosPayment?> GetByIdAsync(Guid paymentId)
+    {
+        return await _db.PosPayments.IgnoreQueryFilters()
+            .Include(p => p.Order)
+            .FirstOrDefaultAsync(p => p.Id == paymentId);
+    }
 }

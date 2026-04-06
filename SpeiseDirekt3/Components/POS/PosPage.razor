@@ -7,8 +7,9 @@
 @layout PosLayout
 @inject ApplicationDbContext Context
 @inject IOrderService OrderService
-@inject IPermissionService PermissionService
+@inject IImageUploadService ImageUploadService
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
 
@@ -38,24 +39,25 @@
                 <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                @if (cartItemCount > 0)
+                @if (cart.TotalQuantity > 0)
                 {
-                    <span class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full text-xs font-bold text-white flex items-center justify-center">@cartItemCount</span>
+                    <span class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full text-xs font-bold text-white flex items-center justify-center">@cart.TotalQuantity</span>
                 }
             </button>
         </div>
 
         <!-- Category Tabs -->
         <div class="flex gap-2 px-4 sm:px-6 py-3 overflow-x-auto bg-gray-800/30 border-b border-gray-700/30 scrollbar-hide">
-            <button class="px-5 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all active:scale-95 @(selectedCategory == null ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30" : "bg-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-700")"
-                    @onclick="() => selectedCategory = null">
+            <button class="px-5 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all active:scale-95 @(selectedCategoryId == null ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30" : "bg-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-700")"
+                    @onclick="() => selectedCategoryId = null">
                 All Items
             </button>
             @foreach (var cat in categories)
             {
-                var isActive = selectedCategory?.Id == cat.Id;
+                var catId = cat.Id;
+                var isActive = selectedCategoryId == catId;
                 <button class="px-5 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all active:scale-95 @(isActive ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30" : "bg-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-700")"
-                        @onclick="() => selectedCategory = cat">
+                        @onclick="() => selectedCategoryId = catId">
                     @cat.Name
                 </button>
             }
@@ -66,30 +68,40 @@
             <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 @foreach (var item in filteredItems)
                 {
-                    var qty = GetCartQuantity(item.Id);
-                    <button class="group relative bg-gray-800 hover:bg-gray-750 rounded-2xl p-4 sm:p-5 text-left transition-all active:scale-[0.97] border border-gray-700/50 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5"
-                            @onclick="() => AddItemToCart(item)">
+                    var qty = cart.GetQuantity(item.Id);
+                    var imgUrl = ImageUploadService.GetImageUrl(item.ImagePath);
+                    var hasImage = !string.IsNullOrEmpty(item.ImagePath);
+                    <button class="group relative bg-gray-800 hover:bg-gray-750 rounded-2xl overflow-hidden text-left transition-all active:scale-[0.97] border border-gray-700/50 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5"
+                            @onclick="() => HandleItemTap(item)">
                         @if (qty > 0)
                         {
-                            <div class="absolute -top-2 -right-2 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-amber-500/40 z-10">
+                            <div class="absolute top-2 right-2 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-amber-500/40 z-10">
                                 @qty
                             </div>
                         }
-                        <p class="font-semibold text-white text-sm sm:text-base leading-tight mb-2 line-clamp-2">@item.Name</p>
-                        @if (!string.IsNullOrEmpty(item.Description))
+                        @if (hasImage)
                         {
-                            <p class="text-xs text-gray-500 line-clamp-2 mb-3">@item.Description</p>
-                        }
-                        <p class="text-amber-400 font-bold text-lg">@item.Price.ToString("C")</p>
-                        @if (HasCombo(item.Id))
-                        {
-                            <div class="mt-2 flex items-center gap-1">
-                                <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                                <span class="text-[11px] text-orange-400 font-medium">Combo available</span>
+                            <div class="w-full aspect-[4/3] bg-gray-700">
+                                <img src="@imgUrl" alt="@item.Name" class="w-full h-full object-cover" loading="lazy" />
                             </div>
                         }
+                        <div class="p-4">
+                            <p class="font-semibold text-white text-sm sm:text-base leading-tight mb-1 line-clamp-2">@item.Name</p>
+                            @if (!hasImage && !string.IsNullOrEmpty(item.Description))
+                            {
+                                <p class="text-xs text-gray-500 line-clamp-2 mb-2">@item.Description</p>
+                            }
+                            <p class="text-amber-400 font-bold text-lg">@item.Price.ToString("C")</p>
+                            @if (HasCombo(item.Id))
+                            {
+                                <div class="mt-1.5 flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                    </svg>
+                                    <span class="text-[11px] text-orange-400 font-medium">Combo available</span>
+                                </div>
+                            }
+                        </div>
                     </button>
                 }
             </div>
@@ -100,7 +112,10 @@
     <div class="@(showMobileCart ? "fixed inset-0 z-40 lg:relative lg:inset-auto" : "hidden lg:flex") lg:flex lg:w-[400px] lg:flex-col bg-gray-800 border-l border-gray-700/50">
 
         <!-- Mobile backdrop -->
-        <div class="lg:hidden fixed inset-0 bg-black/60" @onclick="() => showMobileCart = false"></div>
+        @if (showMobileCart)
+        {
+            <div class="lg:hidden fixed inset-0 bg-black/60" @onclick="() => showMobileCart = false"></div>
+        }
 
         <!-- Cart panel -->
         <div class="relative z-10 flex flex-col h-full bg-gray-800 @(showMobileCart ? "ml-auto w-[85vw] max-w-[400px]" : "")">
@@ -109,44 +124,45 @@
             <div class="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
                 <div>
                     <h2 class="text-lg font-bold text-white">Your Order</h2>
-                    <p class="text-xs text-gray-500">@cartItemCount items</p>
+                    <p class="text-xs text-gray-500">@cart.TotalQuantity items</p>
                 </div>
-                @if (cartItemCount > 0)
-                {
-                    <button class="text-xs text-red-400 hover:text-red-300 font-medium transition-colors"
-                            @onclick="ClearCart">Clear All</button>
-                }
-                <button class="lg:hidden w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-xl flex items-center justify-center transition-colors"
-                        @onclick="() => showMobileCart = false">
-                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                <div class="flex items-center gap-2">
+                    @if (cart.Items.Any())
+                    {
+                        <button class="text-xs text-red-400 hover:text-red-300 font-medium transition-colors"
+                                @onclick="ClearCart">Clear All</button>
+                    }
+                    <button class="lg:hidden w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-xl flex items-center justify-center transition-colors"
+                            @onclick="() => showMobileCart = false">
+                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             <!-- Cart Items -->
             <div class="flex-1 overflow-y-auto">
-                @if (currentOrder?.Items.Any() == true)
+                @if (cart.Items.Any())
                 {
                     <div class="divide-y divide-gray-700/40">
-                        @foreach (var item in currentOrder.Items)
+                        @foreach (var item in cart.Items)
                         {
+                            var cartItem = item;
                             <button class="w-full px-6 py-4 flex items-center gap-3 hover:bg-gray-700/30 transition-colors text-left"
-                                    @onclick="() => OpenItemDetail(item)">
+                                    @onclick="() => OpenItemDetail(cartItem)">
                                 <div class="w-9 h-9 bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                                    <span class="text-sm font-bold text-white">@item.Quantity</span>
+                                    <span class="text-sm font-bold text-white">@cartItem.Quantity</span>
                                 </div>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-white truncate">
-                                        @item.ItemName
-                                    </p>
-                                    @if (item.IsComboItem)
+                                    <p class="text-sm font-medium text-white truncate">@cartItem.Name</p>
+                                    @if (cartItem.ComboId.HasValue)
                                     {
                                         <span class="text-[10px] text-amber-400 font-medium">COMBO</span>
                                     }
-                                    <p class="text-xs text-gray-500">@item.UnitPrice.ToString("C") each</p>
+                                    <p class="text-xs text-gray-500">@cartItem.UnitPrice.ToString("C") each</p>
                                 </div>
-                                <span class="text-sm font-semibold text-white">@item.LineTotal.ToString("C")</span>
+                                <span class="text-sm font-semibold text-white">@cartItem.LineTotal.ToString("C")</span>
                             </button>
                         }
                     </div>
@@ -165,68 +181,29 @@
                 }
             </div>
 
-            <!-- Discount Code -->
-            @if (currentOrder?.Items.Any() == true)
-            {
-                <div class="px-6 py-3 border-t border-gray-700/50">
-                    @if (currentOrder.DiscountId.HasValue)
-                    {
-                        <div class="flex items-center justify-between bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-2.5">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                </svg>
-                                <span class="text-sm text-green-400 font-medium">Discount applied</span>
-                            </div>
-                            <button class="text-xs text-red-400 hover:text-red-300" @onclick="RemoveDiscount">Remove</button>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="flex gap-2">
-                            <input type="text" @bind="discountCode" placeholder="Voucher code"
-                                   class="flex-1 px-4 py-2.5 bg-gray-700/50 border border-gray-600 text-white text-sm rounded-xl focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none placeholder-gray-500" />
-                            <button class="px-4 py-2.5 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-xl transition-colors"
-                                    @onclick="ApplyDiscount">Apply</button>
-                        </div>
-                        @if (!string.IsNullOrEmpty(discountError))
-                        {
-                            <p class="text-xs text-red-400 mt-1.5">@discountError</p>
-                        }
-                    }
-                </div>
-            }
-
             <!-- Totals + Checkout -->
-            @if (currentOrder?.Items.Any() == true)
+            @if (cart.Items.Any())
             {
                 <div class="border-t border-gray-700/50 bg-gray-800">
                     <div class="px-6 py-4 space-y-1.5">
                         <div class="flex justify-between text-sm text-gray-500">
                             <span>Subtotal</span>
-                            <span>@currentOrder.SubTotal.ToString("C")</span>
+                            <span>@cart.SubTotal.ToString("C")</span>
                         </div>
                         <div class="flex justify-between text-sm text-gray-500">
-                            <span>Tax</span>
-                            <span>@currentOrder.TaxAmount.ToString("C")</span>
+                            <span>Tax (@((defaultTaxRate * 100).ToString("0.##"))%)</span>
+                            <span>@cart.TaxAmount.ToString("C")</span>
                         </div>
-                        @if (currentOrder.DiscountAmount > 0)
-                        {
-                            <div class="flex justify-between text-sm text-green-400">
-                                <span>Discount</span>
-                                <span>-@currentOrder.DiscountAmount.ToString("C")</span>
-                            </div>
-                        }
                         <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-gray-700">
                             <span>Total</span>
-                            <span>@currentOrder.GrandTotal.ToString("C")</span>
+                            <span>@cart.GrandTotal.ToString("C")</span>
                         </div>
                     </div>
 
                     <div class="px-6 pb-6">
                         <button class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white text-lg font-bold rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-green-500/30"
                                 @onclick="OpenCheckout">
-                            Checkout · @currentOrder.GrandTotal.ToString("C")
+                            Checkout · @cart.GrandTotal.ToString("C")
                         </button>
                     </div>
                 </div>
@@ -237,77 +214,79 @@
 
 <!-- Modals -->
 <PosComboOfferModal @ref="comboModal" Combo="pendingCombo" TriggerItem="pendingTriggerItem" OnResult="HandleComboResult" />
-<PosItemDetailModal @ref="itemDetailModal" Item="selectedCartItem" OnQuantityChanged="HandleQuantityChanged" OnRemove="HandleItemRemove" />
-<PosCheckoutModal @ref="checkoutModal" Order="currentOrder" OnPaymentComplete="HandlePaymentComplete" OnCancel="HandleCheckoutCancel" />
-<PosReceiptModal @ref="receiptModal" Order="completedOrder" Payment="completedPayment" OnNewOrder="StartNewOrder" />
+<PosItemDetailModal @ref="itemDetailModal" Item="selectedCartItemProxy" OnQuantityChanged="HandleQuantityChanged" OnRemove="HandleItemRemove" />
+<PosCheckoutModal @ref="checkoutModal" Order="checkoutOrder" OnPaymentComplete="HandlePaymentComplete" OnCancel="HandleCheckoutCancel" />
+<PosReceiptModal @ref="receiptModal" Order="checkoutOrder" Payment="completedPayment" OnNewOrder="StartNewOrder" />
 
 @code {
     [Parameter] public Guid MenuId { get; set; }
 
+    // Data loaded once from DB (read-only)
     private Menu? menu;
     private List<Category> categories = new();
     private List<MenuItem> allMenuItems = new();
     private List<MenuCombo> allCombos = new();
-    private Category? selectedCategory;
-    private Order? currentOrder;
-    private Order? completedOrder;
-    private PosPayment? completedPayment;
-    private string discountCode = "";
-    private string? discountError;
-    private bool showMobileCart;
-    private OrderItem? selectedCartItem;
+    private decimal defaultTaxRate;
+    private Guid menuOwnerId;
 
-    // Modal refs
+    // Client-side cart (no DbContext dependency)
+    private PosCart cart = new();
+    private Guid? selectedCategoryId;
+    private bool showMobileCart;
+
+    // Modal state
     private PosComboOfferModal comboModal = default!;
     private PosItemDetailModal itemDetailModal = default!;
     private PosCheckoutModal checkoutModal = default!;
     private PosReceiptModal receiptModal = default!;
     private MenuCombo? pendingCombo;
     private MenuItem? pendingTriggerItem;
+    private OrderItem? selectedCartItemProxy;
+    private Order? checkoutOrder;
+    private PosPayment? completedPayment;
 
     private IEnumerable<MenuItem> filteredItems =>
-        selectedCategory == null ? allMenuItems : allMenuItems.Where(i => i.CategoryId == selectedCategory.Id);
-
-    private int cartItemCount => currentOrder?.Items.Sum(i => i.Quantity) ?? 0;
+        selectedCategoryId == null ? allMenuItems : allMenuItems.Where(i => i.CategoryId == selectedCategoryId);
 
     protected override async Task OnInitializedAsync()
     {
+        // Load menu data (read-only, bypasses tenant filter for anonymous access)
         menu = await Context.Menus.IgnoreQueryFilters().FirstOrDefaultAsync(m => m.Id == MenuId);
+        if (menu == null) return;
+
+        menuOwnerId = menu.ApplicationUserId;
+
         categories = await Context.Categories.IgnoreQueryFilters()
             .Where(c => c.MenuId == MenuId).OrderBy(c => c.Name).ToListAsync();
+
         allMenuItems = await Context.MenuItems.IgnoreQueryFilters()
+            .Include(mi => mi.TaxRate)
             .Where(mi => Context.Categories.IgnoreQueryFilters().Any(c => c.MenuId == MenuId && c.Id == mi.CategoryId))
             .OrderBy(mi => mi.Name).ToListAsync();
+
         allCombos = await Context.MenuCombos.IgnoreQueryFilters()
             .Include(c => c.Items).ThenInclude(i => i.MenuItem)
             .Where(c => c.MenuId == MenuId).ToListAsync();
 
-        await StartNewOrder();
+        // Get default tax rate for this tenant
+        var defaultTax = await Context.TaxRates.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.ApplicationUserId == menuOwnerId && t.IsDefault);
+        defaultTaxRate = defaultTax?.Rate ?? 0m;
     }
 
-    private async Task StartNewOrder()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        completedOrder = null;
-        completedPayment = null;
-        discountCode = "";
-        discountError = null;
-        showMobileCart = false;
-        currentOrder = await OrderService.CreateOrderAsync(MenuId, new List<CreateOrderItemDto>());
+        if (firstRender)
+        {
+            // Restore cart from session storage
+            await RestoreCartFromSession();
+        }
     }
 
-    private bool HasCombo(Guid menuItemId) => allCombos.Any(c => c.TriggerMenuItemId == menuItemId);
+    // ════════════════ CART OPERATIONS (client-side only) ════════════════
 
-    private int GetCartQuantity(Guid menuItemId)
+    private void HandleItemTap(MenuItem item)
     {
-        if (currentOrder?.Items == null) return 0;
-        return currentOrder.Items.Where(i => i.MenuItemId == menuItemId && !i.IsComboItem).Sum(i => i.Quantity);
-    }
-
-    private async Task AddItemToCart(MenuItem item)
-    {
-        if (currentOrder == null) return;
-
-        // Check for combo
         var combo = allCombos.FirstOrDefault(c => c.TriggerMenuItemId == item.Id);
         if (combo != null)
         {
@@ -317,114 +296,247 @@
             return;
         }
 
-        // Check if item already in cart (non-combo) — increment quantity
-        var existingItem = currentOrder.Items.FirstOrDefault(i => i.MenuItemId == item.Id && !i.IsComboItem);
-        if (existingItem != null)
-        {
-            currentOrder = await OrderService.UpdateItemQuantityAsync(
-                currentOrder.Id, existingItem.Id, existingItem.Quantity + 1);
-        }
-        else
-        {
-            currentOrder = await OrderService.AddItemAsync(currentOrder.Id,
-                new CreateOrderItemDto { MenuItemId = item.Id, Quantity = 1 });
-        }
+        AddToCart(item, null);
     }
 
-    private async Task HandleComboResult(bool acceptCombo)
+    private void HandleComboResult(bool acceptCombo)
     {
-        if (currentOrder == null || pendingTriggerItem == null) return;
+        if (pendingTriggerItem == null) return;
 
         if (acceptCombo && pendingCombo != null)
         {
-            // Add trigger item with combo price
-            currentOrder = await OrderService.AddItemAsync(currentOrder.Id,
-                new CreateOrderItemDto { MenuItemId = pendingTriggerItem.Id, Quantity = 1, MenuComboId = pendingCombo.Id });
-            // Add included items
+            // Add trigger at combo price
+            var triggerTaxRate = ResolveTaxRate(pendingTriggerItem);
+            cart.AddItem(pendingTriggerItem.Id, pendingTriggerItem.Name, pendingCombo.ComboPrice,
+                triggerTaxRate, pendingCombo.Id, isComboTrigger: true);
+
+            // Add included items at 0 price
             foreach (var comboItem in pendingCombo.Items)
             {
-                currentOrder = await OrderService.AddItemAsync(currentOrder.Id,
-                    new CreateOrderItemDto { MenuItemId = comboItem.MenuItemId, Quantity = 1, MenuComboId = pendingCombo.Id });
+                var mi = allMenuItems.FirstOrDefault(m => m.Id == comboItem.MenuItemId);
+                if (mi != null)
+                {
+                    var itemTax = ResolveTaxRate(mi);
+                    cart.AddItem(mi.Id, mi.Name, 0, itemTax, pendingCombo.Id, isComboTrigger: false);
+                }
             }
         }
         else
         {
-            // Add item only — check for existing
-            var existingItem = currentOrder.Items.FirstOrDefault(i => i.MenuItemId == pendingTriggerItem.Id && !i.IsComboItem);
-            if (existingItem != null)
-            {
-                currentOrder = await OrderService.UpdateItemQuantityAsync(
-                    currentOrder.Id, existingItem.Id, existingItem.Quantity + 1);
-            }
-            else
-            {
-                currentOrder = await OrderService.AddItemAsync(currentOrder.Id,
-                    new CreateOrderItemDto { MenuItemId = pendingTriggerItem.Id, Quantity = 1 });
-            }
+            AddToCart(pendingTriggerItem, null);
         }
 
         pendingCombo = null;
         pendingTriggerItem = null;
+        _ = SaveCartToSession();
     }
 
-    private void OpenItemDetail(OrderItem item)
+    private void AddToCart(MenuItem item, Guid? comboId)
     {
-        selectedCartItem = item;
+        var taxRate = ResolveTaxRate(item);
+        cart.IncrementOrAdd(item.Id, item.Name, item.Price, taxRate);
+        _ = SaveCartToSession();
+    }
+
+    private decimal ResolveTaxRate(MenuItem item)
+    {
+        return item.TaxRate?.Rate ?? defaultTaxRate;
+    }
+
+    private void OpenItemDetail(PosCartItem cartItem)
+    {
+        // Create a proxy OrderItem for the detail modal
+        selectedCartItemProxy = new OrderItem
+        {
+            Id = Guid.NewGuid(), // Temporary ID for the modal
+            ItemName = cartItem.Name,
+            UnitPrice = cartItem.UnitPrice,
+            Quantity = cartItem.Quantity,
+            IsComboItem = cartItem.ComboId.HasValue,
+            LineTotal = cartItem.LineTotal
+        };
+        // Store reference to the actual cart item index
+        _editingCartIndex = cart.Items.IndexOf(cartItem);
         itemDetailModal.Show();
     }
 
-    private async Task HandleQuantityChanged((Guid ItemId, int Quantity) result)
-    {
-        if (currentOrder == null) return;
-        currentOrder = await OrderService.UpdateItemQuantityAsync(currentOrder.Id, result.ItemId, result.Quantity);
-    }
+    private int _editingCartIndex = -1;
 
-    private async Task HandleItemRemove(Guid itemId)
+    private void HandleQuantityChanged((Guid ItemId, int Quantity) result)
     {
-        if (currentOrder == null) return;
-        currentOrder = await OrderService.RemoveItemAsync(currentOrder.Id, itemId);
-    }
-
-    private async Task ApplyDiscount()
-    {
-        if (currentOrder == null || string.IsNullOrWhiteSpace(discountCode)) return;
-        discountError = null;
-        try
+        if (_editingCartIndex >= 0 && _editingCartIndex < cart.Items.Count)
         {
-            currentOrder = await OrderService.ApplyDiscountAsync(currentOrder.Id, discountCode.Trim());
-            discountCode = "";
-        }
-        catch (InvalidOperationException ex)
-        {
-            discountError = ex.Message;
+            cart.Items[_editingCartIndex].Quantity = result.Quantity;
+            cart.Recalculate();
+            _ = SaveCartToSession();
         }
     }
 
-    private async Task RemoveDiscount()
+    private void HandleItemRemove(Guid itemId)
     {
-        if (currentOrder == null) return;
-        currentOrder = await OrderService.RemoveDiscountAsync(currentOrder.Id);
+        if (_editingCartIndex >= 0 && _editingCartIndex < cart.Items.Count)
+        {
+            cart.Items.RemoveAt(_editingCartIndex);
+            cart.Recalculate();
+            _ = SaveCartToSession();
+        }
     }
 
-    private async Task ClearCart()
+    private void ClearCart()
     {
-        if (currentOrder != null)
-            await OrderService.CancelOrderAsync(currentOrder.Id, "Cleared");
-        await StartNewOrder();
+        cart = new PosCart();
+        _ = SaveCartToSession();
     }
 
-    private void OpenCheckout()
+    private bool HasCombo(Guid menuItemId) => allCombos.Any(c => c.TriggerMenuItemId == menuItemId);
+
+    // ════════════════ CHECKOUT (creates server-side order) ════════════════
+
+    private async Task OpenCheckout()
     {
         showMobileCart = false;
+
+        // Create the real Order on the server at checkout time
+        var items = cart.Items.Select(ci => new CreateOrderItemDto
+        {
+            MenuItemId = ci.MenuItemId,
+            Quantity = ci.Quantity,
+            MenuComboId = ci.ComboId
+        }).ToList();
+
+        checkoutOrder = await OrderService.CreatePosOrderAsync(MenuId, menuOwnerId, items);
         checkoutModal.Show();
     }
 
     private async Task HandlePaymentComplete(PosPayment payment)
     {
-        completedOrder = currentOrder;
         completedPayment = payment;
         receiptModal.Show();
     }
 
-    private void HandleCheckoutCancel() { }
+    private void HandleCheckoutCancel()
+    {
+        // Order created but payment cancelled — cancel the server order
+        if (checkoutOrder != null)
+        {
+            _ = OrderService.CancelOrderAsync(checkoutOrder.Id, "Payment cancelled");
+            checkoutOrder = null;
+        }
+    }
+
+    private async Task StartNewOrder()
+    {
+        cart = new PosCart();
+        checkoutOrder = null;
+        completedPayment = null;
+        await SaveCartToSession();
+    }
+
+    // ════════════════ SESSION STORAGE ════════════════
+
+    private async Task SaveCartToSession()
+    {
+        try
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(cart);
+            await JS.InvokeVoidAsync("sessionStorage.setItem", $"pos_cart_{MenuId}", json);
+        }
+        catch { /* SSR or prerender — ignore */ }
+    }
+
+    private async Task RestoreCartFromSession()
+    {
+        try
+        {
+            var json = await JS.InvokeAsync<string?>("sessionStorage.getItem", $"pos_cart_{MenuId}");
+            if (!string.IsNullOrEmpty(json))
+            {
+                var restored = System.Text.Json.JsonSerializer.Deserialize<PosCart>(json);
+                if (restored != null)
+                {
+                    cart = restored;
+                    StateHasChanged();
+                }
+            }
+        }
+        catch { /* SSR or prerender — ignore */ }
+    }
+
+    // ════════════════ CLIENT-SIDE CART MODEL ════════════════
+
+    public class PosCart
+    {
+        public List<PosCartItem> Items { get; set; } = new();
+        public decimal SubTotal { get; set; }
+        public decimal TaxAmount { get; set; }
+        public decimal GrandTotal { get; set; }
+        public int TotalQuantity => Items.Sum(i => i.Quantity);
+
+        public int GetQuantity(Guid menuItemId)
+        {
+            return Items.Where(i => i.MenuItemId == menuItemId && !i.ComboId.HasValue).Sum(i => i.Quantity);
+        }
+
+        public void IncrementOrAdd(Guid menuItemId, string name, decimal price, decimal taxRate)
+        {
+            var existing = Items.FirstOrDefault(i => i.MenuItemId == menuItemId && !i.ComboId.HasValue);
+            if (existing != null)
+            {
+                existing.Quantity++;
+                existing.Recalculate();
+            }
+            else
+            {
+                Items.Add(new PosCartItem
+                {
+                    MenuItemId = menuItemId,
+                    Name = name,
+                    UnitPrice = price,
+                    TaxRate = taxRate,
+                    Quantity = 1
+                });
+            }
+            Recalculate();
+        }
+
+        public void AddItem(Guid menuItemId, string name, decimal price, decimal taxRate, Guid? comboId, bool isComboTrigger)
+        {
+            Items.Add(new PosCartItem
+            {
+                MenuItemId = menuItemId,
+                Name = name,
+                UnitPrice = price,
+                TaxRate = taxRate,
+                Quantity = 1,
+                ComboId = comboId
+            });
+            Recalculate();
+        }
+
+        public void Recalculate()
+        {
+            foreach (var item in Items) item.Recalculate();
+            SubTotal = Items.Sum(i => i.LineTotal);
+            TaxAmount = Items.Sum(i => i.TaxAmount);
+            GrandTotal = SubTotal + TaxAmount;
+        }
+    }
+
+    public class PosCartItem
+    {
+        public Guid MenuItemId { get; set; }
+        public string Name { get; set; } = "";
+        public decimal UnitPrice { get; set; }
+        public decimal TaxRate { get; set; }
+        public int Quantity { get; set; } = 1;
+        public Guid? ComboId { get; set; }
+        public decimal LineTotal { get; set; }
+        public decimal TaxAmount { get; set; }
+
+        public void Recalculate()
+        {
+            LineTotal = Math.Round(UnitPrice * Quantity, 2, MidpointRounding.AwayFromZero);
+            TaxAmount = Math.Round(LineTotal * TaxRate, 2, MidpointRounding.AwayFromZero);
+        }
+    }
 }

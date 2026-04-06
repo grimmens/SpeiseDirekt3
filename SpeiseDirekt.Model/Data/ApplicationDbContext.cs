@@ -254,9 +254,11 @@ namespace SpeiseDirekt.Data
                             break;
                     }
                 }
-                else
+                else if (entity.ApplicationUserId == Guid.Empty)
                 {
-                    // If we don't have a valid user ID, this is a problem
+                    // Only throw if the entity doesn't already have a valid ApplicationUserId.
+                    // POS entities may be created with an explicit ApplicationUserId (e.g. from the menu owner)
+                    // when the customer is anonymous.
                     throw new InvalidOperationException("Cannot save entity: User is not authenticated or user ID is invalid.");
                 }
             }

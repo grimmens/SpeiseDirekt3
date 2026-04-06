@@ -215,9 +215,96 @@ public class OrderService : IOrderService
         order.GrandTotal = order.SubTotal + order.TaxAmount - order.DiscountAmount;
     }
 
+    public async Task<Order> CreatePosOrderAsync(Guid menuId, Guid menuOwnerId, List<CreateOrderItemDto> items, string? notes = null)
+    {
+        // Get default tax rate for this tenant (bypassing query filters)
+        var defaultTax = await _db.TaxRates.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(t => t.ApplicationUserId == menuOwnerId && t.IsDefault);
+        var defaultRate = defaultTax?.Rate ?? 0m;
+
+        // Generate order number (bypassing query filters)
+        var lastOrderNumber = await _db.Orders.IgnoreQueryFilters()
+            .Where(o => o.ApplicationUserId == menuOwnerId)
+            .OrderByDescending(o => o.OrderNumber)
+            .Select(o => o.OrderNumber)
+            .FirstOrDefaultAsync();
+
+        string orderNumber;
+        if (lastOrderNumber != null && lastOrderNumber.StartsWith("ORD-")
+            && int.TryParse(lastOrderNumber[4..], out var lastNum))
+            orderNumber = $"ORD-{lastNum + 1:D6}";
+        else
+            orderNumber = "ORD-000001";
+
+        var order = new Order
+        {
+            OrderNumber = orderNumber,
+            MenuId = menuId,
+            Status = OrderStatus.Draft,
+            Notes = notes,
+            ApplicationUserId = menuOwnerId // Assign to menu owner
+        };
+
+        foreach (var dto in items)
+        {
+            var orderItem = await BuildPosOrderItemAsync(dto, defaultRate, menuOwnerId);
+            orderItem.ApplicationUserId = menuOwnerId;
+            order.Items.Add(orderItem);
+        }
+
+        RecalculateTotals(order);
+        _db.Orders.Add(order);
+        await _db.SaveChangesAsync();
+        return order;
+    }
+
     public Task<List<Order>> GetActiveOrdersAsync() => _orderRepo.GetActiveOrdersAsync();
     public Task<List<Order>> GetOrderHistoryAsync(int page = 1, int pageSize = 20) => _orderRepo.GetAllAsync(page, pageSize);
     public Task<Order?> GetByIdAsync(Guid id) => _orderRepo.GetByIdAsync(id);
+
+    private async Task<OrderItem> BuildPosOrderItemAsync(CreateOrderItemDto dto, decimal defaultTaxRate, Guid ownerId)
+    {
+        var menuItem = await _db.MenuItems.IgnoreQueryFilters()
+            .Include(mi => mi.TaxRate)
+            .FirstOrDefaultAsync(mi => mi.Id == dto.MenuItemId)
+            ?? throw new InvalidOperationException($"MenuItem '{dto.MenuItemId}' not found.");
+
+        var taxRate = menuItem.TaxRate?.Rate ?? defaultTaxRate;
+        var unitPrice = menuItem.Price;
+        var isComboItem = false;
+
+        if (dto.MenuComboId.HasValue)
+        {
+            var combo = await _db.MenuCombos.IgnoreQueryFilters()
+                .Include(c => c.Items)
+                .FirstOrDefaultAsync(c => c.Id == dto.MenuComboId.Value);
+
+            if (combo != null)
+            {
+                if (menuItem.Id == combo.TriggerMenuItemId)
+                    unitPrice = combo.ComboPrice;
+                else
+                    unitPrice = 0;
+                isComboItem = true;
+            }
+        }
+
+        var lineTotal = Math.Round(unitPrice * dto.Quantity, 2, MidpointRounding.AwayFromZero);
+        var taxAmount = Math.Round(lineTotal * taxRate, 2, MidpointRounding.AwayFromZero);
+
+        return new OrderItem
+        {
+            MenuItemId = dto.MenuItemId,
+            MenuComboId = dto.MenuComboId,
+            Quantity = dto.Quantity,
+            UnitPrice = unitPrice,
+            ItemName = menuItem.Name,
+            TaxRate = taxRate,
+            TaxAmount = taxAmount,
+            LineTotal = lineTotal,
+            IsComboItem = isComboItem
+        };
+    }
 
     private async Task<OrderItem> BuildOrderItemAsync(CreateOrderItemDto dto, decimal defaultTaxRate)
     {
