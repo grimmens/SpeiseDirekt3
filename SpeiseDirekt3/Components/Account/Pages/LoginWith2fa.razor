@@ -9,40 +9,72 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWith2fa> Logger
 
-<PageTitle>Two-factor authentication</PageTitle>
+<PageTitle>Two-factor authentication - Speise-Direkt</PageTitle>
 
-<h1>Two-factor authentication</h1>
-<hr />
-<StatusMessage Message="@message" />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <input type="hidden" name="RememberMe" value="@RememberMe" />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
-                <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
+<!-- 2FA Login Page -->
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Header -->
+        <div class="text-center">
+            <div class="flex justify-center mb-6">
+                <img src="/image/speise-direkt.png" alt="Speise-Direkt Logo" class="h-16 w-16 rounded-full shadow-lg" />
             </div>
-            <div class="checkbox mb-3">
-                <label for="remember-machine" class="form-label">
-                    <InputCheckbox @bind-Value="Input.RememberMachine" />
-                    Remember this machine
-                </label>
-            </div>
-            <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-            </div>
-        </EditForm>
+            <h2 class="text-3xl font-bold text-gray-900 font-display">Two-factor authentication</h2>
+            <p class="mt-2 text-gray-600">Your login is protected with an authenticator app. Enter your authenticator code below.</p>
+        </div>
+
+        <!-- 2FA Form -->
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <StatusMessage Message="@message" />
+            <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post" class="space-y-6">
+                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+                <input type="hidden" name="RememberMe" value="@RememberMe" />
+                <DataAnnotationsValidator />
+                <ValidationSummary class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert" />
+
+                <!-- Authenticator Code Field -->
+                <div>
+                    <label for="Input.TwoFactorCode" class="block text-sm font-medium text-gray-700 mb-2">Authenticator code</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode"
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                   autocomplete="off" aria-required="true" placeholder="Enter your 6-digit code" />
+                    </div>
+                    <ValidationMessage For="() => Input.TwoFactorCode" class="mt-1 text-sm text-red-600" />
+                </div>
+
+                <!-- Remember Machine -->
+                <div class="flex items-center">
+                    <InputCheckbox @bind-Value="Input.RememberMachine" id="Input.RememberMachine"
+                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                    <label for="Input.RememberMachine" class="ml-2 block text-sm text-gray-700">
+                        Remember this machine
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <div>
+                    <button type="submit"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        Log in
+                    </button>
+                </div>
+
+                <!-- Recovery Code Link -->
+                <div class="text-center">
+                    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl" class="text-sm text-blue-600 hover:text-blue-500 hover:underline">
+                        Don't have access to your authenticator device? Use a recovery code
+                    </a>
+                </div>
+            </EditForm>
+        </div>
     </div>
 </div>
-<p>
-    Don't have access to your authenticator device? You can
-    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">log in with a recovery code</a>.
-</p>
 
 @code {
     private string? message;
