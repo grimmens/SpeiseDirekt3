@@ -30,6 +30,35 @@ namespace SpeiseDirekt.Data
             builder.Entity<TimeTableEntry>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<CalendarEntry>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
 
+            // Allergen: many-to-many with MenuItem via join table
+            builder.Entity<MenuItem>()
+                .HasMany(mi => mi.Allergens)
+                .WithMany(a => a.MenuItems)
+                .UsingEntity("MenuItemAllergen");
+
+            builder.Entity<Allergen>(entity =>
+            {
+                entity.HasIndex(e => e.Code).IsUnique();
+            });
+
+            // Seed the 14 EU allergens
+            builder.Entity<Allergen>().HasData(
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000001"), Code = "A", Name = "Gluten" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000002"), Code = "B", Name = "Crustaceans" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000003"), Code = "C", Name = "Eggs" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000004"), Code = "D", Name = "Fish" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000005"), Code = "E", Name = "Peanuts" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000006"), Code = "F", Name = "Soybeans" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000007"), Code = "G", Name = "Milk" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000008"), Code = "H", Name = "Nuts" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-000000000009"), Code = "I", Name = "Celery" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000a"), Code = "J", Name = "Mustard" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000b"), Code = "K", Name = "Sesame" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000c"), Code = "L", Name = "Sulphites" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000d"), Code = "M", Name = "Lupin" },
+                new Allergen { Id = Guid.Parse("a0000000-0000-0000-0000-00000000000e"), Code = "N", Name = "Molluscs" }
+            );
+
             builder.Entity<ApplicationUser>()
                    .HasOne(u => u.TenantSubscription)
                    .WithOne(ts => ts.Tenant)
@@ -84,6 +113,7 @@ namespace SpeiseDirekt.Data
 
             base.OnModelCreating(builder);
         }
+        public DbSet<Allergen> Allergens { get; set; }
         public DbSet<MenuItem> MenuItems { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Menu> Menus { get; set; }

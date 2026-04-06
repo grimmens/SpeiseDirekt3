@@ -12,6 +12,11 @@ public static class TestSeedData
     public static readonly Guid MenuItem1Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
     public static readonly Guid MenuItem2Id = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccd");
     public static readonly Guid MenuItem3Id = Guid.Parse("cccccccc-cccc-cccc-cccc-ccccccccccce");
+
+    // Allergen IDs (matching seeded data from DbContext)
+    public static readonly Guid AllergenGlutenId = Guid.Parse("a0000000-0000-0000-0000-000000000001");
+    public static readonly Guid AllergenMilkId = Guid.Parse("a0000000-0000-0000-0000-000000000007");
+    public static readonly Guid AllergenFishId = Guid.Parse("a0000000-0000-0000-0000-000000000004");
     public static readonly Guid QrCodeId = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
     public static readonly Guid TimeTableEntryId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
     public static readonly Guid CalendarEntryId = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
@@ -79,39 +84,46 @@ public static class TestSeedData
         };
         context.Categories.AddRange(category1, category2);
 
+        // Load seeded allergens
+        var glutenAllergen = context.Allergens.Find(AllergenGlutenId)!;
+        var milkAllergen = context.Allergens.Find(AllergenMilkId)!;
+        var fishAllergen = context.Allergens.Find(AllergenFishId)!;
+
         // MenuItems
-        context.MenuItems.AddRange(
-            new MenuItem
-            {
-                Id = MenuItem1Id,
-                Name = "Caesar Salad",
-                Description = "Fresh romaine lettuce with caesar dressing",
-                Allergens = "Dairy, Gluten",
-                Price = 8.50m,
-                CategoryId = Category1Id,
-                ApplicationUserId = appUserId
-            },
-            new MenuItem
-            {
-                Id = MenuItem2Id,
-                Name = "Tomato Soup",
-                Description = "Homemade tomato soup",
-                Allergens = "",
-                Price = 6.00m,
-                CategoryId = Category1Id,
-                ApplicationUserId = appUserId
-            },
-            new MenuItem
-            {
-                Id = MenuItem3Id,
-                Name = "Grilled Salmon",
-                Description = "Atlantic salmon with vegetables",
-                Allergens = "Fish",
-                Price = 22.00m,
-                CategoryId = Category2Id,
-                ApplicationUserId = appUserId
-            }
-        );
+        var menuItem1 = new MenuItem
+        {
+            Id = MenuItem1Id,
+            Name = "Caesar Salad",
+            Description = "Fresh romaine lettuce with caesar dressing",
+            Price = 8.50m,
+            CategoryId = Category1Id,
+            ApplicationUserId = appUserId
+        };
+        menuItem1.Allergens.Add(milkAllergen);
+        menuItem1.Allergens.Add(glutenAllergen);
+
+        var menuItem2 = new MenuItem
+        {
+            Id = MenuItem2Id,
+            Name = "Tomato Soup",
+            Description = "Homemade tomato soup",
+            Price = 6.00m,
+            CategoryId = Category1Id,
+            ApplicationUserId = appUserId
+        };
+
+        var menuItem3 = new MenuItem
+        {
+            Id = MenuItem3Id,
+            Name = "Grilled Salmon",
+            Description = "Atlantic salmon with vegetables",
+            Price = 22.00m,
+            CategoryId = Category2Id,
+            ApplicationUserId = appUserId
+        };
+        menuItem3.Allergens.Add(fishAllergen);
+
+        context.MenuItems.AddRange(menuItem1, menuItem2, menuItem3);
 
         // QRCode
         var qrCode = new QRCode

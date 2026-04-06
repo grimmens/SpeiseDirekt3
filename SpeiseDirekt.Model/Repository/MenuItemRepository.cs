@@ -15,7 +15,9 @@ public class MenuItemRepository : IMenuItemRepository
 
     public async Task<List<MenuItem>> GetAllAsync(Guid? categoryId = null)
     {
-        var query = _db.MenuItems.AsQueryable();
+        var query = _db.MenuItems
+            .Include(mi => mi.Allergens)
+            .AsQueryable();
 
         if (categoryId.HasValue)
             query = query.Where(mi => mi.CategoryId == categoryId.Value);
@@ -27,6 +29,7 @@ public class MenuItemRepository : IMenuItemRepository
     {
         return await _db.MenuItems
             .Include(mi => mi.Category)
+            .Include(mi => mi.Allergens)
             .FirstOrDefaultAsync(mi => mi.Id == id);
     }
 
@@ -39,7 +42,9 @@ public class MenuItemRepository : IMenuItemRepository
 
     public async Task<MenuItem?> UpdateAsync(Guid id, Action<MenuItem> updateAction)
     {
-        var menuItem = await _db.MenuItems.FindAsync(id);
+        var menuItem = await _db.MenuItems
+            .Include(mi => mi.Allergens)
+            .FirstOrDefaultAsync(mi => mi.Id == id);
         if (menuItem is null)
             return null;
 

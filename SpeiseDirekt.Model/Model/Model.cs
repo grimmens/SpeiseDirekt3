@@ -11,6 +11,16 @@ namespace SpeiseDirekt.Model
     {
         Guid ApplicationUserId { get; set; }
     }
+    public class Allergen
+    {
+        public Guid Id { get; set; }
+        [Required, StringLength(5)]
+        public string Code { get; set; } = string.Empty;
+        [Required, StringLength(100)]
+        public string Name { get; set; } = string.Empty;
+        public ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
+    }
+
     public class MenuItem : IAppUserEntity
     {
         public Guid Id { get; set; }
@@ -18,7 +28,7 @@ namespace SpeiseDirekt.Model
         public string Name { get; set; } = string.Empty;
         [Required]
         public string Description { get; set; } = string.Empty;
-        public string Allergens { get; set; } = string.Empty;
+        public ICollection<Allergen> Allergens { get; set; } = new List<Allergen>();
         [Precision(18,2)]
         public decimal Price { get; set; }
         [ForeignKey(nameof(Category))]

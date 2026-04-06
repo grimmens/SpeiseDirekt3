@@ -25,7 +25,7 @@ public class MenuItemsControllerTests : BaseIntegrationTest
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var items = await response.Content.ReadFromJsonAsync<List<MenuItem>>(JsonOptions);
+        var items = await response.Content.ReadFromJsonAsync<List<MenuItemResponse>>(JsonOptions);
         items.Should().HaveCount(3);
         items.Should().Contain(i => i.Name == "Caesar Salad");
         items.Should().Contain(i => i.Name == "Tomato Soup");
@@ -39,7 +39,7 @@ public class MenuItemsControllerTests : BaseIntegrationTest
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var items = await response.Content.ReadFromJsonAsync<List<MenuItem>>(JsonOptions);
+        var items = await response.Content.ReadFromJsonAsync<List<MenuItemResponse>>(JsonOptions);
         items.Should().HaveCount(2);
         items.Should().Contain(i => i.Name == "Caesar Salad");
         items.Should().Contain(i => i.Name == "Tomato Soup");
@@ -52,10 +52,13 @@ public class MenuItemsControllerTests : BaseIntegrationTest
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var item = await response.Content.ReadFromJsonAsync<MenuItem>(JsonOptions);
+        var item = await response.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions);
         item.Should().NotBeNull();
         item!.Name.Should().Be("Caesar Salad");
         item.Price.Should().Be(8.50m);
+        item.Allergens.Should().HaveCount(2);
+        item.Allergens.Should().Contain(a => a.Code == "A"); // Gluten
+        item.Allergens.Should().Contain(a => a.Code == "G"); // Milk
     }
 
     [Fact]
@@ -75,7 +78,7 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         {
             Name = "Fish and Chips",
             Description = "Classic British dish",
-            Allergens = "Fish, Gluten",
+            AllergenIds = new List<Guid> { TestSeedData.AllergenFishId, TestSeedData.AllergenGlutenId },
             Price = 14.50m,
             CategoryId = TestSeedData.Category1Id
         };
@@ -88,11 +91,14 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.Created);
         response.Headers.Location.Should().NotBeNull();
 
-        var created = await response.Content.ReadFromJsonAsync<MenuItem>(JsonOptions);
+        var created = await response.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions);
         created.Should().NotBeNull();
         created!.Name.Should().Be("Fish and Chips");
         created.Price.Should().Be(14.50m);
         created.CategoryId.Should().Be(TestSeedData.Category1Id);
+        created.Allergens.Should().HaveCount(2);
+        created.Allergens.Should().Contain(a => a.Code == "D"); // Fish
+        created.Allergens.Should().Contain(a => a.Code == "A"); // Gluten
     }
 
     [Fact]
@@ -102,7 +108,7 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         {
             Name = "Ghost Item",
             Description = "Should not be created",
-            Allergens = "",
+            AllergenIds = new List<Guid>(),
             Price = 10.00m,
             CategoryId = Guid.Parse("00000000-0000-0000-0000-000000000001")
         };
@@ -122,7 +128,7 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         {
             Name = "Updated Caesar Salad",
             Description = "Fresh romaine lettuce with caesar dressing",
-            Allergens = "Dairy, Gluten",
+            AllergenIds = new List<Guid> { TestSeedData.AllergenMilkId, TestSeedData.AllergenGlutenId },
             Price = 9.99m,
             CategoryId = TestSeedData.Category1Id
         };
@@ -134,7 +140,7 @@ public class MenuItemsControllerTests : BaseIntegrationTest
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var updated = await response.Content.ReadFromJsonAsync<MenuItem>(JsonOptions);
+        var updated = await response.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions);
         updated.Should().NotBeNull();
         updated!.Name.Should().Be("Updated Caesar Salad");
         updated.Price.Should().Be(9.99m);
@@ -148,7 +154,7 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         {
             Name = "Ghost Item",
             Description = "Does not exist",
-            Allergens = "",
+            AllergenIds = new List<Guid>(),
             Price = 10.00m,
             CategoryId = TestSeedData.Category1Id
         };
@@ -181,5 +187,23 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         var response = await Client.DeleteAsync($"/api/menuitems/{nonExistentId}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // Helper record for deserialization since MenuItem entity has navigation properties
+    private record MenuItemResponse
+    {
+        public Guid Id { get; init; }
+        public string Name { get; init; } = string.Empty;
+        public string Description { get; init; } = string.Empty;
+        public decimal Price { get; init; }
+        public Guid CategoryId { get; init; }
+        public List<AllergenResponse> Allergens { get; init; } = new();
+    }
+
+    private record AllergenResponse
+    {
+        public Guid Id { get; init; }
+        public string Code { get; init; } = string.Empty;
+        public string Name { get; init; } = string.Empty;
     }
 }

@@ -180,7 +180,7 @@
     </div>
 }
 
-<MenuItemEditor @ref="menuItemEditor" OnOk="HandleOk" OnCancel="HandleCancel" SelectedCategory="Category" Categories="Categories" />
+<MenuItemEditor @ref="menuItemEditor" OnOk="HandleOk" OnCancel="HandleCancel" SelectedCategory="Category" Categories="Categories" AvailableAllergens="availableAllergens" />
 
 
 @code {
@@ -207,6 +207,7 @@
     private Category category;
     private SemaphoreSlim semaphoreSlim = new(1);
     List<MenuItem> MenuItems = new();
+    List<Allergen> availableAllergens = new();
     MenuItem Input = new();
     EditContext editContext;
     EditForm editForm;
@@ -244,8 +245,11 @@
         try
         {
             MenuItems = await Context.MenuItems
+                .Include(m => m.Allergens)
                 .Where(m => m.CategoryId == Category.Id)
                 .ToListAsync();
+            if (!availableAllergens.Any())
+                availableAllergens = await Context.Allergens.OrderBy(a => a.Code).ToListAsync();
             await InvokeAsync(StateHasChanged);
         }
         finally
@@ -362,6 +366,7 @@
     {
         var items = new List<MenuItem>();
         var random = new Random();
+        var allergensByCode = availableAllergens.ToDictionary(a => a.Code, a => a);
 
         // Sample menu items based on category name
         var sampleItems = GetSampleItemsForCategory(category.Name.ToLower());
@@ -369,13 +374,17 @@
         for (int i = 0; i < count && i < sampleItems.Count; i++)
         {
             var sample = sampleItems[i];
+            var allergens = sample.AllergenCodes
+                .Where(c => allergensByCode.ContainsKey(c))
+                .Select(c => allergensByCode[c])
+                .ToList();
             items.Add(new MenuItem
             {
                 Id = Guid.NewGuid(),
                 Name = sample.Name,
                 Description = sample.Description,
-                Allergens = sample.Allergens,
-                Price = (decimal)(random.NextDouble() * 15.0 + 5.0), // Random price between 5-20
+                Allergens = allergens,
+                Price = (decimal)(random.NextDouble() * 15.0 + 5.0),
                 CategoryId = category.Id
             });
         }
@@ -383,61 +392,60 @@
         return items;
     }
 
-    List<(string Name, string Description, string Allergens)> GetSampleItemsForCategory(string categoryName)
+    List<(string Name, string Description, string[] AllergenCodes)> GetSampleItemsForCategory(string categoryName)
     {
         // Default items that work for most categories
-        var defaultItems = new List<(string, string, string)>
+        var defaultItems = new List<(string, string, string[])>
         {
-            ("Klassisches Gericht", "Ein traditionelles und beliebtes Gericht", "G, M"),
-            ("Hausgemachte Spezialität", "Nach unserem besonderen Rezept zubereitet", "G"),
-            ("Saisonale Auswahl", "Mit frischen, saisonalen Zutaten", ""),
-            ("Chef's Empfehlung", "Vom Küchenchef persönlich empfohlen", "G, M"),
-            ("Regionale Köstlichkeit", "Mit lokalen Zutaten zubereitet", "M")
+            ("Klassisches Gericht", "Ein traditionelles und beliebtes Gericht", new[] { "A", "G" }),
+            ("Hausgemachte Spezialität", "Nach unserem besonderen Rezept zubereitet", new[] { "A" }),
+            ("Saisonale Auswahl", "Mit frischen, saisonalen Zutaten", Array.Empty<string>()),
+            ("Chef's Empfehlung", "Vom Küchenchef persönlich empfohlen", new[] { "A", "G" }),
+            ("Regionale Köstlichkeit", "Mit lokalen Zutaten zubereitet", new[] { "G" })
         };
 
-        // Category-specific items
         if (categoryName.Contains("vorspeise") || categoryName.Contains("starter"))
         {
-            return new List<(string, string, string)>
+            return new List<(string, string, string[])>
             {
-                ("Bruschetta", "Geröstetes Brot mit Tomaten und Basilikum", "G"),
-                ("Carpaccio", "Hauchdünn geschnittenes Rindfleisch", "M"),
-                ("Suppe des Tages", "Täglich wechselnde hausgemachte Suppe", ""),
-                ("Antipasti Teller", "Auswahl italienischer Vorspeisen", "G, M"),
-                ("Caesar Salad", "Klassischer Salat mit Parmesan", "G, M, E")
+                ("Bruschetta", "Geröstetes Brot mit Tomaten und Basilikum", new[] { "A" }),
+                ("Carpaccio", "Hauchdünn geschnittenes Rindfleisch", new[] { "G" }),
+                ("Suppe des Tages", "Täglich wechselnde hausgemachte Suppe", Array.Empty<string>()),
+                ("Antipasti Teller", "Auswahl italienischer Vorspeisen", new[] { "A", "G" }),
+                ("Caesar Salad", "Klassischer Salat mit Parmesan", new[] { "A", "G", "C" })
             };
         }
         else if (categoryName.Contains("hauptgang") || categoryName.Contains("main"))
         {
-            return new List<(string, string, string)>
+            return new List<(string, string, string[])>
             {
-                ("Schnitzel Wiener Art", "Paniertes Kalbsschnitzel mit Zitrone", "G, E"),
-                ("Pasta Carbonara", "Spaghetti mit Speck und Ei", "G, M, E"),
-                ("Gegrilltes Lachs", "Mit Kräuterbutter und Gemüse", "F, M"),
-                ("Rinderfilet", "Medium gebraten mit Pfeffersauce", "M"),
-                ("Vegetarische Lasagne", "Mit Gemüse und Béchamelsauce", "G, M")
+                ("Schnitzel Wiener Art", "Paniertes Kalbsschnitzel mit Zitrone", new[] { "A", "C" }),
+                ("Pasta Carbonara", "Spaghetti mit Speck und Ei", new[] { "A", "G", "C" }),
+                ("Gegrilltes Lachs", "Mit Kräuterbutter und Gemüse", new[] { "D", "G" }),
+                ("Rinderfilet", "Medium gebraten mit Pfeffersauce", new[] { "G" }),
+                ("Vegetarische Lasagne", "Mit Gemüse und Béchamelsauce", new[] { "A", "G" })
             };
         }
         else if (categoryName.Contains("dessert") || categoryName.Contains("nachspeise"))
         {
-            return new List<(string, string, string)>
+            return new List<(string, string, string[])>
             {
-                ("Tiramisu", "Klassisches italienisches Dessert", "G, M, E"),
-                ("Schokoladenkuchen", "Warmer Kuchen mit Vanilleeis", "G, M, E"),
-                ("Panna Cotta", "Mit Beerensauce", "M"),
-                ("Apfelstrudel", "Mit Vanillesauce", "G, M, E"),
-                ("Eis-Variation", "Drei Kugeln nach Wahl", "M")
+                ("Tiramisu", "Klassisches italienisches Dessert", new[] { "A", "G", "C" }),
+                ("Schokoladenkuchen", "Warmer Kuchen mit Vanilleeis", new[] { "A", "G", "C" }),
+                ("Panna Cotta", "Mit Beerensauce", new[] { "G" }),
+                ("Apfelstrudel", "Mit Vanillesauce", new[] { "A", "G", "C" }),
+                ("Eis-Variation", "Drei Kugeln nach Wahl", new[] { "G" })
             };
         }
         else if (categoryName.Contains("getränk") || categoryName.Contains("drink"))
         {
-            return new List<(string, string, string)>
+            return new List<(string, string, string[])>
             {
-                ("Hauswein", "Rotwein oder Weißwein", "S"),
-                ("Craft Beer", "Lokales Bier vom Fass", "G"),
-                ("Espresso", "Italienischer Kaffee", ""),
-                ("Frischer Orangensaft", "Täglich gepresst", ""),
-                ("Mineralwasser", "Still oder sprudelnd", "")
+                ("Hauswein", "Rotwein oder Weißwein", new[] { "L" }),
+                ("Craft Beer", "Lokales Bier vom Fass", new[] { "A" }),
+                ("Espresso", "Italienischer Kaffee", Array.Empty<string>()),
+                ("Frischer Orangensaft", "Täglich gepresst", Array.Empty<string>()),
+                ("Mineralwasser", "Still oder sprudelnd", Array.Empty<string>())
             };
         }
 

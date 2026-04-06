@@ -68,7 +68,7 @@ namespace SpeiseDirekt.ServiceImplementation
                     Id = Guid.NewGuid(), // New ID for translated version
                     Name = await TranslateTextAsync(menuItem.Name, targetLanguage, sourceLanguage),
                     Description = await TranslateTextAsync(menuItem.Description, targetLanguage, sourceLanguage),
-                    Allergens = await TranslateTextAsync(menuItem.Allergens, targetLanguage, sourceLanguage),
+                    Allergens = menuItem.Allergens, // Allergens are code-based, no translation needed
                     Price = menuItem.Price, // Price remains the same
                     CategoryId = menuItem.CategoryId, // Keep same category reference
                     ApplicationUserId = menuItem.ApplicationUserId, // Keep same user

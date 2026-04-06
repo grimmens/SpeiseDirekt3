@@ -10,7 +10,7 @@ public record MenuItemDto
     [Required]
     public string Description { get; init; } = string.Empty;
 
-    public string Allergens { get; init; } = string.Empty;
+    public List<Guid> AllergenIds { get; init; } = new();
 
     public decimal Price { get; init; }
 
