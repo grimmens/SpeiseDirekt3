@@ -1,8 +1,10 @@
 ﻿@page "/menu/edit/{Id:guid?}"
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
 @inject ApplicationDbContext Context
 @inject NavigationManager NavManager
+@inject IPermissionService PermissionService
 
 
 <div class="container">
@@ -92,6 +94,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var requiredPerm = IsNew ? Permission.MenusCreate : Permission.MenusEdit;
+        if (!await PermissionService.HasPermissionAsync(requiredPerm))
+        {
+            NavManager.NavigateTo("/menus");
+            return;
+        }
+
         if (IsNew)
         {
             Menu = new Menu();

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SpeiseDirekt.Api.Dtos;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.Repository;
 
@@ -19,7 +20,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "CanViewQrCodes")]
+    [Authorize(Policy = PolicyNames.CanViewQrCodes)]
     public async Task<ActionResult<List<QRCode>>> GetAll()
     {
         var qrCodes = await _qrCodeRepository.GetAllAsync();
@@ -27,7 +28,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "CanViewQrCodes")]
+    [Authorize(Policy = PolicyNames.CanViewQrCodes)]
     public async Task<ActionResult<QRCode>> Get(Guid id)
     {
         var qrCode = await _qrCodeRepository.GetByIdAsync(id);
@@ -39,7 +40,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "CanCreateQrCodes")]
+    [Authorize(Policy = PolicyNames.CanCreateQrCodes)]
     public async Task<ActionResult<QRCode>> Create(QrCodeDto dto)
     {
         if (dto.MenuId.HasValue)
@@ -65,7 +66,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = "CanEditQrCodes")]
+    [Authorize(Policy = PolicyNames.CanEditQrCodes)]
     public async Task<IActionResult> Update(Guid id, QrCodeDto dto)
     {
         if (dto.MenuId.HasValue)
@@ -90,7 +91,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "CanDeleteQrCodes")]
+    [Authorize(Policy = PolicyNames.CanDeleteQrCodes)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _qrCodeRepository.DeleteAsync(id);
@@ -101,7 +102,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/timetable-entries")]
-    [Authorize(Policy = "CanEditQrCodes")]
+    [Authorize(Policy = PolicyNames.CanEditQrCodes)]
     public async Task<ActionResult<TimeTableEntry>> AddTimeTableEntry(Guid id, TimeTableEntryDto dto)
     {
         var menuExists = await _qrCodeRepository.MenuExistsAsync(dto.MenuId);
@@ -124,7 +125,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}/timetable-entries/{entryId:guid}")]
-    [Authorize(Policy = "CanEditQrCodes")]
+    [Authorize(Policy = PolicyNames.CanEditQrCodes)]
     public async Task<IActionResult> RemoveTimeTableEntry(Guid id, Guid entryId)
     {
         var removed = await _qrCodeRepository.RemoveTimeTableEntryAsync(id, entryId);
@@ -135,7 +136,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/calendar-entries")]
-    [Authorize(Policy = "CanEditQrCodes")]
+    [Authorize(Policy = PolicyNames.CanEditQrCodes)]
     public async Task<ActionResult<CalendarEntry>> AddCalendarEntry(Guid id, CalendarEntryDto dto)
     {
         var menuExists = await _qrCodeRepository.MenuExistsAsync(dto.MenuId);
@@ -159,7 +160,7 @@ public class QrCodesController : ControllerBase
     }
 
     [HttpDelete("{id:guid}/calendar-entries/{entryId:guid}")]
-    [Authorize(Policy = "CanEditQrCodes")]
+    [Authorize(Policy = PolicyNames.CanEditQrCodes)]
     public async Task<IActionResult> RemoveCalendarEntry(Guid id, Guid entryId)
     {
         var removed = await _qrCodeRepository.RemoveCalendarEntryAsync(id, entryId);

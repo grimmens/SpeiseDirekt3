@@ -89,8 +89,11 @@
                                         <CategoryMenuItemCount CategoryId="@item.Id" />
                                     </td>
                                     <td class="py-2 px-3 text-right space-x-2">
-                                        <SpeiseDirekt3.Components.HelperComp.ActionSubMenu Edit="() => EditCategory(item)"
-                                                                                           Delete="() => DeleteCategory(item.Id)" />
+                                        @if (canEdit || canDelete)
+                                        {
+                                            <SpeiseDirekt3.Components.HelperComp.ActionSubMenu Edit="canEdit ? () => EditCategory(item) : null"
+                                                                                               Delete="canDelete ? () => DeleteCategory(item.Id) : null" />
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -104,27 +107,30 @@
             </div>
         </div>
 
-        <!-- Add New Category Form -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="bg-blue-600 text-white rounded-t-lg px-4 py-3">
-                <h3 class="text-lg font-semibold">Add New Category</h3>
-            </div>
-            <div class="p-4">
-                <EditForm @ref="editForm" EditContext="editContext" OnValidSubmit="SaveAsync">
-                    <DataAnnotationsValidator />
+        @if (canCreate)
+        {
+            <!-- Add New Category Form -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="bg-blue-600 text-white rounded-t-lg px-4 py-3">
+                    <h3 class="text-lg font-semibold">Add New Category</h3>
+                </div>
+                <div class="p-4">
+                    <EditForm @ref="editForm" EditContext="editContext" OnValidSubmit="SaveAsync">
+                        <DataAnnotationsValidator />
 
-                    <div class="mb-4">
-                        <label for="Input.Name" class="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                        <InputText @bind-Value="Input.Name" id="Input.Name" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                        <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm mt-1" />
-                    </div>
+                        <div class="mb-4">
+                            <label for="Input.Name" class="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
+                            <InputText @bind-Value="Input.Name" id="Input.Name" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm mt-1" />
+                        </div>
 
-                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-                        ➕ Add Category
-                    </button>
-                </EditForm>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
+                            ➕ Add Category
+                        </button>
+                    </EditForm>
+                </div>
             </div>
-        </div>
+        }
     </div>
 
     <!-- Optional Right Section -->
@@ -148,8 +154,11 @@
     public AuthenticationStateProvider AuthenticationStateProvider { get; set; }
     [Inject]
     public INotificationService NotificationService { get; set; }
+    [Inject]
+    public IPermissionService PermissionService { get; set; }
 
     ICollection<Category> Categories { get; set; } = [];
+    bool canCreate, canEdit, canDelete;
 
     Category Input { get; set; } = new();
     CategoryEditor categoryEditor;
@@ -165,6 +174,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        canCreate = await PermissionService.HasPermissionAsync(Permission.CategoriesCreate);
+        canEdit = await PermissionService.HasPermissionAsync(Permission.CategoriesEdit);
+        canDelete = await PermissionService.HasPermissionAsync(Permission.CategoriesDelete);
         await LoadCategoriesAsync();
         Input = new()
             {
@@ -174,6 +186,7 @@
 
     async Task SaveAsync()
     {
+        if (!canCreate) return;
         try
         {
             editContext = new EditContext(Input);
@@ -259,6 +272,7 @@
 
     async Task DeleteCategory(Guid id)
     {
+        if (!canDelete) return;
         try
         {
             var category = await Context.Categories.FindAsync(id);

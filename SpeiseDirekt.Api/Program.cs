@@ -32,7 +32,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("PaidTenant", policy =>
+    options.AddPolicy(PolicyNames.PaidTenant, policy =>
         policy.Requirements.Add(new PaidTenantRequirement()));
     options.AddPermissionPolicies();
 });

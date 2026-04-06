@@ -2,8 +2,10 @@
 @using Microsoft.EntityFrameworkCore
 @using QRCoder
 @using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
+@inject IPermissionService PermissionService
 
 <PageTitle>@(IsNew ? "Create QR Code" : "Edit QR Code") - Speise-Direkt</PageTitle>
 
@@ -195,6 +197,13 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var requiredPerm = IsNew ? Permission.QrCodesCreate : Permission.QrCodesEdit;
+        if (!await PermissionService.HasPermissionAsync(requiredPerm))
+        {
+            NavManager.NavigateTo("/qrcodes");
+            return;
+        }
+
         menus = await DbContext.Menus.OrderBy(m => m.Name).ToListAsync();
 
         if (IsNew)

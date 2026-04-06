@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Api.Dtos;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.Repository;
 
@@ -23,7 +24,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "CanViewMenuItems")]
+    [Authorize(Policy = PolicyNames.CanViewMenuItems)]
     public async Task<ActionResult<List<MenuItem>>> GetAll([FromQuery] Guid? categoryId)
     {
         var menuItems = await _menuItemRepository.GetAllAsync(categoryId);
@@ -31,7 +32,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "CanViewMenuItems")]
+    [Authorize(Policy = PolicyNames.CanViewMenuItems)]
     public async Task<ActionResult<MenuItem>> Get(Guid id)
     {
         var menuItem = await _menuItemRepository.GetByIdAsync(id);
@@ -43,7 +44,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "CanCreateMenuItems")]
+    [Authorize(Policy = PolicyNames.CanCreateMenuItems)]
     public async Task<ActionResult<MenuItem>> Create(MenuItemDto dto)
     {
         var categoryExists = await _menuItemRepository.CategoryExistsAsync(dto.CategoryId);
@@ -70,7 +71,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = "CanEditMenuItems")]
+    [Authorize(Policy = PolicyNames.CanEditMenuItems)]
     public async Task<IActionResult> Update(Guid id, MenuItemDto dto)
     {
         var categoryExists = await _menuItemRepository.CategoryExistsAsync(dto.CategoryId);
@@ -99,7 +100,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "CanDeleteMenuItems")]
+    [Authorize(Policy = PolicyNames.CanDeleteMenuItems)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var deleted = await _menuItemRepository.DeleteAsync(id);

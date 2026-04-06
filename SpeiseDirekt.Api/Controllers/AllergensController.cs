@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Api.Dtos;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 
 namespace SpeiseDirekt.Api.Controllers;
@@ -20,7 +21,7 @@ public class AllergensController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "CanViewAllergens")]
+    [Authorize(Policy = PolicyNames.CanViewAllergens)]
     public async Task<ActionResult<List<Allergen>>> GetAll([FromQuery] Guid? menuId)
     {
         if (menuId is null)
@@ -35,7 +36,7 @@ public class AllergensController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "CanViewAllergens")]
+    [Authorize(Policy = PolicyNames.CanViewAllergens)]
     public async Task<ActionResult<Allergen>> Get(Guid id)
     {
         var allergen = await _db.Allergens.FindAsync(id);
@@ -46,7 +47,7 @@ public class AllergensController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "CanCreateAllergens")]
+    [Authorize(Policy = PolicyNames.CanCreateAllergens)]
     public async Task<ActionResult<Allergen>> Create(AllergenDto dto)
     {
         var codeExists = await _db.Allergens
@@ -70,7 +71,7 @@ public class AllergensController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = "CanEditAllergens")]
+    [Authorize(Policy = PolicyNames.CanEditAllergens)]
     public async Task<IActionResult> Update(Guid id, AllergenDto dto)
     {
         var allergen = await _db.Allergens.FindAsync(id);
@@ -91,7 +92,7 @@ public class AllergensController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "CanDeleteAllergens")]
+    [Authorize(Policy = PolicyNames.CanDeleteAllergens)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var allergen = await _db.Allergens.FindAsync(id);

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Api.Dtos;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceInterface;
 
@@ -26,7 +27,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Policy = "CanViewUsers")]
+    [Authorize(Policy = PolicyNames.CanViewUsers)]
     public async Task<ActionResult<List<TenantUser>>> GetAll()
     {
         var tenantOwnerId = _userIdProvider.GetUserId();
@@ -40,7 +41,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Policy = "CanViewUsers")]
+    [Authorize(Policy = PolicyNames.CanViewUsers)]
     public async Task<ActionResult<TenantUser>> Get(Guid id)
     {
         var tenantOwnerId = _userIdProvider.GetUserId();
@@ -55,7 +56,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = "CanCreateUsers")]
+    [Authorize(Policy = PolicyNames.CanCreateUsers)]
     public async Task<ActionResult<TenantUser>> Create(CreateTenantUserDto dto)
     {
         var tenantOwnerId = _userIdProvider.GetUserId();
@@ -102,7 +103,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Policy = "CanEditUsers")]
+    [Authorize(Policy = PolicyNames.CanEditUsers)]
     public async Task<IActionResult> Update(Guid id, UpdateTenantUserDto dto)
     {
         var tenantOwnerId = _userIdProvider.GetUserId();
@@ -123,7 +124,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Policy = "CanDeleteUsers")]
+    [Authorize(Policy = PolicyNames.CanDeleteUsers)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var tenantOwnerId = _userIdProvider.GetUserId();

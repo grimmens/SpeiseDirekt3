@@ -1,8 +1,11 @@
 @page "/analytics"
 @using Microsoft.AspNetCore.Authorization
+@using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @inject IAnalyticsService AnalyticsService
+@inject IPermissionService PermissionService
 @inject IJSRuntime JSRuntime
+@inject NavigationManager NavManager
 @inherits PaidTenantComponentBase
 @attribute [Authorize]
 
@@ -152,6 +155,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await PermissionService.HasPermissionAsync(Permission.AnalyticsView))
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
         await LoadData();
     }
 
