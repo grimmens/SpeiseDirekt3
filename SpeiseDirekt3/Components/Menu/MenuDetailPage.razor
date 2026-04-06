@@ -212,7 +212,7 @@
     private int comboCount;
     private bool canEdit, canDelete;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         canEdit = await PermissionService.HasPermissionAsync(Permission.MenusEdit);
         canDelete = await PermissionService.HasPermissionAsync(Permission.MenusDelete);

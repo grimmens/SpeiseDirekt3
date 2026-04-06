@@ -110,7 +110,7 @@ namespace SpeiseDirekt3
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            });
+            }, contextLifetime: ServiceLifetime.Transient);
             builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
             {
                 options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
@@ -137,11 +137,11 @@ namespace SpeiseDirekt3
                     .Build();
             });
             builder.Services.AddTransient<IMenuItemGenerator, AiMenuItemGenerator>();
-            builder.Services.AddScoped<IImageUploadService, ImageDatabaseUploadService>();
+            builder.Services.AddTransient<IImageUploadService, ImageDatabaseUploadService>();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
-            builder.Services.AddScoped<IAuthorizationHandler, PaidTenantHandler>();
+            builder.Services.AddTransient<IAuthorizationHandler, PaidTenantHandler>();
             builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
-            builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation, TenantClaimsTransformation>();
+            builder.Services.AddTransient<Microsoft.AspNetCore.Authentication.IClaimsTransformation, TenantClaimsTransformation>();
 
 
             var app = builder.Build();
