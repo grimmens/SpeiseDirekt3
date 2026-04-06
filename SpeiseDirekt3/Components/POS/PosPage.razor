@@ -170,13 +170,11 @@
                                 var comboTotal = cartItem.LineTotal + subItems.Sum(s => s.LineTotal);
 
                                 <div class="px-6 py-4">
-                                    <!-- Combo header (tappable to remove entire combo) -->
+                                    <!-- Combo header (tappable to edit quantity or remove) -->
                                     <button class="w-full flex items-center gap-3 hover:bg-gray-700/30 rounded-xl -mx-2 px-2 py-1 transition-colors text-left"
                                             @onclick="() => OpenComboDetail(itemIdx)">
-                                        <div class="w-9 h-9 bg-amber-500/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                            </svg>
+                                        <div class="w-9 h-9 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                            <span class="text-sm font-bold text-white">@cartItem.Quantity</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
                                             <p class="text-sm font-medium text-white truncate">@cartItem.Name</p>
@@ -420,14 +418,14 @@
         if (triggerIndex < 0 || triggerIndex >= cart.Items.Count) return;
         var triggerItem = cart.Items[triggerIndex];
 
-        // For combos, the detail modal shows the trigger but Remove deletes the whole combo
+        // Combo quantity is editable — it applies to the whole combo group
         selectedCartItemProxy = new OrderItem
         {
             Id = Guid.NewGuid(),
             ItemName = triggerItem.Name + " (Combo)",
             UnitPrice = triggerItem.UnitPrice,
-            Quantity = 1,
-            IsComboItem = true,
+            Quantity = triggerItem.Quantity,
+            IsComboItem = false, // false so quantity controls show
             LineTotal = triggerItem.LineTotal
         };
         _editingCartIndex = triggerIndex;
@@ -442,13 +440,23 @@
     {
         if (_editingCartIndex < 0 || _editingCartIndex >= cart.Items.Count) return;
 
-        // Combos cannot have quantity changed — only regular items
-        if (!_editingIsCombo)
+        if (_editingIsCombo)
+        {
+            // Update quantity for the entire combo group (trigger + all sub-items)
+            var comboId = cart.Items[_editingCartIndex].ComboId;
+            if (comboId.HasValue)
+            {
+                foreach (var item in cart.Items.Where(i => i.ComboId == comboId))
+                    item.Quantity = result.Quantity;
+            }
+        }
+        else
         {
             cart.Items[_editingCartIndex].Quantity = result.Quantity;
-            cart.Recalculate();
-            _ = SaveCartToSession();
         }
+
+        cart.Recalculate();
+        _ = SaveCartToSession();
         _editingIsCombo = false;
     }
 
