@@ -1,0 +1,83 @@
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Data
+@using SpeiseDirekt.Model
+@inject IJSRuntime JSRuntime
+
+<div class="modal fade" id="allergenEditModal" tabindex="-1" aria-labelledby="allergenEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="allergenEditModalLabel">Edit Allergen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="Cancel"></button>
+            </div>
+            <div class="modal-body">
+                <EditForm @ref=editForm EditContext="editContext" OnSubmit="OnSubmit">
+                    <DataAnnotationsValidator />
+
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.Code" id="Allergen.Code" class="form-control" />
+                        <label for="Allergen.Code">Code</label>
+                        <ValidationMessage For="() => Input.Code" class="text-danger" />
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.Name" id="Allergen.Name" class="form-control" />
+                        <label for="Allergen.Name">Name</label>
+                        <ValidationMessage For="() => Input.Name" class="text-danger" />
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [Parameter] public Allergen Input { get; set; } = new();
+    [Parameter] public EventCallback<Allergen> OnOk { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [Inject] private ApplicationDbContext Context { get; set; }
+
+    EditContext editContext = new EditContext(new Allergen());
+    EditForm editForm;
+
+    private async Task OnSubmit()
+    {
+        editContext = new EditContext(Input);
+        editForm.EditContext = editContext;
+        if (!editContext.Validate())
+            return;
+
+        var codeExists = await Context.Allergens.Where(a => a.Id != Input.Id).AnyAsync(a => a.MenuId == Input.MenuId && a.Code == Input.Code);
+        if (codeExists)
+        {
+            var messages = new ValidationMessageStore(editContext);
+            messages.Add(() => Input.Code, "This code already exists for this menu.");
+            editContext.NotifyValidationStateChanged();
+            return;
+        }
+        await OnOk.InvokeAsync(Input);
+        await CloseModal();
+    }
+
+    public async Task ShowModal()
+    {
+        await JSRuntime.InvokeVoidAsync("openModal", "allergenEditModal");
+    }
+
+    private async Task CloseModal()
+    {
+        await JSRuntime.InvokeVoidAsync("hideModal", "allergenEditModal");
+    }
+
+    private async Task Cancel()
+    {
+        await OnCancel.InvokeAsync();
+        await CloseModal();
+    }
+}
