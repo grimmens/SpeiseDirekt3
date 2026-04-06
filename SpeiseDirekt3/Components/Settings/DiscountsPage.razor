@@ -1,0 +1,176 @@
+@page "/settings/discounts"
+@using Microsoft.AspNetCore.Authorization
+@using SpeiseDirekt3.Components.Settings.Components
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@inject IDiscountService DiscountService
+@inject INotificationService NotificationService
+@inject IPermissionService PermissionService
+@attribute [Authorize]
+
+<PageTitle>Discounts</PageTitle>
+
+<div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 font-display">Discounts</h1>
+                <p class="mt-1 text-gray-600">Manage voucher codes and discount offers.</p>
+            </div>
+            @if (canCreate)
+            {
+                <button class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                        @onclick="CreateDiscount">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    New Discount
+                </button>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    @if (discounts == null)
+    {
+        <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+    }
+    else if (!discounts.Any())
+    {
+        <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
+            <h3 class="text-sm font-semibold text-gray-900">No discounts yet</h3>
+            <p class="mt-1 text-sm text-gray-500">Create discount codes for your customers.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach (var discount in discounts)
+            {
+                <div class="bg-white rounded-xl border border-gray-200 p-5">
+                    <div class="flex items-start justify-between mb-3">
+                        <div>
+                            <span class="text-lg font-bold text-gray-900 font-mono">@discount.Code</span>
+                            <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium @(discount.IsActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600")">
+                                @(discount.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </div>
+                        <span class="text-lg font-bold text-blue-600">
+                            @if (discount.Type == DiscountType.Percentage)
+                            {
+                                @($"{discount.Value}%")
+                            }
+                            else
+                            {
+                                @discount.Value.ToString("C")
+                            }
+                        </span>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(discount.Description))
+                    {
+                        <p class="text-sm text-gray-600 mb-2">@discount.Description</p>
+                    }
+
+                    <div class="text-xs text-gray-500 space-y-1">
+                        @if (discount.MaxUses.HasValue)
+                        {
+                            <p>Used @discount.CurrentUses / @discount.MaxUses times</p>
+                        }
+                        @if (discount.MinOrderAmount.HasValue)
+                        {
+                            <p>Min order: @discount.MinOrderAmount.Value.ToString("C")</p>
+                        }
+                        @if (discount.ValidFrom.HasValue || discount.ValidTo.HasValue)
+                        {
+                            <p>
+                                @(discount.ValidFrom?.ToString("d") ?? "Any") — @(discount.ValidTo?.ToString("d") ?? "No expiry")
+                            </p>
+                        }
+                    </div>
+
+                    @if (canEdit || canDelete)
+                    {
+                        <div class="flex gap-2 pt-3 mt-3 border-t border-gray-100">
+                            @if (canEdit)
+                            {
+                                <button class="flex-1 text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                        @onclick="() => EditDiscount(discount)">Edit</button>
+                            }
+                            @if (canDelete)
+                            {
+                                <button class="text-sm text-red-600 hover:text-red-800"
+                                        @onclick="() => DeleteDiscount(discount)">Delete</button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<DiscountEditor @ref="editor" OnOk="HandleSave" OnCancel="HandleCancel" />
+
+@code {
+    private List<Discount>? discounts;
+    private DiscountEditor editor = default!;
+    private bool canCreate, canEdit, canDelete;
+
+    protected override async Task OnInitializedAsync()
+    {
+        canCreate = await PermissionService.HasPermissionAsync(Permission.DiscountsCreate);
+        canEdit = await PermissionService.HasPermissionAsync(Permission.DiscountsEdit);
+        canDelete = await PermissionService.HasPermissionAsync(Permission.DiscountsDelete);
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync() => discounts = await DiscountService.GetAllAsync();
+
+    private void CreateDiscount()
+    {
+        editor.Input = new Discount { IsActive = true };
+        editor.ShowModal();
+    }
+
+    private void EditDiscount(Discount d)
+    {
+        editor.Input = d;
+        editor.ShowModal();
+    }
+
+    private async Task HandleSave(Discount d)
+    {
+        if (d.Id == Guid.Empty)
+            await DiscountService.CreateAsync(d);
+        else
+            await DiscountService.UpdateAsync(d.Id, existing =>
+            {
+                existing.Code = d.Code;
+                existing.Description = d.Description;
+                existing.Type = d.Type;
+                existing.Value = d.Value;
+                existing.MinOrderAmount = d.MinOrderAmount;
+                existing.ValidFrom = d.ValidFrom;
+                existing.ValidTo = d.ValidTo;
+                existing.MaxUses = d.MaxUses;
+                existing.IsActive = d.IsActive;
+            });
+        await LoadAsync();
+    }
+
+    private Task HandleCancel() => Task.CompletedTask;
+
+    private async Task DeleteDiscount(Discount d)
+    {
+        var confirm = await NotificationService.ShowConfirmation(("Delete", $"Delete discount \"{d.Code}\"?"));
+        if (confirm)
+        {
+            await DiscountService.DeleteAsync(d.Id);
+            await LoadAsync();
+        }
+    }
+}

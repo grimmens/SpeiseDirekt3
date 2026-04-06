@@ -1,0 +1,340 @@
+@page "/pos/{MenuId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Components.POS.Components
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@inject ApplicationDbContext Context
+@inject IOrderService OrderService
+@inject IDiscountService DiscountService
+@inject IPermissionService PermissionService
+@inject INotificationService NotificationService
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+<PageTitle>POS - @menu?.Name</PageTitle>
+
+<div class="flex flex-col lg:flex-row h-[calc(100vh-4rem)] overflow-hidden">
+    <!-- Left: Menu Items -->
+    <div class="flex-1 flex flex-col overflow-hidden bg-gray-50">
+        <!-- Header -->
+        <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/pos" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </a>
+                <h1 class="text-lg font-bold text-gray-900">@menu?.Name</h1>
+            </div>
+            <a href="/orders" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View Orders</a>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="bg-white border-b border-gray-200 px-4 py-2 overflow-x-auto flex gap-2">
+            <button class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap @(selectedCategory == null ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
+                    @onclick="() => selectedCategory = null">All</button>
+            @foreach (var cat in categories)
+            {
+                var isActive = selectedCategory?.Id == cat.Id;
+                <button class="px-3 py-1.5 text-sm font-medium rounded-full transition-colors whitespace-nowrap @(isActive ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
+                        @onclick="() => selectedCategory = cat">@cat.Name</button>
+            }
+        </div>
+
+        <!-- Item Grid -->
+        <div class="flex-1 overflow-y-auto p-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                @foreach (var item in filteredItems)
+                {
+                    <button class="bg-white rounded-lg border border-gray-200 p-3 text-left hover:shadow-md hover:border-blue-300 transition-all active:scale-95"
+                            @onclick="() => AddItemToCart(item)">
+                        <p class="font-medium text-gray-900 text-sm line-clamp-2">@item.Name</p>
+                        <p class="text-blue-600 font-semibold mt-1">@item.Price.ToString("C")</p>
+                    </button>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Cart -->
+    <div class="w-full lg:w-96 bg-white border-l border-gray-200 flex flex-col">
+        <div class="px-4 py-3 border-b border-gray-200">
+            <h2 class="font-bold text-gray-900">Current Order</h2>
+            @if (currentOrder != null)
+            {
+                <p class="text-xs text-gray-500">@currentOrder.OrderNumber</p>
+            }
+        </div>
+
+        <!-- Cart Items -->
+        <div class="flex-1 overflow-y-auto">
+            @if (currentOrder?.Items.Any() == true)
+            {
+                <div class="divide-y divide-gray-100">
+                    @foreach (var item in currentOrder.Items)
+                    {
+                        <div class="px-4 py-3 flex items-center justify-between">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    @item.ItemName
+                                    @if (item.IsComboItem)
+                                    {
+                                        <span class="text-xs text-orange-600 ml-1">(combo)</span>
+                                    }
+                                </p>
+                                <p class="text-xs text-gray-500">@item.UnitPrice.ToString("C") each</p>
+                            </div>
+                            <div class="flex items-center gap-2 ml-2">
+                                <button class="w-7 h-7 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm transition-colors"
+                                        @onclick="() => UpdateQuantity(item, item.Quantity - 1)">-</button>
+                                <span class="text-sm font-medium w-6 text-center">@item.Quantity</span>
+                                <button class="w-7 h-7 flex items-center justify-center rounded bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm transition-colors"
+                                        @onclick="() => UpdateQuantity(item, item.Quantity + 1)">+</button>
+                                <span class="text-sm font-semibold text-gray-900 w-16 text-right">@item.LineTotal.ToString("C")</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="flex flex-col items-center justify-center h-full text-gray-400 px-4">
+                    <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <p class="text-sm">Tap items to add them</p>
+                </div>
+            }
+        </div>
+
+        <!-- Discount Input -->
+        @if (currentOrder?.Items.Any() == true)
+        {
+            <div class="px-4 py-2 border-t border-gray-100">
+                @if (currentOrder.DiscountId.HasValue)
+                {
+                    <div class="flex items-center justify-between bg-green-50 rounded-lg px-3 py-2">
+                        <span class="text-sm text-green-700 font-medium">Discount applied</span>
+                        <button class="text-sm text-red-500 hover:text-red-700" @onclick="RemoveDiscount">Remove</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="flex gap-2">
+                        <input type="text" @bind="discountCode" placeholder="Discount code"
+                               class="flex-1 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" />
+                        <button class="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                                @onclick="ApplyDiscount">Apply</button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(discountError))
+                    {
+                        <p class="text-xs text-red-600 mt-1">@discountError</p>
+                    }
+                }
+            </div>
+        }
+
+        <!-- Totals -->
+        @if (currentOrder?.Items.Any() == true)
+        {
+            <div class="px-4 py-3 border-t border-gray-200 space-y-1 bg-gray-50">
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span>Subtotal</span>
+                    <span>@currentOrder.SubTotal.ToString("C")</span>
+                </div>
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span>Tax</span>
+                    <span>@currentOrder.TaxAmount.ToString("C")</span>
+                </div>
+                @if (currentOrder.DiscountAmount > 0)
+                {
+                    <div class="flex justify-between text-sm text-green-600">
+                        <span>Discount</span>
+                        <span>-@currentOrder.DiscountAmount.ToString("C")</span>
+                    </div>
+                }
+                <div class="flex justify-between text-lg font-bold text-gray-900 pt-1">
+                    <span>Total</span>
+                    <span>@currentOrder.GrandTotal.ToString("C")</span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="px-4 py-3 border-t border-gray-200 flex gap-2">
+                <button class="flex-1 px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+                        @onclick="ClearCart">Clear</button>
+                <button class="flex-[2] px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                        @onclick="OpenCheckout">
+                    Checkout @currentOrder.GrandTotal.ToString("C")
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modals -->
+<PosComboOfferModal @ref="comboModal" Combo="pendingCombo" TriggerItem="pendingTriggerItem" OnResult="HandleComboResult" />
+<PosCheckoutModal @ref="checkoutModal" Order="currentOrder" OnPaymentComplete="HandlePaymentComplete" OnCancel="HandleCheckoutCancel" />
+<PosReceiptModal @ref="receiptModal" Order="completedOrder" Payment="completedPayment" OnNewOrder="StartNewOrder" />
+
+@code {
+    [Parameter] public Guid MenuId { get; set; }
+
+    private Menu? menu;
+    private List<Category> categories = new();
+    private List<MenuItem> allMenuItems = new();
+    private Category? selectedCategory;
+    private Order? currentOrder;
+    private Order? completedOrder;
+    private PosPayment? completedPayment;
+    private string discountCode = "";
+    private string? discountError;
+
+    // Combo modal state
+    private PosComboOfferModal comboModal = default!;
+    private PosCheckoutModal checkoutModal = default!;
+    private PosReceiptModal receiptModal = default!;
+    private MenuCombo? pendingCombo;
+    private MenuItem? pendingTriggerItem;
+
+    private IEnumerable<MenuItem> filteredItems =>
+        selectedCategory == null ? allMenuItems : allMenuItems.Where(i => i.CategoryId == selectedCategory.Id);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await PermissionService.HasPermissionAsync(Permission.OrdersCreate))
+        {
+            NavManager.NavigateTo("/pos");
+            return;
+        }
+
+        menu = await Context.Menus.FirstOrDefaultAsync(m => m.Id == MenuId);
+        categories = await Context.Categories.Where(c => c.MenuId == MenuId).OrderBy(c => c.Name).ToListAsync();
+        allMenuItems = await Context.MenuItems
+            .Where(mi => Context.Categories.Any(c => c.MenuId == MenuId && c.Id == mi.CategoryId))
+            .OrderBy(mi => mi.Name)
+            .ToListAsync();
+
+        await StartNewOrder();
+    }
+
+    private async Task StartNewOrder()
+    {
+        completedOrder = null;
+        completedPayment = null;
+        discountCode = "";
+        discountError = null;
+        currentOrder = await OrderService.CreateOrderAsync(MenuId, new List<CreateOrderItemDto>());
+    }
+
+    private async Task AddItemToCart(MenuItem item)
+    {
+        if (currentOrder == null) return;
+
+        // Check for combo
+        var combo = await Context.MenuCombos
+            .Include(c => c.Items).ThenInclude(i => i.MenuItem)
+            .FirstOrDefaultAsync(c => c.TriggerMenuItemId == item.Id && c.MenuId == MenuId);
+
+        if (combo != null)
+        {
+            pendingCombo = combo;
+            pendingTriggerItem = item;
+            comboModal.Show();
+            return;
+        }
+
+        var dto = new CreateOrderItemDto { MenuItemId = item.Id, Quantity = 1 };
+        currentOrder = await OrderService.AddItemAsync(currentOrder.Id, dto);
+    }
+
+    private async Task HandleComboResult(bool acceptCombo)
+    {
+        if (currentOrder == null || pendingTriggerItem == null) return;
+
+        if (acceptCombo && pendingCombo != null)
+        {
+            // Add trigger item with combo price
+            currentOrder = await OrderService.AddItemAsync(currentOrder.Id,
+                new CreateOrderItemDto { MenuItemId = pendingTriggerItem.Id, Quantity = 1, MenuComboId = pendingCombo.Id });
+            // Add included items
+            foreach (var comboItem in pendingCombo.Items)
+            {
+                currentOrder = await OrderService.AddItemAsync(currentOrder.Id,
+                    new CreateOrderItemDto { MenuItemId = comboItem.MenuItemId, Quantity = 1, MenuComboId = pendingCombo.Id });
+            }
+        }
+        else
+        {
+            // Add item only
+            currentOrder = await OrderService.AddItemAsync(currentOrder.Id,
+                new CreateOrderItemDto { MenuItemId = pendingTriggerItem.Id, Quantity = 1 });
+        }
+
+        pendingCombo = null;
+        pendingTriggerItem = null;
+    }
+
+    private async Task UpdateQuantity(OrderItem item, int newQuantity)
+    {
+        if (currentOrder == null) return;
+
+        if (newQuantity < 1)
+        {
+            currentOrder = await OrderService.RemoveItemAsync(currentOrder.Id, item.Id);
+        }
+        else
+        {
+            currentOrder = await OrderService.UpdateItemQuantityAsync(currentOrder.Id, item.Id, newQuantity);
+        }
+    }
+
+    private async Task ApplyDiscount()
+    {
+        if (currentOrder == null || string.IsNullOrWhiteSpace(discountCode)) return;
+        discountError = null;
+
+        try
+        {
+            currentOrder = await OrderService.ApplyDiscountAsync(currentOrder.Id, discountCode.Trim());
+            discountCode = "";
+        }
+        catch (InvalidOperationException ex)
+        {
+            discountError = ex.Message;
+        }
+    }
+
+    private async Task RemoveDiscount()
+    {
+        if (currentOrder == null) return;
+        currentOrder = await OrderService.RemoveDiscountAsync(currentOrder.Id);
+    }
+
+    private async Task ClearCart()
+    {
+        if (currentOrder != null)
+        {
+            await OrderService.CancelOrderAsync(currentOrder.Id, "Cleared by staff");
+        }
+        await StartNewOrder();
+    }
+
+    private void OpenCheckout()
+    {
+        checkoutModal.Show();
+    }
+
+    private async Task HandlePaymentComplete(PosPayment payment)
+    {
+        completedOrder = currentOrder;
+        completedPayment = payment;
+        receiptModal.Show();
+    }
+
+    private void HandleCheckoutCancel()
+    {
+        // Modal closed, stay on POS
+    }
+}

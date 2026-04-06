@@ -1,0 +1,80 @@
+@page "/pos"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@inject ApplicationDbContext Context
+@inject IPermissionService PermissionService
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+<PageTitle>POS - Select Menu</PageTitle>
+
+<div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <h1 class="text-3xl font-bold text-gray-900 font-display">Point of Sale</h1>
+        <p class="mt-1 text-gray-600">Select a menu to start taking orders.</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    @if (menus == null)
+    {
+        <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="ml-3 text-gray-600">Loading...</span>
+        </div>
+    }
+    else if (!menus.Any())
+    {
+        <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
+            <h3 class="mt-2 text-sm font-semibold text-gray-900">No menus available</h3>
+            <p class="mt-1 text-sm text-gray-500">Create a menu first to use the POS.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var menu in menus)
+            {
+                <a href="@($"pos/{menu.Id}")"
+                   class="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg hover:border-blue-300 transition-all duration-200">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="p-3 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">@menu.Name</h3>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                                @menu.Theme
+                            </span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600">@menu.Description</p>
+                    <div class="mt-4 flex items-center text-sm text-blue-600 font-medium group-hover:text-blue-700">
+                        Open POS
+                        <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Menu>? menus;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!await PermissionService.HasPermissionAsync(Permission.OrdersCreate))
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+        menus = await Context.Menus.OrderBy(m => m.Name).ToListAsync();
+    }
+}

@@ -1,0 +1,203 @@
+@page "/orders"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@inject IOrderService OrderService
+@inject INotificationService NotificationService
+@inject IPermissionService PermissionService
+@inject NavigationManager NavManager
+@attribute [Authorize]
+
+<PageTitle>Orders</PageTitle>
+
+<div class="bg-white shadow-sm border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 font-display">Orders</h1>
+                <p class="mt-1 text-gray-600">Manage and track restaurant orders.</p>
+            </div>
+            <a href="/pos" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                New Order
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Status Tabs -->
+    <div class="flex gap-2 mb-6 overflow-x-auto">
+        @foreach (var tab in statusTabs)
+        {
+            var isActive = activeTab == tab.Key;
+            <button class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-colors @(isActive ? "bg-blue-600 text-white" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50")"
+                    @onclick="() => SetTab(tab.Key)">
+                @tab.Key
+                @if (tab.Value > 0)
+                {
+                    <span class="ml-1.5 px-1.5 py-0.5 text-xs rounded-full @(isActive ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-600")">
+                        @tab.Value
+                    </span>
+                }
+            </button>
+        }
+    </div>
+
+    <!-- Orders List -->
+    @if (filteredOrders == null)
+    {
+        <div class="flex items-center justify-center py-12">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+    }
+    else if (!filteredOrders.Any())
+    {
+        <div class="text-center py-12 bg-white rounded-xl border border-gray-200">
+            <h3 class="text-sm font-semibold text-gray-900">No orders found</h3>
+            <p class="mt-1 text-sm text-gray-500">Orders will appear here as they are created.</p>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-3">
+            @foreach (var order in filteredOrders)
+            {
+                <div class="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div class="flex items-center gap-3">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-gray-900">@order.OrderNumber</span>
+                                    @{ var (badgeClass, label) = GetStatusBadge(order.Status); }
+                                    <span class="px-2 py-0.5 rounded-full text-xs font-medium @badgeClass">@label</span>
+                                </div>
+                                <p class="text-sm text-gray-500 mt-0.5">
+                                    @order.CreatedAt.ToLocalTime().ToString("g") · @order.Items.Count items
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-lg font-bold text-gray-900">@order.GrandTotal.ToString("C")</span>
+
+                            @if (canEdit)
+                            {
+                                @if (order.Status == OrderStatus.Confirmed)
+                                {
+                                    <button class="px-3 py-1.5 text-sm bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-lg transition-colors font-medium"
+                                            @onclick="() => AdvanceStatus(order, OrderStatus.Preparing)">
+                                        Start Preparing
+                                    </button>
+                                }
+                                @if (order.Status == OrderStatus.Preparing)
+                                {
+                                    <button class="px-3 py-1.5 text-sm bg-green-100 text-green-800 hover:bg-green-200 rounded-lg transition-colors font-medium"
+                                            @onclick="() => AdvanceStatus(order, OrderStatus.Ready)">
+                                        Mark Ready
+                                    </button>
+                                }
+                                @if (order.Status == OrderStatus.Ready)
+                                {
+                                    <button class="px-3 py-1.5 text-sm bg-blue-100 text-blue-800 hover:bg-blue-200 rounded-lg transition-colors font-medium"
+                                            @onclick="() => AdvanceStatus(order, OrderStatus.Completed)">
+                                        Complete
+                                    </button>
+                                }
+                                @if (order.Status != OrderStatus.Completed && order.Status != OrderStatus.Cancelled)
+                                {
+                                    <button class="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            @onclick="() => CancelOrder(order)">
+                                        Cancel
+                                    </button>
+                                }
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<Order>? allOrders;
+    private List<Order>? filteredOrders;
+    private string activeTab = "Active";
+    private bool canEdit;
+    private Dictionary<string, int> statusTabs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        canEdit = await PermissionService.HasPermissionAsync(Permission.OrdersEdit);
+        await LoadOrders();
+    }
+
+    private async Task LoadOrders()
+    {
+        allOrders = await OrderService.GetOrderHistoryAsync(1, 200);
+        UpdateTabs();
+        ApplyFilter();
+    }
+
+    private void UpdateTabs()
+    {
+        if (allOrders == null) return;
+        var active = allOrders.Count(o => o.Status != OrderStatus.Completed && o.Status != OrderStatus.Cancelled);
+        var completed = allOrders.Count(o => o.Status == OrderStatus.Completed);
+        var cancelled = allOrders.Count(o => o.Status == OrderStatus.Cancelled);
+        statusTabs = new()
+        {
+            ["Active"] = active,
+            ["Completed"] = completed,
+            ["Cancelled"] = cancelled,
+            ["All"] = allOrders.Count
+        };
+    }
+
+    private void SetTab(string tab)
+    {
+        activeTab = tab;
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        filteredOrders = activeTab switch
+        {
+            "Active" => allOrders?.Where(o => o.Status != OrderStatus.Completed && o.Status != OrderStatus.Cancelled).ToList(),
+            "Completed" => allOrders?.Where(o => o.Status == OrderStatus.Completed).ToList(),
+            "Cancelled" => allOrders?.Where(o => o.Status == OrderStatus.Cancelled).ToList(),
+            _ => allOrders
+        };
+    }
+
+    private async Task AdvanceStatus(Order order, OrderStatus newStatus)
+    {
+        await OrderService.UpdateStatusAsync(order.Id, newStatus);
+        await LoadOrders();
+    }
+
+    private async Task CancelOrder(Order order)
+    {
+        var confirm = await NotificationService.ShowConfirmation(("Cancel", $"Cancel order {order.OrderNumber}?"));
+        if (confirm)
+        {
+            await OrderService.CancelOrderAsync(order.Id, "Cancelled by staff");
+            await LoadOrders();
+        }
+    }
+
+    private (string CssClass, string Label) GetStatusBadge(OrderStatus status) => status switch
+    {
+        OrderStatus.Draft => ("bg-gray-100 text-gray-800", "Draft"),
+        OrderStatus.Confirmed => ("bg-blue-100 text-blue-800", "Confirmed"),
+        OrderStatus.Preparing => ("bg-yellow-100 text-yellow-800", "Preparing"),
+        OrderStatus.Ready => ("bg-green-100 text-green-800", "Ready"),
+        OrderStatus.Completed => ("bg-green-200 text-green-900", "Completed"),
+        OrderStatus.Cancelled => ("bg-red-100 text-red-800", "Cancelled"),
+        _ => ("bg-gray-100 text-gray-600", status.ToString())
+    };
+}

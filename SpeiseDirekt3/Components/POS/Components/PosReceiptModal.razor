@@ -1,0 +1,113 @@
+@using SpeiseDirekt.Model
+@inject IJSRuntime JS
+
+<div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 @(isVisible ? "" : "hidden")">
+    <div class="bg-white rounded-xl shadow-2xl max-w-md w-full">
+        <div class="bg-gradient-to-r from-green-600 to-green-700 px-6 py-4 rounded-t-xl">
+            <div class="flex items-center gap-2">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <h3 class="text-lg font-bold text-white">Order Complete</h3>
+            </div>
+        </div>
+
+        <div class="p-6" id="receipt-content">
+            @if (Order != null)
+            {
+                <div class="text-center mb-4">
+                    <p class="text-2xl font-bold text-gray-900">@Order.OrderNumber</p>
+                    <p class="text-sm text-gray-500">@Order.CreatedAt.ToLocalTime().ToString("g")</p>
+                </div>
+
+                <div class="border-t border-dashed border-gray-300 py-3 space-y-2">
+                    @foreach (var item in Order.Items)
+                    {
+                        <div class="flex justify-between text-sm">
+                            <div>
+                                <span class="text-gray-800">@item.ItemName</span>
+                                @if (item.Quantity > 1)
+                                {
+                                    <span class="text-gray-500"> x@item.Quantity</span>
+                                }
+                                @if (item.IsComboItem)
+                                {
+                                    <span class="text-xs text-orange-600 ml-1">(combo)</span>
+                                }
+                            </div>
+                            <span class="text-gray-800 font-medium">@item.LineTotal.ToString("C")</span>
+                        </div>
+                    }
+                </div>
+
+                <div class="border-t border-dashed border-gray-300 py-3 space-y-1">
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>Subtotal</span>
+                        <span>@Order.SubTotal.ToString("C")</span>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>Tax</span>
+                        <span>@Order.TaxAmount.ToString("C")</span>
+                    </div>
+                    @if (Order.DiscountAmount > 0)
+                    {
+                        <div class="flex justify-between text-sm text-green-600">
+                            <span>Discount</span>
+                            <span>-@Order.DiscountAmount.ToString("C")</span>
+                        </div>
+                    }
+                    <div class="flex justify-between text-base font-bold text-gray-900 pt-1">
+                        <span>Total</span>
+                        <span>@Order.GrandTotal.ToString("C")</span>
+                    </div>
+                </div>
+
+                @if (Payment != null)
+                {
+                    <div class="border-t border-dashed border-gray-300 pt-3 text-center text-sm text-gray-500">
+                        Paid by @Payment.PaymentMethod
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="px-6 pb-6 flex gap-3">
+            <button class="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
+                    @onclick="PrintReceipt">
+                <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
+            </button>
+            <button class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                    @onclick="NewOrder">
+                New Order
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Order? Order { get; set; }
+    [Parameter] public PosPayment? Payment { get; set; }
+    [Parameter] public EventCallback OnNewOrder { get; set; }
+
+    private bool isVisible;
+
+    public void Show()
+    {
+        isVisible = true;
+        StateHasChanged();
+    }
+
+    private async Task PrintReceipt()
+    {
+        await JS.InvokeVoidAsync("window.print");
+    }
+
+    private async Task NewOrder()
+    {
+        isVisible = false;
+        await OnNewOrder.InvokeAsync();
+    }
+}
