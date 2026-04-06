@@ -21,6 +21,7 @@ public static class TestSeedData
     public static readonly Guid MenuView3Id = Guid.Parse("11111111-1111-1111-1111-111111111113");
     public static readonly Guid MenuItemClick1Id = Guid.Parse("22222222-2222-2222-2222-222222222221");
     public static readonly Guid MenuItemClick2Id = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    public static readonly Guid DirectQrCodeId = Guid.Parse("dddddddd-dddd-dddd-dddd-ddddddddddde");
     public static readonly string TestSessionId = "test-session-001";
 
     public static async Task SeedAsync(ApplicationDbContext context, string userId)
@@ -123,6 +124,18 @@ public static class TestSeedData
             ApplicationUserId = appUserId
         };
         context.QRCodes.Add(qrCode);
+
+        // Direct QRCode (no time-based resolution) for MenuDisplay tests
+        var directQrCode = new QRCode
+        {
+            Id = DirectQrCodeId,
+            Title = "Table 2 - Direct",
+            MenuId = Menu1Id,
+            IsTimeTableBased = false,
+            IsCalendarBased = false,
+            ApplicationUserId = appUserId
+        };
+        context.QRCodes.Add(directQrCode);
 
         // TimeTableEntry
         context.TimeTableEntries.Add(new TimeTableEntry
