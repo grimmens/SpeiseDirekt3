@@ -248,8 +248,10 @@
                 .Include(m => m.Allergens)
                 .Where(m => m.CategoryId == Category.Id)
                 .ToListAsync();
-            if (!availableAllergens.Any())
-                availableAllergens = await Context.Allergens.OrderBy(a => a.Code).ToListAsync();
+            availableAllergens = await Context.Allergens
+                .Where(a => a.MenuId == Category.MenuId)
+                .OrderBy(a => a.Code)
+                .ToListAsync();
             await InvokeAsync(StateHasChanged);
         }
         finally
