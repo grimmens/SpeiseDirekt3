@@ -40,6 +40,9 @@ namespace SpeiseDirekt.Infrastructure
             services.AddTransient<IPosPaymentService, PosPaymentService>();
             services.AddTransient<IPosStripeGateway, PosStripeGateway>();
 
+            // POS location (geocoding via OpenStreetMap Nominatim)
+            services.AddHttpClient<IPosLocationService, PosLocationService>();
+
             // POS repositories (restaurant transactions, not app subscription billing)
             services.AddTransient<IOrderRepository, OrderRepository>();
             services.AddTransient<ITaxRateRepository, TaxRateRepository>();
