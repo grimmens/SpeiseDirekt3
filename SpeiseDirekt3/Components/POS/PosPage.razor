@@ -475,7 +475,7 @@
 <PosComboOfferModal @ref="comboModal" Combo="pendingCombo" TriggerItem="pendingTriggerItem" OnResult="HandleComboResult" />
 <PosItemDetailModal @ref="itemDetailModal" Item="selectedCartItemProxy" OnQuantityChanged="HandleQuantityChanged" OnRemove="HandleItemRemove" />
 <PosCheckoutModal @ref="checkoutModal" Order="checkoutOrder" OnPaymentComplete="HandlePaymentComplete" OnCancel="HandleCheckoutCancel" />
-<PosReceiptModal @ref="receiptModal" Order="checkoutOrder" Payment="completedPayment" OnNewOrder="StartNewOrder" />
+<PosReceiptModal @ref="receiptModal" Order="checkoutOrder" Payment="completedPayment" TrackingCode="@checkoutOrder?.TrackingCode" OnNewOrder="StartNewOrder" />
 
 @code {
     [Parameter] public Guid MenuId { get; set; }
