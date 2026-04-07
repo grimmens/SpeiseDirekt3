@@ -727,7 +727,7 @@
         }).ToList();
 
         checkoutOrder = await OrderService.CreatePosOrderAsync(MenuId, menuOwnerId, items);
-        checkoutModal.Show();
+        await checkoutModal.Show();
     }
 
     private async Task HandlePaymentComplete(PosPayment payment)

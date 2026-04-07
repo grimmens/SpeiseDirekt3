@@ -23,4 +23,5 @@ public interface IOrderService
     Task<List<Order>> GetOrderHistoryAsync(int page = 1, int pageSize = 20);
     Task<Order?> GetByIdAsync(Guid id);
     Task<Order?> GetByTrackingCodeAsync(string trackingCode);
+    Task<Order> UpdateCustomerDetailsAsync(Guid orderId, string? customerName, string? customerEmail, string? customerPhone, string? deliveryStreet, string? deliveryCity, string? deliveryPostalCode);
 }

@@ -263,6 +263,25 @@ public class OrderService : IOrderService
     public Task<List<Order>> GetOrderHistoryAsync(int page = 1, int pageSize = 20) => _orderRepo.GetAllAsync(page, pageSize);
     public Task<Order?> GetByIdAsync(Guid id) => _orderRepo.GetByIdAsync(id);
 
+    public async Task<Order> UpdateCustomerDetailsAsync(Guid orderId, string? customerName, string? customerEmail, string? customerPhone, string? deliveryStreet, string? deliveryCity, string? deliveryPostalCode)
+    {
+        var order = await _db.Orders.IgnoreQueryFilters()
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == orderId)
+            ?? throw new InvalidOperationException($"Order '{orderId}' not found.");
+
+        order.CustomerName = customerName;
+        order.CustomerEmail = customerEmail;
+        order.CustomerPhone = customerPhone;
+        order.DeliveryStreet = deliveryStreet;
+        order.DeliveryCity = deliveryCity;
+        order.DeliveryPostalCode = deliveryPostalCode;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync();
+        return order;
+    }
+
     public async Task<Order?> GetByTrackingCodeAsync(string trackingCode)
     {
         return await _db.Orders.IgnoreQueryFilters()
