@@ -32,6 +32,7 @@ namespace SpeiseDirekt.Infrastructure
             // POS session (server-side cart in IMemoryCache)
             services.AddMemoryCache();
             services.AddSingleton<IPosSessionService, PosSessionService>();
+            services.AddSingleton<IPosCustomerService, PosCustomerService>();
 
             // POS services (restaurant transactions, not app subscription billing)
             services.AddTransient<IOrderService, OrderService>();
