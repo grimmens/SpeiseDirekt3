@@ -1,0 +1,377 @@
+@* Lieferando-style credit card input form with visual card preview *@
+
+<div class="space-y-6">
+
+    <!-- Card Preview -->
+    <div class="relative w-full max-w-sm mx-auto" style="perspective: 1000px;">
+        <div class="relative transition-transform duration-700" style="transform-style: preserve-3d; @(isCvvFocused ? "transform: rotateY(180deg);" : "")">
+
+            <!-- Card Front -->
+            <div class="w-full rounded-2xl p-6 text-white shadow-xl" style="aspect-ratio: 1.6/1; background: linear-gradient(135deg, #1f2937, #111827); backface-visibility: hidden;">
+                <div class="flex flex-col justify-between h-full">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-7 bg-gradient-to-r from-yellow-300 to-yellow-500 rounded-md"></div>
+                            <div class="w-6 h-6 bg-gray-600 rounded-full opacity-60"></div>
+                        </div>
+                        <div class="text-right">
+                            @if (detectedBrand == "visa")
+                            {
+                                <span class="text-2xl font-bold italic tracking-wider text-blue-300">VISA</span>
+                            }
+                            else if (detectedBrand == "mastercard")
+                            {
+                                <div class="flex items-center gap-0">
+                                    <div class="w-6 h-6 rounded-full bg-red-500 opacity-80"></div>
+                                    <div class="w-6 h-6 rounded-full bg-yellow-500 opacity-80 -ml-2"></div>
+                                </div>
+                            }
+                            else if (detectedBrand == "amex")
+                            {
+                                <span class="text-lg font-bold tracking-wider text-blue-400">AMEX</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="text-xl sm:text-2xl font-mono tracking-[0.2em] text-center my-auto">
+                        @GetMaskedCardNumber()
+                    </div>
+                    <div class="flex justify-between items-end text-sm">
+                        <div>
+                            <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Karteninhaber</div>
+                            <div class="font-medium tracking-wide">@(string.IsNullOrWhiteSpace(cardholderName) ? "DEIN NAME" : cardholderName.ToUpper())</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-0.5">Gültig bis</div>
+                            <div class="font-mono">@(string.IsNullOrWhiteSpace(expiryDate) ? "MM/YY" : expiryDate)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card Back -->
+            <div class="absolute inset-0 w-full rounded-2xl text-white shadow-xl overflow-hidden" style="aspect-ratio: 1.6/1; background: linear-gradient(135deg, #111827, #1f2937); backface-visibility: hidden; transform: rotateY(180deg);">
+                <div class="w-full h-12 bg-gray-700 mt-6"></div>
+                <div class="px-6 mt-4">
+                    <div class="text-[10px] text-gray-400 uppercase tracking-widest mb-1 text-right">CVV</div>
+                    <div class="bg-gray-200 rounded-md px-4 py-2 text-right">
+                        <span class="text-gray-800 font-mono tracking-[0.3em]">@(string.IsNullOrWhiteSpace(cvv) ? "•••" : new string('•', cvv.Length))</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Input Fields -->
+    <div class="space-y-4">
+
+        <!-- Card Number -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Kartennummer</label>
+            <div class="relative">
+                <input type="text"
+                       inputmode="numeric"
+                       class="w-full bg-white border rounded-lg py-3 px-4 pr-12 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors @(showErrors && !string.IsNullOrEmpty(cardNumberError) ? "border-red-400 focus:border-red-500 focus:ring-red-200" : "border-gray-300 focus:border-[#FF8000] focus:ring-orange-200")"
+                       placeholder="1234 5678 9012 3456"
+                       maxlength="19"
+                       value="@cardNumber"
+                       @oninput="OnCardNumberInput"
+                       @onfocus="() => isCvvFocused = false"
+                       disabled="@IsProcessing" />
+                <div class="absolute right-3 top-1/2 -translate-y-1/2">
+                    @if (detectedBrand == "visa")
+                    {
+                        <span class="text-sm font-bold italic text-blue-600">VISA</span>
+                    }
+                    else if (detectedBrand == "mastercard")
+                    {
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full bg-red-500 opacity-80"></div>
+                            <div class="w-4 h-4 rounded-full bg-yellow-500 opacity-80 -ml-1.5"></div>
+                        </div>
+                    }
+                    else if (detectedBrand == "amex")
+                    {
+                        <span class="text-xs font-bold text-blue-600">AMEX</span>
+                    }
+                    else
+                    {
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                    }
+                </div>
+            </div>
+            @if (showErrors && !string.IsNullOrEmpty(cardNumberError))
+            {
+                <p class="mt-1 text-xs text-red-500">@cardNumberError</p>
+            }
+        </div>
+
+        <!-- Expiry + CVV Row -->
+        <div class="grid grid-cols-2 gap-4">
+            <!-- Expiry Date -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Gültig bis</label>
+                <input type="text"
+                       inputmode="numeric"
+                       class="w-full bg-white border rounded-lg py-3 px-4 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors @(showErrors && !string.IsNullOrEmpty(expiryError) ? "border-red-400 focus:border-red-500 focus:ring-red-200" : "border-gray-300 focus:border-[#FF8000] focus:ring-orange-200")"
+                       placeholder="MM/YY"
+                       maxlength="5"
+                       value="@expiryDate"
+                       @oninput="OnExpiryInput"
+                       @onfocus="() => isCvvFocused = false"
+                       disabled="@IsProcessing" />
+                @if (showErrors && !string.IsNullOrEmpty(expiryError))
+                {
+                    <p class="mt-1 text-xs text-red-500">@expiryError</p>
+                }
+            </div>
+
+            <!-- CVV -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">CVV</label>
+                <input type="password"
+                       inputmode="numeric"
+                       class="w-full bg-white border rounded-lg py-3 px-4 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 transition-colors @(showErrors && !string.IsNullOrEmpty(cvvError) ? "border-red-400 focus:border-red-500 focus:ring-red-200" : "border-gray-300 focus:border-[#FF8000] focus:ring-orange-200")"
+                       placeholder="•••"
+                       maxlength="4"
+                       value="@cvv"
+                       @oninput="OnCvvInput"
+                       @onfocus="() => isCvvFocused = true"
+                       @onblur="() => isCvvFocused = false"
+                       disabled="@IsProcessing" />
+                @if (showErrors && !string.IsNullOrEmpty(cvvError))
+                {
+                    <p class="mt-1 text-xs text-red-500">@cvvError</p>
+                }
+            </div>
+        </div>
+
+        <!-- Cardholder Name -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">Karteninhaber</label>
+            <input type="text"
+                   class="w-full bg-white border rounded-lg py-3 px-4 text-gray-900 placeholder-gray-400 uppercase focus:outline-none focus:ring-2 transition-colors @(showErrors && !string.IsNullOrEmpty(nameError) ? "border-red-400 focus:border-red-500 focus:ring-red-200" : "border-gray-300 focus:border-[#FF8000] focus:ring-orange-200")"
+                   placeholder="MAX MUSTERMANN"
+                   value="@cardholderName"
+                   @oninput="OnNameInput"
+                   @onfocus="() => isCvvFocused = false"
+                   disabled="@IsProcessing" />
+            @if (showErrors && !string.IsNullOrEmpty(nameError))
+            {
+                <p class="mt-1 text-xs text-red-500">@nameError</p>
+            }
+        </div>
+
+    </div>
+
+    <!-- Security note -->
+    <div class="flex items-center gap-2 text-xs text-gray-400">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <span>Deine Kartendaten werden sicher über Stripe verarbeitet</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<CreditCardInfo> OnCardSubmit { get; set; }
+    [Parameter] public bool IsProcessing { get; set; }
+
+    private string cardNumber = "";
+    private string expiryDate = "";
+    private string cvv = "";
+    private string cardholderName = "";
+    private string detectedBrand = "";
+    private bool isCvvFocused;
+    private bool showErrors;
+
+    private string? cardNumberError;
+    private string? expiryError;
+    private string? cvvError;
+    private string? nameError;
+
+    private void OnCardNumberInput(ChangeEventArgs e)
+    {
+        var raw = new string((e.Value?.ToString() ?? "").Where(char.IsDigit).ToArray());
+        if (raw.Length > 16) raw = raw[..16];
+
+        // Format with spaces every 4 digits
+        cardNumber = string.Join(" ", Enumerable.Range(0, (raw.Length + 3) / 4)
+            .Select(i => raw.Substring(i * 4, Math.Min(4, raw.Length - i * 4))));
+
+        DetectBrand(raw);
+        ValidateCardNumber(raw);
+    }
+
+    private void OnExpiryInput(ChangeEventArgs e)
+    {
+        var raw = new string((e.Value?.ToString() ?? "").Where(char.IsDigit).ToArray());
+        if (raw.Length > 4) raw = raw[..4];
+
+        expiryDate = raw.Length >= 3
+            ? raw[..2] + "/" + raw[2..]
+            : raw;
+
+        ValidateExpiry();
+    }
+
+    private void OnCvvInput(ChangeEventArgs e)
+    {
+        cvv = new string((e.Value?.ToString() ?? "").Where(char.IsDigit).ToArray());
+        if (cvv.Length > 4) cvv = cvv[..4];
+        ValidateCvv();
+    }
+
+    private void OnNameInput(ChangeEventArgs e)
+    {
+        cardholderName = e.Value?.ToString() ?? "";
+        ValidateName();
+    }
+
+    private void DetectBrand(string digits)
+    {
+        if (digits.Length == 0) { detectedBrand = ""; return; }
+        detectedBrand = digits[0] switch
+        {
+            '4' => "visa",
+            '5' => "mastercard",
+            '3' when digits.Length >= 2 && (digits[1] == '4' || digits[1] == '7') => "amex",
+            _ => ""
+        };
+    }
+
+    private void ValidateCardNumber(string digits)
+    {
+        if (digits.Length == 0) { cardNumberError = null; return; }
+        if (digits.Length < 13)
+        {
+            cardNumberError = "Kartennummer ist zu kurz";
+            return;
+        }
+        if (!LuhnCheck(digits))
+        {
+            cardNumberError = "Ungültige Kartennummer";
+            return;
+        }
+        cardNumberError = null;
+    }
+
+    private void ValidateExpiry()
+    {
+        var raw = new string(expiryDate.Where(char.IsDigit).ToArray());
+        if (raw.Length < 4) { expiryError = raw.Length > 0 ? "Bitte vollständig eingeben (MM/YY)" : null; return; }
+
+        if (!int.TryParse(raw[..2], out var month) || month < 1 || month > 12)
+        {
+            expiryError = "Ungültiger Monat";
+            return;
+        }
+
+        if (!int.TryParse(raw[2..], out var year))
+        {
+            expiryError = "Ungültiges Jahr";
+            return;
+        }
+
+        var expYear = 2000 + year;
+        var now = DateTime.Now;
+        if (expYear < now.Year || (expYear == now.Year && month < now.Month))
+        {
+            expiryError = "Karte ist abgelaufen";
+            return;
+        }
+
+        expiryError = null;
+    }
+
+    private void ValidateCvv()
+    {
+        if (cvv.Length == 0) { cvvError = null; return; }
+        cvvError = cvv.Length < 3 ? "CVV muss 3-4 Ziffern haben" : null;
+    }
+
+    private void ValidateName()
+    {
+        nameError = string.IsNullOrWhiteSpace(cardholderName) && showErrors ? "Name ist erforderlich" : null;
+    }
+
+    private bool LuhnCheck(string digits)
+    {
+        int sum = 0;
+        bool alternate = false;
+        for (int i = digits.Length - 1; i >= 0; i--)
+        {
+            int n = digits[i] - '0';
+            if (alternate)
+            {
+                n *= 2;
+                if (n > 9) n -= 9;
+            }
+            sum += n;
+            alternate = !alternate;
+        }
+        return sum % 10 == 0;
+    }
+
+    private string GetMaskedCardNumber()
+    {
+        var digits = new string(cardNumber.Where(char.IsDigit).ToArray());
+        if (digits.Length == 0) return "•••• •••• •••• ••••";
+        if (digits.Length <= 4) return "•••• •••• •••• " + digits.PadRight(4, '•');
+
+        var last4 = digits[^Math.Min(4, digits.Length)..];
+        var maskedGroups = new List<string>();
+        int totalGroups = (digits.Length + 3) / 4;
+        for (int g = 0; g < totalGroups; g++)
+        {
+            if (g == totalGroups - 1)
+                maskedGroups.Add(last4.PadLeft(4, '•'));
+            else
+                maskedGroups.Add("••••");
+        }
+        while (maskedGroups.Count < 4) maskedGroups.Insert(0, "••••");
+        return string.Join(" ", maskedGroups);
+    }
+
+    public bool IsFormValid()
+    {
+        var digits = new string(cardNumber.Where(char.IsDigit).ToArray());
+        var expiryDigits = new string(expiryDate.Where(char.IsDigit).ToArray());
+        return digits.Length >= 13 && LuhnCheck(digits)
+            && expiryDigits.Length == 4 && expiryError == null
+            && cvv.Length >= 3
+            && !string.IsNullOrWhiteSpace(cardholderName);
+    }
+
+    public async Task SubmitAsync()
+    {
+        showErrors = true;
+        var digits = new string(cardNumber.Where(char.IsDigit).ToArray());
+        ValidateCardNumber(digits);
+        ValidateExpiry();
+        ValidateCvv();
+        ValidateName();
+
+        if (!IsFormValid()) return;
+
+        await OnCardSubmit.InvokeAsync(new CreditCardInfo
+        {
+            CardNumber = cardNumber,
+            ExpiryDate = expiryDate,
+            Cvv = cvv,
+            CardholderName = cardholderName.ToUpper(),
+            IsValid = true
+        });
+    }
+
+    public class CreditCardInfo
+    {
+        public string CardNumber { get; set; } = "";
+        public string ExpiryDate { get; set; } = "";
+        public string Cvv { get; set; } = "";
+        public string CardholderName { get; set; } = "";
+        public bool IsValid { get; set; }
+    }
+}
