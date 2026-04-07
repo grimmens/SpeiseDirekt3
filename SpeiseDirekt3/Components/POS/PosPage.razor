@@ -16,157 +16,324 @@
 
 <PageTitle>Order - @menu?.Name</PageTitle>
 
-<div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
+<div class="flex-1 flex flex-col lg:flex-row h-screen bg-gray-50">
 
-    <!-- ═══════════ LEFT: MENU ITEMS ═══════════ -->
+    <!-- ═══════════ LEFT: MENU CONTENT ═══════════ -->
     <div class="flex-1 flex flex-col overflow-hidden">
 
-        <!-- Top Bar -->
-        <div class="flex items-center justify-between px-4 sm:px-6 py-4 bg-gray-800/60 border-b border-gray-700/50">
-            <div class="flex items-center gap-3">
-                <a href="/pos" class="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-xl flex items-center justify-center transition-colors">
-                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <!-- Scrollable area (header + categories + menu) -->
+        <div class="flex-1 overflow-y-auto @(cart.TotalQuantity > 0 ? "pb-24 lg:pb-0" : "")" id="menu-scroll-area">
+
+            <!-- Restaurant Hero Header (scrolls away) -->
+            <div class="relative h-36 bg-gradient-to-br from-[#FF8000] to-amber-500 overflow-hidden flex-shrink-0">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+                <!-- Back button -->
+                <a href="/pos" class="absolute top-3 left-3 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors shadow-md z-10">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </a>
-                <div>
-                    <h1 class="text-lg font-bold text-white">@menu?.Name</h1>
-                    <p class="text-xs text-gray-500">Tap items to add to your order</p>
+                <!-- Mobile cart toggle -->
+                <button class="lg:hidden absolute top-3 right-3 w-9 h-9 bg-white/90 hover:bg-white rounded-full flex items-center justify-center transition-colors shadow-md z-10 relative"
+                        @onclick="() => showMobileCart = !showMobileCart">
+                    <svg class="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    @if (cart.TotalQuantity > 0)
+                    {
+                        <span class="absolute -top-1 -right-1 w-5 h-5 bg-[#FF8000] rounded-full text-[11px] font-bold text-white flex items-center justify-center">@cart.TotalQuantity</span>
+                    }
+                </button>
+            </div>
+
+            <!-- Restaurant Info -->
+            <div class="bg-white px-4 sm:px-8 py-5 border-b border-gray-200">
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900">@menu?.Name</h1>
+                @if (!string.IsNullOrEmpty(menu?.Description))
+                {
+                    <p class="text-sm text-gray-500 mt-1">@menu.Description</p>
+                }
+                <div class="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        25-40 min
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4"/></svg>
+                        Min. &euro;10.00
+                    </span>
+                    <span class="flex items-center gap-1">
+                        <svg class="w-4 h-4 text-[#FF8000]" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                        4.5
+                    </span>
                 </div>
             </div>
-            <!-- Mobile cart toggle -->
-            <button class="lg:hidden relative w-12 h-12 bg-amber-500 hover:bg-amber-400 rounded-xl flex items-center justify-center transition-colors"
-                    @onclick="() => showMobileCart = !showMobileCart">
-                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                @if (cart.TotalQuantity > 0)
-                {
-                    <span class="absolute -top-1 -right-1 w-6 h-6 bg-red-500 rounded-full text-xs font-bold text-white flex items-center justify-center">@cart.TotalQuantity</span>
-                }
-            </button>
-        </div>
 
-        <!-- Category Tabs -->
-        <div class="flex gap-2 px-4 sm:px-6 py-3 overflow-x-auto bg-gray-800/30 border-b border-gray-700/30 scrollbar-hide">
-            <button class="px-5 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all active:scale-95 @(selectedCategoryId == null ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30" : "bg-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-700")"
-                    @onclick="() => selectedCategoryId = null">
-                All Items
-            </button>
-            @foreach (var cat in categories)
-            {
-                var catId = cat.Id;
-                var isActive = selectedCategoryId == catId;
-                <button class="px-5 py-2.5 text-sm font-semibold rounded-xl whitespace-nowrap transition-all active:scale-95 @(isActive ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30" : "bg-gray-700/60 text-gray-400 hover:text-white hover:bg-gray-700")"
-                        @onclick="() => selectedCategoryId = catId">
-                    @cat.Name
-                </button>
-            }
-        </div>
-
-        <!-- Item Grid -->
-        <div class="flex-1 overflow-y-auto p-4 sm:p-6 @(cart.TotalQuantity > 0 ? "pb-24 lg:pb-6" : "")">
-            @if (!initialized)
-            {
-                <div class="flex items-center justify-center h-full">
-                    <div class="flex items-center gap-3 text-gray-400">
-                        <div class="animate-spin rounded-full h-6 w-6 border-2 border-gray-600 border-t-amber-400"></div>
-                        <span>Loading menu...</span>
+            <!-- Sticky category nav + search -->
+            <div class="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm" id="category-nav">
+                <!-- Search Bar -->
+                <div class="px-4 sm:px-8 pt-3 pb-2">
+                    <div class="relative max-w-2xl">
+                        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" placeholder="Suche in @menu?.Name"
+                               class="w-full pl-10 pr-8 py-2 bg-gray-100 border-0 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#FF8000]/40 transition-all"
+                               @bind="searchQuery" @bind:event="oninput" />
+                        @if (!string.IsNullOrEmpty(searchQuery))
+                        {
+                            <button class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    @onclick="() => searchQuery = string.Empty">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        }
                     </div>
                 </div>
-            }
-            else if (!filteredItems.Any())
+                <!-- Category Pills -->
+                <div class="flex gap-2 px-4 sm:px-8 pb-3 overflow-x-auto" style="scrollbar-width: none; -ms-overflow-style: none;" id="category-pills">
+                    <button class="px-4 py-1.5 text-sm font-semibold rounded-full whitespace-nowrap transition-all @(selectedCategoryId == null && string.IsNullOrEmpty(searchQuery) ? "bg-[#FF8000] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
+                            @onclick="() => ScrollToCategory(null)">
+                        Beliebt
+                    </button>
+                    @foreach (var cat in categories)
+                    {
+                        var catId = cat.Id;
+                        var isActive = selectedCategoryId == catId;
+                        <button class="px-4 py-1.5 text-sm font-semibold rounded-full whitespace-nowrap transition-all @(isActive ? "bg-[#FF8000] text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200")"
+                                id="pill-@catId"
+                                @onclick="() => ScrollToCategory(catId)">
+                            @cat.Name
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- Menu Content -->
+            @if (!initialized)
             {
-                <div class="flex flex-col items-center justify-center h-full text-center text-gray-500">
-                    <p class="text-lg">No items in this category</p>
+                <!-- Skeleton Loading -->
+                <div class="px-4 sm:px-8 py-6 max-w-3xl">
+                    @for (int s = 0; s < 3; s++)
+                    {
+                        <div class="mb-8">
+                            <div class="h-7 w-32 bg-gray-200 rounded animate-pulse mb-4"></div>
+                            @for (int j = 0; j < 3; j++)
+                            {
+                                <div class="bg-white rounded-xl p-4 mb-3 flex gap-4">
+                                    <div class="flex-1">
+                                        <div class="h-4 w-40 bg-gray-200 rounded animate-pulse mb-2"></div>
+                                        <div class="h-3 w-56 bg-gray-100 rounded animate-pulse mb-2"></div>
+                                        <div class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+                                    </div>
+                                    <div class="w-20 h-20 bg-gray-200 rounded-lg animate-pulse flex-shrink-0"></div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else if (!searchFilteredItems.Any())
+            {
+                <div class="flex flex-col items-center justify-center py-20 text-center text-gray-400">
+                    <svg class="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <p class="text-lg font-medium text-gray-500">Keine Ergebnisse</p>
+                    <p class="text-sm text-gray-400 mt-1">Versuche einen anderen Suchbegriff</p>
                 </div>
             }
             else
             {
-            <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
-                @foreach (var item in filteredItems)
-                {
-                    var qty = cart.Items.Where(i => i.MenuItemId == item.Id).Sum(i => i.Quantity);
-                    var imgUrl = ImageUploadService.GetImageUrl(item.ImagePath);
-                    var hasImage = !string.IsNullOrEmpty(item.ImagePath);
-                    <button class="group relative bg-gray-800 hover:bg-gray-750 rounded-2xl overflow-hidden text-left transition-all active:scale-[0.97] border border-gray-700/50 hover:border-amber-500/50 hover:shadow-lg hover:shadow-amber-500/5"
-                            @onclick="() => HandleItemTap(item)">
-                        @if (qty > 0)
-                        {
-                            <div class="absolute top-2 right-2 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-lg shadow-amber-500/40 z-10">
-                                @qty
+                <div class="px-4 sm:px-8 py-6 max-w-3xl">
+
+                    @if (string.IsNullOrEmpty(searchQuery))
+                    {
+                        <!-- ══ Popular Items (horizontal scroll) ══ -->
+                        <section class="mb-8" id="cat-popular">
+                            <h2 class="text-lg font-bold text-gray-900 mb-3">Beliebt</h2>
+                            <div class="flex gap-3 overflow-x-auto pb-2" style="scrollbar-width: none; -ms-overflow-style: none;">
+                                @foreach (var item in popularItems)
+                                {
+                                    var qty = cart.Items.Where(i => i.MenuItemId == item.Id).Sum(i => i.Quantity);
+                                    <div class="flex-shrink-0 w-36 bg-white rounded-xl border border-gray-200 hover:border-[#FF8000]/40 hover:shadow-md transition-all cursor-pointer relative group overflow-hidden"
+                                         @onclick="() => HandleItemTap(item)">
+                                        @if (qty > 0)
+                                        {
+                                            <div class="absolute top-2 left-2 w-5 h-5 bg-[#FF8000] rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow z-10">@qty</div>
+                                        }
+                                        <!-- Placeholder image area -->
+                                        <div class="h-20 bg-gradient-to-br from-orange-50 to-amber-50 flex items-center justify-center">
+                                            <svg class="w-8 h-8 text-[#FF8000]/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                        </div>
+                                        <div class="p-3">
+                                            <p class="text-xs font-semibold text-gray-900 leading-tight line-clamp-2 mb-1.5">@item.Name</p>
+                                            <div class="flex items-center justify-between">
+                                                <p class="text-xs font-bold text-[#FF8000]">@item.Price.ToString("C")</p>
+                                                <div class="w-6 h-6 bg-[#FF8000] rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
                             </div>
-                        }
-                        @if (hasImage)
+                        </section>
+
+                        <!-- ══ All Categories ══ -->
+                        @foreach (var cat in categories)
                         {
-                            <div class="w-full aspect-[4/3] bg-gray-700">
-                                <img src="@imgUrl" alt="@item.Name" class="w-full h-full object-cover" loading="lazy" />
-                            </div>
-                        }
-                        <div class="p-4">
-                            <p class="font-semibold text-white text-sm sm:text-base leading-tight mb-1 line-clamp-2">@item.Name</p>
-                            @if (!hasImage && !string.IsNullOrEmpty(item.Description))
-                            {
-                                <p class="text-xs text-gray-500 line-clamp-2 mb-2">@item.Description</p>
-                            }
-                            <p class="text-amber-400 font-bold text-lg">@item.Price.ToString("C")</p>
-                            @if (HasCombo(item.Id))
-                            {
-                                <div class="mt-1.5 flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                    </svg>
-                                    <span class="text-[11px] text-orange-400 font-medium">Combo available</span>
+                            var catItems = allMenuItems.Where(i => i.CategoryId == cat.Id).ToList();
+                            if (!catItems.Any()) continue;
+
+                            <section class="mb-8" id="cat-@cat.Id">
+                                <h2 class="text-lg font-bold text-gray-900 mb-3">@cat.Name</h2>
+                                <div class="space-y-3">
+                                    @foreach (var item in catItems)
+                                    {
+                                        var qty = cart.Items.Where(i => i.MenuItemId == item.Id).Sum(i => i.Quantity);
+                                        <div class="bg-white rounded-xl border border-gray-200 hover:border-[#FF8000]/40 hover:shadow-md transition-all cursor-pointer p-4 flex gap-4 relative group"
+                                             @onclick="() => HandleItemTap(item)">
+                                            <!-- Left: text content -->
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-bold text-gray-900 leading-tight mb-1">@item.Name</p>
+                                                @if (!string.IsNullOrEmpty(item.Description))
+                                                {
+                                                    <p class="text-xs text-gray-400 line-clamp-2 mb-2">@item.Description</p>
+                                                }
+                                                <div class="flex items-center gap-2 mt-auto">
+                                                    <span class="text-sm font-bold text-[#FF8000]">@item.Price.ToString("C")</span>
+                                                    @if (HasCombo(item.Id))
+                                                    {
+                                                        <span class="inline-flex items-center gap-0.5 text-[10px] bg-orange-50 text-[#FF8000] font-semibold px-1.5 py-0.5 rounded-full">
+                                                            <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                                            Combo
+                                                        </span>
+                                                    }
+                                                </div>
+                                                @if (qty > 0)
+                                                {
+                                                    <div class="mt-2">
+                                                        <span class="text-[11px] font-bold text-[#FF8000] bg-orange-50 px-2 py-0.5 rounded-full">@qty im Warenkorb</span>
+                                                    </div>
+                                                }
+                                            </div>
+                                            <!-- Right: image placeholder -->
+                                            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex-shrink-0 flex items-center justify-center relative overflow-hidden">
+                                                <svg class="w-8 h-8 text-[#FF8000]/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                                <!-- Add button -->
+                                                <button class="absolute bottom-1 right-1 w-7 h-7 bg-[#FF8000] hover:bg-[#E67300] text-white rounded-full flex items-center justify-center shadow-md transition-colors"
+                                                        @onclick="() => HandleItemTap(item)" @onclick:stopPropagation="true">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
                                 </div>
-                            }
-                        </div>
-                    </button>
-                }
-            </div>
+                            </section>
+                        }
+                    }
+                    else
+                    {
+                        <!-- ══ Search Results ══ -->
+                        <section>
+                            <h2 class="text-lg font-bold text-gray-900 mb-3">Suchergebnisse</h2>
+                            <div class="space-y-3">
+                                @foreach (var item in searchFilteredItems)
+                                {
+                                    var qty = cart.Items.Where(i => i.MenuItemId == item.Id).Sum(i => i.Quantity);
+                                    var catName = categories.FirstOrDefault(c => c.Id == item.CategoryId)?.Name;
+                                    <div class="bg-white rounded-xl border border-gray-200 hover:border-[#FF8000]/40 hover:shadow-md transition-all cursor-pointer p-4 flex gap-4 relative group"
+                                         @onclick="() => HandleItemTap(item)">
+                                        <div class="flex-1 min-w-0">
+                                            @if (!string.IsNullOrEmpty(catName))
+                                            {
+                                                <p class="text-[11px] text-gray-400 mb-0.5">@catName</p>
+                                            }
+                                            <p class="text-sm font-bold text-gray-900 leading-tight mb-1">@item.Name</p>
+                                            @if (!string.IsNullOrEmpty(item.Description))
+                                            {
+                                                <p class="text-xs text-gray-400 line-clamp-2 mb-2">@item.Description</p>
+                                            }
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-sm font-bold text-[#FF8000]">@item.Price.ToString("C")</span>
+                                                @if (HasCombo(item.Id))
+                                                {
+                                                    <span class="inline-flex items-center gap-0.5 text-[10px] bg-orange-50 text-[#FF8000] font-semibold px-1.5 py-0.5 rounded-full">
+                                                        <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                                        Combo
+                                                    </span>
+                                                }
+                                            </div>
+                                            @if (qty > 0)
+                                            {
+                                                <div class="mt-2">
+                                                    <span class="text-[11px] font-bold text-[#FF8000] bg-orange-50 px-2 py-0.5 rounded-full">@qty im Warenkorb</span>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="w-20 h-20 rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 flex-shrink-0 flex items-center justify-center relative overflow-hidden">
+                                            <svg class="w-8 h-8 text-[#FF8000]/20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                            <button class="absolute bottom-1 right-1 w-7 h-7 bg-[#FF8000] hover:bg-[#E67300] text-white rounded-full flex items-center justify-center shadow-md transition-colors"
+                                                    @onclick="() => HandleItemTap(item)" @onclick:stopPropagation="true">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </section>
+                    }
+                </div>
             }
         </div>
 
-        <!-- Mobile bottom bar (shows when cart has items, hidden on lg where cart panel is visible) -->
+        <!-- Mobile floating cart button -->
         @if (cart.TotalQuantity > 0)
         {
-            <div class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-gray-800 border-t border-gray-700 px-4 py-3 safe-area-bottom">
-                <button class="w-full py-3.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-bold rounded-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-transform shadow-lg shadow-green-500/30"
+            <div class="lg:hidden fixed bottom-0 left-0 right-0 z-30 px-4 pb-4 pt-2" style="background: linear-gradient(transparent, rgba(249,250,251,0.95) 30%);">
+                <button class="w-full py-3.5 bg-[#FF8000] hover:bg-[#E67300] text-white font-bold rounded-full flex items-center justify-between px-6 active:scale-[0.98] transition-all shadow-lg"
                         @onclick="() => showMobileCart = true">
-                    <span class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-sm">@cart.TotalQuantity</span>
-                    <span>View Cart</span>
-                    <span>@cart.GrandTotal.ToString("C")</span>
+                    <span class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center text-sm font-bold">@cart.TotalQuantity</span>
+                    <span class="text-base">Warenkorb anzeigen</span>
+                    <span class="font-bold">@cart.GrandTotal.ToString("C")</span>
                 </button>
             </div>
         }
     </div>
 
-    <!-- ═══════════ RIGHT: CART ═══════════ -->
-    <div class="@(showMobileCart ? "fixed inset-0 z-40 lg:relative lg:inset-auto" : "hidden lg:flex") lg:flex lg:w-[400px] lg:flex-col bg-gray-800 border-l border-gray-700/50">
+    <!-- ═══════════ RIGHT: CART SIDEBAR ═══════════ -->
+    <div class="@(showMobileCart ? "fixed inset-0 z-40 lg:relative lg:inset-auto" : "hidden lg:flex") lg:flex lg:w-[380px] lg:flex-col lg:flex-shrink-0">
 
         <!-- Mobile backdrop -->
         @if (showMobileCart)
         {
-            <div class="lg:hidden fixed inset-0 bg-black/60" @onclick="() => showMobileCart = false"></div>
+            <div class="lg:hidden fixed inset-0 bg-black/40 z-40" @onclick="() => showMobileCart = false"></div>
         }
 
         <!-- Cart panel -->
-        <div class="relative z-10 flex flex-col h-full bg-gray-800 @(showMobileCart ? "ml-auto w-[85vw] max-w-[400px]" : "")">
+        <div class="relative z-50 lg:z-auto flex flex-col h-full bg-white shadow-lg lg:shadow-[-4px_0_20px_rgba(0,0,0,0.05)] lg:border-l lg:border-gray-200 lg:rounded-none @(showMobileCart ? "ml-auto w-[85vw] max-w-[400px] rounded-l-2xl" : "lg:rounded-2xl lg:m-4 lg:mb-4 lg:mt-4")">
 
             <!-- Cart Header -->
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-700/50">
-                <div>
-                    <h2 class="text-lg font-bold text-white">Your Order</h2>
-                    <p class="text-xs text-gray-500">@cart.TotalQuantity items</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    @if (cart.Items.Any())
-                    {
-                        <button class="text-xs text-red-400 hover:text-red-300 font-medium transition-colors"
-                                @onclick="ClearCart">Clear All</button>
-                    }
-                    <button class="lg:hidden w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-xl flex items-center justify-center transition-colors"
+            <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-lg font-extrabold text-gray-900">Deine Bestellung</h2>
+                        @if (cart.Items.Any())
+                        {
+                            <p class="text-xs text-gray-400 mt-0.5">@cart.TotalQuantity Artikel</p>
+                        }
+                    </div>
+                    <button class="lg:hidden w-8 h-8 bg-gray-100 hover:bg-gray-200 rounded-full flex items-center justify-center transition-colors"
                             @onclick="() => showMobileCart = false">
-                        <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
@@ -177,7 +344,7 @@
             <div class="flex-1 overflow-y-auto">
                 @if (cart.Items.Any())
                 {
-                    <div class="divide-y divide-gray-700/40">
+                    <div class="divide-y divide-gray-50">
                         @{ var rendered = new HashSet<int>(); }
                         @for (var idx = 0; idx < cart.Items.Count; idx++)
                         {
@@ -188,7 +355,6 @@
 
                             @if (cartItem.ComboId.HasValue && cartItem.IsComboTrigger)
                             {
-                                // ── Combo group ──
                                 var comboId = cartItem.ComboId.Value;
                                 var subItems = new List<PosCartItem>();
                                 for (var j = idx + 1; j < cart.Items.Count; j++)
@@ -201,32 +367,30 @@
                                 }
                                 var comboTotal = cartItem.LineTotal + subItems.Sum(s => s.LineTotal);
 
-                                <div class="px-6 py-4">
-                                    <!-- Combo header (tappable to edit quantity or remove) -->
-                                    <button class="w-full flex items-center gap-3 hover:bg-gray-700/30 rounded-xl -mx-2 px-2 py-1 transition-colors text-left"
+                                <div class="px-5 py-4">
+                                    <button class="w-full flex items-start gap-3 hover:bg-gray-50 rounded-lg -mx-1 px-1 py-1 transition-colors text-left"
                                             @onclick="() => OpenComboDetail(itemIdx)">
-                                        <div class="w-9 h-9 bg-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                                            <span class="text-sm font-bold text-white">@cartItem.Quantity</span>
+                                        <div class="w-7 h-7 bg-[#FF8000]/10 text-[#FF8000] rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <span class="text-xs font-bold">@cartItem.Quantity</span>
                                         </div>
                                         <div class="flex-1 min-w-0">
-                                            <p class="text-sm font-medium text-white truncate">@cartItem.Name</p>
-                                            <span class="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded-full font-semibold">COMBO</span>
+                                            <p class="text-sm font-semibold text-gray-900 truncate">@cartItem.Name</p>
+                                            <span class="text-[10px] px-1.5 py-0.5 bg-[#FF8000]/10 text-[#FF8000] rounded font-semibold">COMBO</span>
                                         </div>
-                                        <span class="text-sm font-semibold text-amber-400">@comboTotal.ToString("C")</span>
+                                        <span class="text-sm font-semibold text-gray-700 flex-shrink-0">@comboTotal.ToString("C")</span>
                                     </button>
-                                    <!-- Sub-items (not individually editable) -->
-                                    <div class="ml-12 mt-2 space-y-1.5 border-l-2 border-gray-700 pl-3">
+                                    <div class="ml-10 mt-1.5 space-y-0.5 border-l-2 border-gray-100 pl-3">
                                         @foreach (var sub in subItems)
                                         {
                                             <div class="flex items-center justify-between">
-                                                <p class="text-xs text-gray-400">@sub.Name</p>
+                                                <p class="text-[11px] text-gray-400">@sub.Name</p>
                                                 @if (sub.UnitPrice > 0)
                                                 {
-                                                    <span class="text-xs text-gray-500">@sub.UnitPrice.ToString("C")</span>
+                                                    <span class="text-[11px] text-gray-400">@sub.UnitPrice.ToString("C")</span>
                                                 }
                                                 else
                                                 {
-                                                    <span class="text-xs text-green-500">included</span>
+                                                    <span class="text-[11px] text-green-600">inkl.</span>
                                                 }
                                             </div>
                                         }
@@ -235,32 +399,39 @@
                             }
                             else if (!cartItem.ComboId.HasValue)
                             {
-                                // ── Regular item (tappable to edit quantity) ──
-                                <button class="w-full px-6 py-4 flex items-center gap-3 hover:bg-gray-700/30 transition-colors text-left"
+                                <button class="w-full px-5 py-4 flex items-start gap-3 hover:bg-gray-50 transition-colors text-left"
                                         @onclick="() => OpenItemDetail(itemIdx)">
-                                    <div class="w-9 h-9 bg-gray-700 rounded-xl flex items-center justify-center flex-shrink-0">
-                                        <span class="text-sm font-bold text-white">@cartItem.Quantity</span>
+                                    <div class="w-7 h-7 bg-gray-100 text-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <span class="text-xs font-bold">@cartItem.Quantity</span>
                                     </div>
                                     <div class="flex-1 min-w-0">
-                                        <p class="text-sm font-medium text-white truncate">@cartItem.Name</p>
-                                        <p class="text-xs text-gray-500">@cartItem.UnitPrice.ToString("C") each</p>
+                                        <p class="text-sm font-semibold text-gray-900 truncate">@cartItem.Name</p>
+                                        <p class="text-[11px] text-gray-400">@cartItem.UnitPrice.ToString("C") pro Stk.</p>
                                     </div>
-                                    <span class="text-sm font-semibold text-white">@cartItem.LineTotal.ToString("C")</span>
+                                    <span class="text-sm font-semibold text-gray-700 flex-shrink-0">@cartItem.LineTotal.ToString("C")</span>
                                 </button>
                             }
                         }
                     </div>
+
+                    @if (cart.Items.Any())
+                    {
+                        <div class="px-5 py-2">
+                            <button class="text-xs text-gray-400 hover:text-[#FF8000] font-medium transition-colors"
+                                    @onclick="ClearCart">Alles entfernen</button>
+                        </div>
+                    }
                 }
                 else
                 {
-                    <div class="flex flex-col items-center justify-center h-full text-center px-8">
-                        <div class="w-16 h-16 bg-gray-700/50 rounded-2xl flex items-center justify-center mb-4">
-                            <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <div class="flex flex-col items-center justify-center h-full text-center px-8 py-12">
+                        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                            <svg class="w-10 h-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                             </svg>
                         </div>
-                        <p class="text-gray-500 text-sm">Your cart is empty</p>
-                        <p class="text-gray-600 text-xs mt-1">Tap items on the left to add them</p>
+                        <h3 class="text-base font-bold text-gray-800 mb-1">Dein Warenkorb ist leer</h3>
+                        <p class="text-sm text-gray-400 leading-relaxed">Artikel hinzufuegen um deine Bestellung zu starten</p>
                     </div>
                 }
             </div>
@@ -268,26 +439,30 @@
             <!-- Totals + Checkout -->
             @if (cart.Items.Any())
             {
-                <div class="border-t border-gray-700/50 bg-gray-800">
-                    <div class="px-6 py-4 space-y-1.5">
+                <div class="border-t border-gray-200 bg-white rounded-b-2xl">
+                    <div class="px-5 py-4 space-y-1.5">
                         <div class="flex justify-between text-sm text-gray-500">
-                            <span>Subtotal</span>
+                            <span>Zwischensumme</span>
                             <span>@cart.SubTotal.ToString("C")</span>
                         </div>
                         <div class="flex justify-between text-sm text-gray-500">
-                            <span>Tax (@((defaultTaxRate * 100).ToString("0.##"))%)</span>
+                            <span>Lieferkosten</span>
+                            <span class="text-green-600 font-medium">Gratis</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-400">
+                            <span>MwSt. (@((defaultTaxRate * 100).ToString("0.##"))%)</span>
                             <span>@cart.TaxAmount.ToString("C")</span>
                         </div>
-                        <div class="flex justify-between text-xl font-bold text-white pt-2 border-t border-gray-700">
-                            <span>Total</span>
+                        <div class="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
+                            <span>Gesamt</span>
                             <span>@cart.GrandTotal.ToString("C")</span>
                         </div>
                     </div>
 
-                    <div class="px-6 pb-6">
-                        <button class="w-full py-4 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-400 hover:to-emerald-400 text-white text-lg font-bold rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-green-500/30"
+                    <div class="px-5 pb-5">
+                        <button class="w-full py-3.5 bg-[#FF8000] hover:bg-[#E67300] text-white text-base font-bold rounded-full transition-all active:scale-[0.98] shadow-md"
                                 @onclick="OpenCheckout">
-                            Checkout · @cart.GrandTotal.ToString("C")
+                            Zur Kasse &middot; @cart.GrandTotal.ToString("C")
                         </button>
                     </div>
                 </div>
@@ -320,6 +495,9 @@
     private bool showMobileCart;
     private bool initialized;
 
+    // Search
+    private string searchQuery = string.Empty;
+
     // Modal state
     private PosComboOfferModal comboModal = default!;
     private PosItemDetailModal itemDetailModal = default!;
@@ -333,6 +511,28 @@
 
     private IEnumerable<MenuItem> filteredItems =>
         selectedCategoryId == null ? allMenuItems : allMenuItems.Where(i => i.CategoryId == selectedCategoryId);
+
+    private IEnumerable<MenuItem> searchFilteredItems =>
+        string.IsNullOrEmpty(searchQuery)
+            ? filteredItems
+            : allMenuItems.Where(i => i.Name.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrEmpty(i.Description) && i.Description.Contains(searchQuery, StringComparison.OrdinalIgnoreCase)));
+
+    private IEnumerable<MenuItem> popularItems => allMenuItems.Take(8);
+
+    private void SelectCategory(Guid? catId)
+    {
+        selectedCategoryId = catId;
+        searchQuery = string.Empty;
+    }
+
+    private async Task ScrollToCategory(Guid? catId)
+    {
+        selectedCategoryId = catId;
+        searchQuery = string.Empty;
+        var elementId = catId == null ? "cat-popular" : $"cat-{catId}";
+        await JS.InvokeVoidAsync("eval", $"document.getElementById('{elementId}')?.scrollIntoView({{behavior:'smooth',block:'start'}})");
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -362,7 +562,6 @@
     {
         if (firstRender)
         {
-            // Restore or create session
             var storedId = await JS.InvokeAsync<string?>("sessionStorage.getItem", $"pos_sid_{MenuId}");
             if (!string.IsNullOrEmpty(storedId) && Guid.TryParse(storedId, out var parsed))
             {
@@ -379,7 +578,7 @@
         }
     }
 
-    // ════════════════ CART OPERATIONS (server-side via PosSessionService) ════════════════
+    // ════════════════ CART OPERATIONS ════════════════
 
     private void SaveCart()
     {
@@ -550,7 +749,6 @@
 
     private async Task StartNewOrder()
     {
-        // New session for next customer
         sessionId = SessionService.CreateSessionId();
         await JS.InvokeVoidAsync("sessionStorage.setItem", $"pos_sid_{MenuId}", sessionId.ToString());
         cart = SessionService.GetCart(sessionId);
