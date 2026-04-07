@@ -2,76 +2,312 @@
 @page "/pos/kiosk"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@using Microsoft.JSInterop
 @using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
 @layout PosLayout
 @inject ApplicationDbContext Context
 @inject NavigationManager NavManager
+@inject IPosLocationService LocationService
+@inject IJSRuntime JS
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
 
-<PageTitle>Order Here</PageTitle>
+<PageTitle>SpeiseDirekt – Essen bestellen</PageTitle>
 
-<div class="flex-1 flex flex-col items-center justify-center px-6 py-12">
-    <!-- Logo / Welcome -->
-    <div class="text-center mb-12">
-        <div class="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-xl shadow-amber-500/20">
-            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
+<!-- Hero Section -->
+<div class="relative overflow-hidden" style="background: linear-gradient(135deg, #FF8000 0%, #FF6B00 100%);">
+    <div class="max-w-3xl mx-auto px-4 py-16 sm:py-24 text-center">
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-white mb-3 leading-tight">
+            Was möchtest du essen?
+        </h1>
+        <p class="text-white/80 text-lg sm:text-xl mb-8">
+            Gib deine Adresse ein, um Restaurants in deiner Nähe zu finden
+        </p>
+
+        <!-- Address Search -->
+        <div class="relative max-w-xl mx-auto" @onfocusout="HandleFocusOut">
+            <div class="flex items-center bg-white rounded-full shadow-xl overflow-hidden pl-4 pr-1.5 py-1.5">
+                <!-- Location pin icon -->
+                <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <input type="text"
+                       class="flex-1 px-3 py-2.5 text-gray-800 placeholder-gray-400 text-base sm:text-lg outline-none bg-transparent"
+                       placeholder="Straße, Stadt oder PLZ eingeben..."
+                       @bind="searchQuery"
+                       @bind:event="oninput"
+                       @bind:after="OnSearchInput"
+                       @onfocus="() => showDropdown = searchResults?.Count > 0" />
+                <button class="flex items-center justify-center px-5 py-2.5 rounded-full text-white font-semibold text-sm shrink-0"
+                        style="background-color: #FF8000;"
+                        @onclick="PerformSearch">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Search Results Dropdown -->
+            @if (showDropdown && searchResults?.Count > 0)
+            {
+                <div class="absolute left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl z-50 overflow-hidden border border-gray-100 max-h-72 overflow-y-auto">
+                    @foreach (var result in searchResults)
+                    {
+                        <button class="w-full text-left px-5 py-3.5 hover:bg-orange-50 transition-colors flex items-start gap-3 border-b border-gray-50 last:border-0"
+                                @onclick="() => SelectLocation(result)">
+                            <svg class="w-5 h-5 text-orange-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <div>
+                                <div class="text-gray-900 font-medium text-sm">
+                                    @result.Street @result.HouseNumber
+                                </div>
+                                <div class="text-gray-500 text-xs">
+                                    @result.PostalCode @result.City
+                                </div>
+                            </div>
+                        </button>
+                    }
+                </div>
+            }
         </div>
-        <h1 class="text-4xl sm:text-5xl font-bold text-white font-display mb-3">Welcome</h1>
-        <p class="text-xl text-gray-400">Tap a menu to start your order</p>
-    </div>
 
-    <!-- Menu Cards -->
+        <!-- Use Current Location -->
+        <button class="mt-4 inline-flex items-center gap-2 text-white/90 hover:text-white text-sm font-medium transition-colors"
+                @onclick="UseCurrentLocation"
+                disabled="@isLocating">
+            @if (isLocating)
+            {
+                <div class="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white"></div>
+                <span>Standort wird ermittelt...</span>
+            }
+            else
+            {
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="3" stroke-width="2" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v4m0 12v4m10-10h-4M6 12H2" />
+                </svg>
+                <span>Aktuellen Standort verwenden</span>
+            }
+        </button>
+
+        <!-- Selected Address Display -->
+        @if (selectedAddress != null)
+        {
+            <div class="mt-4 inline-flex items-center gap-2 bg-white/20 backdrop-blur rounded-full px-4 py-2 text-white text-sm">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
+                <span>@selectedAddress.Street @selectedAddress.HouseNumber, @selectedAddress.PostalCode @selectedAddress.City</span>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Restaurant Listing -->
+<div class="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+    <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-6">
+        @(selectedAddress != null ? "Restaurants in deiner Nähe" : "Alle Restaurants")
+    </h2>
+
     @if (menus != null && menus.Any())
     {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl w-full">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             @foreach (var menu in menus)
             {
-                <button class="group relative overflow-hidden bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl p-8 text-left hover:from-amber-600 hover:to-orange-600 transition-all duration-300 shadow-lg hover:shadow-2xl hover:shadow-amber-500/20 hover:scale-[1.02] active:scale-[0.98]"
-                        @onclick="() => GoToMenu(menu.Id)">
-                    <div class="relative z-10">
-                        <h2 class="text-2xl font-bold text-white mb-2 group-hover:text-white">@menu.Name</h2>
-                        <p class="text-gray-400 group-hover:text-amber-100 text-sm">@menu.Description</p>
-                        <div class="mt-6 flex items-center text-amber-400 group-hover:text-white font-semibold">
-                            <span>Start Order</span>
-                            <svg class="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                            </svg>
+                <a href="/pos/@menu.Id"
+                   class="group bg-white rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 overflow-hidden transition-all duration-200 hover:-translate-y-0.5 block no-underline">
+                    <!-- Card image placeholder -->
+                    <div class="h-36 bg-gradient-to-br from-orange-100 to-amber-50 flex items-center justify-center">
+                        <svg class="w-12 h-12 text-orange-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-lg font-bold text-gray-900 mb-1 group-hover:text-orange-600 transition-colors">
+                            @menu.Name
+                        </h3>
+                        @if (!string.IsNullOrEmpty(menu.Description))
+                        {
+                            <p class="text-gray-500 text-sm line-clamp-2 mb-3">@menu.Description</p>
+                        }
+                        <div class="flex items-center gap-3 text-xs text-gray-400">
+                            <span class="flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Lieferung 30–45 Min.
+                            </span>
+                            <span>·</span>
+                            <span>Min. €10,00</span>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-100">
+                            <span class="text-sm font-semibold text-orange-500 group-hover:text-orange-600 transition-colors flex items-center gap-1">
+                                Bestellen
+                                <svg class="w-4 h-4 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </span>
                         </div>
                     </div>
-                </button>
+                </a>
             }
         </div>
     }
     else if (menus != null)
     {
-        <div class="text-center text-gray-500">
-            <p class="text-lg">No menus available at this time.</p>
+        <div class="text-center py-12 text-gray-400">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+            <p class="text-lg">Derzeit sind keine Restaurants verfügbar.</p>
         </div>
     }
     else
     {
-        <div class="flex items-center gap-3 text-gray-400">
-            <div class="animate-spin rounded-full h-6 w-6 border-2 border-gray-600 border-t-amber-400"></div>
-            <span>Loading...</span>
+        <div class="flex items-center justify-center gap-3 py-12 text-gray-400">
+            <div class="animate-spin rounded-full h-6 w-6 border-2 border-gray-300 border-t-orange-500"></div>
+            <span>Wird geladen...</span>
         </div>
     }
 </div>
 
-<!-- Footer -->
-<div class="text-center py-4 text-gray-600 text-xs">
-    Powered by Speise-Direkt
-</div>
-
 @code {
     private List<Menu>? menus;
+    private string searchQuery = "";
+    private List<LocationResult>? searchResults;
+    private LocationResult? selectedAddress;
+    private bool showDropdown;
+    private bool isLocating;
+    private System.Timers.Timer? debounceTimer;
 
     protected override async Task OnInitializedAsync()
     {
         menus = await Context.Menus.IgnoreQueryFilters().OrderBy(m => m.Name).ToListAsync();
     }
 
-    private void GoToMenu(Guid menuId) => NavManager.NavigateTo($"/pos/{menuId}");
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Restore saved address from sessionStorage
+            var saved = await JS.InvokeAsync<string?>("sessionStorage.getItem", "pos_delivery_address");
+            if (!string.IsNullOrEmpty(saved))
+            {
+                try
+                {
+                    selectedAddress = System.Text.Json.JsonSerializer.Deserialize<LocationResult>(saved);
+                    if (selectedAddress != null)
+                    {
+                        searchQuery = $"{selectedAddress.Street} {selectedAddress.HouseNumber}, {selectedAddress.PostalCode} {selectedAddress.City}";
+                    }
+                    StateHasChanged();
+                }
+                catch { /* ignore invalid stored data */ }
+            }
+        }
+    }
+
+    private void OnSearchInput()
+    {
+        debounceTimer?.Stop();
+        debounceTimer?.Dispose();
+
+        if (string.IsNullOrWhiteSpace(searchQuery) || searchQuery.Length < 3)
+        {
+            searchResults = null;
+            showDropdown = false;
+            return;
+        }
+
+        debounceTimer = new System.Timers.Timer(500);
+        debounceTimer.AutoReset = false;
+        debounceTimer.Elapsed += async (_, _) =>
+        {
+            await InvokeAsync(async () =>
+            {
+                await PerformSearch();
+                StateHasChanged();
+            });
+        };
+        debounceTimer.Start();
+    }
+
+    private async Task PerformSearch()
+    {
+        if (string.IsNullOrWhiteSpace(searchQuery) || searchQuery.Length < 3) return;
+
+        searchResults = await LocationService.SearchAsync(searchQuery, "de");
+        showDropdown = searchResults.Count > 0;
+    }
+
+    private async Task SelectLocation(LocationResult result)
+    {
+        selectedAddress = result;
+        searchQuery = $"{result.Street} {result.HouseNumber}, {result.PostalCode} {result.City}";
+        showDropdown = false;
+
+        var json = System.Text.Json.JsonSerializer.Serialize(result);
+        await JS.InvokeVoidAsync("sessionStorage.setItem", "pos_delivery_address", json);
+    }
+
+    private async Task UseCurrentLocation()
+    {
+        isLocating = true;
+        StateHasChanged();
+
+        try
+        {
+            var coords = await JS.InvokeAsync<double[]>("eval", @"
+                new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => resolve([pos.coords.latitude, pos.coords.longitude]),
+                        err => reject(err.message),
+                        { enableHighAccuracy: true, timeout: 10000 }
+                    );
+                })
+            ");
+
+            if (coords is { Length: 2 })
+            {
+                var result = await LocationService.ReverseGeocodeAsync(coords[0], coords[1]);
+                if (result != null)
+                {
+                    await SelectLocation(result);
+                }
+            }
+        }
+        catch
+        {
+            // Geolocation denied or unavailable - silently ignore
+        }
+        finally
+        {
+            isLocating = false;
+            StateHasChanged();
+        }
+    }
+
+    private void HandleFocusOut()
+    {
+        // Small delay to allow click events on dropdown items to fire first
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(200);
+            await InvokeAsync(() =>
+            {
+                showDropdown = false;
+                StateHasChanged();
+            });
+        });
+    }
+
+    public void Dispose()
+    {
+        debounceTimer?.Stop();
+        debounceTimer?.Dispose();
+    }
 }
