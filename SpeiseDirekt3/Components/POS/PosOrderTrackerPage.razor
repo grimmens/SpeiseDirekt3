@@ -1,0 +1,363 @@
+@page "/pos/track/{TrackingCode}"
+@page "/pos/orders"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@layout PosLayout
+@inject IOrderService OrderService
+@inject NavigationManager NavManager
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
+@implements IDisposable
+
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-lg mx-auto px-4 py-6">
+
+        @if (string.IsNullOrEmpty(TrackingCode))
+        {
+            <!-- Mode 1: Lookup form -->
+            <div class="mt-12">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+                    <!-- Icon -->
+                    <div class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center" style="background-color: rgba(255, 128, 0, 0.1);">
+                        <svg class="w-8 h-8" style="color: #FF8000;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+
+                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Bestellung verfolgen</h1>
+                    <p class="text-gray-500 text-sm mb-6">Gib deinen 6-stelligen Bestellcode ein</p>
+
+                    <EditForm Model="@lookupModel" OnValidSubmit="NavigateToTracking" FormName="tracking-lookup">
+                        <div class="mb-5">
+                            <input type="text"
+                                   @bind="lookupModel.Code"
+                                   maxlength="6"
+                                   placeholder="ABC123"
+                                   class="w-full text-center text-3xl font-mono font-bold tracking-[0.3em] uppercase py-4 px-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#FF8000] transition-colors bg-gray-50" />
+                        </div>
+                        <button type="submit"
+                                class="w-full py-4 text-lg font-bold text-white rounded-full transition-all active:scale-[0.98]"
+                                style="background-color: #FF8000;"
+                                disabled="@(string.IsNullOrWhiteSpace(lookupModel.Code))">
+                            Bestellung suchen
+                        </button>
+                    </EditForm>
+                </div>
+            </div>
+        }
+        else if (isLoading)
+        {
+            <!-- Loading spinner -->
+            <div class="flex items-center justify-center py-20">
+                <div class="w-10 h-10 border-4 border-gray-200 rounded-full animate-spin" style="border-top-color: #FF8000;"></div>
+            </div>
+        }
+        else if (order == null)
+        {
+            <!-- Error: not found -->
+            <div class="mt-12">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+                    <div class="w-16 h-16 mx-auto mb-5 bg-red-100 rounded-full flex items-center justify-center">
+                        <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-2">Bestellung nicht gefunden</h2>
+                    <p class="text-gray-500 text-sm mb-6">Der Code „@TrackingCode" konnte keiner Bestellung zugeordnet werden.</p>
+                    <button @onclick="GoToLookup"
+                            class="w-full py-3 text-base font-semibold text-white rounded-full transition-all active:scale-[0.98]"
+                            style="background-color: #FF8000;">
+                        Erneut versuchen
+                    </button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Mode 2: Order tracking view -->
+
+            <!-- Header -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between">
+                    <h1 class="text-xl font-bold text-gray-900">Bestellung #@order.OrderNumber</h1>
+                    <span class="px-3 py-1 text-xs font-mono font-bold rounded-full tracking-wider text-white" style="background-color: #FF8000;">
+                        @order.TrackingCode
+                    </span>
+                </div>
+            </div>
+
+            @if (order.Status == OrderStatus.Cancelled)
+            {
+                <!-- Cancelled state -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center mb-6">
+                    <div class="w-20 h-20 mx-auto mb-5 bg-red-100 rounded-full flex items-center justify-center">
+                        <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-red-600 mb-2">Bestellung storniert</h2>
+                    @if (!string.IsNullOrEmpty(order.CancellationReason))
+                    {
+                        <p class="text-gray-500 text-sm">@order.CancellationReason</p>
+                    }
+                    @if (order.CancelledAt.HasValue)
+                    {
+                        <p class="text-gray-400 text-xs mt-2">Storniert am @order.CancelledAt.Value.ToString("dd.MM.yyyy, HH:mm") Uhr</p>
+                    }
+                </div>
+            }
+            else
+            {
+                <!-- Status timeline -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <div class="relative pl-10">
+                        @foreach (var (step, index) in timelineSteps.Select((s, i) => (s, i)))
+                        {
+                            var isReached = GetStepIndex(order.Status) >= index;
+                            var isCurrent = GetStepIndex(order.Status) == index;
+                            var isLast = index == timelineSteps.Count - 1;
+
+                            <div class="relative @(isLast ? "" : "pb-8")">
+                                @* Vertical line *@
+                                @if (!isLast)
+                                {
+                                    <div class="absolute left-[-24px] top-8 w-0.5 h-full @(isReached && GetStepIndex(order.Status) > index ? "" : "bg-gray-200")"
+                                         style="@(isReached && GetStepIndex(order.Status) > index ? "background-color: #FF8000;" : "")"></div>
+                                }
+
+                                @* Circle *@
+                                <div class="absolute left-[-32px] top-0.5 flex items-center justify-center">
+                                    @if (isReached)
+                                    {
+                                        <div class="w-[18px] h-[18px] rounded-full flex items-center justify-center @(isCurrent ? "animate-[pulse_2s_ease-in-out_infinite]" : "")"
+                                             style="background-color: @(index == timelineSteps.Count - 1 && isReached ? "#22c55e" : "#FF8000");">
+                                            <svg class="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="w-[18px] h-[18px] rounded-full border-2 border-gray-300 bg-white"></div>
+                                    }
+                                </div>
+
+                                @* Label & timestamp *@
+                                <div>
+                                    <p class="text-sm font-semibold @(isReached ? "text-gray-900" : "text-gray-400")">@step.Label</p>
+                                    @if (isReached && step.GetTimestamp(order) is DateTime ts)
+                                    {
+                                        <p class="text-xs text-gray-400 mt-0.5">@ts.ToString("HH:mm") Uhr</p>
+                                    }
+                                    else if (isCurrent)
+                                    {
+                                        <p class="text-xs mt-0.5" style="color: #FF8000;">Aktuell</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Estimated time card -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 mb-6">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center" style="background-color: rgba(255, 128, 0, 0.1);">
+                            <svg class="w-5 h-5" style="color: #FF8000;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Voraussichtliche Fertigstellung</p>
+                            <p class="text-base font-bold text-gray-900">
+                                @if (order.EstimatedReadyAt.HasValue)
+                                {
+                                    @order.EstimatedReadyAt.Value.ToString("HH:mm") <text> Uhr</text>
+                                }
+                                else
+                                {
+                                    <text>ca. 15–20 Minuten</text>
+                                }
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Progress bar -->
+                    <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all duration-1000 ease-out animate-[pulse_3s_ease-in-out_infinite]"
+                             style="background-color: #FF8000; width: @(GetProgressPercent())%;">
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Order details (collapsible) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+                <button @onclick="() => detailsExpanded = !detailsExpanded"
+                        class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-50 transition-colors">
+                    <span class="text-base font-semibold text-gray-900">Bestelldetails</span>
+                    <svg class="w-5 h-5 text-gray-400 transition-transform duration-200 @(detailsExpanded ? "rotate-180" : "")"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+
+                @if (detailsExpanded)
+                {
+                    <div class="border-t border-gray-100">
+                        <!-- Items -->
+                        <div class="px-6 py-4 space-y-3">
+                            @foreach (var item in order.Items)
+                            {
+                                <div class="flex justify-between items-start">
+                                    <div class="flex items-start gap-3">
+                                        <span class="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">@item.Quantity</span>
+                                        <span class="text-sm text-gray-900 font-medium">@item.ItemName</span>
+                                    </div>
+                                    <span class="text-sm text-gray-600 font-medium">@item.LineTotal.ToString("C")</span>
+                                </div>
+                            }
+                        </div>
+
+                        <!-- Totals -->
+                        <div class="border-t border-gray-100 px-6 py-4">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm text-gray-400">Zwischensumme</span>
+                                <span class="text-sm text-gray-600">@order.SubTotal.ToString("C")</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-gray-400">MwSt.</span>
+                                <span class="text-sm text-gray-600">@order.TaxAmount.ToString("C")</span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t border-gray-100">
+                                <span class="text-base font-bold text-gray-900">Gesamt</span>
+                                <span class="text-base font-bold" style="color: #FF8000;">@order.GrandTotal.ToString("C")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Back to menu -->
+            <a href="/pos"
+               class="block w-full py-3.5 text-center text-base font-semibold text-gray-600 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors active:scale-[0.98]">
+                Zurück zum Menü
+            </a>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string? TrackingCode { get; set; }
+
+    private Order? order;
+    private bool isLoading;
+    private bool detailsExpanded;
+    private LookupModel lookupModel = new();
+    private Timer? pollingTimer;
+
+    private class LookupModel
+    {
+        public string? Code { get; set; }
+    }
+
+    private record TimelineStep(string Label, Func<Order, DateTime?> GetTimestamp);
+
+    private readonly List<TimelineStep> timelineSteps = new()
+    {
+        new("Eingegangen", o => o.CreatedAt),
+        new("In Zubereitung", o => o.Status >= OrderStatus.Preparing ? o.UpdatedAt : null),
+        new("Bereit zur Abholung", o => o.Status >= OrderStatus.Ready ? o.UpdatedAt : null),
+        new("Abgeschlossen", o => o.CompletedAt)
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(TrackingCode))
+        {
+            isLoading = true;
+            StateHasChanged();
+
+            order = await OrderService.GetByTrackingCodeAsync(TrackingCode);
+            isLoading = false;
+
+            StartPolling();
+        }
+        else
+        {
+            StopPolling();
+            order = null;
+        }
+    }
+
+    private void StartPolling()
+    {
+        StopPolling();
+
+        if (order != null && order.Status != OrderStatus.Completed && order.Status != OrderStatus.Cancelled)
+        {
+            pollingTimer = new Timer(async _ =>
+            {
+                var updated = await OrderService.GetByTrackingCodeAsync(TrackingCode!);
+                if (updated != null)
+                {
+                    order = updated;
+                    await InvokeAsync(StateHasChanged);
+                }
+
+                if (order?.Status == OrderStatus.Completed || order?.Status == OrderStatus.Cancelled)
+                {
+                    StopPolling();
+                }
+            }, null, TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+        }
+    }
+
+    private void StopPolling()
+    {
+        pollingTimer?.Dispose();
+        pollingTimer = null;
+    }
+
+    private void NavigateToTracking()
+    {
+        if (!string.IsNullOrWhiteSpace(lookupModel.Code))
+        {
+            NavManager.NavigateTo($"/pos/track/{lookupModel.Code.Trim().ToUpper()}");
+        }
+    }
+
+    private void GoToLookup()
+    {
+        NavManager.NavigateTo("/pos/orders");
+    }
+
+    private static int GetStepIndex(OrderStatus status) => status switch
+    {
+        OrderStatus.Confirmed => 0,
+        OrderStatus.Preparing => 1,
+        OrderStatus.Ready => 2,
+        OrderStatus.Completed => 3,
+        _ => -1
+    };
+
+    private int GetProgressPercent()
+    {
+        if (order == null) return 0;
+        return order.Status switch
+        {
+            OrderStatus.Confirmed => 15,
+            OrderStatus.Preparing => 50,
+            OrderStatus.Ready => 85,
+            OrderStatus.Completed => 100,
+            _ => 0
+        };
+    }
+
+    public void Dispose()
+    {
+        StopPolling();
+    }
+}
