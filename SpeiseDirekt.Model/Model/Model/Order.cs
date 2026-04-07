@@ -52,6 +52,29 @@ namespace SpeiseDirekt.Model
         [StringLength(500)]
         public string? CancellationReason { get; set; }
 
+        [StringLength(6)]
+        public string? TrackingCode { get; set; }
+
+        public DateTime? EstimatedReadyAt { get; set; }
+
+        [StringLength(200)]
+        public string? CustomerEmail { get; set; }
+
+        [StringLength(200)]
+        public string? CustomerName { get; set; }
+
+        [StringLength(50)]
+        public string? CustomerPhone { get; set; }
+
+        [StringLength(300)]
+        public string? DeliveryStreet { get; set; }
+
+        [StringLength(200)]
+        public string? DeliveryCity { get; set; }
+
+        [StringLength(20)]
+        public string? DeliveryPostalCode { get; set; }
+
         public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 
         public Guid ApplicationUserId { get; set; }

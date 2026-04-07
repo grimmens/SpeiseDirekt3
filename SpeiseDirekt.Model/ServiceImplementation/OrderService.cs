@@ -253,6 +253,7 @@ public class OrderService : IOrderService
         }
 
         RecalculateTotals(order);
+        order.TrackingCode = GenerateTrackingCode();
         _db.Orders.Add(order);
         await _db.SaveChangesAsync();
         return order;
@@ -261,6 +262,13 @@ public class OrderService : IOrderService
     public Task<List<Order>> GetActiveOrdersAsync() => _orderRepo.GetActiveOrdersAsync();
     public Task<List<Order>> GetOrderHistoryAsync(int page = 1, int pageSize = 20) => _orderRepo.GetAllAsync(page, pageSize);
     public Task<Order?> GetByIdAsync(Guid id) => _orderRepo.GetByIdAsync(id);
+
+    public async Task<Order?> GetByTrackingCodeAsync(string trackingCode)
+    {
+        return await _db.Orders.IgnoreQueryFilters()
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.TrackingCode == trackingCode);
+    }
 
     private async Task<OrderItem> BuildPosOrderItemAsync(CreateOrderItemDto dto, decimal defaultTaxRate, Guid ownerId)
     {
@@ -361,6 +369,13 @@ public class OrderService : IOrderService
     {
         if (order.Status != OrderStatus.Draft)
             throw new InvalidOperationException($"Order must be in Draft status to modify items. Current status: {order.Status}.");
+    }
+
+    private static string GenerateTrackingCode()
+    {
+        const string chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        var random = new Random();
+        return new string(Enumerable.Range(0, 6).Select(_ => chars[random.Next(chars.Length)]).ToArray());
     }
 
     private static void ValidateStatusTransition(OrderStatus current, OrderStatus target)
