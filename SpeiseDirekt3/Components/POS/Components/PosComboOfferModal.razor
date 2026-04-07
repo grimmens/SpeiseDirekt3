@@ -1,86 +1,101 @@
 @using SpeiseDirekt.Model
 
-<!-- Fullscreen combo offer overlay - McDonald's style upsell -->
-<div class="fixed inset-0 z-50 flex items-center justify-center @(isVisible ? "" : "hidden")"
-     style="background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);">
-    <div class="max-w-lg w-full mx-4 animate-[scaleIn_0.2s_ease-out]">
-        @if (Combo != null && TriggerItem != null)
-        {
-            <!-- Header -->
-            <div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-t-3xl px-8 pt-8 pb-6 text-center">
-                <div class="w-16 h-16 mx-auto mb-4 bg-white/20 rounded-full flex items-center justify-center">
-                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                </div>
-                <h2 class="text-2xl font-bold text-white mb-1">Make it a Combo?</h2>
-                <p class="text-amber-100">Save with the @Combo.Name</p>
+<!-- Combo offer backdrop -->
+@if (isVisible && Combo != null && TriggerItem != null)
+{
+    <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+         @onclick="Cancel">
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-black/50 transition-opacity"></div>
+
+        <!-- Modal card: bottom sheet on mobile, centered on desktop -->
+        <div class="relative w-full sm:max-w-md sm:mx-4 bg-white rounded-t-2xl sm:rounded-2xl overflow-hidden
+                    animate-[slideUp_0.25s_ease-out] sm:animate-[scaleIn_0.2s_ease-out]"
+             @onclick:stopPropagation="true">
+
+            <!-- Orange banner strip -->
+            <div class="flex items-center gap-3 px-5 py-3" style="background: #FF8000;">
+                <!-- Tag/deal icon -->
+                <svg class="w-5 h-5 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M7 7h.01M7 3h5a1.99 1.99 0 011.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+                <span class="text-white font-bold text-base">Combo Deal</span>
             </div>
 
-            <!-- Body -->
-            <div class="bg-gray-800 px-8 py-6">
-                <!-- Price comparison -->
-                <div class="flex items-center justify-center gap-4 mb-6">
-                    <div class="text-center">
-                        <p class="text-xs text-gray-500 uppercase tracking-wide mb-1">Item Only</p>
-                        <p class="text-2xl font-bold text-gray-400">@TriggerItem.Price.ToString("C")</p>
-                    </div>
-                    <div class="text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                    </div>
-                    <div class="text-center">
-                        <p class="text-xs text-amber-400 uppercase tracking-wide mb-1">Combo Deal</p>
-                        <p class="text-2xl font-bold text-amber-400">@Combo.ComboPrice.ToString("C")</p>
-                    </div>
-                </div>
+            <!-- Main content -->
+            <div class="px-5 pt-5 pb-4">
+                <!-- Item name + price -->
+                <h2 class="text-xl font-bold text-gray-900 mb-1">@Combo.Name</h2>
+                <p class="text-lg font-bold mb-2" style="color: #FF8000;">@Combo.ComboPrice.ToString("C")</p>
+                <p class="text-sm text-gray-500 mb-5">Füge diese Artikel hinzu und spare!</p>
 
-                <!-- Included items -->
-                <div class="bg-gray-700/50 rounded-xl p-4 mb-6">
-                    <p class="text-xs text-gray-400 uppercase tracking-wider mb-3 font-semibold">Combo includes:</p>
-                    <div class="space-y-2">
+                <!-- Combo items list -->
+                <div class="space-y-3 mb-5">
+                    <!-- Trigger item -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0"
+                             style="border-color: #FF8000; background: #FFF7ED;">
+                            <svg class="w-4 h-4" style="color: #FF8000;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <span class="text-gray-900 font-medium flex-1">@TriggerItem.Name</span>
+                        <span class="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">Enthalten</span>
+                    </div>
+
+                    @foreach (var item in Combo.Items)
+                    {
                         <div class="flex items-center gap-3">
-                            <div class="w-8 h-8 bg-amber-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            <div class="w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0"
+                                 style="border-color: #FF8000; background: #FFF7ED;">
+                                <svg class="w-4 h-4" style="color: #FF8000;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
-                            <span class="text-white font-medium">@TriggerItem.Name</span>
+                            <span class="text-gray-900 font-medium flex-1">@item.MenuItem?.Name</span>
+                            <span class="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">Enthalten</span>
                         </div>
-                        @foreach (var item in Combo.Items)
-                        {
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 bg-green-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                </div>
-                                <span class="text-white font-medium">@item.MenuItem?.Name</span>
-                            </div>
-                        }
-                    </div>
+                    }
                 </div>
-            </div>
 
-            <!-- Actions -->
-            <div class="bg-gray-800 rounded-b-3xl px-8 pb-8 space-y-3">
-                <button class="w-full py-4 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white text-lg font-bold rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-amber-500/30"
+                <!-- Savings -->
+                @{
+                    var savings = TriggerItem.Price + Combo.Items.Sum(i => i.MenuItem?.Price ?? 0) - Combo.ComboPrice;
+                }
+                @if (savings > 0)
+                {
+                    <p class="text-base font-bold text-green-600 mb-4">Du sparst @savings.ToString("C")!</p>
+                }
+
+                <!-- Divider -->
+                <hr class="border-gray-200 mb-4" />
+
+                <!-- Actions -->
+                <button class="w-full py-3.5 text-white text-base font-bold rounded-full transition-all active:scale-[0.98] shadow-sm mb-3"
+                        style="background: #FF8000;"
                         @onclick="AcceptCombo">
-                    Yes, Make it a Combo!
+                    Combo hinzufügen — @Combo.ComboPrice.ToString("C")
                 </button>
-                <button class="w-full py-4 bg-gray-700 hover:bg-gray-600 text-white text-lg font-medium rounded-2xl transition-all active:scale-[0.98]"
+                <button class="w-full py-2 text-gray-500 text-sm underline hover:text-gray-700 transition-colors"
                         @onclick="AddItemOnly">
-                    Just the @TriggerItem.Name
-                </button>
-                <button class="w-full py-3 text-gray-500 hover:text-gray-300 text-sm transition-colors"
-                        @onclick="Cancel">
-                    Cancel
+                    Nein danke, nur den Artikel
                 </button>
             </div>
-        }
+        </div>
     </div>
-</div>
+}
+
+<style>
+    @@keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+    @@keyframes scaleIn {
+        from { transform: scale(0.95); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
+</style>
 
 @code {
     [Parameter] public MenuCombo? Combo { get; set; }
