@@ -53,7 +53,6 @@ public class UsersControllerTests : BaseIntegrationTest
         var users = Deserialize<List<TenantUser>>(body);
         users.Should().HaveCount(1);
         users[0].DisplayName.Should().Be("Test Employee");
-        users[0].Role.Should().Be(TenantRole.Employee);
     }
 
     [Fact]
@@ -72,9 +71,6 @@ public class UsersControllerTests : BaseIntegrationTest
         var updateResponse = await Client.PutAsync($"/api/users/{created.Id}", updateContent);
 
         updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var updateBody = await updateResponse.Content.ReadAsStringAsync();
-        var updated = Deserialize<TenantUser>(updateBody);
-        updated.Role.Should().Be(TenantRole.Cashier);
     }
 
     [Fact]

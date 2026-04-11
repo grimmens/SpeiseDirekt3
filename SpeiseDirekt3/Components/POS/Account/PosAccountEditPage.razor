@@ -1,0 +1,276 @@
+@page "/pos/account/edit"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Identity
+@using SpeiseDirekt.Data
+@using SpeiseDirekt.ServiceInterface
+@layout PosLayout
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavManager
+
+<PageTitle>Daten bearbeiten - Speise-Direkt</PageTitle>
+
+<div class="max-w-2xl mx-auto px-4 py-6 pb-24 lg:pb-6">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 mb-4">
+        <a href="/pos/account/overview" class="hover:text-gray-700">Mein Konto</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-800">Daten bearbeiten</span>
+    </nav>
+
+    @if (user == null)
+    {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+            <p class="text-gray-600">Du bist nicht angemeldet.</p>
+            <a href="/pos/account/login" class="inline-block mt-4 px-5 py-2.5 rounded-full text-white font-semibold text-sm" style="background-color: #FF8000;">Anmelden</a>
+        </div>
+    }
+    else
+    {
+        <!-- Edit profile form -->
+        <section class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6">
+            <h1 class="text-xl font-bold text-gray-900 mb-1">Persönliche Daten</h1>
+            <p class="text-sm text-gray-500 mb-5">Aktualisiere deine Kontaktinformationen.</p>
+
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                    @successMessage
+                </div>
+            }
+
+            <EditForm EditContext="profileContext" method="post" OnValidSubmit="HandleSave" FormName="profile">
+                <DataAnnotationsValidator />
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Vorname</label>
+                            <InputText @bind-Value="Input.FirstName" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                            <ValidationMessage For="() => Input.FirstName" class="text-red-500 text-xs mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nachname</label>
+                            <InputText @bind-Value="Input.LastName" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                            <ValidationMessage For="() => Input.LastName" class="text-red-500 text-xs mt-1" />
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">E-Mail</label>
+                        <InputText type="email" @bind-Value="Input.Email" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                        <ValidationMessage For="() => Input.Email" class="text-red-500 text-xs mt-1" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
+                        <InputText type="tel" @bind-Value="Input.Phone" class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                        <ValidationMessage For="() => Input.Phone" class="text-red-500 text-xs mt-1" />
+                    </div>
+
+                    <div class="flex gap-3 pt-2">
+                        <a href="/pos/account/overview" class="flex-1 text-center py-3 rounded-full border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50">
+                            Abbrechen
+                        </a>
+                        <button type="submit" class="flex-1 py-3 rounded-full text-white font-semibold text-sm hover:opacity-90" style="background-color: #FF8000;">
+                            Speichern
+                        </button>
+                    </div>
+                </div>
+            </EditForm>
+        </section>
+
+        <!-- Danger zone -->
+        <section class="bg-white rounded-2xl shadow-sm border border-red-200 p-6">
+            <h2 class="text-lg font-bold text-red-700 mb-1">Konto löschen</h2>
+            <p class="text-sm text-gray-600 mb-4">
+                Das Löschen deines Kontos ist endgültig. Deine Bestellhistorie bleibt aus rechtlichen Gründen beim jeweiligen Restaurant gespeichert, deine persönlichen Daten werden jedoch entfernt.
+            </p>
+
+            @if (!ConfirmDelete)
+            {
+                <a href="/pos/account/edit?confirmDelete=1"
+                   class="inline-block px-5 py-2.5 rounded-full border-2 border-red-500 text-red-600 font-semibold text-sm hover:bg-red-50">
+                    Konto löschen
+                </a>
+            }
+            else
+            {
+                <div class="p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <p class="text-sm font-semibold text-red-800 mb-1">Bist du sicher?</p>
+                    <p class="text-sm text-red-700 mb-4">
+                        Diese Aktion kann nicht rückgängig gemacht werden. Dein Konto <strong>@user.Email</strong> wird unwiderruflich gelöscht.
+                    </p>
+
+                    @if (!string.IsNullOrEmpty(deleteError))
+                    {
+                        <p class="text-sm text-red-700 mb-3">@deleteError</p>
+                    }
+
+                    <div class="flex gap-3">
+                        <a href="/pos/account/edit" class="flex-1 text-center py-2.5 rounded-full border-2 border-gray-300 text-gray-700 font-semibold text-sm hover:bg-gray-50">
+                            Abbrechen
+                        </a>
+                        <EditForm Model="deleteModel" method="post" OnValidSubmit="HandleDelete" FormName="delete-account" class="flex-1">
+                            <button type="submit" class="w-full py-2.5 rounded-full bg-red-600 text-white font-semibold text-sm hover:bg-red-700">
+                                Ja, endgültig löschen
+                            </button>
+                        </EditForm>
+                    </div>
+                </div>
+            }
+        </section>
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "confirmDelete")]
+    public string? ConfirmDeleteParam { get; set; }
+
+    [SupplyParameterFromForm(FormName = "profile")]
+    private InputModel Input { get; set; } = new();
+
+    [SupplyParameterFromForm(FormName = "delete-account")]
+    private DeleteModel deleteModel { get; set; } = new();
+
+    private ApplicationUser? user;
+    private EditContext profileContext = default!;
+    private ValidationMessageStore profileMessages = default!;
+    private string? successMessage;
+    private string? deleteError;
+
+    private bool ConfirmDelete => ConfirmDeleteParam == "1";
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user == null)
+        {
+            return;
+        }
+
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            Input = new InputModel
+            {
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Email = user.Email ?? "",
+                Phone = user.PhoneNumber
+            };
+        }
+
+        profileContext = new EditContext(Input);
+        profileMessages = new ValidationMessageStore(profileContext);
+    }
+
+    private async Task HandleSave()
+    {
+        profileMessages.Clear();
+        successMessage = null;
+
+        if (user == null)
+        {
+            return;
+        }
+
+        var email = Input.Email.Trim();
+        if (!string.Equals(user.Email, email, StringComparison.OrdinalIgnoreCase))
+        {
+            var existing = await UserManager.FindByEmailAsync(email);
+            if (existing != null && existing.Id != user.Id)
+            {
+                profileMessages.Add(() => Input.Email, "Diese E-Mail-Adresse ist bereits vergeben.");
+                profileContext.NotifyValidationStateChanged();
+                return;
+            }
+
+            var setEmailResult = await UserManager.SetEmailAsync(user, email);
+            if (!setEmailResult.Succeeded)
+            {
+                foreach (var error in setEmailResult.Errors)
+                    profileMessages.Add(() => Input.Email, error.Description);
+                profileContext.NotifyValidationStateChanged();
+                return;
+            }
+
+            var setUserNameResult = await UserManager.SetUserNameAsync(user, email);
+            if (!setUserNameResult.Succeeded)
+            {
+                foreach (var error in setUserNameResult.Errors)
+                    profileMessages.Add(() => Input.Email, error.Description);
+                profileContext.NotifyValidationStateChanged();
+                return;
+            }
+        }
+
+        user.FirstName = string.IsNullOrWhiteSpace(Input.FirstName) ? null : Input.FirstName.Trim();
+        user.LastName = string.IsNullOrWhiteSpace(Input.LastName) ? null : Input.LastName.Trim();
+        var updateNameResult = await UserManager.UpdateAsync(user);
+        if (!updateNameResult.Succeeded)
+        {
+            foreach (var error in updateNameResult.Errors)
+                profileMessages.Add(() => Input.FirstName, error.Description);
+            profileContext.NotifyValidationStateChanged();
+            return;
+        }
+
+        var newPhone = string.IsNullOrWhiteSpace(Input.Phone) ? null : Input.Phone.Trim();
+        if (user.PhoneNumber != newPhone)
+        {
+            var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, newPhone);
+            if (!setPhoneResult.Succeeded)
+            {
+                foreach (var error in setPhoneResult.Errors)
+                    profileMessages.Add(() => Input.Phone, error.Description);
+                profileContext.NotifyValidationStateChanged();
+                return;
+            }
+        }
+
+        await SignInManager.RefreshSignInAsync(user);
+        NavManager.NavigateTo("/pos/account/overview");
+    }
+
+    private async Task HandleDelete()
+    {
+        deleteError = null;
+
+        if (user == null)
+        {
+            return;
+        }
+
+        var result = await UserManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            deleteError = string.Join(" ", result.Errors.Select(e => e.Description));
+            return;
+        }
+
+        await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
+        NavManager.NavigateTo("/pos", forceLoad: true);
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Bitte gib einen Vornamen ein.")]
+        public string? FirstName { get; set; }
+        [Required(ErrorMessage = "Bitte gib einen Nachnamen ein.")]
+        public string? LastName { get; set; }
+
+        [Required(ErrorMessage = "Bitte gib deine E-Mail-Adresse ein.")]
+        [EmailAddress(ErrorMessage = "Bitte gib eine gültige E-Mail-Adresse ein.")]
+        public string Email { get; set; } = "";
+
+        [Phone(ErrorMessage = "Bitte gib eine gültige Telefonnummer ein.")]
+        public string? Phone { get; set; }
+    }
+
+    private sealed class DeleteModel
+    {
+    }
+}

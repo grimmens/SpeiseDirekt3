@@ -142,13 +142,14 @@
                 return;
             }
 
+            await UserManager.AddToRoleAsync(appUser, model.Role.ToString());
+
             // Create TenantUser record
             var tenantUser = new TenantUser
             {
                 Id = Guid.NewGuid(),
                 ApplicationUserId = appUser.Id,
                 TenantOwnerId = tenantOwnerId,
-                Role = model.Role,
                 DisplayName = model.DisplayName,
                 IsActive = true
             };

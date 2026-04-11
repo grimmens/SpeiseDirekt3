@@ -85,13 +85,14 @@ public class UsersController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(result.Errors.Select(e => e.Description));
 
+        await _userManager.AddToRoleAsync(appUser, dto.Role.ToString());
+
         // Create TenantUser record
         var tenantUser = new TenantUser
         {
             Id = Guid.NewGuid(),
             ApplicationUserId = appUser.Id,
             TenantOwnerId = tenantOwnerId,
-            Role = dto.Role,
             DisplayName = dto.DisplayName,
             IsActive = true
         };
@@ -113,7 +114,15 @@ public class UsersController : ControllerBase
         if (tenantUser is null)
             return NotFound();
 
-        tenantUser.Role = dto.Role;
+        var appUser = await _userManager.FindByIdAsync(tenantUser.ApplicationUserId);
+        if (appUser is not null)
+        {
+            var existingRoles = await _userManager.GetRolesAsync(appUser);
+            if (existingRoles.Count > 0)
+                await _userManager.RemoveFromRolesAsync(appUser, existingRoles);
+            await _userManager.AddToRoleAsync(appUser, dto.Role.ToString());
+        }
+
         tenantUser.IsActive = dto.IsActive;
         if (dto.CustomPermissions.HasValue)
             tenantUser.Permissions = dto.CustomPermissions.Value;

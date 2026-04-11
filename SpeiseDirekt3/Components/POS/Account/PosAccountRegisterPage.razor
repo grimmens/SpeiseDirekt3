@@ -142,7 +142,9 @@
         {
             UserName = email,
             Email = email,
-            PhoneNumber = string.IsNullOrWhiteSpace(Input.Phone) ? null : Input.Phone.Trim()
+            PhoneNumber = string.IsNullOrWhiteSpace(Input.Phone) ? null : Input.Phone.Trim(),
+            FirstName = Input.FirstName.Trim(),
+            LastName = string.IsNullOrWhiteSpace(Input.LastName) ? null : Input.LastName.Trim(),
         };
 
         var result = await UserManager.CreateAsync(appUser, Input.Password);
@@ -160,6 +162,8 @@
             editContext.NotifyValidationStateChanged();
             return;
         }
+
+        await UserManager.AddToRoleAsync(appUser, SpeiseDirekt.Model.TenantRole.Customer.ToString());
         NavManager.NavigateTo(GetReturnUrl());
     }
 

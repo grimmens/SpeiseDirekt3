@@ -9,6 +9,7 @@ using SpeiseDirekt3.Components;
 using SpeiseDirekt3.Components.Account;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
+using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceImplementation;
 using SpeiseDirekt.ServiceInterface;
 
@@ -23,6 +24,8 @@ namespace SpeiseDirekt3
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+
+            builder.Services.AddLocalization(o => o.ResourcesPath = "Resources");
 
             builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddScoped<IdentityUserAccessor>();
@@ -125,6 +128,7 @@ namespace SpeiseDirekt3
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
             builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager()
                 .AddDefaultTokenProviders();
@@ -150,6 +154,8 @@ namespace SpeiseDirekt3
 
             var app = builder.Build();
 
+            SeedRolesAsync(app.Services).GetAwaiter().GetResult();
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -164,6 +170,12 @@ namespace SpeiseDirekt3
 
             app.UseHttpsRedirection();
 
+            var supportedCultures = new[] { "de", "en" };
+            app.UseRequestLocalization(new Microsoft.AspNetCore.Builder.RequestLocalizationOptions()
+                .SetDefaultCulture("de")
+                .AddSupportedCultures(supportedCultures)
+                .AddSupportedUICultures(supportedCultures));
+
             app.UseAntiforgery();
 
             app.MapControllers();
@@ -174,6 +186,18 @@ namespace SpeiseDirekt3
             app.MapAdditionalIdentityEndpoints();
 
             app.Run();
+        }
+
+        private static async Task SeedRolesAsync(IServiceProvider services)
+        {
+            using var scope = services.CreateScope();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            foreach (var role in Enum.GetValues<TenantRole>())
+            {
+                var name = role.ToString();
+                if (!await roleManager.RoleExistsAsync(name))
+                    await roleManager.CreateAsync(new IdentityRole(name));
+            }
         }
     }
 }

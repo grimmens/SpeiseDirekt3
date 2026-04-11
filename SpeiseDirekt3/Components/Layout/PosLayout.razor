@@ -2,6 +2,7 @@
 @attribute [AllowAnonymous]
 
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
 
 <div class="min-h-screen bg-gray-50 flex flex-col">
     <!-- Top Header Bar -->
@@ -28,15 +29,39 @@
                 </svg>
             </button>
 
-            <!-- Right: Cart Icon -->
-            <a href="/pos" class="relative shrink-0 p-2 rounded-full hover:bg-gray-100 transition-colors">
-                <svg class="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="9" cy="21" r="1"/>
-                    <circle cx="20" cy="21" r="1"/>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
-                </svg>
-                <span class="absolute -top-0.5 -right-0.5 flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full" style="background-color: #FF8000;">0</span>
-            </a>
+            <!-- Right: Profile / Login + Cart -->
+            <div class="flex items-center gap-2 shrink-0">
+                <AuthorizeView>
+                    <Authorized>
+                        <a href="/pos/account/overview" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors text-sm font-medium text-gray-700">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                            <span>Profil</span>
+                        </a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/pos/account/login" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-white text-sm font-semibold transition-colors hover:opacity-90" style="background-color: #FF8000;">
+                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                                <polyline points="10 17 15 12 10 7" />
+                                <line x1="15" y1="12" x2="3" y2="12" />
+                            </svg>
+                            <span>Anmelden</span>
+                        </a>
+                    </NotAuthorized>
+                </AuthorizeView>
+
+                <a href="/pos" class="relative p-2 rounded-full hover:bg-gray-100 transition-colors">
+                    <svg class="w-6 h-6 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="9" cy="21" r="1"/>
+                        <circle cx="20" cy="21" r="1"/>
+                        <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/>
+                    </svg>
+                    <span class="absolute -top-0.5 -right-0.5 flex items-center justify-center w-5 h-5 text-xs font-bold text-white rounded-full" style="background-color: #FF8000;">0</span>
+                </a>
+            </div>
         </div>
 
         <!-- Mobile: Delivery Address (below header on small screens) -->
@@ -89,13 +114,27 @@
                 <span class="text-xs font-medium">Bestellungen</span>
             </a>
 
-            <a href="/pos/login" class="flex flex-col items-center justify-center gap-0.5 w-full py-1 text-gray-500 hover:text-[#FF8000] transition-colors">
-                <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
-                    <circle cx="12" cy="7" r="4"/>
-                </svg>
-                <span class="text-xs font-medium">Profil</span>
-            </a>
+            <AuthorizeView>
+                <Authorized>
+                    <a href="/pos/account/overview" class="flex flex-col items-center justify-center gap-0.5 w-full py-1 text-gray-500 hover:text-[#FF8000] transition-colors">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                        <span class="text-xs font-medium">Profil</span>
+                    </a>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/pos/account/login" class="flex flex-col items-center justify-center gap-0.5 w-full py-1 text-gray-500 hover:text-[#FF8000] transition-colors">
+                        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" />
+                            <polyline points="10 17 15 12 10 7" />
+                            <line x1="15" y1="12" x2="3" y2="12" />
+                        </svg>
+                        <span class="text-xs font-medium">Anmelden</span>
+                    </a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
     </nav>
 

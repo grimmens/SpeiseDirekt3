@@ -19,8 +19,8 @@ public class TenantClaimsTransformation : IClaimsTransformation
         if (principal.Identity?.IsAuthenticated != true)
             return principal;
 
-        // If claims already injected, skip DB lookup
-        if (principal.HasClaim(c => c.Type == "TenantOwnerId" || c.Type == "TenantRole"))
+        // If claim already injected, skip DB lookup
+        if (principal.HasClaim(c => c.Type == "TenantOwnerId"))
             return principal;
 
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -43,18 +43,6 @@ public class TenantClaimsTransformation : IClaimsTransformation
         if (!string.IsNullOrEmpty(appUser.TenantOwnerId))
         {
             identity.AddClaim(new Claim("TenantOwnerId", appUser.TenantOwnerId));
-
-            // Look up role from TenantUser
-            var tenantUser = await _db.TenantUsers
-                .AsNoTracking()
-                .Where(tu => tu.ApplicationUserId == userId && tu.TenantOwnerId == appUser.TenantOwnerId)
-                .Select(tu => new { tu.Role })
-                .FirstOrDefaultAsync();
-
-            if (tenantUser != null)
-            {
-                identity.AddClaim(new Claim("TenantRole", tenantUser.Role.ToString()));
-            }
         }
 
         return principal;

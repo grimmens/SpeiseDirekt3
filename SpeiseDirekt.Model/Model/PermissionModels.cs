@@ -109,8 +109,6 @@ public class TenantUser
     public string TenantOwnerId { get; set; } = string.Empty;
     public ApplicationUser? TenantOwner { get; set; }
 
-    public TenantRole Role { get; set; } = TenantRole.Employee;
-
     public Permission Permissions { get; set; } = Permission.None;
 
     public bool IsActive { get; set; } = true;

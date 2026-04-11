@@ -18,6 +18,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Identity API endpoints
 builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // Application services
@@ -57,6 +58,17 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    foreach (var role in Enum.GetValues<TenantRole>())
+    {
+        var name = role.ToString();
+        if (!await roleManager.RoleExistsAsync(name))
+            await roleManager.CreateAsync(new IdentityRole(name));
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {
