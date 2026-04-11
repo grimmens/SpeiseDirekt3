@@ -16,6 +16,8 @@ namespace SpeiseDirekt.Data
 
         public ICollection<TenantUser>? TenantUsers { get; set; }
 
+        public ICollection<Address>? Addresses { get; set; }
+
         [StringLength(100)]
         public string? FirstName { get; set; }
 

@@ -197,6 +197,17 @@ namespace SpeiseDirekt.Data
                 .HasForeignKey(u => u.TenantOwnerId)
                 .OnDelete(DeleteBehavior.NoAction);
 
+            // Address: 1:n ApplicationUser -> Addresses
+            builder.Entity<Address>(entity =>
+            {
+                entity.HasIndex(a => a.ApplicationUserId);
+
+                entity.HasOne(a => a.ApplicationUser)
+                      .WithMany(u => u.Addresses)
+                      .HasForeignKey(a => a.ApplicationUserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
             // TenantUser relationships
             builder.Entity<TenantUser>(entity =>
             {
@@ -235,6 +246,7 @@ namespace SpeiseDirekt.Data
         public DbSet<TaxRate> TaxRates { get; set; }
         public DbSet<Discount> Discounts { get; set; }
         public DbSet<PosPayment> PosPayments { get; set; }
+        public DbSet<Address> Addresses { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
         {
             if (e.Entry.Entity is IAppUserEntity entity)
