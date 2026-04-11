@@ -1,0 +1,143 @@
+@page "/pos/account/address"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Identity
+@using SpeiseDirekt.Data
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@layout PosLayout
+@inject UserManager<ApplicationUser> UserManager
+@inject IAddressService AddressService
+@inject NavigationManager NavManager
+
+<PageTitle>Adressen - Speise-Direkt</PageTitle>
+
+<div class="max-w-2xl mx-auto px-4 py-6 pb-24 lg:pb-6">
+    @if (user == null)
+    {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+            <p class="text-gray-600">Du bist nicht angemeldet.</p>
+            <a href="/pos/account/login" class="inline-block mt-4 px-5 py-2.5 rounded-full text-white font-semibold text-sm" style="background-color: #FF8000;">Anmelden</a>
+        </div>
+    }
+    else
+    {
+        <!-- Breadcrumb -->
+        <nav class="text-sm text-gray-500 mb-4">
+            <a href="/pos/account/overview" class="hover:text-gray-700">Mein Konto</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-800">Adressen</span>
+        </nav>
+
+        <!-- Header -->
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Meine Adressen</h1>
+            <p class="text-sm text-gray-500 mt-1">Verwalte deine Liefer- und Rechnungsadressen.</p>
+        </div>
+
+        <!-- Add button -->
+        <a href="/pos/account/address/create"
+           class="flex items-center justify-center gap-2 w-full py-3 mb-4 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90"
+           style="background-color: #FF8000;">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Neue Adresse hinzufügen
+        </a>
+
+        @if (addresses.Count == 0)
+        {
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 text-center">
+                <div class="w-14 h-14 mx-auto mb-3 rounded-full bg-gray-100 flex items-center justify-center">
+                    <svg class="w-7 h-7 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                    </svg>
+                </div>
+                <p class="text-sm text-gray-500">Du hast noch keine Adressen gespeichert.</p>
+            </div>
+        }
+        else
+        {
+            <ul class="space-y-3">
+                @foreach (var address in addresses)
+                {
+                    <li class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    @if (!string.IsNullOrWhiteSpace(address.Label))
+                                    {
+                                        <span class="font-semibold text-gray-900 text-sm">@address.Label</span>
+                                    }
+                                    @if (address.IsDefault)
+                                    {
+                                        <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-orange-100" style="color: #FF8000;">
+                                            Standard
+                                        </span>
+                                    }
+                                </div>
+                                <p class="text-sm text-gray-900">
+                                    @address.Street@(string.IsNullOrWhiteSpace(address.HouseNumber) ? "" : " " + address.HouseNumber)
+                                </p>
+                                <p class="text-sm text-gray-500">
+                                    @(string.IsNullOrWhiteSpace(address.PostalCode) ? "" : address.PostalCode + " ")@address.City
+                                </p>
+                                @if (!string.IsNullOrWhiteSpace(address.Country))
+                                {
+                                    <p class="text-xs text-gray-400 mt-0.5">@address.Country</p>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                            <a href="@($"/pos/account/address/edit/{address.Id}")"
+                               class="flex-1 text-center py-2 rounded-full border text-sm font-semibold transition-colors hover:bg-gray-50"
+                               style="border-color: #FF8000; color: #FF8000;">
+                                Bearbeiten
+                            </a>
+                            <form method="post" class="flex-1">
+                                <AntiforgeryToken />
+                                <input type="hidden" name="deleteId" value="@address.Id" />
+                                <button type="submit"
+                                        class="w-full py-2 rounded-full border border-red-200 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50">
+                                    Löschen
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private ApplicationUser? user;
+    private List<Address> addresses = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpContext.User.Identity?.IsAuthenticated != true)
+        {
+            NavManager.NavigateTo($"/pos/account/login?returnUrl={Uri.EscapeDataString("/pos/account/address")}", forceLoad: true);
+            return;
+        }
+
+        user = await UserManager.GetUserAsync(HttpContext.User);
+        if (user == null) return;
+
+        if (HttpMethods.IsPost(HttpContext.Request.Method)
+            && HttpContext.Request.Form.TryGetValue("deleteId", out var raw)
+            && Guid.TryParse(raw, out var id))
+        {
+            await AddressService.DeleteAsync(id, user.Id);
+        }
+
+        addresses = await AddressService.GetForUserAsync(user.Id);
+    }
+}

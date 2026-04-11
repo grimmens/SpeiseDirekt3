@@ -1,0 +1,152 @@
+@page "/pos/account/address/create"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Http
+@using Microsoft.AspNetCore.Identity
+@using SpeiseDirekt.Data
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@layout PosLayout
+@inject UserManager<ApplicationUser> UserManager
+@inject IAddressService AddressService
+@inject NavigationManager NavManager
+
+<PageTitle>Neue Adresse - Speise-Direkt</PageTitle>
+
+<div class="max-w-2xl mx-auto px-4 py-6 pb-24 lg:pb-6">
+    @if (user == null)
+    {
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
+            <p class="text-gray-600">Du bist nicht angemeldet.</p>
+            <a href="/pos/account/login" class="inline-block mt-4 px-5 py-2.5 rounded-full text-white font-semibold text-sm" style="background-color: #FF8000;">Anmelden</a>
+        </div>
+    }
+    else
+    {
+        <!-- Breadcrumb -->
+        <nav class="text-sm text-gray-500 mb-4">
+            <a href="/pos/account/address" class="hover:text-gray-700">Adressen</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-800">Neu</span>
+        </nav>
+
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">Neue Adresse</h1>
+            <p class="text-sm text-gray-500 mt-1">Füge eine neue Liefer- oder Rechnungsadresse hinzu.</p>
+        </div>
+
+        <EditForm Model="Input" method="post" FormName="address-create" OnValidSubmit="HandleSubmit">
+            <DataAnnotationsValidator />
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Bezeichnung (optional)</label>
+                    <InputText @bind-Value="Input.Label" placeholder="z. B. Zuhause, Büro"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                    <ValidationMessage For="() => Input.Label" class="text-red-500 text-xs mt-1" />
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Straße</label>
+                        <InputText @bind-Value="Input.Street" placeholder="Musterstraße"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                        <ValidationMessage For="() => Input.Street" class="text-red-500 text-xs mt-1" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nr.</label>
+                        <InputText @bind-Value="Input.HouseNumber" placeholder="12a"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                        <ValidationMessage For="() => Input.HouseNumber" class="text-red-500 text-xs mt-1" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">PLZ</label>
+                        <InputText @bind-Value="Input.PostalCode" placeholder="12345"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                        <ValidationMessage For="() => Input.PostalCode" class="text-red-500 text-xs mt-1" />
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ort</label>
+                        <InputText @bind-Value="Input.City" placeholder="Musterstadt"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                        <ValidationMessage For="() => Input.City" class="text-red-500 text-xs mt-1" />
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bundesland</label>
+                        <InputText @bind-Value="Input.State"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                        <ValidationMessage For="() => Input.State" class="text-red-500 text-xs mt-1" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Land</label>
+                        <InputText @bind-Value="Input.Country" placeholder="Deutschland"
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent" />
+                        <ValidationMessage For="() => Input.Country" class="text-red-500 text-xs mt-1" />
+                    </div>
+                </div>
+
+                <label class="flex items-center gap-2 pt-2 cursor-pointer">
+                    <InputCheckbox @bind-Value="Input.IsDefault" class="rounded border-gray-300 text-orange-500 focus:ring-orange-500" />
+                    <span class="text-sm text-gray-700">Als Standardadresse verwenden</span>
+                </label>
+            </div>
+
+            <div class="flex gap-3 mt-5">
+                <a href="/pos/account/address" class="flex-1 text-center py-3 rounded-full border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50">
+                    Abbrechen
+                </a>
+                <button type="submit"
+                        class="flex-1 py-3 rounded-full text-white font-semibold text-sm transition-colors hover:opacity-90"
+                        style="background-color: #FF8000;">
+                    Adresse speichern
+                </button>
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromForm(FormName = "address-create")]
+    private AddressFormModel Input { get; set; } = new();
+
+    private ApplicationUser? user;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (HttpContext.User.Identity?.IsAuthenticated != true)
+        {
+            NavManager.NavigateTo($"/pos/account/login?returnUrl={Uri.EscapeDataString("/pos/account/address/create")}", forceLoad: true);
+            return;
+        }
+
+        user = await UserManager.GetUserAsync(HttpContext.User);
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (user == null) return;
+
+        var address = new Address
+        {
+            Label = Input.Label,
+            Street = Input.Street.Trim(),
+            HouseNumber = Input.HouseNumber,
+            PostalCode = Input.PostalCode,
+            City = Input.City.Trim(),
+            State = Input.State,
+            Country = Input.Country,
+            IsDefault = Input.IsDefault
+        };
+
+        await AddressService.CreateAsync(user.Id, address);
+        NavManager.NavigateTo("/pos/account/address");
+    }
+}
