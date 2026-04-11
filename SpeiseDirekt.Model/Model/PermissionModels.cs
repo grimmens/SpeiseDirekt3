@@ -9,7 +9,8 @@ public enum TenantRole
     Manager = 1,
     Cashier = 2,
     Employee = 3,
-    Driver = 4
+    Driver = 4,
+    Customer = 5
 }
 
 [Flags]
@@ -90,6 +91,10 @@ public enum Permission : long
     // POS Payments (restaurant transactions, not app subscription billing)
     PosPaymentsView = 1L << 46,
     PosPaymentsManage = 1L << 47,
+
+    // Customer self-service orders (own orders only)
+    OwnOrdersView = 1L << 48,
+    OwnOrdersCreate = 1L << 49,
 }
 
 public class TenantUser

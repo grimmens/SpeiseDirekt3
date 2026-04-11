@@ -40,6 +40,9 @@ public static class PermissionDefaults
         Permission.MenusView |
         Permission.DeliveryView | Permission.DeliveryManage;
 
+    private static readonly Permission CustomerPermissions =
+        Permission.OwnOrdersView | Permission.OwnOrdersCreate;
+
     public static Permission GetDefaultPermissions(TenantRole role) => role switch
     {
         TenantRole.GeneralManager => AllPermissions,
@@ -47,6 +50,7 @@ public static class PermissionDefaults
         TenantRole.Cashier => CashierPermissions,
         TenantRole.Employee => EmployeePermissions,
         TenantRole.Driver => DriverPermissions,
+        TenantRole.Customer => CustomerPermissions,
         _ => Permission.None
     };
 }

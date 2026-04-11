@@ -1,0 +1,185 @@
+@page "/Pos/Account/Register"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Identity
+@using SpeiseDirekt.Data
+@using SpeiseDirekt.ServiceInterface
+@layout PosLayout
+@inject IPosCustomerService CustomerService
+@inject UserManager<ApplicationUser> UserManager
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+@attribute [AllowAnonymous]
+
+<div class="min-h-[calc(100vh-3.5rem)] flex flex-col items-center bg-gray-50">
+    <!-- Orange header area -->
+    <div class="w-full py-8 px-4 text-center" style="background: linear-gradient(135deg, #FF8000, #FF9A33);">
+        <svg class="w-12 h-12 mx-auto mb-3" viewBox="0 0 24 24" fill="none">
+            <rect width="24" height="24" rx="6" fill="white" />
+            <path d="M7 8h10M7 12h7M7 16h10" stroke="#FF8000" stroke-width="2" stroke-linecap="round" />
+        </svg>
+        <h1 class="text-2xl font-bold text-white">Registrieren</h1>
+        <p class="text-white/80 text-sm mt-1">Erstelle dein Konto in wenigen Sekunden</p>
+    </div>
+
+    <!-- Card -->
+    <div class="w-full max-w-md mx-auto -mt-4 px-4 pb-20 lg:pb-8">
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <EditForm EditContext="editContext" method="post" OnValidSubmit="HandleSignup" FormName="register">
+                <DataAnnotationsValidator />
+                <div class="p-6">
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Vorname</label>
+                                <InputText @bind-Value="Input.FirstName" placeholder="Max"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow" />
+                                <ValidationMessage For="() => Input.FirstName" class="text-red-500 text-xs mt-1" />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nachname</label>
+                                <InputText @bind-Value="Input.LastName" placeholder="Mustermann"
+                                           class="w-full px-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow" />
+                                <ValidationMessage For="() => Input.LastName" class="text-red-500 text-xs mt-1" />
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">E-Mail</label>
+                            <div class="relative">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                                    <polyline points="22,6 12,13 2,6" />
+                                </svg>
+                                <InputText type="email" @bind-Value="Input.Email" placeholder="deine@email.de"
+                                           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow" />
+                            </div>
+                            <ValidationMessage For="() => Input.Email" class="text-red-500 text-xs mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefonnummer</label>
+                            <div class="relative">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" />
+                                </svg>
+                                <InputText type="tel" @bind-Value="Input.Phone" placeholder="+49 123 456789"
+                                           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow" />
+                            </div>
+                            <ValidationMessage For="() => Input.Phone" class="text-red-500 text-xs mt-1" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Passwort</label>
+                            <div class="relative">
+                                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                                </svg>
+                                <InputText type="password" @bind-Value="Input.Password" placeholder="Mindestens 6 Zeichen"
+                                           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-shadow" />
+                            </div>
+                            <ValidationMessage For="() => Input.Password" class="text-red-500 text-xs mt-1" />
+                        </div>
+
+                        <button type="submit"
+                                class="w-full py-3 rounded-full text-white font-semibold text-sm transition-all hover:opacity-90 disabled:opacity-50"
+                                style="background-color: #FF8000;">
+                            <span>Konto erstellen</span>
+                        </button>
+                    </div>
+
+                    <!-- Login link -->
+                    <p class="text-center text-sm text-gray-600 mt-5">
+                        Bereits ein Konto?
+                        <a href="@GetLoginUrl()" class="font-semibold ml-1" style="color: #FF8000;">Anmelden</a>
+                    </p>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromForm]
+    private InputModel Input { get; set; } = new();
+
+    private EditContext editContext = default!;
+    private ValidationMessageStore messageStore = default!;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(Input);
+        messageStore = new ValidationMessageStore(editContext);
+    }
+
+    private string GetReturnUrl() => string.IsNullOrWhiteSpace(ReturnUrl) ? "/pos" : ReturnUrl;
+
+    private string GetLoginUrl()
+    {
+        if (string.IsNullOrWhiteSpace(ReturnUrl))
+            return "/pos/account/login";
+        return $"/pos/account/login?returnUrl={Uri.EscapeDataString(ReturnUrl)}";
+    }
+
+    public async Task HandleSignup()
+    {
+        messageStore.Clear();
+
+        var email = Input.Email.Trim();
+
+        var existing = await UserManager.FindByEmailAsync(email);
+        if (existing != null)
+        {
+            messageStore.Add(() => Input.Email, "Diese E-Mail-Adresse ist bereits registriert.");
+            editContext.NotifyValidationStateChanged();
+            return;
+        }
+
+        var appUser = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            PhoneNumber = string.IsNullOrWhiteSpace(Input.Phone) ? null : Input.Phone.Trim()
+        };
+
+        var result = await UserManager.CreateAsync(appUser, Input.Password);
+        if (!result.Succeeded)
+        {
+            var passwordField = new FieldIdentifier(Input, nameof(InputModel.Password));
+            var emailField = new FieldIdentifier(Input, nameof(InputModel.Email));
+            foreach (var error in result.Errors)
+            {
+                var field = error.Code.Contains("Password", StringComparison.OrdinalIgnoreCase)
+                    ? passwordField
+                    : emailField;
+                messageStore.Add(field, error.Description);
+            }
+            editContext.NotifyValidationStateChanged();
+            return;
+        }
+        NavManager.NavigateTo(GetReturnUrl());
+    }
+
+    private sealed class InputModel
+    {
+        [Required(ErrorMessage = "Bitte gib deinen Vornamen ein.")]
+        public string FirstName { get; set; } = "";
+
+        public string? LastName { get; set; }
+
+        [Required(ErrorMessage = "Bitte gib deine E-Mail-Adresse ein.")]
+        [EmailAddress(ErrorMessage = "Bitte gib eine gültige E-Mail-Adresse ein.")]
+        public string Email { get; set; } = "";
+
+        [Phone(ErrorMessage = "Bitte gib eine gültige Telefonnummer ein.")]
+        public string? Phone { get; set; }
+
+        [Required(ErrorMessage = "Bitte wähle ein Passwort.")]
+        [DataType(DataType.Password)]
+        [MinLength(6, ErrorMessage = "Das Passwort muss mindestens 6 Zeichen lang sein.")]
+        public string Password { get; set; } = "";
+    }
+}

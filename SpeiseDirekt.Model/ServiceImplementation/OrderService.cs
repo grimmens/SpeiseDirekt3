@@ -167,14 +167,14 @@ public class OrderService : IOrderService
             ?? throw new InvalidOperationException($"Order '{orderId}' not found.");
 
         ValidateStatusTransition(order.Status, newStatus);
+        await _orderRepo.UpdateAsync(orderId, o =>
+        {
+            o.Status = newStatus;
+            o.UpdatedAt = DateTime.UtcNow;
 
-        order.Status = newStatus;
-        order.UpdatedAt = DateTime.UtcNow;
-
-        if (newStatus == OrderStatus.Completed)
-            order.CompletedAt = DateTime.UtcNow;
-
-        await _db.SaveChangesAsync();
+            if (newStatus == OrderStatus.Completed)
+                o.CompletedAt = DateTime.UtcNow;
+        });
         return order;
     }
 
