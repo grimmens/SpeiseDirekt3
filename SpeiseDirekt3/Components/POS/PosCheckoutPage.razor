@@ -585,12 +585,12 @@
             if (selectedMethod == PosPaymentMethod.Cash)
             {
                 await PaymentService.CreateCashPaymentAsync(order.Id);
-                NavManager.NavigateTo($"/pos/{MenuId}/receipt/{order.Id}");
+                NavManager.NavigateTo($"/pos/track/{order.TrackingCode}?success=true");
             }
             else
             {
                 var baseUrl = NavManager.BaseUri.TrimEnd('/');
-                var successUrl = $"{baseUrl}/pos/{MenuId}/receipt/{order.Id}";
+                var successUrl = $"{baseUrl}/pos/track/{order.TrackingCode}?success=true";
                 var cancelUrl = $"{baseUrl}/pos/{MenuId}/checkout";
                 var (_, checkoutUrl) = await PaymentService.CreateStripeCheckoutAsync(order.Id, successUrl, cancelUrl);
                 NavManager.NavigateTo(checkoutUrl, forceLoad: true);

@@ -9,7 +9,7 @@
 @inject IMenuItemGenerator MenuItemGenerator
 @inject IPermissionService PermissionService
 @inherits PaidTenantComponentBase
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>QR Codes - Speise-Direkt</PageTitle>
 

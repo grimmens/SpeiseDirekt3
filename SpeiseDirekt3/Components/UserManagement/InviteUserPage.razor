@@ -9,7 +9,7 @@
 @inject IUserIdProvider UserIdProvider
 @inject IPermissionService PermissionService
 @inject NavigationManager NavManager
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>Invite User - Speise-Direkt</PageTitle>
 

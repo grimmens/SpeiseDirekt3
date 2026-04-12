@@ -7,7 +7,7 @@
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavManager
 @inherits PaidTenantComponentBase
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>Analytics - Speise-Direkt</PageTitle>
 

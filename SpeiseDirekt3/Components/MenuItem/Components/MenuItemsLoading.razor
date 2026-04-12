@@ -3,7 +3,7 @@
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Data
 @using SpeiseDirekt.Model
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 @inject NavigationManager Navigation
 
 <PageTitle>Loading...</PageTitle>

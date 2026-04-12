@@ -42,6 +42,10 @@ namespace SpeiseDirekt.Infrastructure
             services.AddTransient<IPosPaymentService, PosPaymentService>();
             services.AddTransient<IPosStripeGateway, PosStripeGateway>();
 
+            // POS receipt PDF
+            QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+            services.AddSingleton<IPosReceiptPdfService, PosReceiptPdfService>();
+
             // POS location (geocoding via OpenStreetMap Nominatim)
             services.AddHttpClient<IPosLocationService, PosLocationService>();
 

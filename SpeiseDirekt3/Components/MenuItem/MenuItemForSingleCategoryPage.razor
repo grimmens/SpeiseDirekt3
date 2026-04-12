@@ -5,7 +5,7 @@
 @using SpeiseDirekt.Data
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>Menu Items</PageTitle>
 

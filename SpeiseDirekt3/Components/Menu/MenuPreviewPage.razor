@@ -3,6 +3,7 @@
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Data
 @using SpeiseDirekt.Model
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
 @layout MenuLayout

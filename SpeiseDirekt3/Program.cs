@@ -110,6 +110,9 @@ namespace SpeiseDirekt3
             {
                 options.AddPolicy(PolicyNames.PaidTenant, policy =>
                     policy.Requirements.Add(new PaidTenantRequirement()));
+                options.AddPolicy(PolicyNames.TenantStaff, policy =>
+                    policy.RequireAuthenticatedUser()
+                          .RequireAssertion(context => !context.User.IsInRole("Customer")));
                 options.AddPermissionPolicies();
             });
 

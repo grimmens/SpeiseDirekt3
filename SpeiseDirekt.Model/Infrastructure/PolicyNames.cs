@@ -3,6 +3,7 @@ namespace SpeiseDirekt.Infrastructure;
 public static class PolicyNames
 {
     public const string PaidTenant = "PaidTenant";
+    public const string TenantStaff = "TenantStaff";
 
     // Menus
     public const string CanViewMenus = "CanViewMenus";

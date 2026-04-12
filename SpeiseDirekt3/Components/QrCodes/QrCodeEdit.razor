@@ -1,8 +1,10 @@
 ﻿@page "/qrcode/edit/{Id:guid?}"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using QRCoder
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService

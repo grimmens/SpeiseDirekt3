@@ -7,7 +7,7 @@
 @inject INotificationService NotificationService
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>@(menu?.Name ?? "Menu") - Speise-Direkt</PageTitle>
 

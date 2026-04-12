@@ -6,7 +6,7 @@
 @inject IDiscountService DiscountService
 @inject INotificationService NotificationService
 @inject IPermissionService PermissionService
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>Discounts</PageTitle>
 

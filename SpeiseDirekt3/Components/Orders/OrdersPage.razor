@@ -7,7 +7,7 @@
 @inject INotificationService NotificationService
 @inject IPermissionService PermissionService
 @inject NavigationManager NavManager
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>Orders</PageTitle>
 

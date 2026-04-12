@@ -8,7 +8,7 @@
 @inject INotificationService NotificationService
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>Combos - @menu?.Name</PageTitle>
 

@@ -7,7 +7,7 @@
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.ServiceInterface
-@attribute [Authorize]
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 
 <PageTitle>Categories</PageTitle>
 

@@ -1,12 +1,15 @@
 @page "/pos/track/{TrackingCode}"
 @page "/pos/orders"
 @using Microsoft.AspNetCore.Authorization
-@using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
+@using SpeiseDirekt3.Components.POS.Components
 @layout PosLayout
 @inject IOrderService OrderService
+@inject IPosPaymentService PaymentService
+@inject IPosReceiptPdfService ReceiptPdfService
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 @attribute [AllowAnonymous]
 @rendermode InteractiveServer
 @implements IDisposable
@@ -16,36 +19,7 @@
 
         @if (string.IsNullOrEmpty(TrackingCode))
         {
-            <!-- Mode 1: Lookup form -->
-            <div class="mt-12">
-                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 text-center">
-                    <!-- Icon -->
-                    <div class="w-16 h-16 mx-auto mb-5 rounded-full flex items-center justify-center" style="background-color: rgba(255, 128, 0, 0.1);">
-                        <svg class="w-8 h-8" style="color: #FF8000;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </div>
-
-                    <h1 class="text-2xl font-bold text-gray-900 mb-2">Bestellung verfolgen</h1>
-                    <p class="text-gray-500 text-sm mb-6">Gib deinen 6-stelligen Bestellcode ein</p>
-
-                    <EditForm Model="@lookupModel" OnValidSubmit="NavigateToTracking" FormName="tracking-lookup">
-                        <div class="mb-5">
-                            <input type="text"
-                                   @bind="lookupModel.Code"
-                                   maxlength="6"
-                                   placeholder="ABC123"
-                                   class="w-full text-center text-3xl font-mono font-bold tracking-[0.3em] uppercase py-4 px-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-[#FF8000] transition-colors bg-gray-50" />
-                        </div>
-                        <button type="submit"
-                                class="w-full py-4 text-lg font-bold text-white rounded-full transition-all active:scale-[0.98]"
-                                style="background-color: #FF8000;"
-                                disabled="@(string.IsNullOrWhiteSpace(lookupModel.Code))">
-                            Bestellung suchen
-                        </button>
-                    </EditForm>
-                </div>
-            </div>
+            <PosTrackingCodeSearch OnCodeSubmitted="NavigateToTracking" />
         }
         else if (isLoading)
         {
@@ -77,6 +51,20 @@
         else
         {
             <!-- Mode 2: Order tracking view -->
+
+            @if (Success)
+            {
+                <!-- Success banner (shown right after checkout via ?success=true) -->
+                <div class="text-center mb-6">
+                    <div class="w-20 h-20 mx-auto mb-4 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg">
+                        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                        </svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-1">Bestellung erfolgreich!</h2>
+                    <p class="text-gray-500">Deine Bestellung wurde entgegengenommen</p>
+                </div>
+            }
 
             <!-- Header -->
             <div class="mb-6">
@@ -239,29 +227,46 @@
                 }
             </div>
 
-            <!-- Back to menu -->
-            <a href="/pos"
-               class="block w-full py-3.5 text-center text-base font-semibold text-gray-600 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors active:scale-[0.98]">
-                Zurück zum Menü
-            </a>
+            <!-- Actions -->
+            <div class="space-y-3 mb-6">
+                <button class="w-full flex items-center justify-center gap-2 py-3.5 text-base font-semibold text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-gray-50 transition-colors active:scale-[0.98]"
+                        @onclick="DownloadReceipt" disabled="@isGeneratingPdf">
+                    @if (isGeneratingPdf)
+                    {
+                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-700"></div>
+                        <span>Wird erstellt...</span>
+                    }
+                    else
+                    {
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Beleg herunterladen (PDF)</span>
+                    }
+                </button>
+
+                <a href="/pos"
+                   class="block w-full py-3.5 text-center text-base font-semibold rounded-full transition-all active:scale-[0.98] hover:opacity-90 text-white"
+                   style="background-color: #FF8000;">
+                    Neue Bestellung aufgeben
+                </a>
+            </div>
         }
     </div>
 </div>
 
 @code {
-    [Parameter]
-    public string? TrackingCode { get; set; }
+    [Parameter] public string? TrackingCode { get; set; }
+
+    [SupplyParameterFromQuery(Name = "success")]
+    public bool Success { get; set; }
 
     private Order? order;
+    private PosPayment? payment;
     private bool isLoading;
     private bool detailsExpanded;
-    private LookupModel lookupModel = new();
+    private bool isGeneratingPdf;
     private Timer? pollingTimer;
-
-    private class LookupModel
-    {
-        public string? Code { get; set; }
-    }
 
     private record TimelineStep(string Label, Func<Order, DateTime?> GetTimestamp);
 
@@ -281,8 +286,10 @@
             StateHasChanged();
 
             order = await OrderService.GetByTrackingCodeAsync(TrackingCode);
-            isLoading = false;
+            if (order != null)
+                payment = await PaymentService.GetByOrderIdAsync(order.Id);
 
+            isLoading = false;
             StartPolling();
         }
         else
@@ -321,12 +328,9 @@
         pollingTimer = null;
     }
 
-    private void NavigateToTracking()
+    private void NavigateToTracking(string code)
     {
-        if (!string.IsNullOrWhiteSpace(lookupModel.Code))
-        {
-            NavManager.NavigateTo($"/pos/track/{lookupModel.Code.Trim().ToUpper()}");
-        }
+        NavManager.NavigateTo($"/pos/track/{code}");
     }
 
     private void GoToLookup()
@@ -354,6 +358,28 @@
             OrderStatus.Completed => 100,
             _ => 0
         };
+    }
+
+    private async Task DownloadReceipt()
+    {
+        if (order == null) return;
+        isGeneratingPdf = true;
+        StateHasChanged();
+
+        try
+        {
+            var pdfBytes = ReceiptPdfService.Generate(order, payment);
+            var fileName = $"Beleg_{order.OrderNumber}_{order.CreatedAt:yyyyMMdd}.pdf";
+
+            // Stream the PDF to the browser as a download via JS interop
+            using var stream = new DotNetStreamReference(new MemoryStream(pdfBytes));
+            await JS.InvokeVoidAsync("downloadFileFromStream", fileName, stream);
+        }
+        finally
+        {
+            isGeneratingPdf = false;
+            StateHasChanged();
+        }
     }
 
     public void Dispose()

@@ -1,7 +1,9 @@
 @page "/menu/edit/{Id:guid?}"
+@using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
+@attribute [Authorize(Policy = PolicyNames.TenantStaff)]
 @inject ApplicationDbContext Context
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
