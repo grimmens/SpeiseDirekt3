@@ -6,9 +6,9 @@
     <div class="absolute inset-0 bg-black/50"></div>
 
     <!-- Bottom sheet (mobile) / Centered modal (desktop) -->
-    <div class="absolute inset-x-0 bottom-0 lg:static lg:flex lg:items-center lg:justify-center lg:h-full"
-         @onclick:stopPropagation="true">
-        <div class="bg-white rounded-t-3xl lg:rounded-2xl lg:max-w-lg w-full max-h-[calc(100vh-60px)] lg:max-h-[90vh] lg:mx-4 flex flex-col overflow-hidden shadow-2xl animate-[slideUp_0.25s_ease-out]">
+    <div class="absolute inset-x-0 bottom-0 lg:static lg:flex lg:items-center lg:justify-center lg:h-full">
+        <div class="bg-white rounded-t-3xl lg:rounded-2xl lg:max-w-lg w-full max-h-[calc(100vh-60px)] lg:max-h-[90vh] lg:mx-4 flex flex-col overflow-hidden shadow-2xl animate-[slideUp_0.25s_ease-out]"
+             @onclick:stopPropagation="true">
             @if (Item != null)
             {
                 <!-- Close button -->
@@ -63,21 +63,21 @@
                         <div class="mx-6 border-t border-gray-200 my-3"></div>
 
                         <!-- Quantity selector -->
-                        <div class="px-6 py-4">
-                            <div class="flex items-center justify-center gap-8">
-                                <button class="w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all active:scale-95 @(quantity <= 1 ? "border-gray-200 text-gray-300 cursor-not-allowed" : "text-gray-700 hover:bg-orange-50")"
+                        <div class="px-6 py-3">
+                            <div class="flex items-center justify-center gap-6">
+                                <button class="w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all active:scale-95 @(quantity <= 1 ? "border-gray-200 text-gray-300 cursor-not-allowed" : "text-gray-700 hover:bg-orange-50")"
                                         style="@(quantity > 1 ? "border-color: #FF8000;" : "")"
                                         disabled="@(quantity <= 1)"
                                         @onclick="Decrement">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 12H4" />
                                     </svg>
                                 </button>
-                                <span class="text-2xl font-bold text-gray-900 w-10 text-center">@quantity</span>
-                                <button class="w-12 h-12 rounded-full border-2 flex items-center justify-center transition-all active:scale-95 hover:bg-orange-50"
+                                <span class="text-xl font-bold text-gray-900 w-8 text-center">@quantity</span>
+                                <button class="w-9 h-9 rounded-full border-2 flex items-center justify-center transition-all active:scale-95 hover:bg-orange-50"
                                         style="border-color: #FF8000; color: #FF8000;"
                                         @onclick="Increment">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
                                     </svg>
                                 </button>
@@ -90,16 +90,16 @@
                 </div>
 
                 <!-- Sticky bottom actions -->
-                <div class="flex-shrink-0 px-6 py-4 bg-white border-t border-gray-100">
+                <div class="flex-shrink-0 px-6 py-3 bg-white border-t border-gray-100">
                     @if (!Item.IsComboItem)
                     {
-                        <button class="w-full py-4 rounded-full font-bold text-white text-lg transition-all active:scale-[0.98]"
+                        <button class="w-full py-3 rounded-full font-bold text-white text-sm transition-all active:scale-[0.98]"
                                 style="background-color: #FF8000;"
                                 @onclick="Confirm">
                             @(isEditing ? "Aktualisieren" : "Zum Warenkorb hinzufügen") — @((Item.UnitPrice * quantity).ToString("C"))
                         </button>
                     }
-                    <button class="w-full py-3 text-red-500 font-medium text-center transition-all hover:text-red-600 @(!Item.IsComboItem ? "mt-2" : "")"
+                    <button class="w-full py-2 text-red-500 font-medium text-sm text-center transition-all hover:text-red-600 @(!Item.IsComboItem ? "mt-1" : "")"
                             @onclick="Remove">
                         @(Item.IsComboItem ? "Combo entfernen" : "Aus Bestellung entfernen")
                     </button>
@@ -110,16 +110,18 @@
 </div>
 
 @code {
-    [Parameter] public OrderItem? Item { get; set; }
     [Parameter] public EventCallback<(Guid ItemId, int Quantity)> OnQuantityChanged { get; set; }
     [Parameter] public EventCallback<Guid> OnRemove { get; set; }
+
+    private OrderItem? Item { get; set; }
 
     private bool isVisible;
     private int quantity;
     private bool isEditing => Item?.Quantity > 0;
 
-    public void Show()
+    public void Show(OrderItem orderItem)
     {
+        this.Item = orderItem;
         quantity = Item?.Quantity ?? 1;
         isVisible = true;
         StateHasChanged();
@@ -135,6 +137,7 @@
         if (Item == null) return;
         isVisible = false;
         await OnQuantityChanged.InvokeAsync((Item.Id, quantity));
+        Item = null;
     }
 
     private async Task Remove()
@@ -142,5 +145,6 @@
         if (Item == null) return;
         isVisible = false;
         await OnRemove.InvokeAsync(Item.Id);
+        Item = null;
     }
 }

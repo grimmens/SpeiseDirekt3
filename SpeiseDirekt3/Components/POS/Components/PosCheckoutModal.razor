@@ -47,6 +47,10 @@
                         else
                         {
                             <p class="text-sm text-gray-400 mt-0.5">Keine Adresse angegeben</p>
+                            @if (validationErrors.ContainsKey("address"))
+                            {
+                                <p class="text-xs text-red-500 mt-0.5">@validationErrors["address"]</p>
+                            }
                         }
                     </div>
                     <button class="text-sm font-medium text-[#FF8000] hover:underline" @onclick="() => showAddressSearch = !showAddressSearch">
@@ -125,8 +129,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             <input type="text" placeholder="Dein Name" @bind="customerName"
-                                   class="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF8000]/30 focus:border-[#FF8000]" />
+                                   class="w-full border rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF8000]/30 focus:border-[#FF8000] @(validationErrors.ContainsKey("name") ? "border-red-300" : "border-gray-200")" />
                         </div>
+                        @if (validationErrors.ContainsKey("name"))
+                        {
+                            <p class="text-xs text-red-500 mt-1">@validationErrors["name"]</p>
+                        }
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 font-medium mb-1 block">E-Mail *</label>
@@ -135,8 +143,12 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                             </svg>
                             <input type="email" placeholder="email@beispiel.de" @bind="customerEmail"
-                                   class="w-full border border-gray-200 rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF8000]/30 focus:border-[#FF8000]" />
+                                   class="w-full border rounded-lg pl-10 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#FF8000]/30 focus:border-[#FF8000] @(validationErrors.ContainsKey("email") ? "border-red-300" : "border-gray-200")" />
                         </div>
+                        @if (validationErrors.ContainsKey("email"))
+                        {
+                            <p class="text-xs text-red-500 mt-1">@validationErrors["email"]</p>
+                        }
                     </div>
                     <div>
                         <label class="text-xs text-gray-500 font-medium mb-1 block">Telefon</label>
@@ -341,7 +353,13 @@
     // Order summary
     private bool showOrderDetails = true;
 
-    private bool CanPlaceOrder => !isProcessing && !string.IsNullOrWhiteSpace(customerEmail) && Order != null;
+    // Validation
+    private Dictionary<string, string> validationErrors = new();
+
+    private bool CanPlaceOrder => !isProcessing && Order != null && validationErrors.Count == 0
+        && !string.IsNullOrWhiteSpace(customerEmail)
+        && !string.IsNullOrWhiteSpace(deliveryStreet)
+        && !string.IsNullOrWhiteSpace(customerName);
 
     public async Task Show()
     {
@@ -460,11 +478,36 @@
         addressQuery = "";
     }
 
+    private bool Validate()
+    {
+        validationErrors.Clear();
+
+        if (string.IsNullOrWhiteSpace(customerName))
+            validationErrors["name"] = "Bitte gib deinen Namen ein.";
+
+        if (string.IsNullOrWhiteSpace(customerEmail))
+            validationErrors["email"] = "Bitte gib deine E-Mail-Adresse ein.";
+        else if (!System.Text.RegularExpressions.Regex.IsMatch(customerEmail.Trim(), @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            validationErrors["email"] = "Bitte gib eine gültige E-Mail-Adresse ein.";
+
+        if (string.IsNullOrWhiteSpace(deliveryStreet) || string.IsNullOrWhiteSpace(deliveryCity))
+            validationErrors["address"] = "Bitte gib eine Lieferadresse an.";
+
+        return validationErrors.Count == 0;
+    }
+
     private async Task ProcessPayment()
     {
         if (Order == null) return;
-        isProcessing = true;
         errorMessage = null;
+
+        if (!Validate())
+        {
+            StateHasChanged();
+            return;
+        }
+
+        isProcessing = true;
 
         try
         {

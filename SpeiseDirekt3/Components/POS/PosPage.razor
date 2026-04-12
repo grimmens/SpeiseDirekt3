@@ -473,7 +473,7 @@
 
 <!-- Modals -->
 <PosComboOfferModal @ref="comboModal" Combo="pendingCombo" TriggerItem="pendingTriggerItem" OnResult="HandleComboResult" />
-<PosItemDetailModal @ref="itemDetailModal" Item="selectedCartItemProxy" OnQuantityChanged="HandleQuantityChanged" OnRemove="HandleItemRemove" />
+<PosItemDetailModal @ref="itemDetailModal" OnQuantityChanged="HandleQuantityChanged" OnRemove="HandleItemRemove" />
 <PosCheckoutModal @ref="checkoutModal" Order="checkoutOrder" OnPaymentComplete="HandlePaymentComplete" OnCancel="HandleCheckoutCancel" />
 <PosReceiptModal @ref="receiptModal" Order="checkoutOrder" Payment="completedPayment" TrackingCode="@checkoutOrder?.TrackingCode" OnNewOrder="StartNewOrder" />
 
@@ -505,7 +505,6 @@
     private PosReceiptModal receiptModal = default!;
     private MenuCombo? pendingCombo;
     private MenuItem? pendingTriggerItem;
-    private OrderItem? selectedCartItemProxy;
     private Order? checkoutOrder;
     private PosPayment? completedPayment;
 
@@ -637,28 +636,28 @@
     {
         if (index < 0 || index >= cart.Items.Count) return;
         var ci = cart.Items[index];
-        selectedCartItemProxy = new OrderItem
+        var selectedCartItemProxy = new OrderItem
         {
             Id = Guid.NewGuid(), ItemName = ci.Name, UnitPrice = ci.UnitPrice,
             Quantity = ci.Quantity, IsComboItem = false, LineTotal = ci.LineTotal
         };
         _editingCartIndex = index;
         _editingIsCombo = false;
-        itemDetailModal.Show();
+        itemDetailModal.Show(selectedCartItemProxy);
     }
 
     private void OpenComboDetail(int triggerIndex)
     {
         if (triggerIndex < 0 || triggerIndex >= cart.Items.Count) return;
         var ci = cart.Items[triggerIndex];
-        selectedCartItemProxy = new OrderItem
+        var selectedCartItemProxy = new OrderItem
         {
             Id = Guid.NewGuid(), ItemName = ci.Name + " (Combo)", UnitPrice = ci.UnitPrice,
             Quantity = ci.Quantity, IsComboItem = false, LineTotal = ci.LineTotal
         };
         _editingCartIndex = triggerIndex;
         _editingIsCombo = true;
-        itemDetailModal.Show();
+        itemDetailModal.Show(selectedCartItemProxy);
     }
 
     private int _editingCartIndex = -1;

@@ -170,9 +170,9 @@ namespace SpeiseDirekt3
 
             app.UseHttpsRedirection();
 
-            var supportedCultures = new[] { "de", "en" };
+            var supportedCultures = new[] { "de-AT", "en-AT" };
             app.UseRequestLocalization(new Microsoft.AspNetCore.Builder.RequestLocalizationOptions()
-                .SetDefaultCulture("de")
+                .SetDefaultCulture("de-AT")
                 .AddSupportedCultures(supportedCultures)
                 .AddSupportedUICultures(supportedCultures));
 
