@@ -1,14 +1,25 @@
+@page "/pos/{MenuId:guid}/receipt/{OrderId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@layout PosLayout
+@inject ApplicationDbContext Context
+@inject IPosPaymentService PaymentService
+@inject IPosSessionService SessionService
+@inject NavigationManager NavManager
 @inject IJSRuntime JS
-@inject NavigationManager Navigation
+@attribute [AllowAnonymous]
+@rendermode InteractiveServer
 
-<!-- Full-screen order confirmation overlay -->
-<div class="fixed inset-0 z-50 bg-white overflow-y-auto @(isVisible ? "" : "hidden")">
-    @if (Order != null)
+<PageTitle>Bestellbestätigung - Speise-Direkt</PageTitle>
+
+<div class="min-h-screen bg-white overflow-y-auto">
+    @if (order != null)
     {
-        <div class="max-w-lg mx-auto px-4 py-8" id="pos-receipt">
+        <div class="max-w-lg mx-auto px-4 py-8">
 
-            <!-- Success animation area -->
+            <!-- Success animation -->
             <div class="text-center mb-8">
                 <div class="w-24 h-24 mx-auto mb-5 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg animate-[pulse_2s_ease-in-out_infinite]">
                     <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,12 +30,12 @@
                 <p class="text-gray-500 text-lg">Deine Bestellung wurde entgegengenommen</p>
             </div>
 
-            <!-- Order code card -->
-            @if (!string.IsNullOrEmpty(TrackingCode))
+            <!-- Tracking code -->
+            @if (!string.IsNullOrEmpty(order.TrackingCode))
             {
                 <div class="border-2 border-dashed border-gray-300 rounded-2xl p-6 text-center mb-6">
                     <p class="text-sm text-gray-500 uppercase tracking-wider font-semibold mb-2">Dein Bestellcode</p>
-                    <p class="text-5xl font-mono font-bold tracking-widest mb-3" style="color: #FF8000;">@TrackingCode</p>
+                    <p class="text-5xl font-mono font-bold tracking-widest mb-3" style="color: #FF8000;">@order.TrackingCode</p>
                     <p class="text-sm text-gray-400 mb-4">Zeige diesen Code bei der Abholung vor</p>
                     <button class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
                             @onclick="CopyTrackingCode">
@@ -36,13 +47,12 @@
                 </div>
             }
 
-            <!-- Order details card -->
+            <!-- Order details -->
             <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm mb-6">
-                <!-- Order number & estimated time -->
                 <div class="px-6 py-4">
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-sm text-gray-400">Bestellnummer</span>
-                        <span class="text-sm text-gray-500 font-medium">#@Order.OrderNumber</span>
+                        <span class="text-sm text-gray-500 font-medium">#@order.OrderNumber</span>
                     </div>
                     <div class="flex items-center gap-2 text-green-600">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,12 +62,10 @@
                     </div>
                 </div>
 
-                <!-- Divider -->
                 <div class="border-t border-gray-100"></div>
 
-                <!-- Itemized list -->
                 <div class="px-6 py-4 space-y-3">
-                    @foreach (var item in Order.Items)
+                    @foreach (var item in order.Items)
                     {
                         <div class="flex justify-between items-start">
                             <div class="flex items-start gap-3">
@@ -75,38 +83,35 @@
                     }
                 </div>
 
-                <!-- Divider -->
                 <div class="border-t border-gray-100"></div>
 
-                <!-- Totals -->
                 <div class="px-6 py-4 space-y-2">
                     <div class="flex justify-between text-sm text-gray-400">
                         <span>Zwischensumme</span>
-                        <span>@Order.SubTotal.ToString("C")</span>
+                        <span>@order.SubTotal.ToString("C")</span>
                     </div>
                     <div class="flex justify-between text-sm text-gray-400">
                         <span>MwSt.</span>
-                        <span>@Order.TaxAmount.ToString("C")</span>
+                        <span>@order.TaxAmount.ToString("C")</span>
                     </div>
-                    @if (Order.DiscountAmount > 0)
+                    @if (order.DiscountAmount > 0)
                     {
                         <div class="flex justify-between text-sm text-green-600">
                             <span>Rabatt</span>
-                            <span>-@Order.DiscountAmount.ToString("C")</span>
+                            <span>-@order.DiscountAmount.ToString("C")</span>
                         </div>
                     }
                     <div class="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
                         <span>Gesamt</span>
-                        <span>@Order.GrandTotal.ToString("C")</span>
+                        <span>@order.GrandTotal.ToString("C")</span>
                     </div>
                 </div>
 
-                <!-- Payment method -->
-                @if (Payment != null)
+                @if (payment != null)
                 {
                     <div class="px-6 pb-4">
                         <div class="flex items-center gap-2 text-sm text-gray-400">
-                            @if (Payment.PaymentMethod == PosPaymentMethod.Card)
+                            @if (payment.PaymentMethod == PosPaymentMethod.Card)
                             {
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -120,15 +125,15 @@
                                 </svg>
                                 <span>Barzahlung</span>
                             }
-                            <span class="ml-auto">@Order.CreatedAt.ToLocalTime().ToString("g")</span>
+                            <span class="ml-auto">@order.CreatedAt.ToLocalTime().ToString("g")</span>
                         </div>
                     </div>
                 }
             </div>
 
-            <!-- Action buttons -->
+            <!-- Actions -->
             <div class="space-y-3 mb-8">
-                @if (!string.IsNullOrEmpty(TrackingCode))
+                @if (!string.IsNullOrEmpty(order.TrackingCode))
                 {
                     <button class="w-full py-4 text-white text-lg font-bold rounded-full transition-all active:scale-[0.98] shadow-md hover:shadow-lg"
                             style="background-color: #FF8000;"
@@ -153,28 +158,46 @@
             </div>
         </div>
     }
+    else if (initialized)
+    {
+        <div class="flex flex-col items-center justify-center min-h-screen px-8 text-center">
+            <p class="text-gray-600">Bestellung nicht gefunden.</p>
+            <a href="/pos/@MenuId" class="mt-4 px-6 py-2.5 rounded-full text-white font-semibold text-sm" style="background-color: #FF8000;">Zurück</a>
+        </div>
+    }
 </div>
 
 @code {
-    [Parameter] public Order? Order { get; set; }
-    [Parameter] public PosPayment? Payment { get; set; }
-    [Parameter] public EventCallback OnNewOrder { get; set; }
-    [Parameter] public string? TrackingCode { get; set; }
+    [Parameter] public Guid MenuId { get; set; }
+    [Parameter] public Guid OrderId { get; set; }
 
-    private bool isVisible;
+    private Order? order;
+    private PosPayment? payment;
+    private bool initialized;
     private bool codeCopied;
 
-    public void Show()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        isVisible = true;
+        if (!firstRender) return;
+
+        order = await Context.Orders.IgnoreQueryFilters()
+            .Include(o => o.Items)
+            .FirstOrDefaultAsync(o => o.Id == OrderId);
+
+        if (order != null)
+        {
+            payment = await PaymentService.GetByOrderIdAsync(order.Id);
+        }
+
+        initialized = true;
         StateHasChanged();
     }
 
     private async Task CopyTrackingCode()
     {
-        if (!string.IsNullOrEmpty(TrackingCode))
+        if (!string.IsNullOrEmpty(order?.TrackingCode))
         {
-            await JS.InvokeVoidAsync("navigator.clipboard.writeText", TrackingCode);
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", order.TrackingCode);
             codeCopied = true;
             StateHasChanged();
             await Task.Delay(2000);
@@ -183,17 +206,14 @@
         }
     }
 
-    private void TrackOrder()
-    {
-        isVisible = false;
-        Navigation.NavigateTo($"/pos/track/{TrackingCode}");
-    }
-
-    private async Task PrintReceipt() => await JS.InvokeVoidAsync("window.print");
+    private void TrackOrder() => NavManager.NavigateTo($"/pos/track/{order?.TrackingCode}");
 
     private async Task NewOrder()
     {
-        isVisible = false;
-        await OnNewOrder.InvokeAsync();
+        var newSessionId = SessionService.CreateSessionId();
+        await JS.InvokeVoidAsync("sessionStorage.setItem", $"pos_sid_{MenuId}", newSessionId.ToString());
+        NavManager.NavigateTo($"/pos/{MenuId}");
     }
+
+    private async Task PrintReceipt() => await JS.InvokeVoidAsync("window.print");
 }

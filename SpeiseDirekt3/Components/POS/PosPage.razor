@@ -474,8 +474,6 @@
 <!-- Modals -->
 <PosComboOfferModal @ref="comboModal" Combo="pendingCombo" TriggerItem="pendingTriggerItem" OnResult="HandleComboResult" />
 <PosItemDetailModal @ref="itemDetailModal" OnQuantityChanged="HandleQuantityChanged" OnRemove="HandleItemRemove" />
-<PosCheckoutModal @ref="checkoutModal" Order="checkoutOrder" OnPaymentComplete="HandlePaymentComplete" OnCancel="HandleCheckoutCancel" />
-<PosReceiptModal @ref="receiptModal" Order="checkoutOrder" Payment="completedPayment" TrackingCode="@checkoutOrder?.TrackingCode" OnNewOrder="StartNewOrder" />
 
 @code {
     [Parameter] public Guid MenuId { get; set; }
@@ -501,12 +499,8 @@
     // Modal state
     private PosComboOfferModal comboModal = default!;
     private PosItemDetailModal itemDetailModal = default!;
-    private PosCheckoutModal checkoutModal = default!;
-    private PosReceiptModal receiptModal = default!;
     private MenuCombo? pendingCombo;
     private MenuItem? pendingTriggerItem;
-    private Order? checkoutOrder;
-    private PosPayment? completedPayment;
 
     private IEnumerable<MenuItem> filteredItems =>
         selectedCategoryId == null ? allMenuItems : allMenuItems.Where(i => i.CategoryId == selectedCategoryId);
@@ -714,44 +708,9 @@
 
     // ════════════════ CHECKOUT ════════════════
 
-    private async Task OpenCheckout()
+    private void OpenCheckout()
     {
         showMobileCart = false;
-
-        var items = cart.Items.Select(ci => new CreateOrderItemDto
-        {
-            MenuItemId = ci.MenuItemId,
-            Quantity = ci.Quantity,
-            MenuComboId = ci.ComboId
-        }).ToList();
-
-        checkoutOrder = await OrderService.CreatePosOrderAsync(MenuId, menuOwnerId, items);
-        await checkoutModal.Show();
-    }
-
-    private async Task HandlePaymentComplete(PosPayment payment)
-    {
-        completedPayment = payment;
-        SessionService.ClearCart(sessionId);
-        cart = SessionService.GetCart(sessionId);
-        receiptModal.Show();
-    }
-
-    private void HandleCheckoutCancel()
-    {
-        if (checkoutOrder != null)
-        {
-            _ = OrderService.CancelOrderAsync(checkoutOrder.Id, "Payment cancelled");
-            checkoutOrder = null;
-        }
-    }
-
-    private async Task StartNewOrder()
-    {
-        sessionId = SessionService.CreateSessionId();
-        await JS.InvokeVoidAsync("sessionStorage.setItem", $"pos_sid_{MenuId}", sessionId.ToString());
-        cart = SessionService.GetCart(sessionId);
-        checkoutOrder = null;
-        completedPayment = null;
+        NavManager.NavigateTo($"/pos/{MenuId}/checkout");
     }
 }
