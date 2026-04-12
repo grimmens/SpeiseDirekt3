@@ -1,8 +1,13 @@
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @inject IPosPaymentService PaymentService
 @inject IOrderService OrderService
 @inject IPosLocationService LocationService
+@inject IPosCustomerService CustomerService
+@inject IAddressService AddressService
+@inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavManager
 @inject IJSRuntime JS
 
@@ -37,7 +42,7 @@
                         <h2 class="text-sm font-semibold text-gray-900">Lieferadresse</h2>
                         @if (!string.IsNullOrEmpty(deliveryStreet))
                         {
-                            <p class="text-sm text-gray-500 mt-0.5">@deliveryStreet, @deliveryPostalCode @deliveryCity</p>
+                            <p class="text-sm text-gray-500 mt-0.5">@($"{deliveryStreet} {deliveryHouseNumber}".Trim()), @deliveryPostalCode @deliveryCity</p>
                         }
                         else
                         {
@@ -48,6 +53,35 @@
                         @(showAddressSearch ? "Schließen" : (string.IsNullOrEmpty(deliveryStreet) ? "Hinzufügen" : "Ändern"))
                     </button>
                 </div>
+
+                @if (isRegisteredUser && savedAddresses.Any())
+                {
+                    <div class="space-y-2 mb-3">
+                        @foreach (var saved in savedAddresses)
+                        {
+                            var isSelected = selectedAddressId == saved.Id;
+                            <button class="w-full text-left p-3 rounded-lg border-2 transition-all @(isSelected ? "border-[#FF8000] bg-orange-50" : "border-gray-200 hover:border-gray-300")"
+                                    @onclick="() => SelectSavedAddress(saved.Id)">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 @(isSelected ? "border-[#FF8000]" : "border-gray-300")">
+                                        @if (isSelected)
+                                        {
+                                            <div class="w-2 h-2 rounded-full bg-[#FF8000]"></div>
+                                        }
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        @if (!string.IsNullOrWhiteSpace(saved.Label))
+                                        {
+                                            <div class="text-xs font-semibold text-gray-700">@saved.Label</div>
+                                        }
+                                        <div class="text-sm text-gray-900 truncate">@saved.Street @saved.HouseNumber</div>
+                                        <div class="text-xs text-gray-500">@saved.PostalCode @saved.City</div>
+                                    </div>
+                                </div>
+                            </button>
+                        }
+                    </div>
+                }
 
                 @if (showAddressSearch)
                 {
@@ -116,11 +150,14 @@
                     </div>
                 </div>
 
-                <div class="mt-3 pt-3 border-t border-gray-100">
-                    <a href="/pos/login?returnUrl=@(Uri.EscapeDataString(NavManager.Uri))" class="text-sm font-medium text-[#FF8000] hover:underline">
-                        Anmelden für schnellere Bestellung →
-                    </a>
-                </div>
+                @if (!isRegisteredUser)
+                {
+                    <div class="mt-3 pt-3 border-t border-gray-100">
+                        <a href="/pos/account/login?returnUrl=@(Uri.EscapeDataString(NavManager.Uri))" class="text-sm font-medium text-[#FF8000] hover:underline">
+                            Anmelden für schnellere Bestellung →
+                        </a>
+                    </div>
+                }
             </div>
 
             <!-- 4. Payment Method Section -->
@@ -280,8 +317,15 @@
     private string? errorMessage;
     private PosPaymentMethod selectedMethod = PosPaymentMethod.Cash;
 
-    // Address fields
+    // Session
+    private string? sessionId;
+    private bool isRegisteredUser;
+    private List<Address> savedAddresses = new();
+    private Guid? selectedAddressId;
+
+    // Address fields (snapshot of currently-chosen delivery address)
     private string? deliveryStreet;
+    private string? deliveryHouseNumber;
     private string? deliveryCity;
     private string? deliveryPostalCode;
     private bool showAddressSearch;
@@ -307,23 +351,72 @@
         showAddressSearch = false;
         addressResults.Clear();
 
-        // Try to load saved address from sessionStorage
-        try
-        {
-            var savedAddress = await JS.InvokeAsync<string?>("sessionStorage.getItem", "pos_delivery_address");
-            if (!string.IsNullOrEmpty(savedAddress))
-            {
-                var parts = savedAddress.Split('|');
-                if (parts.Length >= 3)
-                {
-                    deliveryStreet = parts[0];
-                    deliveryPostalCode = parts[1];
-                    deliveryCity = parts[2];
-                }
-            }
-        }
-        catch { /* sessionStorage may not be available */ }
+        await LoadSessionAsync();
+        StateHasChanged();
+    }
 
+    private async Task LoadSessionAsync()
+    {
+        // Persistent POS customer session id, shared across pages.
+        sessionId = await JS.InvokeAsync<string?>("sessionStorage.getItem", "pos_customer_sid");
+        if (string.IsNullOrEmpty(sessionId))
+        {
+            sessionId = Guid.NewGuid().ToString();
+            await JS.InvokeVoidAsync("sessionStorage.setItem", "pos_customer_sid", sessionId);
+        }
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var userId = authState.User.Identity?.IsAuthenticated == true
+            ? authState.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            : null;
+
+        var session = await CustomerService.GetOrCreateSessionAsync(sessionId, userId);
+
+        isRegisteredUser = session is RegisteredUserPosSession;
+        customerEmail = session.Email;
+        customerPhone = session.Phone;
+        customerName = session.FullName;
+
+        if (session.DeliveryAddress != null)
+        {
+            deliveryStreet = session.DeliveryAddress.Street;
+            deliveryHouseNumber = session.DeliveryAddress.HouseNumber;
+            deliveryCity = session.DeliveryAddress.City;
+            deliveryPostalCode = session.DeliveryAddress.PostalCode;
+        }
+        else
+        {
+            deliveryStreet = deliveryHouseNumber = deliveryCity = deliveryPostalCode = null;
+        }
+
+        if (session is RegisteredUserPosSession registered)
+        {
+            savedAddresses = await AddressService.GetForUserAsync(registered.ApplicationUserId);
+            selectedAddressId = registered.SelectedAddressId;
+        }
+        else
+        {
+            savedAddresses = new();
+            selectedAddressId = null;
+        }
+    }
+
+    private async Task SelectSavedAddress(Guid addressId)
+    {
+        if (sessionId == null) return;
+
+        var session = await CustomerService.SelectAddressAsync(sessionId, addressId);
+        if (session == null) return;
+
+        selectedAddressId = session.SelectedAddressId;
+        if (session.DeliveryAddress != null)
+        {
+            deliveryStreet = session.DeliveryAddress.Street;
+            deliveryHouseNumber = session.DeliveryAddress.HouseNumber;
+            deliveryCity = session.DeliveryAddress.City;
+            deliveryPostalCode = session.DeliveryAddress.PostalCode;
+        }
+        showAddressSearch = false;
         StateHasChanged();
     }
 
@@ -357,9 +450,11 @@
 
     private void SelectAddress(LocationResult result)
     {
-        deliveryStreet = $"{result.Street} {result.HouseNumber}".Trim();
+        deliveryStreet = result.Street;
+        deliveryHouseNumber = result.HouseNumber;
         deliveryCity = result.City;
         deliveryPostalCode = result.PostalCode;
+        selectedAddressId = null; // free-form override clears saved-address selection
         addressResults.Clear();
         showAddressSearch = false;
         addressQuery = "";
@@ -373,13 +468,33 @@
 
         try
         {
+            // Persist form edits back to the POS customer session so they survive
+            // across pages (checkout → order tracker → next order).
+            if (sessionId != null)
+            {
+                CustomerService.UpdateContact(sessionId, customerEmail, customerName, null, customerPhone);
+                if (selectedAddressId == null && !string.IsNullOrWhiteSpace(deliveryStreet))
+                {
+                    CustomerService.UpdateDeliveryAddress(sessionId, new PosSessionAddress
+                    {
+                        Street = deliveryStreet,
+                        HouseNumber = deliveryHouseNumber,
+                        City = deliveryCity,
+                        PostalCode = deliveryPostalCode,
+                    });
+                }
+            }
+
             // Save customer details to the order
+            var orderStreetLine = string.IsNullOrWhiteSpace(deliveryHouseNumber)
+                ? deliveryStreet
+                : $"{deliveryStreet} {deliveryHouseNumber}".Trim();
             await OrderService.UpdateCustomerDetailsAsync(
                 Order.Id,
                 customerName,
                 customerEmail,
                 customerPhone,
-                deliveryStreet,
+                orderStreetLine,
                 deliveryCity,
                 deliveryPostalCode);
 

@@ -97,14 +97,13 @@
                                style="border-color: #FF8000; color: #FF8000;">
                                 Bearbeiten
                             </a>
-                            <form method="post" class="flex-1">
+                            <EditForm method="post" OnValidSubmit="Delete" Model="address" class="flex-1">
                                 <AntiforgeryToken />
-                                <input type="hidden" name="deleteId" value="@address.Id" />
                                 <button type="submit"
                                         class="w-full py-2 rounded-full border border-red-200 text-sm font-semibold text-red-600 transition-colors hover:bg-red-50">
                                     Löschen
                                 </button>
-                            </form>
+                            </EditForm>
                         </div>
                     </li>
                 }
@@ -139,5 +138,11 @@
         }
 
         addresses = await AddressService.GetForUserAsync(user.Id);
+    }
+
+    public async Task Delete(EditContext context)
+    {
+        var model = (Address)context.Model;
+        await AddressService.DeleteAsync(model.Id, model.ApplicationUserId);
     }
 }

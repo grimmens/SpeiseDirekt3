@@ -162,24 +162,13 @@
 
         }
 
-        // var sessionId = Guid.NewGuid().ToString();
-        // var session = new PosCustomerSession
-        // {
-        //     Email = user.Email,
-        //     IsGuest = false
-        // };
-
-        // CustomerService.SaveSession(sessionId, session);
-        // await JS.InvokeVoidAsync("sessionStorage.setItem", "pos_customer_sid", sessionId);
         NavManager.NavigateTo(GetReturnUrl());
     }
 
     private async Task HandleGuestContinue()
     {
         var sessionId = Guid.NewGuid().ToString();
-        var session = new PosCustomerSession { IsGuest = true };
-
-        CustomerService.SaveSession(sessionId, session);
+        CustomerService.EnsureGuestSession(sessionId);
         await JS.InvokeVoidAsync("sessionStorage.setItem", "pos_customer_sid", sessionId);
         NavManager.NavigateTo(GetReturnUrl());
     }

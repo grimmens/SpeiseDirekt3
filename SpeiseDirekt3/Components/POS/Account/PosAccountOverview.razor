@@ -72,9 +72,9 @@
                 <a href="/pos/account/address" class="block text-center w-full py-2.5 rounded-full border-2 text-sm font-semibold transition-colors hover:bg-orange-50" style="border-color: #FF8000; color: #FF8000;">
                     Adressen verwalten
                 </a>
-                <form action="/Account/Logout" method="post">
+                <form action="Account/Logout" method="post">
                     <AntiforgeryToken />
-                    <input type="hidden" name="ReturnUrl" value="/pos" />
+                    <input type="hidden" name="ReturnUrl" value="pos" />
                     <button type="submit" class="w-full py-2.5 rounded-full border-2 text-sm font-semibold transition-colors hover:bg-orange-50" style="border-color: #FF8000; color: #FF8000;">
                         Abmelden
                     </button>

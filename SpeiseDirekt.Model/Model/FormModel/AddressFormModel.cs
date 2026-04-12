@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace SpeiseDirekt3.Components.POS.Account;
+namespace SpeiseDirekt.Model;
 
 public class AddressFormModel
 {
