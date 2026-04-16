@@ -9,6 +9,7 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IAddressService AddressService
 @inject NavigationManager NavManager
+@inject IAddressValidationService AddressValidation
 
 <PageTitle>Adresse bearbeiten - Speise-Direkt</PageTitle>
 
@@ -103,6 +104,23 @@
                 </label>
             </div>
 
+            @if (!string.IsNullOrEmpty(addressError))
+            {
+                <div class="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+                    @addressError
+                </div>
+            }
+
+            @if (suggestedAddress != null)
+            {
+                <div class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <p class="text-sm text-gray-700">Meinten Sie: <span class="font-semibold">@suggestedAddress.Street @suggestedAddress.HouseNumber, @suggestedAddress.PostalCode @suggestedAddress.City</span>?</p>
+                    <button type="button" class="mt-2 px-4 py-1.5 text-sm font-semibold text-white rounded-full" style="background-color: #FF8000;" @onclick="AcceptSuggestion">
+                        Vorschlag übernehmen
+                    </button>
+                </div>
+            }
+
             <div class="flex gap-3 mt-5">
                 <a href="/pos/account/address" class="flex-1 text-center py-3 rounded-full border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:bg-gray-50">
                     Abbrechen
@@ -128,6 +146,8 @@
 
     private ApplicationUser? user;
     private bool notFound;
+    private string? addressError;
+    private LocationResult? suggestedAddress;
 
     protected override async Task OnInitializedAsync()
     {
@@ -166,6 +186,23 @@
     private async Task HandleSubmit()
     {
         if (user == null) return;
+        addressError = null;
+        suggestedAddress = null;
+
+        var validation = await AddressValidation.ValidateAddressAsync(
+            Input.Street.Trim(), Input.HouseNumber, Input.City.Trim(), Input.PostalCode);
+
+        if (!validation.IsValid)
+        {
+            addressError = validation.ErrorMessage;
+            return;
+        }
+
+        if (validation.SuggestedAddress != null)
+        {
+            suggestedAddress = validation.SuggestedAddress;
+            return;
+        }
 
         var result = await AddressService.UpdateAsync(Id, user.Id, a =>
         {
@@ -186,5 +223,16 @@
         }
 
         NavManager.NavigateTo("/pos/account/address");
+    }
+
+    private void AcceptSuggestion()
+    {
+        if (suggestedAddress == null) return;
+        Input.Street = suggestedAddress.Street;
+        Input.HouseNumber = suggestedAddress.HouseNumber;
+        Input.City = suggestedAddress.City;
+        Input.PostalCode = suggestedAddress.PostalCode;
+        suggestedAddress = null;
+        addressError = null;
     }
 }

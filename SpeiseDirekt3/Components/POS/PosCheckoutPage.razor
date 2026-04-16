@@ -11,6 +11,7 @@
 @inject IPosSessionService SessionService
 @inject IPosPaymentService PaymentService
 @inject IPosLocationService LocationService
+@inject IAddressValidationService AddressValidation
 @inject IPosCustomerService CustomerService
 @inject IAddressService AddressService
 @inject AuthenticationStateProvider AuthStateProvider
@@ -134,6 +135,16 @@
                                     }
                                 </div>
                             }
+                        </div>
+                    }
+
+                    @if (suggestedAddress != null)
+                    {
+                        <div class="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                            <p class="text-sm text-gray-700">Meinten Sie: <span class="font-semibold">@suggestedAddress.Street @suggestedAddress.HouseNumber, @suggestedAddress.PostalCode @suggestedAddress.City</span>?</p>
+                            <button class="mt-2 px-4 py-1.5 text-sm font-semibold text-white rounded-full" style="background-color: #FF8000;" @onclick="AcceptSuggestedAddress">
+                                Vorschlag übernehmen
+                            </button>
                         </div>
                     }
                 </div>
@@ -384,6 +395,7 @@
 
     // Validation
     private Dictionary<string, string> validationErrors = new();
+    private LocationResult? suggestedAddress;
 
     private bool CanPlaceOrder => !isProcessing && order != null && validationErrors.Count == 0
         && !string.IsNullOrWhiteSpace(customerEmail)
@@ -524,9 +536,10 @@
         addressDebounce.Start();
     }
 
-    private bool Validate()
+    private async Task<bool> ValidateAsync()
     {
         validationErrors.Clear();
+        suggestedAddress = null;
 
         if (string.IsNullOrWhiteSpace(customerName))
             validationErrors["name"] = "Bitte gib deinen Namen ein.";
@@ -537,9 +550,33 @@
             validationErrors["email"] = "Bitte gib eine gültige E-Mail-Adresse ein.";
 
         if (string.IsNullOrWhiteSpace(deliveryStreet) || string.IsNullOrWhiteSpace(deliveryCity))
+        {
             validationErrors["address"] = "Bitte gib eine Lieferadresse an.";
+        }
+        else
+        {
+            var result = await AddressValidation.ValidateAddressAsync(deliveryStreet!, deliveryHouseNumber, deliveryCity!, deliveryPostalCode);
+            if (!result.IsValid)
+            {
+                validationErrors["address"] = result.ErrorMessage ?? "Die eingegebene Adresse konnte nicht verifiziert werden.";
+            }
+            else if (result.SuggestedAddress != null)
+            {
+                suggestedAddress = result.SuggestedAddress;
+            }
+        }
 
         return validationErrors.Count == 0;
+    }
+
+    private void AcceptSuggestedAddress()
+    {
+        if (suggestedAddress == null) return;
+        deliveryStreet = suggestedAddress.Street;
+        deliveryHouseNumber = suggestedAddress.HouseNumber;
+        deliveryCity = suggestedAddress.City;
+        deliveryPostalCode = suggestedAddress.PostalCode;
+        suggestedAddress = null;
     }
 
     private async Task ProcessPayment()
@@ -547,7 +584,7 @@
         if (order == null) return;
         errorMessage = null;
 
-        if (!Validate())
+        if (!await ValidateAsync())
         {
             StateHasChanged();
             return;
