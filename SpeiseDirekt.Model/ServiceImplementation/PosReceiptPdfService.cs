@@ -87,23 +87,24 @@ public class PosReceiptPdfService : IPosReceiptPdfService
     {
         container.PaddingVertical(10).Column(col =>
         {
-            // Items table
+            // Items table — each position with its own net, tax rate, tax amount and gross total
             col.Item().Table(table =>
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(35);  // Pos
-                    columns.ConstantColumn(35);  // Qty
-                    columns.RelativeColumn();     // Item name
-                    columns.ConstantColumn(70);   // Unit price
-                    columns.ConstantColumn(50);   // Tax %
-                    columns.ConstantColumn(70);   // Line total
+                    columns.ConstantColumn(25);  // Pos
+                    columns.ConstantColumn(30);  // Qty
+                    columns.RelativeColumn();    // Item name
+                    columns.ConstantColumn(60);  // Unit price (net)
+                    columns.ConstantColumn(55);  // Netto (line total net)
+                    columns.ConstantColumn(35);  // Tax %
+                    columns.ConstantColumn(55);  // Tax amount
+                    columns.ConstantColumn(60);  // Gross total
                 });
 
-                // Header
                 table.Header(header =>
                 {
-                    var headerStyle = TextStyle.Default.Bold().FontSize(9).FontColor(Colors.Grey.Darken1);
+                    var headerStyle = TextStyle.Default.Bold().FontSize(8).FontColor(Colors.Grey.Darken1);
 
                     header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(4)
                         .Text("Pos.").Style(headerStyle);
@@ -112,11 +113,15 @@ public class PosReceiptPdfService : IPosReceiptPdfService
                     header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(4)
                         .Text("Bezeichnung").Style(headerStyle);
                     header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(4).AlignRight()
-                        .Text("Einzelpreis").Style(headerStyle);
+                        .Text("Einzel\nnetto").Style(headerStyle);
                     header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(4).AlignRight()
-                        .Text("MwSt.").Style(headerStyle);
+                        .Text("Netto").Style(headerStyle);
                     header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(4).AlignRight()
-                        .Text("Gesamt").Style(headerStyle);
+                        .Text("MwSt%").Style(headerStyle);
+                    header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(4).AlignRight()
+                        .Text("MwSt €").Style(headerStyle);
+                    header.Cell().BorderBottom(1).BorderColor(Colors.Grey.Lighten1).Padding(4).AlignRight()
+                        .Text("Brutto").Style(headerStyle);
                 });
 
                 var items = order.Items.ToList();
@@ -125,30 +130,67 @@ public class PosReceiptPdfService : IPosReceiptPdfService
                     var item = items[i];
                     var bgColor = i % 2 == 0 ? Colors.White : Colors.Grey.Lighten4;
 
-                    table.Cell().Background(bgColor).Padding(4).Text($"{i + 1}");
-                    table.Cell().Background(bgColor).Padding(4).Text($"{item.Quantity}x");
+                    // Per-position gross = net line total + position tax amount
+                    var lineGross = Math.Round(item.LineTotal + item.TaxAmount, 2, MidpointRounding.AwayFromZero);
+
+                    table.Cell().Background(bgColor).Padding(4).Text($"{i + 1}").FontSize(9);
+                    table.Cell().Background(bgColor).Padding(4).Text($"{item.Quantity}").FontSize(9);
                     table.Cell().Background(bgColor).Padding(4).Column(c =>
                     {
-                        c.Item().Text(item.ItemName);
+                        c.Item().Text(item.ItemName).FontSize(9);
                         if (item.IsComboItem)
-                            c.Item().Text("Combo").FontSize(8).FontColor(Colors.Orange.Medium);
+                            c.Item().Text("Combo").FontSize(7).FontColor(Colors.Orange.Medium);
                     });
                     table.Cell().Background(bgColor).Padding(4).AlignRight()
-                        .Text($"{item.UnitPrice:C}");
+                        .Text($"{item.UnitPrice:C}").FontSize(9);
                     table.Cell().Background(bgColor).Padding(4).AlignRight()
-                        .Text($"{item.TaxRate:P0}");
+                        .Text($"{item.LineTotal:C}").FontSize(9);
                     table.Cell().Background(bgColor).Padding(4).AlignRight()
-                        .Text($"{item.LineTotal:C}").Bold();
+                        .Text($"{item.TaxRate:P0}").FontSize(9);
+                    table.Cell().Background(bgColor).Padding(4).AlignRight()
+                        .Text($"{item.TaxAmount:C}").FontSize(9);
+                    table.Cell().Background(bgColor).Padding(4).AlignRight()
+                        .Text($"{lineGross:C}").FontSize(9).Bold();
                 }
             });
 
             col.Item().PaddingTop(15).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
 
-            // Totals
-            col.Item().PaddingTop(10).AlignRight().Width(220).Column(totals =>
+            // MwSt breakdown by tax rate (Austrian invoice requirement)
+            var taxGroups = order.Items
+                .GroupBy(i => i.TaxRate)
+                .OrderBy(g => g.Key)
+                .Select(g => new
+                {
+                    Rate = g.Key,
+                    Net = g.Sum(i => i.LineTotal),
+                    Tax = g.Sum(i => i.TaxAmount),
+                })
+                .ToList();
+
+            col.Item().PaddingTop(10).AlignRight().Width(280).Column(breakdown =>
             {
-                TotalRow(totals, "Zwischensumme", $"{order.SubTotal:C}", false);
-                TotalRow(totals, "MwSt.", $"{order.TaxAmount:C}", false);
+                breakdown.Item().Text("Umsatzsteueraufschlüsselung")
+                    .Bold().FontSize(9).FontColor(Colors.Grey.Medium);
+
+                foreach (var group in taxGroups)
+                {
+                    breakdown.Item().PaddingVertical(1).Row(row =>
+                    {
+                        row.RelativeItem().Text($"Netto {group.Rate:P0}")
+                            .FontSize(9).FontColor(Colors.Grey.Darken1);
+                        row.ConstantItem(70).AlignRight().Text($"{group.Net:C}").FontSize(9);
+                        row.ConstantItem(70).AlignRight().Text($"+ {group.Tax:C}")
+                            .FontSize(9).FontColor(Colors.Grey.Medium);
+                    });
+                }
+            });
+
+            // Totals
+            col.Item().PaddingTop(10).AlignRight().Width(280).Column(totals =>
+            {
+                TotalRow(totals, "Summe Netto", $"{order.SubTotal:C}", false);
+                TotalRow(totals, "Summe MwSt.", $"{order.TaxAmount:C}", false);
                 if (order.DiscountAmount > 0)
                     TotalRow(totals, "Rabatt", $"-{order.DiscountAmount:C}", false);
 
@@ -156,8 +198,8 @@ public class PosReceiptPdfService : IPosReceiptPdfService
 
                 totals.Item().Row(row =>
                 {
-                    row.RelativeItem().Text("Gesamt").Bold().FontSize(13);
-                    row.ConstantItem(100).AlignRight().Text($"{order.GrandTotal:C}")
+                    row.RelativeItem().Text("Gesamt Brutto").Bold().FontSize(13);
+                    row.ConstantItem(120).AlignRight().Text($"{order.GrandTotal:C}")
                         .Bold().FontSize(13).FontColor(Colors.Orange.Medium);
                 });
             });
@@ -185,7 +227,7 @@ public class PosReceiptPdfService : IPosReceiptPdfService
         {
             var style = bold ? TextStyle.Default.Bold() : TextStyle.Default;
             row.RelativeItem().Text(label).Style(style).FontColor(Colors.Grey.Darken1);
-            row.ConstantItem(100).AlignRight().Text(value).Style(style);
+            row.ConstantItem(120).AlignRight().Text(value).Style(style);
         });
     }
 
