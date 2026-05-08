@@ -1,0 +1,117 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches:
+      - feature/postgres
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-speisedirekt
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/speisedirekt3
+  APP_DIR: /home/cicd/apps/SpeiseDirekt3
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, ARM64]
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute tag
+        id: meta
+        run: echo "tag=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Build app image
+        run: |
+          docker build \
+            --target app \
+            --tag ${{ env.IMAGE_BASE }}:${{ steps.meta.outputs.tag }} \
+            --tag ${{ env.IMAGE_BASE }}:latest \
+            .
+
+      - name: Build migrate image
+        run: |
+          docker build \
+            --target migrate \
+            --tag ${{ env.IMAGE_BASE }}-migrate:${{ steps.meta.outputs.tag }} \
+            --tag ${{ env.IMAGE_BASE }}-migrate:latest \
+            .
+
+      - name: Push images
+        run: |
+          docker push ${{ env.IMAGE_BASE }}:${{ steps.meta.outputs.tag }}
+          docker push ${{ env.IMAGE_BASE }}:latest
+          docker push ${{ env.IMAGE_BASE }}-migrate:${{ steps.meta.outputs.tag }}
+          docker push ${{ env.IMAGE_BASE }}-migrate:latest
+
+  deploy:
+    needs: build
+    runs-on: [self-hosted, linux, ARM64]
+    permissions:
+      contents: read
+      packages: read
+    environment:
+      name: production
+      url: https://speisedirekt.webtechsys.de
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Sync compose file to deploy dir
+        run: install -m 0644 deploy/compose.yml ${{ env.APP_DIR }}/compose.yml
+
+      - name: Pin image tag and pull
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${{ needs.build.outputs.image_tag }}|" .env
+          docker compose --env-file .env pull
+
+      - name: Start Postgres and wait for health
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          docker compose --env-file .env up -d postgres
+          for i in $(seq 1 30); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' speisedirekt-postgres-1 2>/dev/null || echo starting)
+            echo "postgres health: $status"
+            [ "$status" = "healthy" ] && break
+            sleep 3
+          done
+          [ "$status" = "healthy" ]
+
+      - name: Run EF migrations (one-shot)
+        working-directory: ${{ env.APP_DIR }}
+        run: docker compose --env-file .env run --rm migrate
+
+      - name: Start app
+        working-directory: ${{ env.APP_DIR }}
+        run: docker compose --env-file .env up -d app
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -k -s -o /dev/null -w "%{http_code}" https://speisedirekt.webtechsys.de/ || true)
+            echo "smoke: HTTP $code"
+            [ "$code" = "200" ] || [ "$code" = "302" ] || [ "$code" = "301" ] && exit 0
+            sleep 3
+          done
+          echo "App did not respond healthy in time" >&2
+          docker compose --env-file ${{ env.APP_DIR }}/.env -f ${{ env.APP_DIR }}/compose.yml logs --tail 200 app
+          exit 1
+
+      - name: Prune old images
+        if: always()
+        run: docker image prune -f

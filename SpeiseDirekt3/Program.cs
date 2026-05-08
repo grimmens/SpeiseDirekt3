@@ -109,11 +109,11 @@ namespace SpeiseDirekt3
             var connectionString = builder.Configuration.GetConnectionString("server") ?? throw new InvalidOperationException("Connection string 'server' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                options.UseNpgsql(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             }, contextLifetime: ServiceLifetime.Transient);
             builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
             {
-                options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                options.UseNpgsql(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
             }, lifetime: ServiceLifetime.Scoped);
 
             

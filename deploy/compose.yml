@@ -1,0 +1,54 @@
+# Deploy stack for SpeiseDirekt3 — pulled and run on the self-hosted ARM64
+# CI/CD host. PostgreSQL has native arm64 images, so no platform override
+# is needed.
+#
+# Env values come from /home/cicd/apps/SpeiseDirekt3/.env (NOT this file).
+
+name: speisedirekt
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+  migrate:
+    image: ghcr.io/grimmens/speisedirekt3-migrate:${IMAGE_TAG}
+    pull_policy: always
+    restart: "no"
+    environment:
+      ConnectionStrings__server: ${ConnectionStrings__server}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  app:
+    image: ghcr.io/grimmens/speisedirekt3:${IMAGE_TAG}
+    pull_policy: always
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT}
+      ASPNETCORE_HTTP_PORTS: ${ASPNETCORE_HTTP_PORTS}
+      ConnectionStrings__server: ${ConnectionStrings__server}
+    ports:
+      - "127.0.0.1:8082:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pg_data:
+    name: speisedirekt_pg_data

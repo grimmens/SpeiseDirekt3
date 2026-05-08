@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
-using Microsoft.Identity.Client;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceInterface;
 using System.Collections.Concurrent;
-using System.Data.SqlTypes;
 using System.Text.Json;
 
 namespace SpeiseDirekt.ServiceImplementation
