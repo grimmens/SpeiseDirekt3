@@ -188,9 +188,10 @@ namespace SpeiseDirekt.Data
                             break;
                     }
                 }
-                else
+                else if (e.Entry.State is EntityState.Added or EntityState.Modified or EntityState.Deleted)
                 {
-                    // If we don't have a valid user ID, this is a problem
+                    // Writing tenant data without a valid user ID is a problem. Merely tracking a queried
+                    // entity (Unchanged), e.g. on the anonymous public menu page, is fine.
                     throw new InvalidOperationException("Cannot save entity: User is not authenticated or user ID is invalid.");
                 }
             }

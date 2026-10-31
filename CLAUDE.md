@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Solution Overview
 
-`SpeiseDirekt3.sln` contains four .NET 9 projects:
+`SpeiseDirekt3.sln` contains five .NET 9 projects:
 
 | Project | Type | Purpose |
 |---|---|---|
@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `SpeiseDirekt.Api/` | ASP.NET Core Web API | REST API (Swagger, Identity API endpoints) over the same data |
 | `SpeiseDirekt.Model/` | Class library (root namespace `SpeiseDirekt`) | Shared core: entities, DbContext, migrations, repositories, services, authorization, DI setup |
 | `SpeiseDirekt.Api.IntegrationTests/` | xUnit test project | Integration tests for every API controller |
+| `SpeiseDirekt3.E2ETests/` | xUnit + Playwright test project | Browser end-to-end tests for the public menu pages of the Blazor app |
 
 Both `SpeiseDirekt3` and `SpeiseDirekt.Api` reference `SpeiseDirekt.Model` and share one SQL Server database (connection string `server`).
 
@@ -30,6 +31,7 @@ Run from the repository root.
 - **Run all tests**: `dotnet test`
 - **Run a single test class**: `dotnet test --filter "FullyQualifiedName~MenusControllerTests"`
 - **Run a single test**: `dotnet test --filter "FullyQualifiedName~MenusControllerTests.GetAll_ReturnsSeededMenus"`
+- **Run only the E2E tests**: `dotnet test SpeiseDirekt3.E2ETests` (no SQL Server needed; Chromium is installed by Playwright on first run, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing binary)
 
 ### Database Operations
 Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need both project flags:
@@ -50,7 +52,7 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - **AI**: Microsoft.Extensions.AI with Ollama (`llama3.2:latest` at `http://localhost:11434`, hard-coded in `SpeiseDirekt3/Program.cs`)
 - **Images**: SixLabors.ImageSharp for resizing; images are stored as bytes in the database (`Image` entity)
 - **QR codes**: QRCoder (PNG generated in `SpeiseDirekt3/Controller/ImageController.cs`)
-- **Tests**: xUnit, FluentAssertions, `WebApplicationFactory`, SQLite in-memory
+- **Tests**: xUnit, FluentAssertions, `WebApplicationFactory`, SQLite (in-memory for API tests, temp file for E2E), Microsoft.Playwright
 
 ### SpeiseDirekt.Model (shared core)
 - `Model/Model/`: one file per entity
@@ -74,7 +76,7 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - A **tenant** is the owner account. Sub-accounts (`ApplicationUser.TenantOwnerId` set, plus a `TenantUser` row with role and permissions) work on the owner's data.
 - Tenant-owned entities implement `IAppUserEntity` (`ApplicationUserId` = tenant owner ID).
 - `ApplicationDbContext.OnModelCreating` applies global query filters on `ApplicationUserId` for MenuItem, Category, Menu, QRCode, TimeTableEntry, CalendarEntry, Allergen, MenuCombo and MenuComboItem.
-- `ChangeTracker` events set `ApplicationUserId` on Added/Modified entities from `IUserIdProvider`. Saving an `IAppUserEntity` **throws** if no authenticated user is present.
+- `ChangeTracker` events set `ApplicationUserId` on Added/Modified entities from `IUserIdProvider`. Adding, modifying or deleting an `IAppUserEntity` **throws** if no authenticated user is present; merely tracking queried entities (anonymous public pages) is allowed.
 - `TenantClaimsTransformation` adds `TenantOwnerId` and `TenantRole` claims for sub-accounts.
 - `IUserIdProvider.GetUserId()` returns the **tenant owner ID** (the `TenantOwnerId` claim for sub-accounts, otherwise `NameIdentifier`) and is what the query filters use. `GetActualUserId()` returns the logged-in user. Both return `Guid.Empty` when unauthenticated.
 - Public/anonymous paths (QR code resolution, public menu display) use `IgnoreQueryFilters()`. See `MenuService`, `MenuDisplayPage.razor`, `MenuPreviewPage.razor`, `QrRedirect.razor`.
@@ -132,3 +134,10 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - `BaseIntegrationTest`: recreates the DB and seeds it (`TestSeedData`) before each test. Use the fixed IDs in `TestSeedData` in assertions. Combos are not seeded by default; tests opt in via `TestSeedData.SeedCombosAsync(Factory.Services)`.
 - `Tests/`: one test class per controller.
 - SQLite differs from SQL Server (e.g. FK enforcement, decimal handling). Keep that in mind when a test passes locally but the real DB behaves differently.
+
+### SpeiseDirekt3.E2ETests
+- `Infrastructure/E2EAppFactory`: `WebApplicationFactory<SpeiseDirekt3.Program>` that replaces SQL Server with a SQLite **file** (`%TEMP%/speisedirekt-e2e-{guid}.db`, `EnsureCreated`, seeded with `E2ESeedData`) and additionally starts the app on Kestrel at a free loopback port (`ServerAddress`), because Playwright needs a real socket. The file is deleted when the factory is disposed (connection pooling is off so it can be deleted).
+- `Infrastructure/E2EFixture`: class fixture with one factory (= one server + one DB file) and one headless Chromium **per test class**. xUnit runs test classes in parallel, each with its own DB; tests within a class run sequentially and share the seeded, read-only data.
+- `Infrastructure/E2ETestBase`: new browser context per test; requests to other hosts (CDNs, fonts) are blocked, so Tailwind/Bootstrap from CDN are not loaded and tests run offline. `OpenMenuAsync` waits until the Blazor circuit is interactive (the response for `js/complex-menu*.js`).
+- `Tests/`: `MenuDisplayTests` (menu, categories, items, item overlay, 404), `MenuComboDisplayTests` (combos in the overlay: items, price, savings; no combos for non-trigger items).
+- Only public pages are covered; there is no test login for back-office pages yet.
