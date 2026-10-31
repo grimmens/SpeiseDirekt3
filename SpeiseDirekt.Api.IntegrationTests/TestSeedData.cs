@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
 
@@ -28,6 +29,43 @@ public static class TestSeedData
     public static readonly Guid MenuItemClick2Id = Guid.Parse("22222222-2222-2222-2222-222222222222");
     public static readonly Guid DirectQrCodeId = Guid.Parse("dddddddd-dddd-dddd-dddd-ddddddddddde");
     public static readonly string TestSessionId = "test-session-001";
+
+    // Menu combos: not part of SeedAsync, tests opt in via SeedCombosAsync
+    public static readonly Guid LunchComboId = Guid.Parse("c0c0c0c0-0000-0000-0000-000000000001");
+    public static readonly Guid DinnerComboId = Guid.Parse("c0c0c0c0-0000-0000-0000-000000000002");
+
+    /// <summary>
+    /// Seeds two combos (call after <see cref="SeedAsync"/>):
+    /// Menu1 "Salad Combo" (trigger Caesar Salad, includes Tomato Soup, 12.00) and
+    /// Menu2 "Salmon Combo" (trigger Grilled Salmon, includes Grilled Salmon, 20.00).
+    /// Kept out of <see cref="SeedAsync"/> so tests that count or delete menu items are unaffected.
+    /// </summary>
+    public static async Task SeedCombosAsync(IServiceProvider services)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.MenuCombos.AddRange(
+            new MenuCombo
+            {
+                Id = LunchComboId,
+                Name = "Salad Combo",
+                Description = "Salad with soup",
+                ComboPrice = 12.00m,
+                MenuId = Menu1Id,
+                TriggerMenuItemId = MenuItem1Id,
+                Items = { new MenuComboItem { MenuItemId = MenuItem2Id } }
+            },
+            new MenuCombo
+            {
+                Id = DinnerComboId,
+                Name = "Salmon Combo",
+                ComboPrice = 20.00m,
+                MenuId = Menu2Id,
+                TriggerMenuItemId = MenuItem3Id,
+                Items = { new MenuComboItem { MenuItemId = MenuItem3Id } }
+            });
+        await db.SaveChangesAsync();
+    }
 
     public static async Task SeedAsync(ApplicationDbContext context, string userId)
     {

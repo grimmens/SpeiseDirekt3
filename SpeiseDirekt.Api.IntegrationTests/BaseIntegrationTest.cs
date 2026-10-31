@@ -40,6 +40,14 @@ public abstract class BaseIntegrationTest : IClassFixture<CustomWebApplicationFa
         await db.Database.EnsureDeletedAsync();
     }
 
+    /// <summary>GET request without an authenticated user (see <see cref="TestAuthHandler.AnonymousHeader"/>).</summary>
+    protected static HttpRequestMessage AnonymousGet(string url)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Add(TestAuthHandler.AnonymousHeader, "1");
+        return request;
+    }
+
     protected T Deserialize<T>(string json) =>
         JsonSerializer.Deserialize<T>(json, JsonOptions)!;
 }

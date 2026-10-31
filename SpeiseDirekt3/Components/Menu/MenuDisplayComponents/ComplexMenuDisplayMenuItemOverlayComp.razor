@@ -52,6 +52,62 @@
                         <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">@string.Join(", ", SelectedItem.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</span>
                     }
                 </div>
+
+                @if (Combos.Any())
+                {
+                    <!-- Combo offers triggered by this item -->
+                    <div class="mt-8 pt-6 border-t border-gray-200">
+                        <h2 class="text-lg font-bold text-gray-900 mb-3">Kombi-Angebote</h2>
+                        <div class="space-y-3">
+                            @foreach (var combo in Combos)
+                            {
+                                var includedItems = combo.Items
+                                    .Where(i => i.MenuItem != null)
+                                    .Select(i => i.MenuItem!)
+                                    .OrderBy(mi => mi.Name)
+                                    .ToList();
+                                var singlePriceSum = includedItems.Sum(mi => mi.Price);
+
+                                <div class="bg-teal-50 border border-teal-200 rounded-xl p-4" @key="combo.Id">
+                                    <div class="flex justify-between items-start gap-3 mb-1">
+                                        <h3 class="font-bold text-gray-900 text-base leading-tight">@combo.Name</h3>
+                                        <div class="text-right flex-shrink-0">
+                                            <span class="font-bold text-teal-700 text-base">€ @combo.ComboPrice.ToString("F2")</span>
+                                            @if (singlePriceSum > combo.ComboPrice)
+                                            {
+                                                <div class="text-xs text-gray-500">
+                                                    einzeln <span class="line-through">€ @singlePriceSum.ToString("F2")</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    @if (!string.IsNullOrWhiteSpace(combo.Description))
+                                    {
+                                        <p class="text-gray-600 text-sm mb-2 leading-relaxed">@combo.Description</p>
+                                    }
+                                    @if (includedItems.Any())
+                                    {
+                                        <ul class="text-sm text-gray-700 space-y-1">
+                                            @foreach (var mi in includedItems)
+                                            {
+                                                <li class="flex justify-between gap-2">
+                                                    <span>• @mi.Name</span>
+                                                    <span class="text-gray-500">€ @mi.Price.ToString("F2")</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    @if (singlePriceSum > combo.ComboPrice)
+                                    {
+                                        <span class="inline-block mt-3 text-xs font-medium text-white bg-teal-600 px-2 py-1 rounded-full">
+                                            Sie sparen € @((singlePriceSum - combo.ComboPrice).ToString("F2"))
+                                        </span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
 
         </div>
@@ -65,6 +121,9 @@
     public MenuItem? SelectedItem { get; set; }
     [Parameter]
     public EventCallback<MenuItem?> SelectedItemChanged { get; set; }
+    /// <summary>Combos whose trigger is <see cref="SelectedItem"/> (included items with <c>MenuItem</c> loaded).</summary>
+    [Parameter]
+    public List<MenuCombo> Combos { get; set; } = new();
 
     private async Task CloseModal()
     {

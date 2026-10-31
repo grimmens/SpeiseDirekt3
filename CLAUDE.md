@@ -81,7 +81,7 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 
 ### Authorization
 - **Permissions**: `Permission` is a `[Flags] long` enum (`MenusView`, `MenusCreate`, …, `UsersDelete`, `DeliveryView`, …). When adding a value, pick an unused bit; the bits are not in order.
-- **Policies**: `AuthorizationOptions.AddPermissionPolicies()` generates one policy per permission, named `Can{Action}{Area}` (e.g. `MenusView` → `CanViewMenus`). `PolicyNames` holds constants for them (there are no MenuCombos constants yet).
+- **Policies**: `AuthorizationOptions.AddPermissionPolicies()` generates one policy per permission, named `Can{Action}{Area}` (e.g. `MenusView` → `CanViewMenus`). `PolicyNames` holds constants for them; they must match `GetPolicyName` (e.g. `CanViewMenuCombos`).
 - **Resolution** (`PermissionService`): the owner has all permissions. A sub-account uses `TenantUser.Permissions` if set, otherwise the role defaults from `PermissionDefaults` (GeneralManager, Manager, Cashier, Employee, Driver). Inactive or missing `TenantUser` → no permissions.
 - **API**: controllers use `[Authorize(Policy = PolicyNames.Can…)]` per action. `ImageUploadController` and `MenuDisplayController` have no permission policies.
 - **Blazor**: pages use `@attribute [Authorize]` and check `IPermissionService.HasPermissionAsync(Permission.…)` to show/hide actions.
@@ -104,7 +104,7 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - `Components/`, organized by feature:
   - `Layout/`: main layout, menu layout, navigation, `MenuTreeNav`
   - `Pages/`: home, auth, public `MenuDisplayPage`
-  - `Menu/`: menu list (`/menus`), menu detail (`/menudetail/{MenuId}`), edit form, preview, public display components (`MenuDisplayComponents/`: simple/complex display, search, item overlay)
+  - `Menu/`: menu list (`/menus`), menu detail (`/menudetail/{MenuId}`), edit form, preview, public display components (`MenuDisplayComponents/`: simple/complex display, search, item overlay). `ComplexMenuDisplayComp` loads the menu's combos once (separate query, `IgnoreQueryFilters`); the item overlay shows the combos the opened item triggers (also in `Preview`).
   - `Categories/` (`/Categories/{MenuId}`), `MenuItem/` (`/MenuItems/{MenuId}`), `Allergens/` (`/allergens/{MenuId}`), `MenuCombos/` (`/combos/{MenuId}`)
   - `QrCodes/` (`/qrcodes`, edit, time table entries, `QrRedirect` at `/qr/{QrId}`), `Analytics/` (`/analytics`)
   - `UserManagement/`: users list, invite, edit role/permissions (`/users`, `/users/invite`, `/users/edit/{UserId}`)
@@ -122,13 +122,13 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
   - `UsersController`: manage sub-accounts (creates Identity user + `TenantUser`, enforces `MaxUsers`)
   - `AnalyticsController`: `traffic-per-user`, `traffic-per-menu`, `traffic-per-menuitem`
   - `ImageUploadController` (`/api/images`): upload (max 5 MB, resized to 600px), delete; `GET /api/images/{id}` is anonymous
-  - `MenuDisplayController` (`/api/public`, anonymous): menu for a QR code (records a view) and item click tracking
-- There is no API endpoint for menu combos yet (`IMenuComboRepository` exists but is unused).
+  - `MenuCombosController`: CRUD via `IMenuComboRepository`, scoped to a menu (`GET` requires `?menuId=`). Validates: trigger item required, at least one included item, `ComboPrice >= 0`, trigger and included items must belong to the combo's menu (via `Category.MenuId`). On `PUT` the combo keeps its menu (`MenuId` in the DTO is ignored).
+  - `MenuDisplayController` (`/api/public`, anonymous): menu for a QR code (records a view), the menu's combos (`GET menu/{menuId}/combos`, returns `PublicMenuComboDto` with trigger item, included items and price) and item click tracking
 - Request models in `Dtos/`. Responses currently return entities directly; JSON uses `ReferenceHandler.IgnoreCycles`.
 - CORS policy `AllowAll`. `public partial class Program` exists so the tests can use `WebApplicationFactory<Program>`.
 
 ### SpeiseDirekt.Api.IntegrationTests
-- `CustomWebApplicationFactory`: replaces SQL Server with SQLite in-memory, swaps `IUserIdProvider` for a fixed `TestUserId`, and adds the `TestScheme` auth handler (`TestAuthHandler`), which authenticates every request as that user (the tenant owner, so all permissions apply). It also replaces `TimeProvider` with `TestTimeProvider` (`Factory.Clock`): system clock by default, `SetLocalNow(...)` fixes the time for one test (reset before each test).
-- `BaseIntegrationTest`: recreates the DB and seeds it (`TestSeedData`) before each test. Use the fixed IDs in `TestSeedData` in assertions.
+- `CustomWebApplicationFactory`: replaces SQL Server with SQLite in-memory, swaps `IUserIdProvider` for a fixed `TestUserId`, and adds the `TestScheme` auth handler (`TestAuthHandler`), which authenticates every request as that user (the tenant owner, so all permissions apply). It also replaces `TimeProvider` with `TestTimeProvider` (`Factory.Clock`): system clock by default, `SetLocalNow(...)` fixes the time for one test (reset before each test). Requests with the header `TestAuthHandler.AnonymousHeader` are unauthenticated (`BaseIntegrationTest.AnonymousGet`).
+- `BaseIntegrationTest`: recreates the DB and seeds it (`TestSeedData`) before each test. Use the fixed IDs in `TestSeedData` in assertions. Combos are not seeded by default; tests opt in via `TestSeedData.SeedCombosAsync(Factory.Services)`.
 - `Tests/`: one test class per controller.
 - SQLite differs from SQL Server (e.g. FK enforcement, decimal handling). Keep that in mind when a test passes locally but the real DB behaves differently.

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
@@ -312,6 +313,105 @@ public class MenuDisplayControllerTests : BaseIntegrationTest
         await db.SaveChangesAsync();
 
         return qrCode.Id;
+    }
+
+    // --- Public endpoint: GET /api/public/menu/{menuId}/combos ---
+
+    [Fact]
+    public async Task PublicCombos_Anonymous_ReturnsCombosOfMenuWithItemsAndPrice()
+    {
+        await TestSeedData.SeedCombosAsync(Factory.Services);
+
+        var response = await Client.SendAsync(AnonymousGet($"/api/public/menu/{TestSeedData.Menu1Id}/combos"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var combos = await response.Content.ReadFromJsonAsync<List<PublicComboResponse>>(JsonOptions);
+        combos.Should().ContainSingle();
+        var combo = combos![0];
+        combo.Id.Should().Be(TestSeedData.LunchComboId);
+        combo.Name.Should().Be("Salad Combo");
+        combo.Description.Should().Be("Salad with soup");
+        combo.ComboPrice.Should().Be(12.00m);
+        combo.TriggerMenuItem.Id.Should().Be(TestSeedData.MenuItem1Id);
+        combo.TriggerMenuItem.Name.Should().Be("Caesar Salad");
+        combo.TriggerMenuItem.Price.Should().Be(8.50m);
+        combo.Items.Should().ContainSingle();
+        combo.Items[0].Id.Should().Be(TestSeedData.MenuItem2Id);
+        combo.Items[0].Name.Should().Be("Tomato Soup");
+        combo.Items[0].Price.Should().Be(6.00m);
+    }
+
+    [Fact]
+    public async Task PublicCombos_OtherMenu_ReturnsOnlyItsCombos()
+    {
+        await TestSeedData.SeedCombosAsync(Factory.Services);
+
+        var response = await Client.SendAsync(AnonymousGet($"/api/public/menu/{TestSeedData.Menu2Id}/combos"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var combos = await response.Content.ReadFromJsonAsync<List<PublicComboResponse>>(JsonOptions);
+        combos.Should().ContainSingle().Which.Id.Should().Be(TestSeedData.DinnerComboId);
+    }
+
+    [Fact]
+    public async Task PublicCombos_MenuWithoutCombos_ReturnsEmptyList()
+    {
+        var response = await Client.SendAsync(AnonymousGet($"/api/public/menu/{TestSeedData.Menu1Id}/combos"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var combos = await response.Content.ReadFromJsonAsync<List<PublicComboResponse>>(JsonOptions);
+        combos.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task PublicCombos_NonExistentMenu_Returns404()
+    {
+        var response = await Client.SendAsync(AnonymousGet($"/api/public/menu/{Guid.NewGuid()}/combos"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task PublicCombos_IgnoresTenantQueryFilters()
+    {
+        await TestSeedData.SeedCombosAsync(Factory.Services);
+
+        // Move all data to another tenant: tenant-filtered queries for the test user would now find nothing.
+        var otherTenant = Guid.NewGuid();
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await db.Menus.IgnoreQueryFilters().ExecuteUpdateAsync(s => s.SetProperty(e => e.ApplicationUserId, otherTenant));
+            await db.Categories.IgnoreQueryFilters().ExecuteUpdateAsync(s => s.SetProperty(e => e.ApplicationUserId, otherTenant));
+            await db.MenuItems.IgnoreQueryFilters().ExecuteUpdateAsync(s => s.SetProperty(e => e.ApplicationUserId, otherTenant));
+            await db.MenuCombos.IgnoreQueryFilters().ExecuteUpdateAsync(s => s.SetProperty(e => e.ApplicationUserId, otherTenant));
+            await db.MenuComboItems.IgnoreQueryFilters().ExecuteUpdateAsync(s => s.SetProperty(e => e.ApplicationUserId, otherTenant));
+        }
+
+        var response = await Client.SendAsync(AnonymousGet($"/api/public/menu/{TestSeedData.Menu1Id}/combos"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var combos = await response.Content.ReadFromJsonAsync<List<PublicComboResponse>>(JsonOptions);
+        var combo = combos.Should().ContainSingle().Subject;
+        combo.TriggerMenuItem.Name.Should().Be("Caesar Salad");
+        combo.Items.Should().ContainSingle().Which.Name.Should().Be("Tomato Soup");
+    }
+
+    private record PublicComboResponse
+    {
+        public Guid Id { get; init; }
+        public string Name { get; init; } = string.Empty;
+        public string Description { get; init; } = string.Empty;
+        public decimal ComboPrice { get; init; }
+        public PublicComboItemResponse TriggerMenuItem { get; init; } = new();
+        public List<PublicComboItemResponse> Items { get; init; } = new();
+    }
+
+    private record PublicComboItemResponse
+    {
+        public Guid Id { get; init; }
+        public string Name { get; init; } = string.Empty;
+        public decimal Price { get; init; }
     }
 
     private static CalendarEntry Calendar(

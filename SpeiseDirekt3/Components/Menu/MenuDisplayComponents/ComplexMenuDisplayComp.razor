@@ -1,16 +1,19 @@
 ﻿@using Microsoft.AspNetCore.Components.Web
 @using Microsoft.JSInterop
 @using SpeiseDirekt.Model
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Data
 @using SpeiseDirekt.ServiceInterface
 @layout MenuLayout
 @inject IJSRuntime JSRuntime
 @inject ITrackingService TrackingService
+@inject ApplicationDbContext Context
 
 
 <div class="relative min-h-screen bg-gray-50">
     @if (SelectedItem != null)
     {
-        <ComplexMenuDisplayMenuItemOverlayComp SelectedItem="SelectedItem" SelectedItemChanged="e => SelectMenuItem(e)" />
+        <ComplexMenuDisplayMenuItemOverlayComp SelectedItem="SelectedItem" SelectedItemChanged="e => SelectMenuItem(e)" Combos="GetCombosForItem(SelectedItem)" />
     }
     <!-- Main Menu View -->
     <!-- Restaurant Header -->
@@ -214,7 +217,39 @@
 
     private List<string> categories = new();
 
-    protected override void OnParametersSet()
+    // Combos of the menu, loaded once per menu (separate query, public path: no tenant filter)
+    private List<MenuCombo> combos = new();
+    private Guid? combosLoadedForMenuId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        UpdateCategories();
+        await LoadCombosAsync();
+    }
+
+    private async Task LoadCombosAsync()
+    {
+        var menuId = Menu?.Id ?? Guid.Empty;
+        if (menuId == combosLoadedForMenuId)
+            return;
+
+        combosLoadedForMenuId = menuId;
+        combos = menuId == Guid.Empty
+            ? new List<MenuCombo>()
+            : await Context.MenuCombos
+                .IgnoreQueryFilters()
+                .AsNoTracking()
+                .Include(c => c.Items)
+                    .ThenInclude(i => i.MenuItem)
+                .Where(c => c.MenuId == menuId)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+    }
+
+    private List<MenuCombo> GetCombosForItem(MenuItem item) =>
+        combos.Where(c => c.TriggerMenuItemId == item.Id).ToList();
+
+    private void UpdateCategories()
     {
         // Initialize categories and active category when Menu parameter changes
         if (Menu?.Categories != null)
