@@ -12,7 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `SpeiseDirekt.Api/` | ASP.NET Core Web API | REST API (Swagger, Identity API endpoints) over the same data |
 | `SpeiseDirekt.Model/` | Class library (root namespace `SpeiseDirekt`) | Shared core: entities, DbContext, migrations, repositories, services, authorization, DI setup |
 | `SpeiseDirekt.Api.IntegrationTests/` | xUnit test project | Integration tests for every API controller |
-| `SpeiseDirekt3.E2ETests/` | xUnit + Playwright test project | Browser end-to-end tests for the public menu pages of the Blazor app |
+| `SpeiseDirekt3.E2ETests/` | xUnit + Playwright test project | Browser end-to-end tests for the Blazor app (public pages, QR resolution, auth, back office) |
 
 Both `SpeiseDirekt3` and `SpeiseDirekt.Api` reference `SpeiseDirekt.Model` and share one SQL Server database (connection string `server`).
 
@@ -88,7 +88,7 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - **Resolution** (`PermissionService`): the owner has all permissions. A sub-account uses `TenantUser.Permissions` if set, otherwise the role defaults from `PermissionDefaults` (GeneralManager, Manager, Cashier, Employee, Driver). Inactive or missing `TenantUser` → no permissions.
 - **API**: controllers use `[Authorize(Policy = PolicyNames.Can…)]` per action. `ImageUploadController` and `MenuDisplayController` have no permission policies.
 - **Blazor**: pages use `@attribute [Authorize]` and check `IPermissionService.HasPermissionAsync(Permission.…)` to show/hide actions.
-- **PaidTenant** policy (`PaidTenantHandler`): passes for tenants with an active paid `TenantSubscription`; free tenants pass while they have fewer than 100 QR codes.
+- **PaidTenant** policy (`PaidTenantHandler`): passes for tenants with an active paid `TenantSubscription`; free tenants pass while they have fewer than 100 QR codes. Only the "Create New QR Code" button on `/qrcodes` checks it; `/qrcode/edit` itself does not.
 - **User limit**: creating a sub-account fails once the active `TenantUser` count reaches `TenantSubscription.MaxUsers`.
 
 ### Key Services
@@ -137,8 +137,12 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - SQLite differs from SQL Server (e.g. FK enforcement, decimal handling). Keep that in mind when a test passes locally but the real DB behaves differently.
 
 ### SpeiseDirekt3.E2ETests
-- `Infrastructure/E2EAppFactory`: `WebApplicationFactory<SpeiseDirekt3.Program>` that runs the app in the `E2E` environment with its own SQLite **file** (`%TEMP%/speisedirekt-e2e-{guid}.db` via `ConnectionStrings:e2e`; the app creates the schema, the factory then seeds `E2ESeedData`) and additionally starts the app on Kestrel at a free loopback port (`ServerAddress`), because Playwright needs a real socket. The file is deleted when the factory is disposed (connection pooling is off so it can be deleted).
-- `Infrastructure/E2EFixture`: class fixture with one factory (= one server + one DB file) and one headless Chromium **per test class**. xUnit runs test classes in parallel, each with its own DB; tests within a class run sequentially and share the seeded, read-only data.
-- `Infrastructure/E2ETestBase`: new browser context per test; requests to other hosts (CDNs, fonts) are blocked, so Tailwind/Bootstrap from CDN are not loaded and tests run offline. `OpenMenuAsync` waits until the Blazor circuit is interactive (the response for `js/complex-menu*.js`).
-- `Tests/`: `MenuDisplayTests` (menu, categories, items, item overlay, 404), `MenuComboDisplayTests` (combos in the overlay: items, price, savings; no combos for non-trigger items).
-- Only public pages are covered; there is no test login for back-office pages yet.
+- `Infrastructure/E2EAppFactory`: `WebApplicationFactory<SpeiseDirekt3.Program>` that runs the app in the `E2E` environment with its own SQLite **file** (`%TEMP%/speisedirekt-e2e-{guid}.db` via `ConnectionStrings:e2e`; the app creates the schema, the factory then seeds `E2ESeedData`) and additionally starts the app on Kestrel at a free loopback port (`ServerAddress`), because Playwright needs a real socket. The file is deleted when the factory is disposed (connection pooling is off so it can be deleted). It replaces `TimeProvider` in both hosts with `E2ETestClock` (`App.Clock.SetLocalNow(...)`, reset before every test) and offers `CreateDbContext(ownerId)` / `SeedAsync(ownerId, ...)` to seed data directly.
+- `Infrastructure/E2EFixture`: class fixture with one factory (= one server + one DB file) and one headless Chromium **per test class**. xUnit runs test classes in parallel, each with its own DB; tests within a class run sequentially and share the DB, so every test uses its own tenant (`UniqueEmail()`) or its own seeded ids.
+- `Infrastructure/E2ETestBase`: new browser context per test (`NewContextAsync()` for a second one, e.g. an anonymous guest).
+  - External requests (CDNs, fonts) are blocked unless `E2E_ALLOW_EXTERNAL_REQUESTS=1` (e.g. for layout screenshots). While blocked, `E2ESettings` injects a minimal stylesheet for the Tailwind display utilities the app uses (`hidden`, `lg:flex`, `xl:block`, …, plus an SVG size cap) so hidden modals stay hidden, and a `window.bootstrap` stub (bootstrap.bundle.js comes from a CDN; without it `initPopover`/`openModal` crash the circuit).
+  - `GotoInteractiveAsync` / `WaitForInteractiveAsync`: wait until the Blazor circuit is interactive (the server's `enableNavigationInterception` call on the `/_blazor` WebSocket); clicks during prerendering are lost. `OpenMenuAsync` / `OpenPublicMenuPageAsync` wait for `js/complex-menu*.js` on the public menu display.
+  - Accounts: `RegisterAsync`, `LoginAsync`, `LogoutAsync`, `RegisterNewOwnerAsync` via the Identity UI (static SSR forms). The cookie consent prompt is disabled in `Routes.razor`; `DismissCookieConsentAsync` accepts it should it come back.
+- `Infrastructure/BackOfficeTestBase`: UI helpers for the back office (`CreateMenuViaUiAsync`, `CreateCategoryViaUiAsync`, `CreateAllergenViaUiAsync`, `CreateMenuItemViaUiAsync`, `CreateDirectQrViaUiAsync`).
+- `Tests/`: `MenuDisplayTests`, `MenuComboDisplayTests` (public menu page), `QrRedirectTests` (`/qr/{id}`: direct, unknown, time table with fixed clock incl. across midnight, calendar precedence and fallbacks), `AuthTests`, `BackOfficeFlowTests` (menu → category → item → QR via UI, guest opens the QR), `PermissionTests` (invited Employee is read-only), `AllergenTests`, `ComboEditorTests` (incl. menu preview), `QrCodeLimitTests` (free tier: 99 OK, 100 blocked).
+- The Ollama menu item generator is not tested.

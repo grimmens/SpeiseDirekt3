@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using SpeiseDirekt.Data;
 
@@ -31,6 +32,12 @@ public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>
         Pooling = false
     }.ToString();
 
+    /// <summary>
+    /// Clock used by the app (both hosts). System clock unless a test fixes the time;
+    /// <see cref="E2ETestBase"/> resets it before every test.
+    /// </summary>
+    public E2ETestClock Clock { get; } = new();
+
     /// <summary>Base address of the Kestrel server, e.g. <c>http://127.0.0.1:41234</c>.</summary>
     public string ServerAddress { get; private set; } = string.Empty;
 
@@ -47,20 +54,40 @@ public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>
         await E2ESeedData.SeedAsync(db);
     }
 
-    /// <summary>A DbContext outside the app (no HttpContext) that writes as the seed tenant owner.</summary>
-    private ApplicationDbContext CreateSeedContext()
+    /// <summary>
+    /// A DbContext on the test database outside the app (no HttpContext). Writes are assigned to
+    /// <paramref name="ownerId"/> (tenant owner); reads are filtered to that tenant like in the app.
+    /// </summary>
+    public ApplicationDbContext CreateDbContext(Guid ownerId)
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseSqlite(ConnectionString)
             .Options;
-        return new ApplicationDbContext(options, new FixedUserIdProvider(E2ESeedData.OwnerId));
+        return new ApplicationDbContext(options, new FixedUserIdProvider(ownerId));
     }
+
+    /// <summary>Seeds data directly into the database as tenant <paramref name="ownerId"/>.</summary>
+    public async Task SeedAsync(Guid ownerId, Func<ApplicationDbContext, Task> seed)
+    {
+        await using var db = CreateDbContext(ownerId);
+        await seed(db);
+        await db.SaveChangesAsync();
+    }
+
+    private ApplicationDbContext CreateSeedContext() => CreateDbContext(E2ESeedData.OwnerId);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         // The app switches to SQLite + EnsureCreated in this environment (see Program.cs)
         builder.UseEnvironment(SpeiseDirekt3.Program.E2EEnvironment);
         builder.UseSetting("ConnectionStrings:e2e", ConnectionString);
+
+        // Applies to both hosts (TestServer and Kestrel), they are built from this builder
+        builder.ConfigureServices(services =>
+        {
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Clock);
+        });
     }
 
     /// <summary>
