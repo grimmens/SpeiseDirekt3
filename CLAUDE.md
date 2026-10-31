@@ -25,6 +25,7 @@ Run from the repository root.
 - **Run Blazor app**: `dotnet run --project SpeiseDirekt3` (https://localhost:7051, http://localhost:5010)
 - **Run Web API**: `dotnet run --project SpeiseDirekt.Api` (https://localhost:7254, http://localhost:5289; Swagger UI at `/swagger` in Development)
 - **Watch mode**: `dotnet watch run --project SpeiseDirekt3`
+- **Run Blazor app without SQL Server**: set `ASPNETCORE_ENVIRONMENT=E2E` (`Program.E2EEnvironment`): SQLite (connection string `e2e`, default `speisedirekt-e2e.db`), schema via `EnsureCreated()` (`E2EDatabaseInitializer`, no migrations), static web assets enabled. The database starts empty.
 - **Manual API requests**: `SpeiseDirekt.Api/SpeiseDirekt.Api.http`
 
 ### Testing
@@ -136,7 +137,7 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - SQLite differs from SQL Server (e.g. FK enforcement, decimal handling). Keep that in mind when a test passes locally but the real DB behaves differently.
 
 ### SpeiseDirekt3.E2ETests
-- `Infrastructure/E2EAppFactory`: `WebApplicationFactory<SpeiseDirekt3.Program>` that replaces SQL Server with a SQLite **file** (`%TEMP%/speisedirekt-e2e-{guid}.db`, `EnsureCreated`, seeded with `E2ESeedData`) and additionally starts the app on Kestrel at a free loopback port (`ServerAddress`), because Playwright needs a real socket. The file is deleted when the factory is disposed (connection pooling is off so it can be deleted).
+- `Infrastructure/E2EAppFactory`: `WebApplicationFactory<SpeiseDirekt3.Program>` that runs the app in the `E2E` environment with its own SQLite **file** (`%TEMP%/speisedirekt-e2e-{guid}.db` via `ConnectionStrings:e2e`; the app creates the schema, the factory then seeds `E2ESeedData`) and additionally starts the app on Kestrel at a free loopback port (`ServerAddress`), because Playwright needs a real socket. The file is deleted when the factory is disposed (connection pooling is off so it can be deleted).
 - `Infrastructure/E2EFixture`: class fixture with one factory (= one server + one DB file) and one headless Chromium **per test class**. xUnit runs test classes in parallel, each with its own DB; tests within a class run sequentially and share the seeded, read-only data.
 - `Infrastructure/E2ETestBase`: new browser context per test; requests to other hosts (CDNs, fonts) are blocked, so Tailwind/Bootstrap from CDN are not loaded and tests run offline. `OpenMenuAsync` waits until the Blazor circuit is interactive (the response for `js/complex-menu*.js`).
 - `Tests/`: `MenuDisplayTests` (menu, categories, items, item overlay, 404), `MenuComboDisplayTests` (combos in the overlay: items, price, savings; no combos for non-trigger items).

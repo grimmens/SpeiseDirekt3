@@ -47,7 +47,9 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         var interactive = Page.WaitForResponseAsync(r =>
             ComplexMenuModule.IsMatch(new Uri(r.Url).AbsolutePath));
         await Page.GotoAsync($"/menu/{menuId}");
-        await interactive;
+        var module = await interactive;
+        if (!module.Ok)
+            throw new InvalidOperationException($"{module.Url} returned HTTP {module.Status}; static web assets are not served.");
     }
 
     /// <summary>The item overlay (fixed backdrop) that opens when a guest clicks an item.</summary>

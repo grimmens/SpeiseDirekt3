@@ -12,9 +12,9 @@ using SpeiseDirekt.Data;
 namespace SpeiseDirekt3.E2ETests.Infrastructure;
 
 /// <summary>
-/// Starts the Blazor app on a real Kestrel port (Playwright needs a real socket) with a
-/// SQLite <b>file</b> instead of SQL Server. Every factory instance gets its own file, which is
-/// deleted again in <see cref="DisposeAsync"/>.
+/// Starts the Blazor app in the <c>E2E</c> environment (SQLite <b>file</b> instead of SQL Server)
+/// on a real Kestrel port (Playwright needs a real socket). Every factory instance gets its own file,
+/// which is deleted again in <see cref="DisposeAsync"/>.
 /// </summary>
 public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>, IAsyncLifetime
 {
@@ -34,17 +34,17 @@ public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>
     /// <summary>Base address of the Kestrel server, e.g. <c>http://127.0.0.1:41234</c>.</summary>
     public string ServerAddress { get; private set; } = string.Empty;
 
-    /// <summary>Creates the schema, seeds the data and starts the server.</summary>
+    /// <summary>
+    /// Starts the server (the app creates the schema itself via <c>EnsureCreated()</c> in the
+    /// <see cref="SpeiseDirekt3.Program.E2EEnvironment"/> environment) and seeds the test data.
+    /// </summary>
     public async Task InitializeAsync()
     {
-        await using (var db = CreateSeedContext())
-        {
-            await db.Database.EnsureCreatedAsync();
-            await E2ESeedData.SeedAsync(db);
-        }
-
         // Accessing Services builds and starts the hosts (see CreateHost)
         _ = Services;
+
+        await using var db = CreateSeedContext();
+        await E2ESeedData.SeedAsync(db);
     }
 
     /// <summary>A DbContext outside the app (no HttpContext) that writes as the seed tenant owner.</summary>
@@ -58,30 +58,9 @@ public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.UseEnvironment(Environments.Development);
-        // Program.cs requires a "server" connection string; the SQL Server registration is replaced below
-        builder.UseSetting("ConnectionStrings:server", "unused");
-
-        builder.ConfigureServices(services =>
-        {
-            var efDescriptors = services
-                .Where(d => d.ServiceType == typeof(DbContextOptions<ApplicationDbContext>)
-                         || d.ServiceType == typeof(DbContextOptions)
-                         || d.ServiceType == typeof(IDbContextFactory<ApplicationDbContext>)
-                         || d.ServiceType == typeof(ApplicationDbContext)
-                         || d.ServiceType.FullName?.Contains("EntityFrameworkCore") == true)
-                .ToList();
-            foreach (var descriptor in efDescriptors)
-                services.Remove(descriptor);
-
-            // Same lifetimes as Program.cs
-            services.AddDbContext<ApplicationDbContext>(
-                o => o.UseSqlite(ConnectionString),
-                contextLifetime: ServiceLifetime.Transient);
-            services.AddDbContextFactory<ApplicationDbContext>(
-                o => o.UseSqlite(ConnectionString),
-                lifetime: ServiceLifetime.Scoped);
-        });
+        // The app switches to SQLite + EnsureCreated in this environment (see Program.cs)
+        builder.UseEnvironment(SpeiseDirekt3.Program.E2EEnvironment);
+        builder.UseSetting("ConnectionStrings:e2e", ConnectionString);
     }
 
     /// <summary>
