@@ -1,0 +1,231 @@
+name: CI
+
+# PR-Preview auf dem einen selbstgehosteten ARM64-Runner: jeder offene Pull Request auf master
+# wird beim Öffnen und bei jedem Push als Preview deployt — kein Label nötig. Ein Slot: der
+# zuletzt gelaufene PR ist deployt, ein neuer Lauf eines anderen PR ersetzt ihn. Der Abbau beim
+# Schließen eines PR steht in pr-preview-abbau.yml.
+#
+# Ablauf (https://preview.speisedirekt.de, auf server2 neben der Produktion): Build des
+# Merge-Commits (master + PR) hier auf dem Runner, Tests, Kopie der Produktionsdatenbank auf
+# server2 nach speisedirekt-pr-preview (deploy/preview/db-kopie.sql), rsync nach server2,
+# Migrationen dort gegen die Kopie, Start als speisedirekt-preview.service (Benutzer sdpreview,
+# Port 5013), Kommentar im PR.
+#
+# Voraussetzungen (einmalig, eingerichtet 2026-10-31): auf dem CI-Host /usr/local/bin/sqlcmd,
+# SSH-Schlüssel des Runners bei root@server2, /home/cicd/.secrets/server2-sql-sa (sa für die
+# Kopie), /home/cicd/.secrets/speisedirekt-preview-sql (Preview-Login); auf server2 die Unit
+# speisedirekt-preview.service (ASPNETCORE_ENVIRONMENT=Preview, ConnectionStrings__server auf die
+# Kopie), Apache-Vhost mit Zertifikat, /var/www/SpeiseDirekt-Preview, Login speisedirekt_preview,
+# /var/opt/mssql/backup/preview (Besitzer mssql).
+#
+# Hinweis: GitHub nimmt bei pull_request-Ereignissen die Workflow-Datei aus dem Merge-Commit —
+# ein PR bekommt eine Preview, sobald dieser Workflow auf master oder im PR-Branch liegt.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    branches:
+      - master
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR-Nummer, deren Merge-Stand als Preview deployt wird"
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  PREVIEW_URL: https://preview.speisedirekt.de
+  TARGET_HOST: server2.bgrimm.at
+  APP_DIR: /var/www/SpeiseDirekt-Preview
+  SERVICE: speisedirekt-preview
+  SERVICE_USER: sdpreview
+  SQL_SERVER: tcp:server2.bgrimm.at,1433
+  DB_QUELLE: speisedirekt
+  DB_ZIEL: speisedirekt-pr-preview
+  DB_LOGIN: speisedirekt_preview
+
+jobs:
+  # Welcher PR gehört zu diesem Lauf, und welcher Head soll im Merge-Commit stecken?
+  plan:
+    runs-on: [self-hosted, linux, ARM64]
+    timeout-minutes: 5
+    outputs:
+      pr: ${{ steps.pr.outputs.pr }}
+      head: ${{ steps.pr.outputs.head }}
+    steps:
+      - name: PR ermitteln
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          case "${{ github.event_name }}" in
+            pull_request)
+              PR="${{ github.event.pull_request.number }}"
+              HEAD="${{ github.event.pull_request.head.sha }}"
+              ;;
+            workflow_dispatch)
+              PR="${{ inputs.pr }}"
+              HEAD=$(gh pr view "$PR" -R "${{ github.repository }}" --json headRefOid,state -q 'select(.state == "OPEN") | .headRefOid')
+              [ -n "$HEAD" ] || { echo "::error::PR #$PR ist nicht offen"; exit 1; }
+              ;;
+          esac
+          echo "pr=$PR" >> "$GITHUB_OUTPUT"
+          echo "head=$HEAD" >> "$GITHUB_OUTPUT"
+          echo "Ereignis ${{ github.event_name }}: PR=$PR, Head=$HEAD"
+
+  preview:
+    needs: plan
+    runs-on: [self-hosted, linux, ARM64]
+    timeout-minutes: 20
+    environment:
+      name: preview
+      url: https://preview.speisedirekt.de
+    # Ein Slot, eine Datenbankkopie: nie zwei Läufe zugleich; ein laufender wird nicht
+    # abgebrochen (ein halb wiederhergestelltes Ziel wäre der schlechteste Zustand).
+    concurrency:
+      group: pr-preview-speisedirekt
+      cancel-in-progress: false
+
+    steps:
+      # Der Merge-Commit (master + PR) — der Stand nach dem Merge. GitHub berechnet
+      # refs/pull/N/merge nach einem Push neu; bis dahin zeigt die Ref auf den alten Stand,
+      # darum die Prüfung, dass der zweite Elternteil der gepushte Head ist.
+      - uses: actions/checkout@v5
+        with:
+          ref: refs/pull/${{ needs.plan.outputs.pr }}/merge
+          fetch-depth: 2
+
+      - name: Merge-Commit auf Stand prüfen
+        run: |
+          for i in $(seq 1 12); do
+            if [ "$(git rev-parse HEAD^2)" = "${{ needs.plan.outputs.head }}" ]; then
+              echo "Merge-Commit $(git rev-parse --short HEAD) enthält Head ${{ needs.plan.outputs.head }}"; exit 0
+            fi
+            echo "Merge-Ref noch nicht aktuell (Head $(git rev-parse --short HEAD^2)), warte …"; sleep 10
+            git fetch --depth 2 origin "refs/pull/${{ needs.plan.outputs.pr }}/merge" && git checkout -q FETCH_HEAD
+          done
+          echo "::error::refs/pull/${{ needs.plan.outputs.pr }}/merge enthält den gepushten Stand nicht — Konflikt mit master?"
+          exit 1
+
+      - name: Restore
+        run: |
+          dotnet restore SpeiseDirekt3.sln
+          dotnet tool restore
+
+      - name: Build
+        run: dotnet build SpeiseDirekt3.sln -c Release --no-restore
+
+      - name: Tests
+        run: dotnet test SpeiseDirekt.Api.IntegrationTests -c Release --no-build --logger "console;verbosity=normal"
+
+      - name: Publish
+        run: dotnet publish SpeiseDirekt3/SpeiseDirekt3.csproj -c Release --no-restore -o publish
+
+      # Wie deploy.yml: Bundle für server2 (linux-x64), die App bleibt portabel.
+      - name: EF-Migrationsbundle bauen (für server2, linux-x64)
+        run: dotnet ef migrations bundle --project SpeiseDirekt.Model --startup-project SpeiseDirekt3 --configuration Release -r linux-x64 --no-build --force -o publish/efbundle
+
+      # Erst kopieren, dann stoppen: die alte Preview läuft, bis alles auf server2 liegt.
+      - name: Nach server2 kopieren (Staging-Verzeichnis)
+        run: rsync -az --delete -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new" publish/ "root@${TARGET_HOST}:${APP_DIR}/next/"
+
+      - name: Preview-App stoppen
+        run: ssh -o BatchMode=yes "root@${TARGET_HOST}" "systemctl stop $SERVICE || true"
+
+      - name: Produktionsdatenbank nach ${{ env.DB_ZIEL }} kopieren
+        id: kopie
+        run: |
+          SA_PW="$(cat /home/cicd/.secrets/server2-sql-sa)"
+          [ -n "$SA_PW" ] || { echo "::error::sa-Passwort nicht gefunden"; exit 1; }
+          echo "::add-mask::$SA_PW"
+          export SQLCMDPASSWORD="$SA_PW"
+          sqlcmd -S "$SQL_SERVER" -U sa -C -b -l 15 -t 600 -W -s '|' \
+            -i deploy/preview/db-kopie.sql \
+            -v Quelle="$DB_QUELLE" -v Ziel="$DB_ZIEL" -v Login="$DB_LOGIN" -v Pfad=/var/opt/mssql/backup/preview \
+            | tee kopie.log
+          # Letzte Zeile des Skripts: Zeitpunkt | Anzahl Migrationen | letzte Migration der Kopie
+          ROW=$(grep -E '^[0-9]{4}-[0-9]{2}-[0-9]{2} ' kopie.log | head -1)
+          echo "letzte=${ROW##*|}" >> "$GITHUB_OUTPUT"
+          echo "zeile=$(echo "$ROW" | sed 's/|/ · Migrationen: /; s/|/ · letzte: /')" >> "$GITHUB_OUTPUT"
+
+      # Das Bundle läuft auf server2 aus dem Staging-Verzeichnis heraus (es braucht appsettings.json
+      # neben sich), mit dem Connection-String aus der Preview-Unit. Dann Verzeichnis tauschen,
+      # Besitzer setzen (rsync kommt als root, die App läuft als sdpreview), starten.
+      - name: Migrationen gegen die Kopie, Verzeichnis tauschen und starten
+        run: |
+          ssh -o BatchMode=yes "root@${TARGET_HOST}" bash -s -- "$APP_DIR" "$SERVICE" "$SERVICE_USER" "${{ needs.plan.outputs.pr }}" <<'REMOTE'
+            set -euo pipefail
+            DIR="${1:?}"; SERVICE="${2:?}"; USER_="${3:?}"; PR="${4:?}"
+            CS=$(grep -oE 'ConnectionStrings__server="[^"]+"' "/etc/systemd/system/$SERVICE.service" | sed -E 's/^[^=]+="//; s/"$//')
+            [ -n "$CS" ] || { echo "Connection-String nicht in der Unit gefunden"; exit 1; }
+            chmod +x "$DIR/next/efbundle"
+            (cd "$DIR/next" && ./efbundle --connection "$CS")
+            rm -rf "${DIR:?}/bin"
+            mv "$DIR/next" "$DIR/bin"
+            chown -R "$USER_:$USER_" "$DIR/bin"
+            echo "$PR" > "$DIR/current-pr"
+            systemctl enable --now "$SERVICE"
+            systemctl restart "$SERVICE"
+            sleep 3
+            systemctl is-active "$SERVICE"
+          REMOTE
+
+      # Angewendete Migrationen aus der Historie der Kopie: alles, was neuer ist als der Stand vor
+      # dem Bundle. Leer = Kopie war aktuell. Eine Zeile mit <br>, weil die Liste in einer
+      # Tabellenzelle des Kommentars steht.
+      - name: Angewendete Migrationen ermitteln
+        id: migration
+        run: |
+          PW="$(cat /home/cicd/.secrets/speisedirekt-preview-sql)"
+          echo "::add-mask::$PW"
+          export SQLCMDPASSWORD="$PW"
+          LISTE=$(sqlcmd -S "$SQL_SERVER" -U "$DB_LOGIN" -d "$DB_ZIEL" -C -l 15 -W -h -1 \
+            -Q "SET NOCOUNT ON; SELECT '\`' + MigrationId + '\`' FROM __EFMigrationsHistory WHERE MigrationId > N'${{ steps.kopie.outputs.letzte }}' ORDER BY MigrationId;" \
+            | grep -E '^\`' | paste -sd '|' | sed 's/|/<br>/g' || true)
+          { echo 'migrationen<<EOF'; echo "${LISTE}"; echo 'EOF'; } >> "$GITHUB_OUTPUT"
+          echo "Angewendet: ${LISTE:-keine}"
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$PREVIEW_URL/")
+            echo "$code $PREVIEW_URL/"
+            case "$code" in 200|302) exit 0;; esac
+            sleep 2
+          done
+          echo "Smoke test fehlgeschlagen — letzte Dienstmeldungen:" >&2
+          ssh -o BatchMode=yes "root@${TARGET_HOST}" "journalctl -u $SERVICE -n 40 --no-pager"
+          exit 1
+
+      - name: Kommentar im PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ needs.plan.outputs.pr }}
+          MIGRATIONEN: ${{ steps.migration.outputs.migrationen }}
+          KOPIE: ${{ steps.kopie.outputs.zeile }}
+        run: |
+          MERGE_SHA=$(git rev-parse --short HEAD)
+          BODY=$(cat <<MD
+          <!-- pr-preview -->
+          ### 🔍 Preview deployt: ${PREVIEW_URL}
+
+          | | |
+          |---|---|
+          | Stand | Merge-Commit \`${MERGE_SHA}\` (master + dieser PR), Lauf [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) |
+          | Datenbank | Kopie von \`${DB_QUELLE}\` → \`${DB_ZIEL}\` (${KOPIE:-Zeitpunkt siehe Lauf}) |
+          | Migrationen | ${MIGRATIONEN:-keine (Kopie war aktuell)} |
+
+          Umgebung \`Preview\` auf server2, eigener Dienst und eigene Datenbankkopie — Anmeldung mit den Zugangsdaten aus der Produktion (Stand der Kopie), Änderungen bleiben in der Kopie. Die App versendet keine Mails. Ein Slot: ein neuer Lauf eines anderen PR ersetzt diese Preview; beim Schließen des PR wird sie gestoppt.
+          MD
+          )
+          ID=$(gh api "repos/${{ github.repository }}/issues/${PR}/comments" --paginate -q '.[] | select(.body | contains("<!-- pr-preview -->")) | .id' | head -1)
+          if [ -n "$ID" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/${ID}" -f body="$BODY" >/dev/null
+          else
+            gh api -X POST "repos/${{ github.repository }}/issues/${PR}/comments" -f body="$BODY" >/dev/null
+          fi
