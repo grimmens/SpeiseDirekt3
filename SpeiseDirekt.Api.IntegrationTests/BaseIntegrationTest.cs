@@ -23,6 +23,9 @@ public abstract class BaseIntegrationTest : IClassFixture<CustomWebApplicationFa
 
     public async Task InitializeAsync()
     {
+        // Factory (and its clock) is shared by all tests of a class: start every test on the system clock
+        Factory.Clock.Reset();
+
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         await db.Database.EnsureDeletedAsync();

@@ -1,7 +1,10 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
 
 namespace SpeiseDirekt.Api.IntegrationTests.Tests;
@@ -58,4 +61,274 @@ public class MenuDisplayControllerTests : BaseIntegrationTest
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
+
+    // ---------------------------------------------------------------------
+    // Menu resolution (calendar / time table / direct)
+    // Menu1 ("Lunch Menu") is used as the direct menu, Menu2 ("Dinner Menu")
+    // as the calendar / time-table menu, so the source of the result is visible.
+    // 2026-03-04, 2026-03-18 and 2026-02-25 are Wednesdays, 2026-03-19 is a Thursday.
+    // ---------------------------------------------------------------------
+
+    [Fact]
+    public async Task GetMenuByQrCode_CalendarSingleDateMatch_ReturnsCalendarMenu()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isCalendarBased: true,
+            calendarEntries: [Calendar(new DateOnly(2026, 3, 4), TestSeedData.Menu2Id)]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 4, 12, 0, 0));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu2Id);
+        menu.Categories.Should().ContainSingle(c => c.Id == TestSeedData.Category2Id);
+    }
+
+    [Theory]
+    [InlineData("2026-03-01T00:00:00")] // first day
+    [InlineData("2026-03-05T12:00:00")] // inside
+    [InlineData("2026-03-10T23:59:59")] // last day (inclusive)
+    public async Task GetMenuByQrCode_CalendarDateRangeMatch_ReturnsCalendarMenu(string localNow)
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isCalendarBased: true,
+            calendarEntries: [Calendar(new DateOnly(2026, 3, 1), TestSeedData.Menu2Id, endDate: new DateOnly(2026, 3, 10))]);
+        Factory.Clock.SetLocalNow(DateTime.Parse(localNow, CultureInfo.InvariantCulture));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu2Id);
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_CalendarRecurringWeekdayMatch_ReturnsCalendarMenu()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isCalendarBased: true,
+            calendarEntries: [Calendar(new DateOnly(2026, 3, 1), TestSeedData.Menu2Id, recurringDayOfWeek: DayOfWeek.Wednesday)]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 18, 12, 0, 0));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu2Id);
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_CalendarRecurringOtherWeekday_FallsBackToDirectMenu()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isCalendarBased: true,
+            calendarEntries: [Calendar(new DateOnly(2026, 3, 1), TestSeedData.Menu2Id, recurringDayOfWeek: DayOfWeek.Wednesday)]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 19, 12, 0, 0));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu1Id);
+    }
+
+    [Theory]
+    [InlineData("2026-03-18T12:00:00")] // matching weekday, after EndDate
+    [InlineData("2026-02-25T12:00:00")] // matching weekday, before Date
+    public async Task GetMenuByQrCode_CalendarRecurringOutsideDateRange_FallsBackToDirectMenu(string localNow)
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isCalendarBased: true,
+            calendarEntries:
+            [
+                Calendar(new DateOnly(2026, 3, 1), TestSeedData.Menu2Id,
+                    endDate: new DateOnly(2026, 3, 15), recurringDayOfWeek: DayOfWeek.Wednesday)
+            ]);
+        Factory.Clock.SetLocalNow(DateTime.Parse(localNow, CultureInfo.InvariantCulture));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu1Id);
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_CalendarNoMatch_FallsBackToDirectMenu()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isCalendarBased: true,
+            calendarEntries: [Calendar(new DateOnly(2026, 3, 4), TestSeedData.Menu2Id)]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 5, 12, 0, 0));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu1Id);
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_CalendarNoMatchAndNoDirectMenu_Returns404()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: null,
+            isCalendarBased: true,
+            calendarEntries: [Calendar(new DateOnly(2026, 3, 4), TestSeedData.Menu2Id)]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 5, 12, 0, 0));
+
+        var response = await Client.GetAsync($"/api/public/menu/{qrId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_SingleDateAndRecurringMatch_PrefersSingleDateEntry()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: null,
+            isCalendarBased: true,
+            calendarEntries:
+            [
+                // recurring entry has the earlier Date, the single-date entry must still win
+                Calendar(new DateOnly(2026, 3, 1), TestSeedData.Menu1Id, recurringDayOfWeek: DayOfWeek.Wednesday),
+                Calendar(new DateOnly(2026, 3, 4), TestSeedData.Menu2Id)
+            ]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 4, 12, 0, 0));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu2Id);
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_CalendarMatch_TakesPrecedenceOverTimeTable()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isCalendarBased: true,
+            isTimeTableBased: true,
+            calendarEntries: [Calendar(new DateOnly(2026, 3, 4), TestSeedData.Menu2Id)],
+            timeTableEntries: [TimeTable(new TimeOnly(11, 0), new TimeOnly(14, 0), TestSeedData.Menu1Id)]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 4, 12, 0, 0));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu2Id);
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_CalendarNoMatch_UsesTimeTable()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: null,
+            isCalendarBased: true,
+            isTimeTableBased: true,
+            calendarEntries: [Calendar(new DateOnly(2026, 3, 4), TestSeedData.Menu2Id)],
+            timeTableEntries: [TimeTable(new TimeOnly(11, 0), new TimeOnly(14, 0), TestSeedData.Menu1Id)]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 5, 12, 0, 0));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu1Id);
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_TimeTableNoActiveWindow_Returns404EvenWithDirectMenu()
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isTimeTableBased: true,
+            timeTableEntries: [TimeTable(new TimeOnly(11, 0), new TimeOnly(14, 0), TestSeedData.Menu2Id)]);
+        Factory.Clock.SetLocalNow(new DateTime(2026, 3, 4, 15, 0, 0));
+
+        var response = await Client.GetAsync($"/api/public/menu/{qrId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Theory]
+    [InlineData("22:00:00")]
+    [InlineData("23:59:00")]
+    [InlineData("23:59:30")] // previously in the gap between the 23:59 segment end and midnight
+    [InlineData("00:00:00")]
+    [InlineData("01:59:59")]
+    public async Task GetMenuByQrCode_TimeTableCrossMidnight_ActiveWindow_ReturnsTimeTableMenu(string localTime)
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isTimeTableBased: true,
+            timeTableEntries: [TimeTable(new TimeOnly(22, 0), new TimeOnly(2, 0), TestSeedData.Menu2Id)]);
+        Factory.Clock.SetLocalNow(new DateOnly(2026, 3, 4).ToDateTime(TimeOnly.Parse(localTime, CultureInfo.InvariantCulture)));
+
+        var menu = await GetResolvedMenuAsync(qrId);
+
+        menu.Id.Should().Be(TestSeedData.Menu2Id);
+    }
+
+    [Theory]
+    [InlineData("21:59:59")]
+    [InlineData("02:00:00")]
+    [InlineData("12:00:00")]
+    public async Task GetMenuByQrCode_TimeTableCrossMidnight_OutsideWindow_Returns404(string localTime)
+    {
+        var qrId = await SeedQrCodeAsync(
+            directMenuId: TestSeedData.Menu1Id,
+            isTimeTableBased: true,
+            timeTableEntries: [TimeTable(new TimeOnly(22, 0), new TimeOnly(2, 0), TestSeedData.Menu2Id)]);
+        Factory.Clock.SetLocalNow(new DateOnly(2026, 3, 4).ToDateTime(TimeOnly.Parse(localTime, CultureInfo.InvariantCulture)));
+
+        var response = await Client.GetAsync($"/api/public/menu/{qrId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    private async Task<Menu> GetResolvedMenuAsync(Guid qrCodeId)
+    {
+        var response = await Client.GetAsync($"/api/public/menu/{qrCodeId}");
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var menu = await response.Content.ReadFromJsonAsync<Menu>(JsonOptions);
+        menu.Should().NotBeNull();
+        return menu!;
+    }
+
+    private async Task<Guid> SeedQrCodeAsync(
+        Guid? directMenuId,
+        bool isCalendarBased = false,
+        bool isTimeTableBased = false,
+        List<CalendarEntry>? calendarEntries = null,
+        List<TimeTableEntry>? timeTableEntries = null)
+    {
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var qrCode = new QRCode
+        {
+            Id = Guid.NewGuid(),
+            Title = "Resolution Test",
+            MenuId = directMenuId,
+            IsCalendarBased = isCalendarBased,
+            IsTimeTableBased = isTimeTableBased,
+            CalendarEntries = calendarEntries ?? [],
+            TimeTableEntries = timeTableEntries ?? []
+        };
+        db.QRCodes.Add(qrCode);
+        await db.SaveChangesAsync();
+
+        return qrCode.Id;
+    }
+
+    private static CalendarEntry Calendar(
+        DateOnly date, Guid menuId, DateOnly? endDate = null, DayOfWeek? recurringDayOfWeek = null) => new()
+    {
+        Id = Guid.NewGuid(),
+        Date = date,
+        EndDate = endDate,
+        RecurringDayOfWeek = recurringDayOfWeek,
+        MenuId = menuId
+    };
+
+    private static TimeTableEntry TimeTable(TimeOnly start, TimeOnly end, Guid menuId) => new()
+    {
+        Id = Guid.NewGuid(),
+        StartTime = start,
+        EndTime = end,
+        MenuId = menuId
+    };
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.ServiceInterface;
 
@@ -14,6 +15,11 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     public const string TestUserId = "11111111-1111-1111-1111-111111111111";
 
     private SqliteConnection? _connection;
+
+    /// <summary>
+    /// Clock used by the app under test. Uses the system clock unless a test fixes the time.
+    /// </summary>
+    public TestTimeProvider Clock { get; } = new();
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -37,6 +43,10 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             if (userIdDescriptor != null)
                 services.Remove(userIdDescriptor);
             services.AddScoped<IUserIdProvider>(_ => new TestUserIdProvider(TestUserId));
+
+            // Replace TimeProvider with a controllable test clock
+            services.RemoveAll<TimeProvider>();
+            services.AddSingleton<TimeProvider>(Clock);
 
             // Add SQLite in-memory database
             services.AddDbContext<ApplicationDbContext>(options =>

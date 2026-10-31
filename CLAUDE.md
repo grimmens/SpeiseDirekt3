@@ -89,7 +89,7 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - **User limit**: creating a sub-account fails once the active `TenantUser` count reaches `TenantSubscription.MaxUsers`.
 
 ### Key Services
-- **IMenuService**: resolves the active menu for a QR code, including time windows that cross midnight. Currently only handles direct and time-table based QR codes; calendar-based resolution is not implemented here yet.
+- **IMenuService**: resolves the active menu for a QR code. Precedence: matching calendar entry for today (if `IsCalendarBased`), then the active time-table window (if `IsTimeTableBased`, also across midnight; no active window = null), otherwise the direct menu. Uses the injected `TimeProvider` (`GetLocalNow()`), registered as `TimeProvider.System` in `ServiceExtensions`.
 - **IPermissionService**: current role and permissions (cached per instance)
 - **ITrackingService** / **IAnalyticsService**: records menu views and item clicks (session cookie `SpeiseDirekt_SessionId`) and aggregates them for the analytics page and API.
 - **IImageUploadService**: `ImageDatabaseUploadService` (registered in the Blazor app) stores images in the DB; `ImageUploadService` (file-based, `wwwroot/uploads/`) still exists but is not registered.
@@ -128,7 +128,7 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - CORS policy `AllowAll`. `public partial class Program` exists so the tests can use `WebApplicationFactory<Program>`.
 
 ### SpeiseDirekt.Api.IntegrationTests
-- `CustomWebApplicationFactory`: replaces SQL Server with SQLite in-memory, swaps `IUserIdProvider` for a fixed `TestUserId`, and adds the `TestScheme` auth handler (`TestAuthHandler`), which authenticates every request as that user (the tenant owner, so all permissions apply).
+- `CustomWebApplicationFactory`: replaces SQL Server with SQLite in-memory, swaps `IUserIdProvider` for a fixed `TestUserId`, and adds the `TestScheme` auth handler (`TestAuthHandler`), which authenticates every request as that user (the tenant owner, so all permissions apply). It also replaces `TimeProvider` with `TestTimeProvider` (`Factory.Clock`): system clock by default, `SetLocalNow(...)` fixes the time for one test (reset before each test).
 - `BaseIntegrationTest`: recreates the DB and seeds it (`TestSeedData`) before each test. Use the fixed IDs in `TestSeedData` in assertions.
 - `Tests/`: one test class per controller.
 - SQLite differs from SQL Server (e.g. FK enforcement, decimal handling). Keep that in mind when a test passes locally but the real DB behaves differently.

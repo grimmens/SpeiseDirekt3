@@ -9,7 +9,8 @@ namespace SpeiseDirekt.ServiceInterface
     {
         /// <summary>
         /// Liefert das zu diesem QR-Code gehörende Menü.
-        /// Wenn der QR-Code zeitgesteuert ist, das Menü der aktuellen TimeTableEntry.
+        /// Vorrang: passender Kalender-Eintrag für heute (kalenderbasiert), dann die aktuelle
+        /// TimeTableEntry (zeitgesteuert), sonst das direkt zugeordnete Menü.
         /// </summary>
         /// <param name="qrCodeId">Die Id des QR-Codes.</param>
         /// <returns>Das aufgelöste Menu oder null, falls nicht gefunden oder kein Eintrag aktiv.</returns>
