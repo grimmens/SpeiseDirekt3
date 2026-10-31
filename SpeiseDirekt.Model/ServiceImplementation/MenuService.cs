@@ -51,6 +51,7 @@ namespace SpeiseDirekt.ServiceImplementation
                 .Include(q => q.Menu)
                 .ThenInclude(e => e.Categories)
                 .ThenInclude(e => e.MenuItems)
+                .ThenInclude(e => e.Allergens)
                 .Include(q => q.TimeTableEntries)
                 .Include(q => q.CalendarEntries)
                 .FirstOrDefaultAsync(q => q.Id == qrCodeId);
@@ -99,6 +100,7 @@ namespace SpeiseDirekt.ServiceImplementation
                 .AsNoTracking()
                 .Include(e => e.Categories)
                 .ThenInclude(e => e.MenuItems)
+                .ThenInclude(e => e.Allergens)
                 .SingleOrDefaultAsync(e => e.Id == menuId);
         }
 

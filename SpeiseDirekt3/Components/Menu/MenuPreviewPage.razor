@@ -43,6 +43,7 @@
                 .IgnoreQueryFilters()
                 .Include(m => m.Categories)
                     .ThenInclude(c => c.MenuItems)
+                        .ThenInclude(i => i.Allergens)
                 .AsNoTracking()
                 .Where(m => m.Id == menuId)
                 .FirstOrDefaultAsync();

@@ -36,6 +36,7 @@ else
         .IgnoreQueryFilters()
             .Include(m => m.Categories)!
                 .ThenInclude(c => c.MenuItems)
+                .ThenInclude(i => i.Allergens)
             .FirstOrDefaultAsync(m => m.Id == MenuId);
 
         MenuLoading = false;
