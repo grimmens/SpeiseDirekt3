@@ -1,0 +1,62 @@
+name: PR-Preview Abbau
+
+# Gegenstück zum Preview-Job in ci.yml: wird ein PR geschlossen, dessen Stand gerade als
+# Preview läuft, stoppt die App auf server2. Die Datenbankkopie bleibt bis zum nächsten
+# Preview-Lauf.
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - master
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TARGET_HOST: server2.bgrimm.at
+  APP_DIR: /var/www/SpeiseDirekt-Preview
+  SERVICE: speisedirekt-preview
+  DB_ZIEL: speisedirekt-pr-preview
+
+jobs:
+  abbau:
+    runs-on: [self-hosted, linux, ARM64]
+    timeout-minutes: 5
+    concurrency:
+      group: pr-preview-speisedirekt
+      cancel-in-progress: false
+
+    steps:
+      - name: Preview-App auf server2 stoppen, wenn dieser PR deployt ist
+        id: stop
+        run: |
+          ERGEBNIS=$(ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new "root@${TARGET_HOST}" \
+            bash -s -- "$APP_DIR" "$SERVICE" "${{ github.event.pull_request.number }}" <<'REMOTE' | tail -1
+            set -euo pipefail
+            DIR="${1:?}"; SERVICE="${2:?}"; PR="${3:?}"
+            if [ -f "$DIR/current-pr" ] && [ "$(cat "$DIR/current-pr")" = "$PR" ]; then
+              systemctl disable --now "$SERVICE" 2>/dev/null || true
+              rm -rf "${DIR:?}/bin" "${DIR:?}/next" "${DIR:?}/current-pr"
+              echo abgebaut
+            else
+              echo "nicht deployt (aktuell: $(cat "$DIR/current-pr" 2>/dev/null || echo keiner))"
+            fi
+          REMOTE
+          )
+          echo "server2: $ERGEBNIS"
+          if [ "$ERGEBNIS" = "abgebaut" ]; then
+            echo "abgebaut=true" >> "$GITHUB_OUTPUT"
+            echo "Preview von PR #${{ github.event.pull_request.number }} gestoppt."
+          else
+            echo "Dieser PR ist nicht deployt — nichts zu tun."
+          fi
+
+      - name: Kommentar im PR
+        if: steps.stop.outputs.abgebaut == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api -X POST "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            -f body="🔍 Preview abgebaut (App auf server2 gestoppt). Die Datenbankkopie \`${DB_ZIEL}\` bleibt bis zum nächsten Preview-Lauf bestehen." >/dev/null

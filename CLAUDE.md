@@ -38,7 +38,12 @@ Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need
 - **Remove last migration**: `dotnet ef migrations remove --project SpeiseDirekt.Model --startup-project SpeiseDirekt3`
 
 ### Deployment
-- `SpeiseDirekt3/SendToProd.ps1` publishes the Blazor app (Release) and copies it via `ssh`/`scp` to a systemd service on the production server. Run it from inside `SpeiseDirekt3/`. There is no CI pipeline.
+CI/CD since 2026-10-31 (`.github/workflows/`), running on the self-hosted ARM64 runner of the CI host (`actions-runner-speisedirekt`) and deploying to server2 via SSH/rsync. No Docker. Only the Blazor app `SpeiseDirekt3` is deployed; the Web API is not hosted anywhere.
+- **`deploy.yml`** — on every push to `master`: restore, build, `dotnet test` (a red test stops the deployment), `dotnet publish` of the Blazor app (portable, framework-dependent — server2 runs it with `dotnet SpeiseDirekt3.dll`), EF migrations bundle for linux-x64, rsync to `server2:/var/www/SpeiseDirekt.next`, **COPY_ONLY backup of the `speisedirekt` database** to `/var/opt/mssql/backup/deploy` (the last ten are kept), bundle against the connection string from `Speisedirekt.service`, directory swap, restart, smoke test of https://app.speisedirekt.de.
+- **`ci.yml`** — PR preview at https://preview.speisedirekt.de: every open PR against `master` is deployed when opened and on every push (no label needed). One slot — the most recently pushed PR wins. Build of the merge commit (master + PR), tests, copy of the production database to `speisedirekt-pr-preview` (`deploy/preview/db-kopie.sql`, run with `sa` from the CI host), migrations against the copy, `speisedirekt-preview.service` (user `sdpreview`, port 5013) on server2, comment in the PR with the applied migrations. `workflow_dispatch` with a PR number redeploys a preview by hand.
+- **`pr-preview-abbau.yml`** — stops the preview when its PR is closed; the database copy stays until the next run.
+- `.config/dotnet-tools.json` pins `dotnet-ef` for the bundle (`dotnet tool restore`). Host-side prerequisites (runner, secrets, unit files, Apache vhosts, SQL login) are documented in the CI host's `CLAUDE.md`.
+- `SpeiseDirekt3/SendToProd.ps1` (manual publish + `scp`) is superseded by the pipeline; the file is not tracked in the repository.
 
 ## Architecture
 

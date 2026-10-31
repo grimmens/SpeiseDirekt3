@@ -1,0 +1,120 @@
+name: Build & Deploy to server2
+
+# Baut auf dem ARM64-CI-Host (portabel, framework-dependent), lässt die Tests laufen und deployt
+# per SSH/rsync auf server2 (SQL Server bleibt dort). Vor den Migrationen sichert der Lauf die
+# Produktionsdatenbank (COPY_ONLY nach /var/opt/mssql/backup/deploy, die letzten zehn Sicherungen
+# bleiben liegen). Die Migrationen laufen als EF-Bundle auf server2 vor dem Neustart. Kein Docker.
+#
+# Voraussetzungen (einmalig, eingerichtet 2026-10-31):
+#   - Runner actions-runner-speisedirekt auf dem CI-Host; sein Benutzer cicd hat einen
+#     SSH-Schlüssel, der bei root@server2.bgrimm.at autorisiert ist
+#   - /home/cicd/.secrets/server2-sql-sa auf dem CI-Host (sa-Passwort der Instanz, nur für
+#     die Sicherung; /usr/local/bin/sqlcmd ist go-sqlcmd)
+#   - server2: ASP.NET-Core-9-Runtime, rsync, Unit Speisedirekt.service mit
+#     ConnectionStrings__server in einer Environment-Zeile (bleibt dort, das Deployment ersetzt
+#     nur /var/www/SpeiseDirekt), Verzeichnis /var/opt/mssql/backup/deploy (Besitzer mssql)
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-speisedirekt-server2
+  cancel-in-progress: false
+
+env:
+  DOTNET_NOLOGO: "1"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  TARGET_HOST: server2.bgrimm.at
+  TARGET_DIR: /var/www/SpeiseDirekt
+  SERVICE: Speisedirekt
+  PUBLIC_URL: https://app.speisedirekt.de
+  SQL_SERVER: tcp:server2.bgrimm.at,1433
+  DB: speisedirekt
+  BACKUP_DIR: /var/opt/mssql/backup/deploy
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, ARM64]
+    timeout-minutes: 30
+    environment:
+      name: production
+      url: https://app.speisedirekt.de
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Restore
+        run: |
+          dotnet restore SpeiseDirekt3.sln
+          dotnet tool restore
+
+      - name: Build
+        run: dotnet build SpeiseDirekt3.sln -c Release --no-restore
+
+      # Die API-Tests laufen gegen SQLite im Speicher, ohne Netz und ohne server2 — ein roter
+      # Test hält das Deployment an.
+      - name: Tests
+        run: dotnet test SpeiseDirekt.Api.IntegrationTests -c Release --no-build --logger "console;verbosity=normal"
+
+      # Portabler, framework-dependent Build ohne Runtime-Angabe: server2 startet die App mit
+      # "dotnet SpeiseDirekt3.dll", die dortige ASP.NET-Core-9-Runtime bringt alles mit.
+      - name: Publish
+        run: dotnet publish SpeiseDirekt3/SpeiseDirekt3.csproj -c Release --no-restore -o publish
+
+      # Das Bundle ist eine ausführbare Datei und muss zur CPU von server2 passen (x64); ohne -r
+      # entstünde hier auf dem ARM64-Runner ein ARM64-Programm. Das -r gilt nur dem Bundle, die App
+      # bleibt portabel. Die Migrationen liegen in SpeiseDirekt.Model, der Host ist SpeiseDirekt3.
+      - name: EF-Migrationsbundle bauen (für server2, linux-x64)
+        run: dotnet ef migrations bundle --project SpeiseDirekt.Model --startup-project SpeiseDirekt3 --configuration Release -r linux-x64 --no-build --force -o publish/efbundle
+
+      - name: Nach server2 kopieren (Staging-Verzeichnis)
+        run: rsync -az --delete -e "ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new" publish/ "root@${TARGET_HOST}:${TARGET_DIR}.next/"
+
+      # Sicherung unmittelbar vor den Migrationen: COPY_ONLY berührt keine Backup-Kette, CHECKSUM
+      # und VERIFYONLY stellen sicher, dass die Datei auch zurückgespielt werden kann. Danach bleiben
+      # die zehn jüngsten Sicherungen liegen (SQL Server Express: keine Kompression, ≈ 75 MB je Stück).
+      - name: Produktionsdatenbank sichern
+        run: |
+          SA_PW="$(cat /home/cicd/.secrets/server2-sql-sa)"
+          [ -n "$SA_PW" ] || { echo "::error::sa-Passwort nicht gefunden"; exit 1; }
+          echo "::add-mask::$SA_PW"
+          export SQLCMDPASSWORD="$SA_PW"
+          BAK="$BACKUP_DIR/$DB-$(date -u +%Y%m%d-%H%M%S)-run${{ github.run_number }}.bak"
+          sqlcmd -S "$SQL_SERVER" -U sa -C -b -l 15 -t 600 \
+            -Q "BACKUP DATABASE [$DB] TO DISK = N'$BAK' WITH COPY_ONLY, INIT, FORMAT, CHECKSUM; RESTORE VERIFYONLY FROM DISK = N'$BAK' WITH CHECKSUM;"
+          echo "Sicherung: $BAK"
+          ssh -o BatchMode=yes "root@${TARGET_HOST}" "cd '${BACKUP_DIR:?}' && ls -1t '$DB'-*.bak | tail -n +11 | xargs -r rm -v"
+
+      # Das Bundle läuft aus dem Staging-Verzeichnis heraus (es baut den App-Host und braucht
+      # appsettings.json neben sich — sonst bricht es mit „Connection string not found" ab, bevor
+      # --connection greift), mit dem Connection-String aus der Unit. Dann stoppen, tauschen, starten.
+      - name: Migrieren, Verzeichnis tauschen, Dienst neu starten
+        run: |
+          ssh -o BatchMode=yes "root@${TARGET_HOST}" bash -s -- "$TARGET_DIR" "$SERVICE" <<'REMOTE'
+            set -euo pipefail
+            DIR="${1:?}"; SERVICE="${2:?}"
+            CS=$(grep -oE 'ConnectionStrings__server="[^"]+"' "/etc/systemd/system/$SERVICE.service" | sed -E 's/^[^=]+="//; s/"$//')
+            [ -n "$CS" ] || { echo "Connection-String nicht in der Unit gefunden"; exit 1; }
+            chmod +x "$DIR.next/efbundle"
+            (cd "$DIR.next" && ./efbundle --connection "$CS")
+            systemctl stop "$SERVICE"
+            rsync -a --delete "$DIR.next/" "${DIR:?}/"
+            systemctl start "$SERVICE"
+            sleep 3
+            systemctl is-active "$SERVICE"
+          REMOTE
+
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$PUBLIC_URL/")
+            echo "$code $PUBLIC_URL/"
+            case "$code" in 200|302) exit 0;; esac
+            sleep 2
+          done
+          echo "Smoke test fehlgeschlagen — letzte Dienstmeldungen:" >&2
+          ssh -o BatchMode=yes "root@${TARGET_HOST}" "journalctl -u $SERVICE -n 40 --no-pager"
+          exit 1
