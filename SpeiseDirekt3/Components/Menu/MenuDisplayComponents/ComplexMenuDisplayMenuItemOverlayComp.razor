@@ -43,7 +43,9 @@
 
                 <h1 class="text-2xl font-bold text-gray-900 mb-4">@SelectedItem.Name</h1>
 
-                <p class="text-gray-700 mb-6 leading-relaxed">@SelectedItem.Description</p>
+                <p class="text-gray-700 mb-4 leading-relaxed">@SelectedItem.Description</p>
+
+                <DietaryBadges Item="SelectedItem" Large="true" Class="mb-6" />
 
                 <div class="flex justify-between items-center">
                     <span class="text-2xl font-bold text-gray-900">€ @SelectedItem.Price.ToString("F2")</span>
@@ -52,6 +54,23 @@
                         <span class="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">@string.Join(", ", SelectedItem.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</span>
                     }
                 </div>
+
+                @if (SelectedItem.Allergens.Any())
+                {
+                    <!-- Allergen legend: codes with their names -->
+                    <div class="mt-4 pt-4 border-t border-gray-100" data-testid="allergen-legend">
+                        <h2 class="text-xs text-gray-500 uppercase tracking-wide mb-2">Allergene</h2>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            @foreach (var allergen in SelectedItem.Allergens.OrderBy(a => a.Code))
+                            {
+                                <li class="flex gap-2">
+                                    <span class="font-semibold text-gray-800 w-5">@allergen.Code</span>
+                                    <span>@allergen.Name</span>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
 
                 @if (Combos.Any())
                 {

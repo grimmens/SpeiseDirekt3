@@ -105,8 +105,11 @@ public class QrRedirectTests : E2ETestBase
         var response = await Page.GotoAsync($"/qr/{Guid.NewGuid()}");
 
         response!.Status.Should().Be(200);
-        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Invalid QR code" })).ToBeVisibleAsync();
-        await Assertions.Expect(Page.GetByText("This code does not exist or has been deleted.")).ToBeVisibleAsync();
+        var notice = Page.GetByTestId("guest-notice");
+        await Assertions.Expect(notice).ToHaveAttributeAsync("data-kind", "notfound");
+        await Assertions.Expect(notice.GetByRole(AriaRole.Heading, new() { Name = "Ungültiger QR-Code" })).ToBeVisibleAsync();
+        await Assertions.Expect(notice).ToContainTextAsync("Dieser QR-Code existiert nicht oder wurde gelöscht.");
+        await Assertions.Expect(notice.GetByRole(AriaRole.Link, new() { Name = "Zur Startseite" })).ToBeVisibleAsync();
     }
 
     [Fact]
@@ -115,7 +118,7 @@ public class QrRedirectTests : E2ETestBase
         var response = await Page.GotoAsync("/qr/not-a-guid");
 
         response!.Status.Should().BeLessThan(500);
-        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Invalid QR code" })).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Ungültiger QR-Code" })).ToHaveCountAsync(0);
     }
 
     // --- 2. Time table ---
@@ -154,7 +157,7 @@ public class QrRedirectTests : E2ETestBase
     [InlineData(14, 0)]  // end is exclusive
     [InlineData(15, 30)] // gap between lunch and evening
     [InlineData(2, 0)]   // end of the night window (exclusive)
-    public async Task TimeTableQr_OutsideEveryWindow_ShowsNoMenu_NoError(int hour, int minute)
+    public async Task TimeTableQr_OutsideEveryWindow_ShowsNoMenuNotice(int hour, int minute)
     {
         var suffix = Guid.NewGuid().ToString("N")[..6];
         var lunch = await SeedMenuAsync($"Mittag {suffix}");
@@ -166,12 +169,13 @@ public class QrRedirectTests : E2ETestBase
         var response = await Page.GotoAsync($"/qr/{qrId}");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        // Current behavior: the QR code exists but no menu is active → the page stays empty
-        // (no menu, no "Invalid QR code", no server error).
+        // The QR code exists but no menu is active → friendly notice (no menu, not "invalid", no server error)
         response!.Status.Should().Be(200);
+        var notice = Page.GetByTestId("guest-notice");
+        await Assertions.Expect(notice).ToHaveAttributeAsync("data-kind", "info");
+        await Assertions.Expect(notice.GetByRole(AriaRole.Heading, new() { Name = "Gerade ist kein Menü verfügbar" })).ToBeVisibleAsync();
         await Assertions.Expect(Page.GetByText(suffix)).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Invalid QR code" })).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByText("loading…")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Ungültiger QR-Code" })).ToHaveCountAsync(0);
     }
 
     // --- 3. Calendar ---

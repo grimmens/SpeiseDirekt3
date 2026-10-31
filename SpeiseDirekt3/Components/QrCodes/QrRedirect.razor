@@ -9,18 +9,22 @@
 
 @if (loading)
 {
-    <p>loading…</p>
+    <GuestNotice Kind="GuestNotice.GuestNoticeKind.Loading" Title="Menü wird geladen…" />
 }
 else if (qr == null)
 {
-    <div class="alert alert-danger mt-5 text-center">
-        <h4>Invalid QR code</h4>
-        <p>This code does not exist or has been deleted.</p>
-        <a href="/" class="btn btn-primary">Go Home</a>
-    </div>
-} else if(menu != null)
+    <GuestNotice Kind="GuestNotice.GuestNoticeKind.NotFound" Title="Ungültiger QR-Code"
+                 Message="Dieser QR-Code existiert nicht oder wurde gelöscht." ShowHomeLink="true" />
+}
+else if (menu != null)
 {
     <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" />
+}
+else
+{
+    @* The QR code exists, but no menu is active right now (e.g. outside every time-table window) *@
+    <GuestNotice Kind="GuestNotice.GuestNoticeKind.Info" Title="Gerade ist kein Menü verfügbar"
+                 Message="Zu dieser Uhrzeit ist für diesen QR-Code kein Menü hinterlegt. Bitte versuchen Sie es später noch einmal." />
 }
 @code {
     [Parameter] public Guid QrId { get; set; }

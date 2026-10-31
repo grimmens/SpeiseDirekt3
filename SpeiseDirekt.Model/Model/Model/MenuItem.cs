@@ -19,5 +19,10 @@ namespace SpeiseDirekt.Model
         public Category? Category { get; set; }
         public Guid ApplicationUserId { get; set; }
         public string? ImagePath { get; set; }
+
+        /// <summary>Dietary labels shown to guests (icons on the menu card).</summary>
+        public bool IsVegan { get; set; }
+        public bool IsVegetarian { get; set; }
+        public bool IsSpicy { get; set; }
     }
 }

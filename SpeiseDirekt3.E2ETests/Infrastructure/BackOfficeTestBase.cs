@@ -66,8 +66,19 @@ public abstract class BackOfficeTestBase : E2ETestBase
     /// Creates a menu item in the menu's first category via <c>/MenuItems/{menuId}</c> and the item editor.
     /// <paramref name="allergenCodes"/> are ticked in the editor's allergen list.
     /// </summary>
+    protected Task CreateMenuItemViaUiAsync(
+        Guid menuId, string name, string description, decimal price, params string[] allergenCodes) =>
+        CreateMenuItemViaUiAsync(menuId, name, description, price, DietaryLabels.None, allergenCodes);
+
+    /// <summary>Dietary label checkboxes of the item editor.</summary>
+    protected sealed record DietaryLabels(bool Vegan = false, bool Vegetarian = false, bool Spicy = false)
+    {
+        public static readonly DietaryLabels None = new();
+    }
+
+    /// <inheritdoc cref="CreateMenuItemViaUiAsync(Guid, string, string, decimal, string[])"/>
     protected async Task CreateMenuItemViaUiAsync(
-        Guid menuId, string name, string description, decimal price, params string[] allergenCodes)
+        Guid menuId, string name, string description, decimal price, DietaryLabels labels, params string[] allergenCodes)
     {
         await GotoInteractiveAsync($"/MenuItems/{menuId}");
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/MenuItems/Category/", RegexOptions.IgnoreCase));
@@ -82,6 +93,10 @@ public abstract class BackOfficeTestBase : E2ETestBase
         foreach (var code in allergenCodes)
             await editor.Locator("label", new() { HasTextRegex = new Regex($"^\\s*{Regex.Escape(code)} - ") })
                 .Locator("input[type=checkbox]").CheckAsync();
+
+        await editor.Locator("#MenuItem\\.IsVegan").SetCheckedAsync(labels.Vegan);
+        await editor.Locator("#MenuItem\\.IsVegetarian").SetCheckedAsync(labels.Vegetarian);
+        await editor.Locator("#MenuItem\\.IsSpicy").SetCheckedAsync(labels.Spicy);
 
         await editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
         await Assertions.Expect(editor).ToBeHiddenAsync();

@@ -44,7 +44,7 @@ public static class E2ESeedData
 
     /// <summary>
     /// A dish of the ramen card. <see cref="Vegan"/>, <see cref="Vegetarian"/> and <see cref="Spicy"/> are the
-    /// icons on the card; the app has no fields for them (no EF model change), so they are not stored.
+    /// icons on the card (stored as <c>MenuItem.IsVegan</c>/<c>IsVegetarian</c>/<c>IsSpicy</c>).
     /// </summary>
     public sealed record RamenDish(
         string Name, string Description, decimal Price, string[] AllergenCodes,
@@ -173,7 +173,10 @@ public static class E2ESeedData
                 Name = dish.Name,
                 Description = dish.Description,
                 Price = dish.Price,
-                CategoryId = category.Id
+                CategoryId = category.Id,
+                IsVegan = dish.Vegan,
+                IsVegetarian = dish.Vegetarian,
+                IsSpicy = dish.Spicy
             };
             foreach (var code in dish.AllergenCodes)
                 item.Allergens.Add(allergens[code]);

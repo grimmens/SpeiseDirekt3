@@ -12,15 +12,12 @@
 
 @if (loading)
     {
-        <p>Loading menu...</p>
+        <GuestNotice Kind="GuestNotice.GuestNoticeKind.Loading" Title="Menü wird geladen…" />
     }
     else if (menu == null)
     {
-        <div class="alert alert-danger mt-5 text-center">
-            <h4>Menu not found</h4>
-            <p>This menu does not exist or has been deleted.</p>
-            <a href="/" class="btn btn-primary">Go Home</a>
-        </div>
+        <GuestNotice Kind="GuestNotice.GuestNoticeKind.NotFound" Title="Menü nicht gefunden"
+                     Message="Dieses Menü existiert nicht oder wurde gelöscht." ShowHomeLink="true" />
     }
     else
     {

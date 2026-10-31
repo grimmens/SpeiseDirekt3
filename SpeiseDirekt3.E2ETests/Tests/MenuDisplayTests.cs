@@ -41,7 +41,10 @@ public class MenuDisplayTests : E2ETestBase
     {
         await Page.GotoAsync($"/menu/{Guid.NewGuid()}");
 
-        await Assertions.Expect(Page.GetByText("404 - Menu Not Found")).ToBeVisibleAsync();
+        var notice = Page.GetByTestId("guest-notice");
+        await Assertions.Expect(notice).ToHaveAttributeAsync("data-kind", "notfound");
+        await Assertions.Expect(notice.GetByRole(AriaRole.Heading, new() { Name = "Menü nicht gefunden" })).ToBeVisibleAsync();
+        await Assertions.Expect(notice.GetByRole(AriaRole.Link, new() { Name = "Zur Startseite" })).ToBeVisibleAsync();
     }
 
     [Fact]

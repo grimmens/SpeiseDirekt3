@@ -16,4 +16,9 @@ public record MenuItemDto
 
     [Required]
     public Guid CategoryId { get; init; }
+
+    // Dietary labels (optional, default false)
+    public bool IsVegan { get; init; }
+    public bool IsVegetarian { get; init; }
+    public bool IsSpicy { get; init; }
 }
