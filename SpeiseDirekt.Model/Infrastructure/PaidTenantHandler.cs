@@ -47,10 +47,16 @@ public class PaidTenantHandler : AuthorizationHandler<PaidTenantRequirement>
             return;
         }
 
-        // 3) free tenants: count existing codes
+        // 3) free tenants: count existing codes.
+        // Compare as Guid: the string form of a GUID column is upper case in the database, the
+        // Identity user id is lower case, so a string comparison never matched and the limit never applied.
+        if (!Guid.TryParse(tenantId, out var tenantGuid))
+            return;
+
         var count = await _db.QRCodes
+                             .IgnoreQueryFilters()
                              .AsNoTracking()
-                             .CountAsync(q => q.ApplicationUserId.ToString() == tenantId);
+                             .CountAsync(q => q.ApplicationUserId == tenantGuid);
 
         if (count < 100)
         {

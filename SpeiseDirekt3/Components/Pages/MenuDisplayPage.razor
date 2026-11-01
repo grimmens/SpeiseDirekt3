@@ -8,15 +8,12 @@
 
 @if (MenuLoading)
 {
-    <p>Loading menu...</p>
+    <GuestNotice Kind="GuestNotice.GuestNoticeKind.Loading" Title="Menü wird geladen…" />
 }
 else if (Menu == null)
 {
-    <div class="text-center mt-5">
-        <h2 class="text-danger">404 - Menu Not Found</h2>
-        <p class="text-muted">The menu you are looking for does not exist or has been deleted.</p>
-        <a class="btn btn-primary mt-3" href="/">Back to Home</a>
-    </div>
+    <GuestNotice Kind="GuestNotice.GuestNoticeKind.NotFound" Title="Menü nicht gefunden"
+                 Message="Dieses Menü existiert nicht oder wurde gelöscht." ShowHomeLink="true" />
 }
 else
 {
@@ -36,6 +33,7 @@ else
         .IgnoreQueryFilters()
             .Include(m => m.Categories)!
                 .ThenInclude(c => c.MenuItems)
+                .ThenInclude(i => i.Allergens)
             .FirstOrDefaultAsync(m => m.Id == MenuId);
 
         MenuLoading = false;

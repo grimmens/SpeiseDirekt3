@@ -1,4 +1,5 @@
-﻿using SpeiseDirekt.Repository;
+﻿using Microsoft.Extensions.DependencyInjection.Extensions;
+using SpeiseDirekt.Repository;
 using SpeiseDirekt.ServiceInterface;
 using SpeiseDirekt.ServiceImplementation;
 
@@ -13,6 +14,9 @@ namespace SpeiseDirekt.Infrastructure
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IImageResizeService, ImageResizeService>();
             services.AddHttpClient();
+
+            // System clock (TryAdd, so tests can register a fake TimeProvider)
+            services.TryAddSingleton(TimeProvider.System);
 
             // Transient: services that depend on ApplicationDbContext
             // (each component gets a fresh DbContext to avoid concurrent access issues in Blazor Server)

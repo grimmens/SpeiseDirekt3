@@ -28,6 +28,12 @@ public static class PolicyNames
     public const string CanEditAllergens = "CanEditAllergens";
     public const string CanDeleteAllergens = "CanDeleteAllergens";
 
+    // Menu Combos
+    public const string CanViewMenuCombos = "CanViewMenuCombos";
+    public const string CanCreateMenuCombos = "CanCreateMenuCombos";
+    public const string CanEditMenuCombos = "CanEditMenuCombos";
+    public const string CanDeleteMenuCombos = "CanDeleteMenuCombos";
+
     // QR Codes
     public const string CanViewQrCodes = "CanViewQrCodes";
     public const string CanCreateQrCodes = "CanCreateQrCodes";

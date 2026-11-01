@@ -164,6 +164,7 @@
             Menu = (await Context.Menus
                 .Include(e => e.Categories)
                 .ThenInclude(e => e.MenuItems)
+                .ThenInclude(e => e.Allergens) // shown in the preview
                 .SingleOrDefaultAsync(e => e.Id == Id))
                ?? throw new InvalidOperationException($"Menu '{Id}' not found.");
         }

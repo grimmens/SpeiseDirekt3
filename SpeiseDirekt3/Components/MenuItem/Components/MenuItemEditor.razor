@@ -102,6 +102,28 @@
                     </div>
                 </div>
 
+                <!-- Dietary Labels -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Dietary Labels</label>
+                    <div class="flex flex-wrap gap-4 border border-gray-300 rounded-lg p-3">
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <InputCheckbox @bind-Value="Input.IsVegan" id="MenuItem.IsVegan"
+                                           class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                            <span class="text-sm text-gray-700">🌱 Vegan</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <InputCheckbox @bind-Value="Input.IsVegetarian" id="MenuItem.IsVegetarian"
+                                           class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
+                            <span class="text-sm text-gray-700">🥕 Vegetarian</span>
+                        </label>
+                        <label class="flex items-center space-x-2 cursor-pointer">
+                            <InputCheckbox @bind-Value="Input.IsSpicy" id="MenuItem.IsSpicy"
+                                           class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" />
+                            <span class="text-sm text-gray-700">🌶️ Spicy</span>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Price Field -->
                 <div class="space-y-2">
                     <label for="MenuItem.Price" class="block text-sm font-medium text-gray-700">Price *</label>

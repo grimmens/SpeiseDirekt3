@@ -16,6 +16,13 @@ namespace SpeiseDirekt3
 {
     public class Program
     {
+        /// <summary>
+        /// Environment for end-to-end tests (<c>ASPNETCORE_ENVIRONMENT=E2E</c>): SQLite instead of SQL Server
+        /// (connection string <c>e2e</c>, default <c>speisedirekt-e2e.db</c>) and the schema is created with
+        /// <c>EnsureCreated()</c> at startup instead of migrations.
+        /// </summary>
+        public const string E2EEnvironment = "E2E";
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -106,15 +113,31 @@ namespace SpeiseDirekt3
                 options.AddPermissionPolicies();
             });
 
-            var connectionString = builder.Configuration.GetConnectionString("server") ?? throw new InvalidOperationException("Connection string 'server' not found.");
-            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            var isE2E = builder.Environment.IsEnvironment(E2EEnvironment);
+            if (isE2E)
             {
-                options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            }, contextLifetime: ServiceLifetime.Transient);
-            builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+                var e2eConnectionString = builder.Configuration.GetConnectionString("e2e") ?? "Data Source=speisedirekt-e2e.db";
+                builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                {
+                    options.UseSqlite(e2eConnectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                }, contextLifetime: ServiceLifetime.Transient);
+                builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+                {
+                    options.UseSqlite(e2eConnectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                }, lifetime: ServiceLifetime.Scoped);
+            }
+            else
             {
-                options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
-            }, lifetime: ServiceLifetime.Scoped);
+                var connectionString = builder.Configuration.GetConnectionString("server") ?? throw new InvalidOperationException("Connection string 'server' not found.");
+                builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                {
+                    options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                }, contextLifetime: ServiceLifetime.Transient);
+                builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+                {
+                    options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
+                }, lifetime: ServiceLifetime.Scoped);
+            }
 
             
 
@@ -143,6 +166,14 @@ namespace SpeiseDirekt3
             builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
             builder.Services.AddTransient<Microsoft.AspNetCore.Authentication.IClaimsTransformation, TenantClaimsTransformation>();
 
+
+            if (isE2E)
+            {
+                // Runs (and is awaited) during host start, before requests are served
+                builder.Services.AddHostedService<E2EDatabaseInitializer>();
+                // Static web assets (_content/*, scoped CSS) are only enabled automatically in Development
+                builder.WebHost.UseStaticWebAssets();
+            }
 
             var app = builder.Build();
 

@@ -102,6 +102,54 @@ public class MenuItemsControllerTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task Create_And_Update_DietaryLabels_AreStored()
+    {
+        var dto = new MenuItemDto
+        {
+            Name = "Yasai Ramen",
+            Description = "Miso Ramen mit veganer Dashi-Brühe",
+            Price = 17.40m,
+            CategoryId = TestSeedData.Category1Id,
+            IsVegan = true,
+            IsVegetarian = true,
+            IsSpicy = true
+        };
+
+        var createResponse = await Client.PostAsync("/api/menuitems",
+            new StringContent(JsonSerializer.Serialize(dto, JsonOptions), Encoding.UTF8, "application/json"));
+
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResponse.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions);
+        created!.IsVegan.Should().BeTrue();
+        created.IsVegetarian.Should().BeTrue();
+        created.IsSpicy.Should().BeTrue();
+
+        var updateResponse = await Client.PutAsync($"/api/menuitems/{created.Id}",
+            new StringContent(JsonSerializer.Serialize(dto with { IsVegan = false, IsSpicy = false }, JsonOptions), Encoding.UTF8, "application/json"));
+
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var fetched = await (await Client.GetAsync($"/api/menuitems/{created.Id}")).Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions);
+        fetched!.IsVegan.Should().BeFalse();
+        fetched.IsVegetarian.Should().BeTrue();
+        fetched.IsSpicy.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Create_WithoutDietaryLabels_DefaultsToFalse()
+    {
+        // Existing clients that do not send the new fields keep working
+        var json = $$"""{"name":"Plain","description":"No labels","price":5,"categoryId":"{{TestSeedData.Category1Id}}","allergenIds":[]}""";
+
+        var response = await Client.PostAsync("/api/menuitems", new StringContent(json, Encoding.UTF8, "application/json"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await response.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions);
+        created!.IsVegan.Should().BeFalse();
+        created.IsVegetarian.Should().BeFalse();
+        created.IsSpicy.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task Create_InvalidCategoryId_Returns400()
     {
         var dto = new MenuItemDto
@@ -198,6 +246,9 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         public decimal Price { get; init; }
         public Guid CategoryId { get; init; }
         public List<AllergenResponse> Allergens { get; init; } = new();
+        public bool IsVegan { get; init; }
+        public bool IsVegetarian { get; init; }
+        public bool IsSpicy { get; init; }
     }
 
     private record AllergenResponse

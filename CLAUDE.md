@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Solution Overview
 
-`SpeiseDirekt3.sln` contains four .NET 9 projects:
+`SpeiseDirekt3.sln` contains five .NET 9 projects:
 
 | Project | Type | Purpose |
 |---|---|---|
@@ -12,6 +12,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | `SpeiseDirekt.Api/` | ASP.NET Core Web API | REST API (Swagger, Identity API endpoints) over the same data |
 | `SpeiseDirekt.Model/` | Class library (root namespace `SpeiseDirekt`) | Shared core: entities, DbContext, migrations, repositories, services, authorization, DI setup |
 | `SpeiseDirekt.Api.IntegrationTests/` | xUnit test project | Integration tests for every API controller |
+| `SpeiseDirekt3.E2ETests/` | xUnit + Playwright test project | Browser end-to-end tests for the Blazor app (public pages, QR resolution, auth, back office) |
 
 Both `SpeiseDirekt3` and `SpeiseDirekt.Api` reference `SpeiseDirekt.Model` and share one SQL Server database (connection string `server`).
 
@@ -24,12 +25,14 @@ Run from the repository root.
 - **Run Blazor app**: `dotnet run --project SpeiseDirekt3` (https://localhost:7051, http://localhost:5010)
 - **Run Web API**: `dotnet run --project SpeiseDirekt.Api` (https://localhost:7254, http://localhost:5289; Swagger UI at `/swagger` in Development)
 - **Watch mode**: `dotnet watch run --project SpeiseDirekt3`
+- **Run Blazor app without SQL Server**: set `ASPNETCORE_ENVIRONMENT=E2E` (`Program.E2EEnvironment`): SQLite (connection string `e2e`, default `speisedirekt-e2e.db`), schema via `EnsureCreated()` (`E2EDatabaseInitializer`, no migrations), static web assets enabled. The database starts empty.
 - **Manual API requests**: `SpeiseDirekt.Api/SpeiseDirekt.Api.http`
 
 ### Testing
 - **Run all tests**: `dotnet test`
 - **Run a single test class**: `dotnet test --filter "FullyQualifiedName~MenusControllerTests"`
 - **Run a single test**: `dotnet test --filter "FullyQualifiedName~MenusControllerTests.GetAll_ReturnsSeededMenus"`
+- **Run only the E2E tests**: `dotnet test SpeiseDirekt3.E2ETests` (no SQL Server needed; Chromium is installed by Playwright on first run, or set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to an existing binary)
 
 ### Database Operations
 Migrations live in `SpeiseDirekt.Model/Data/Migrations`, so the EF commands need both project flags:
@@ -55,11 +58,11 @@ CI/CD since 2026-10-31 (`.github/workflows/`), running on the self-hosted ARM64 
 - **AI**: Microsoft.Extensions.AI with Ollama (`llama3.2:latest` at `http://localhost:11434`, hard-coded in `SpeiseDirekt3/Program.cs`)
 - **Images**: SixLabors.ImageSharp for resizing; images are stored as bytes in the database (`Image` entity)
 - **QR codes**: QRCoder (PNG generated in `SpeiseDirekt3/Controller/ImageController.cs`)
-- **Tests**: xUnit, FluentAssertions, `WebApplicationFactory`, SQLite in-memory
+- **Tests**: xUnit, FluentAssertions, `WebApplicationFactory`, SQLite (in-memory for API tests, temp file for E2E), Microsoft.Playwright
 
 ### SpeiseDirekt.Model (shared core)
 - `Model/Model/`: one file per entity
-  - `Menu` (with `DesignTheme`: Elegant, Modern, Classic, Minimal, Fancy, Dark; and `MenuLanguage`) → `Category` → `MenuItem`
+  - `Menu` (with `DesignTheme`: Elegant, Modern, Classic, Minimal, Fancy, Dark; and `MenuLanguage`) → `Category` → `MenuItem` (dietary labels `IsVegan`, `IsVegetarian`, `IsSpicy`)
   - `Allergen`: belongs to a menu (`MenuId`, short `Code` + `Name`); many-to-many with `MenuItem` via join table `MenuItemAllergen`
   - `MenuCombo` / `MenuComboItem`: combo offers per menu, triggered by a `TriggerMenuItem`, with a `ComboPrice` and a list of included items
   - `QRCode`: points to a menu directly, or is time-table based (`TimeTableEntry`) or calendar based (`CalendarEntry`). `IValidatableObject` checks for overlapping time windows and date ranges.
@@ -79,22 +82,22 @@ CI/CD since 2026-10-31 (`.github/workflows/`), running on the self-hosted ARM64 
 - A **tenant** is the owner account. Sub-accounts (`ApplicationUser.TenantOwnerId` set, plus a `TenantUser` row with role and permissions) work on the owner's data.
 - Tenant-owned entities implement `IAppUserEntity` (`ApplicationUserId` = tenant owner ID).
 - `ApplicationDbContext.OnModelCreating` applies global query filters on `ApplicationUserId` for MenuItem, Category, Menu, QRCode, TimeTableEntry, CalendarEntry, Allergen, MenuCombo and MenuComboItem.
-- `ChangeTracker` events set `ApplicationUserId` on Added/Modified entities from `IUserIdProvider`. Saving an `IAppUserEntity` **throws** if no authenticated user is present.
+- `ChangeTracker` events set `ApplicationUserId` on Added/Modified entities from `IUserIdProvider`. Adding, modifying or deleting an `IAppUserEntity` **throws** if no authenticated user is present; merely tracking queried entities (anonymous public pages) is allowed.
 - `TenantClaimsTransformation` adds `TenantOwnerId` and `TenantRole` claims for sub-accounts.
 - `IUserIdProvider.GetUserId()` returns the **tenant owner ID** (the `TenantOwnerId` claim for sub-accounts, otherwise `NameIdentifier`) and is what the query filters use. `GetActualUserId()` returns the logged-in user. Both return `Guid.Empty` when unauthenticated.
 - Public/anonymous paths (QR code resolution, public menu display) use `IgnoreQueryFilters()`. See `MenuService`, `MenuDisplayPage.razor`, `MenuPreviewPage.razor`, `QrRedirect.razor`.
 
 ### Authorization
 - **Permissions**: `Permission` is a `[Flags] long` enum (`MenusView`, `MenusCreate`, …, `UsersDelete`, `DeliveryView`, …). When adding a value, pick an unused bit; the bits are not in order.
-- **Policies**: `AuthorizationOptions.AddPermissionPolicies()` generates one policy per permission, named `Can{Action}{Area}` (e.g. `MenusView` → `CanViewMenus`). `PolicyNames` holds constants for them (there are no MenuCombos constants yet).
+- **Policies**: `AuthorizationOptions.AddPermissionPolicies()` generates one policy per permission, named `Can{Action}{Area}` (e.g. `MenusView` → `CanViewMenus`). `PolicyNames` holds constants for them; they must match `GetPolicyName` (e.g. `CanViewMenuCombos`).
 - **Resolution** (`PermissionService`): the owner has all permissions. A sub-account uses `TenantUser.Permissions` if set, otherwise the role defaults from `PermissionDefaults` (GeneralManager, Manager, Cashier, Employee, Driver). Inactive or missing `TenantUser` → no permissions.
 - **API**: controllers use `[Authorize(Policy = PolicyNames.Can…)]` per action. `ImageUploadController` and `MenuDisplayController` have no permission policies.
 - **Blazor**: pages use `@attribute [Authorize]` and check `IPermissionService.HasPermissionAsync(Permission.…)` to show/hide actions.
-- **PaidTenant** policy (`PaidTenantHandler`): passes for tenants with an active paid `TenantSubscription`; free tenants pass while they have fewer than 100 QR codes.
+- **PaidTenant** policy (`PaidTenantHandler`): passes for tenants with an active paid `TenantSubscription`; free tenants pass while they have fewer than 100 QR codes. Only the "Create New QR Code" button on `/qrcodes` checks it; `/qrcode/edit` itself does not.
 - **User limit**: creating a sub-account fails once the active `TenantUser` count reaches `TenantSubscription.MaxUsers`.
 
 ### Key Services
-- **IMenuService**: resolves the active menu for a QR code, including time windows that cross midnight. Currently only handles direct and time-table based QR codes; calendar-based resolution is not implemented here yet.
+- **IMenuService**: resolves the active menu for a QR code. Precedence: matching calendar entry for today (if `IsCalendarBased`), then the active time-table window (if `IsTimeTableBased`, also across midnight; no active window = null), otherwise the direct menu. Uses the injected `TimeProvider` (`GetLocalNow()`), registered as `TimeProvider.System` in `ServiceExtensions`.
 - **IPermissionService**: current role and permissions (cached per instance)
 - **ITrackingService** / **IAnalyticsService**: records menu views and item clicks (session cookie `SpeiseDirekt_SessionId`) and aggregates them for the analytics page and API.
 - **IImageUploadService**: `ImageDatabaseUploadService` (registered in the Blazor app) stores images in the DB; `ImageUploadService` (file-based, `wwwroot/uploads/`) still exists but is not registered.
@@ -109,7 +112,7 @@ CI/CD since 2026-10-31 (`.github/workflows/`), running on the self-hosted ARM64 
 - `Components/`, organized by feature:
   - `Layout/`: main layout, menu layout, navigation, `MenuTreeNav`
   - `Pages/`: home, auth, public `MenuDisplayPage`
-  - `Menu/`: menu list (`/menus`), menu detail (`/menudetail/{MenuId}`), edit form, preview, public display components (`MenuDisplayComponents/`: simple/complex display, search, item overlay)
+  - `Menu/`: menu list (`/menus`), menu detail (`/menudetail/{MenuId}`), edit form, preview, public display components (`MenuDisplayComponents/`: simple/complex display, search, item overlay). `ComplexMenuDisplayComp` loads the menu's combos once (separate query, `IgnoreQueryFilters`); the item overlay shows the combos the opened item triggers (also in `Preview`), an allergen legend (code + name) and the dietary badges (`DietaryBadges`: vegan / vegetarisch / scharf; vegan hides vegetarisch). Public pages must load `MenuItem.Allergens` (`ThenInclude`). Loading / not found / "no menu right now" states on the public pages use `Shared/GuestNotice` (German, `data-testid="guest-notice"`, `data-kind`).
   - `Categories/` (`/Categories/{MenuId}`), `MenuItem/` (`/MenuItems/{MenuId}`), `Allergens/` (`/allergens/{MenuId}`), `MenuCombos/` (`/combos/{MenuId}`)
   - `QrCodes/` (`/qrcodes`, edit, time table entries, `QrRedirect` at `/qr/{QrId}`), `Analytics/` (`/analytics`)
   - `UserManagement/`: users list, invite, edit role/permissions (`/users`, `/users/invite`, `/users/edit/{UserId}`)
@@ -121,19 +124,30 @@ CI/CD since 2026-10-31 (`.github/workflows/`), running on the self-hosted ARM64 
 
 ### SpeiseDirekt.Api (Web API)
 - Controllers in `Controllers/`, routes under `/api/...`:
-  - `MenusController`, `CategoriesController`, `MenuItemsController`: CRUD via repositories
+  - `MenusController`, `CategoriesController`, `MenuItemsController`: CRUD via repositories (`MenuItemDto` has optional `IsVegan`/`IsVegetarian`/`IsSpicy`, default false)
   - `AllergensController`: CRUD, scoped to a menu (`GET` requires `?menuId=`; `Code` must be unique per menu)
   - `QrCodesController`: CRUD plus `POST/DELETE {id}/timetable-entries` and `{id}/calendar-entries`
   - `UsersController`: manage sub-accounts (creates Identity user + `TenantUser`, enforces `MaxUsers`)
   - `AnalyticsController`: `traffic-per-user`, `traffic-per-menu`, `traffic-per-menuitem`
   - `ImageUploadController` (`/api/images`): upload (max 5 MB, resized to 600px), delete; `GET /api/images/{id}` is anonymous
-  - `MenuDisplayController` (`/api/public`, anonymous): menu for a QR code (records a view) and item click tracking
-- There is no API endpoint for menu combos yet (`IMenuComboRepository` exists but is unused).
+  - `MenuCombosController`: CRUD via `IMenuComboRepository`, scoped to a menu (`GET` requires `?menuId=`). Validates: trigger item required, at least one included item, `ComboPrice >= 0`, trigger and included items must belong to the combo's menu (via `Category.MenuId`). On `PUT` the combo keeps its menu (`MenuId` in the DTO is ignored).
+  - `MenuDisplayController` (`/api/public`, anonymous): menu for a QR code (records a view), the menu's combos (`GET menu/{menuId}/combos`, returns `PublicMenuComboDto` with trigger item, included items and price) and item click tracking
 - Request models in `Dtos/`. Responses currently return entities directly; JSON uses `ReferenceHandler.IgnoreCycles`.
 - CORS policy `AllowAll`. `public partial class Program` exists so the tests can use `WebApplicationFactory<Program>`.
 
 ### SpeiseDirekt.Api.IntegrationTests
-- `CustomWebApplicationFactory`: replaces SQL Server with SQLite in-memory, swaps `IUserIdProvider` for a fixed `TestUserId`, and adds the `TestScheme` auth handler (`TestAuthHandler`), which authenticates every request as that user (the tenant owner, so all permissions apply).
-- `BaseIntegrationTest`: recreates the DB and seeds it (`TestSeedData`) before each test. Use the fixed IDs in `TestSeedData` in assertions.
+- `CustomWebApplicationFactory`: replaces SQL Server with SQLite in-memory, swaps `IUserIdProvider` for a fixed `TestUserId`, and adds the `TestScheme` auth handler (`TestAuthHandler`), which authenticates every request as that user (the tenant owner, so all permissions apply). It also replaces `TimeProvider` with `TestTimeProvider` (`Factory.Clock`): system clock by default, `SetLocalNow(...)` fixes the time for one test (reset before each test). Requests with the header `TestAuthHandler.AnonymousHeader` are unauthenticated (`BaseIntegrationTest.AnonymousGet`).
+- `BaseIntegrationTest`: recreates the DB and seeds it (`TestSeedData`) before each test. Use the fixed IDs in `TestSeedData` in assertions. Combos are not seeded by default; tests opt in via `TestSeedData.SeedCombosAsync(Factory.Services)`.
 - `Tests/`: one test class per controller.
 - SQLite differs from SQL Server (e.g. FK enforcement, decimal handling). Keep that in mind when a test passes locally but the real DB behaves differently.
+
+### SpeiseDirekt3.E2ETests
+- `Infrastructure/E2EAppFactory`: `WebApplicationFactory<SpeiseDirekt3.Program>` that runs the app in the `E2E` environment with its own SQLite **file** (`%TEMP%/speisedirekt-e2e-{guid}.db` via `ConnectionStrings:e2e`; the app creates the schema, the factory then seeds `E2ESeedData`: bistro and cafe menus with a combo, plus the "Ramen" menu transcribed from a real menu card — 8 dishes at 17.40 with allergen codes A–N; including its vegan/vegetarian/spicy icons) and additionally starts the app on Kestrel at a free loopback port (`ServerAddress`), because Playwright needs a real socket. The file is deleted when the factory is disposed (connection pooling is off so it can be deleted). It replaces `TimeProvider` in both hosts with `E2ETestClock` (`App.Clock.SetLocalNow(...)`, reset before every test) and offers `CreateDbContext(ownerId)` / `SeedAsync(ownerId, ...)` to seed data directly.
+- `Infrastructure/E2EFixture`: class fixture with one factory (= one server + one DB file) and one headless Chromium **per test class**. xUnit runs test classes in parallel, each with its own DB; tests within a class run sequentially and share the DB, so every test uses its own tenant (`UniqueEmail()`) or its own seeded ids.
+- `Infrastructure/E2ETestBase`: new browser context per test (`NewContextAsync()` for a second one, e.g. an anonymous guest).
+  - External requests (CDNs, fonts) are blocked unless `E2E_ALLOW_EXTERNAL_REQUESTS=1` (e.g. for layout screenshots). While blocked, `E2ESettings` injects a minimal stylesheet for the Tailwind display utilities the app uses (`hidden`, `lg:flex`, `xl:block`, …, plus an SVG size cap) so hidden modals stay hidden, and a `window.bootstrap` stub (bootstrap.bundle.js comes from a CDN; without it `initPopover`/`openModal` crash the circuit).
+  - `GotoInteractiveAsync` / `WaitForInteractiveAsync`: wait until the Blazor circuit is interactive (the server's `enableNavigationInterception` call on the `/_blazor` WebSocket); clicks during prerendering are lost. `OpenMenuAsync` / `OpenPublicMenuPageAsync` wait for `js/complex-menu*.js` on the public menu display.
+  - Accounts: `RegisterAsync`, `LoginAsync`, `LogoutAsync`, `RegisterNewOwnerAsync` via the Identity UI (static SSR forms). The cookie consent prompt is disabled in `Routes.razor`; `DismissCookieConsentAsync` accepts it should it come back.
+- `Infrastructure/BackOfficeTestBase`: UI helpers for the back office (`CreateMenuViaUiAsync`, `CreateCategoryViaUiAsync`, `CreateAllergenViaUiAsync`, `CreateMenuItemViaUiAsync`, `CreateDirectQrViaUiAsync`).
+- `Tests/`: `MenuDisplayTests`, `MenuComboDisplayTests` (public menu page), `QrRedirectTests` (`/qr/{id}`: direct, unknown, time table with fixed clock incl. across midnight, calendar precedence and fallbacks), `AuthTests`, `BackOfficeFlowTests` (menu → category → item → QR via UI, guest opens the QR), `PermissionTests` (invited Employee is read-only), `AllergenTests`, `ComboEditorTests` (incl. menu preview), `QrCodeLimitTests` (free tier: 99 OK, 100 blocked), `RamenMenuTests` (ramen menu card: dishes, prices, allergen codes, overlay), `GuestUiTests` (dietary badges, allergen legend, editor preview with allergens, notice pages).
+- The Ollama menu item generator is not tested.

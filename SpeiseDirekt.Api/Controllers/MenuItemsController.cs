@@ -62,7 +62,10 @@ public class MenuItemsController : ControllerBase
             Description = dto.Description,
             Allergens = allergens,
             Price = dto.Price,
-            CategoryId = dto.CategoryId
+            CategoryId = dto.CategoryId,
+            IsVegan = dto.IsVegan,
+            IsVegetarian = dto.IsVegetarian,
+            IsSpicy = dto.IsSpicy
         };
 
         await _menuItemRepository.CreateAsync(menuItem);
@@ -91,6 +94,9 @@ public class MenuItemsController : ControllerBase
                 mi.Allergens.Add(allergen);
             mi.Price = dto.Price;
             mi.CategoryId = dto.CategoryId;
+            mi.IsVegan = dto.IsVegan;
+            mi.IsVegetarian = dto.IsVegetarian;
+            mi.IsSpicy = dto.IsSpicy;
         });
 
         if (menuItem is null)

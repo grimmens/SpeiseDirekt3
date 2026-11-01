@@ -367,3 +367,5 @@ FodyWeavers.xsd
 
 
 SendToProd.ps1
+# SQLite database of the E2E environment (ASPNETCORE_ENVIRONMENT=E2E)
+speisedirekt-e2e.db*

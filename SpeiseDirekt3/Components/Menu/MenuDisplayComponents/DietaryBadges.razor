@@ -1,0 +1,28 @@
+﻿@* Dietary labels of a menu item for guests. "vegan" implies vegetarian, so only "vegan" is shown then. *@
+@if (Item.IsVegan || Item.IsVegetarian || Item.IsSpicy)
+{
+    <span class="inline-flex flex-wrap items-center gap-1 @Class" data-testid="dietary-badges">
+        @if (Item.IsVegan)
+        {
+            <span class="@BadgeClass bg-green-100 text-green-800" title="vegan" data-testid="badge-vegan">🌱 vegan</span>
+        }
+        else if (Item.IsVegetarian)
+        {
+            <span class="@BadgeClass bg-lime-100 text-lime-800" title="vegetarisch" data-testid="badge-vegetarian">🥕 vegetarisch</span>
+        }
+        @if (Item.IsSpicy)
+        {
+            <span class="@BadgeClass bg-red-100 text-red-700" title="scharf" data-testid="badge-spicy">🌶️ scharf</span>
+        }
+    </span>
+}
+
+@code {
+    [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
+    [Parameter] public bool Large { get; set; }
+    [Parameter] public string Class { get; set; } = "";
+
+    private string BadgeClass => Large
+        ? "px-3 py-1 rounded-full text-sm font-medium"
+        : "px-2 py-0.5 rounded-full text-xs font-medium";
+}

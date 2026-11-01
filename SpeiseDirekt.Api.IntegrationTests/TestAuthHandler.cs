@@ -8,6 +8,9 @@ namespace SpeiseDirekt.Api.IntegrationTests;
 
 public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
+    /// <summary>Requests carrying this header are treated as anonymous (no authenticated user).</summary>
+    public const string AnonymousHeader = "X-Test-Anonymous";
+
     public TestAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
@@ -18,6 +21,9 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
 
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
+        if (Request.Headers.ContainsKey(AnonymousHeader))
+            return Task.FromResult(AuthenticateResult.NoResult());
+
         var claims = new[]
         {
             new Claim(ClaimTypes.NameIdentifier, CustomWebApplicationFactory.TestUserId),
