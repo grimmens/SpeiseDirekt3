@@ -1,0 +1,112 @@
+﻿/* ==========================================================================
+   Design themes of the public menu display (Menu.Theme → data-theme).
+   ComplexMenuDisplayComp renders <div class="sd-menu" data-theme="…">; the rules
+   below recolor the Tailwind utilities used inside it. "modern" is the default
+   look of the app and has no overrides on purpose.
+   Selectors are .sd-menu[data-theme] + class (specificity 0,4,0) so they win over
+   the single-class Tailwind utilities. Bootstrap also defines .bg-white / .text-white,
+   with !important — those overrides need !important as well.
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=EB+Garamond:wght@400;600&family=Crimson+Text:wght@400;600&family=Pacifico&family=Raleway:wght@400;500;700&display=swap');
+
+/* --- Palettes ------------------------------------------------------------ */
+.sd-menu[data-theme="elegant"] {      /* "Golden Bliss" */
+    --sd-page: #fcf8f4; --sd-panel: #ffffff; --sd-chip: #f3ece4;
+    --sd-text: #2f2924; --sd-muted: #6b5d52; --sd-border: #e6dfd7;
+    --sd-accent: #b8860b; --sd-accent-soft: #fbf3dc; --sd-accent-border: #f9d371;
+    --sd-header: linear-gradient(135deg, #2f2924 0%, #5a4a3c 100%);
+    --sd-header-text: #f9d371; --sd-header-shade: 0;
+    --sd-placeholder: linear-gradient(135deg, #f5ece0 0%, #fbf3dc 100%);
+    --sd-font-heading: 'Playfair Display', Georgia, serif;
+    --sd-font-item: 'Playfair Display', Georgia, serif;
+    --sd-font-body: 'EB Garamond', Georgia, serif;
+}
+.sd-menu[data-theme="classic"] {      /* "Rose Garden Café" */
+    --sd-page: #fbf5f2; --sd-panel: #ffffff; --sd-chip: #f6e7e3;
+    --sd-text: #3e3e3e; --sd-muted: #6c5f5b; --sd-border: #eddcd6;
+    --sd-accent: #b45f6b; --sd-accent-soft: #fbeef0; --sd-accent-border: #eec9c3;
+    --sd-header: linear-gradient(135deg, #cc7a85 0%, #eec9c3 55%, #6d9773 100%);
+    --sd-header-text: #ffffff; --sd-header-shade: 0.15;
+    --sd-placeholder: linear-gradient(135deg, #fbeef0 0%, #e8f0e6 100%);
+    --sd-font-heading: 'Playfair Display', Georgia, serif;
+    --sd-font-item: 'Playfair Display', Georgia, serif;
+    --sd-font-body: 'Crimson Text', Georgia, serif;
+}
+.sd-menu[data-theme="minimal"] {      /* black on white, sand accent */
+    --sd-page: #ffffff; --sd-panel: #ffffff; --sd-chip: #f4f4f4;
+    --sd-text: #1a1a1a; --sd-muted: #5f5f5f; --sd-border: #e5e5e5;
+    --sd-accent: #1a1a1a; --sd-accent-soft: #f6f3ee; --sd-accent-border: #e0c097;
+    --sd-header: #f0ece5;
+    --sd-header-text: #1a1a1a; --sd-header-shade: 0;
+    --sd-placeholder: linear-gradient(135deg, #f6f3ee 0%, #f4f4f4 100%);
+    --sd-font-heading: 'Inter', system-ui, sans-serif;
+    --sd-font-item: 'Inter', system-ui, sans-serif;
+    --sd-font-body: 'Inter', system-ui, sans-serif;
+}
+.sd-menu[data-theme="fancy"] {        /* pink & salmon */
+    --sd-page: #fffdfc; --sd-panel: #ffffff; --sd-chip: #ffe6f0;
+    --sd-text: #4a2c3a; --sd-muted: #8a5a6e; --sd-border: #ffd1e3;
+    --sd-accent: #e0508f; --sd-accent-soft: #ffe6f0; --sd-accent-border: #ffb6d9;
+    --sd-header: linear-gradient(135deg, #ff69b4 0%, #ffa07a 100%);
+    --sd-header-text: #ffffff; --sd-header-shade: 0;
+    --sd-placeholder: linear-gradient(135deg, #ffe6f0 0%, #e6f7ff 100%);
+    --sd-font-heading: 'Pacifico', cursive;
+    --sd-font-item: 'Raleway', system-ui, sans-serif;
+    --sd-font-body: 'Raleway', system-ui, sans-serif;
+}
+.sd-menu[data-theme="dark"] {         /* "Dark Rose" */
+    --sd-page: #121212; --sd-panel: #1e1e1e; --sd-chip: #2a2a2a;
+    --sd-text: #e8e8e8; --sd-muted: #a8a8a8; --sd-border: #2e2e2e;
+    --sd-accent: #c46a7f; --sd-accent-soft: #2b1d22; --sd-accent-border: #883c4d;
+    --sd-header: linear-gradient(135deg, #1e1e1e 0%, #3a2129 100%);
+    --sd-header-text: #f2d4da; --sd-header-shade: 0;
+    --sd-placeholder: linear-gradient(135deg, #2a2a2a 0%, #3a2129 100%);
+    --sd-font-heading: 'Playfair Display', Georgia, serif;
+    --sd-font-item: 'Playfair Display', Georgia, serif;
+    --sd-font-body: 'Crimson Text', Georgia, serif;
+}
+
+/* --- Mapping onto the Tailwind utilities of the guest view ---------------- */
+.sd-menu[data-theme]:not([data-theme="modern"]) {
+    background-color: var(--sd-page);
+    color: var(--sd-text);
+    font-family: var(--sd-font-body);
+}
+.sd-menu[data-theme]:not([data-theme="modern"]) :is(h1, h2) { font-family: var(--sd-font-heading); }
+.sd-menu[data-theme]:not([data-theme="modern"]) h3 { font-family: var(--sd-font-item); }
+/* Small uppercase labels ("ALLERGENE", category label) stay in the body font (no script fonts) */
+.sd-menu[data-theme]:not([data-theme="modern"]) .uppercase { font-family: var(--sd-font-body); }
+
+/* Header */
+.sd-menu[data-theme]:not([data-theme="modern"]) .sd-header { background: var(--sd-header); }
+.sd-menu[data-theme]:not([data-theme="modern"]) .sd-header .text-white,
+.sd-menu[data-theme]:not([data-theme="modern"]) .sd-header .text-white\/80 { color: var(--sd-header-text) !important; }
+.sd-menu[data-theme]:not([data-theme="modern"]) .sd-header-shade { opacity: var(--sd-header-shade); }
+
+/* Surfaces */
+.sd-menu[data-theme]:not([data-theme="modern"]) .bg-gray-50 { background-color: var(--sd-page); }
+.sd-menu[data-theme]:not([data-theme="modern"]) .bg-white { background-color: var(--sd-panel) !important; }
+.sd-menu[data-theme]:not([data-theme="modern"]) .bg-gray-100 { background-color: var(--sd-chip); }
+.sd-menu[data-theme]:not([data-theme="modern"]) :is(.border-gray-100, .border-gray-200, .border-b, .border-t) { border-color: var(--sd-border); }
+
+/* Text */
+.sd-menu[data-theme]:not([data-theme="modern"]) :is(.text-gray-900, .text-gray-800) { color: var(--sd-text); }
+.sd-menu[data-theme]:not([data-theme="modern"]) :is(.text-gray-700, .text-gray-600, .text-gray-500) { color: var(--sd-muted); }
+
+/* Accent: active category, logo, combo offers */
+.sd-menu[data-theme]:not([data-theme="modern"]) .bg-teal-600 { background-color: var(--sd-accent); }
+.sd-menu[data-theme]:not([data-theme="modern"]) .text-teal-700 { color: var(--sd-accent); }
+.sd-menu[data-theme]:not([data-theme="modern"]) .bg-teal-50 { background-color: var(--sd-accent-soft); }
+.sd-menu[data-theme]:not([data-theme="modern"]) .border-teal-200 { border-color: var(--sd-accent-border); }
+
+/* Image placeholders (dishes without a photo) */
+.sd-menu[data-theme]:not([data-theme="modern"]) .from-orange-100 { background-image: var(--sd-placeholder); }
+.sd-menu[data-theme]:not([data-theme="modern"]) .bg-teal-100 { background-color: var(--sd-accent-soft); }
+.sd-menu[data-theme]:not([data-theme="modern"]) :is(.border-yellow-200) { border-color: var(--sd-accent-border); }
+
+/* Page background around the (max-width) menu column */
+.sd-page:has(.sd-menu[data-theme="elegant"]) { background-color: #fcf8f4; }
+.sd-page:has(.sd-menu[data-theme="classic"]) { background-color: #fbf5f2; }
+.sd-page:has(.sd-menu[data-theme="minimal"]) { background-color: #ffffff; }
+.sd-page:has(.sd-menu[data-theme="fancy"]) { background-color: #fffdfc; }
+.sd-page:has(.sd-menu[data-theme="dark"]) { background-color: #121212; }
