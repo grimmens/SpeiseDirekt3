@@ -6,6 +6,8 @@
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
 @layout MenuLayout
+@* Owner preview: only for logged-in users and only menus of their own tenant (query filters apply) *@
+@attribute [Authorize]
 
 <!-- Content wrapper with top padding to account for fixed banner -->
 <div class="">
@@ -21,7 +23,7 @@
     }
     else
     {
-        <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" />
+        <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" DisableTracking="true" />
     }
 
 </div>
@@ -37,7 +39,6 @@
         if (Guid.TryParse(Id, out var menuId))
         {
             menu = await DbContext.Menus
-                .IgnoreQueryFilters()
                 .Include(m => m.Categories)
                     .ThenInclude(c => c.MenuItems)
                         .ThenInclude(i => i.Allergens)

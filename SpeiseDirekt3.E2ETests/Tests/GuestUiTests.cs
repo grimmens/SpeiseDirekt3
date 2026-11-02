@@ -1,3 +1,4 @@
+using FluentAssertions;
 using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using SpeiseDirekt3.E2ETests.Infrastructure;
@@ -128,11 +129,45 @@ public class GuestUiTests : BackOfficeTestBase
         await Assertions.Expect(Page.GetByText("Neue Beschreibung").First).ToBeVisibleAsync();
     }
 
+    // --- Layout / assets ---
+
+    [Fact]
+    public async Task MenuCard_PriceStaysOnOneLine_OnNarrowPhones()
+    {
+        // Tokyo Ramen has six allergen codes next to the price; on narrow screens "€" and "17.40" used to wrap
+        await Page.SetViewportSizeAsync(360, 780);
+        await OpenMenuAsync(E2ESeedData.RamenMenuId);
+
+        var price = DishCard(Page, "Tokyo Ramen").GetByTestId("item-price");
+        await Assertions.Expect(price).ToHaveTextAsync(new Regex("€ 17[.,]40"));
+        await Assertions.Expect(price).ToHaveCSSAsync("white-space", "nowrap");
+        var box = await price.BoundingBoxAsync();
+        box!.Height.Should().BeLessThan(30, "the price must not wrap onto a second line");
+    }
+
+    [Fact]
+    public async Task BootstrapJs_IsServedLocally_PopoversWork()
+    {
+        var bootstrapRequests = new List<string>();
+        Page.Request += (_, r) => { if (r.Url.Contains("bootstrap") && r.Url.EndsWith(".js")) bootstrapRequests.Add(r.Url); };
+
+        await RegisterNewOwnerAsync();
+        await GotoInteractiveAsync("/menu/edit"); // uses InfoPopoverComp → initPopover → bootstrap.Popover
+
+        (await Page.EvaluateAsync<bool>("typeof window.bootstrap?.Popover === 'function'")).Should().BeTrue();
+        bootstrapRequests.Should().NotBeEmpty()
+            .And.OnlyContain(url => url.StartsWith(App.ServerAddress), "bootstrap.bundle.js must not come from a CDN");
+        // The circuit survived initPopover (no "unhandled error" bar) and the form is usable
+        await Page.Locator("#menuName").FillAsync("Popover Test");
+        await Assertions.Expect(Page.Locator("#blazor-error-ui")).ToBeHiddenAsync();
+    }
+
     // --- Notice pages ---
 
     [Fact]
     public async Task UnknownMenuPreview_ShowsNotFoundNotice()
     {
+        await RegisterNewOwnerAsync(); // the preview requires a login
         await Page.GotoAsync($"/menu/preview/{Guid.NewGuid()}");
 
         var notice = Page.GetByTestId("guest-notice");

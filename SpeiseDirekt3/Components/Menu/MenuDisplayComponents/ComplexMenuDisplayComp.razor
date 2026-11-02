@@ -134,11 +134,11 @@
                                             </div>
                                             <p class="text-gray-600 text-xs mb-3 line-clamp-2 leading-relaxed">@item.Description</p>
                                             <DietaryBadges Item="item" Class="mb-3" />
-                                            <div class="flex justify-between items-center">
-                                                <span class="font-bold text-gray-900 text-sm">€ @item.Price.ToString("F2")</span>
+                                            <div class="flex flex-wrap justify-between items-center gap-x-2 gap-y-1">
+                                                <span class="font-bold text-gray-900 text-sm whitespace-nowrap shrink-0" data-testid="item-price">€ @item.Price.ToString("F2")</span>
                                                 @if (item.Allergens.Any())
                                                 {
-                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-medium">@string.Join(", ", item.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</span>
+                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-medium whitespace-nowrap" data-testid="item-allergens">@string.Join(", ", item.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</span>
                                                 }
                                             </div>
                                         </div>
@@ -165,7 +165,7 @@
                                             <div class="flex-1 py-2">
                                                 <div class="flex justify-between items-start mb-1">
                                                     <h3 class="font-bold text-gray-900 text-base leading-tight">@item.Name</h3>
-                                                    <span class="font-bold text-gray-900 text-base ml-2">€ @item.Price.ToString("F2")</span>
+                                                    <span class="font-bold text-gray-900 text-base ml-2 whitespace-nowrap shrink-0" data-testid="item-price">€ @item.Price.ToString("F2")</span>
                                                 </div>
                                                 <p class="text-gray-600 text-sm mb-2 line-clamp-2 leading-relaxed">@item.Description</p>
                                                 <DietaryBadges Item="item" Class="mb-2 mr-1" />
@@ -204,6 +204,8 @@
 @code {
         [Parameter] public Menu? Menu { get; set; }
         [Parameter] public bool Preview { get; set; }
+        /// <summary>Do not record item clicks (e.g. the owner's full-page preview).</summary>
+        [Parameter] public bool DisableTracking { get; set; }
     private string activeCategory = "";
     private MenuItem? SelectedItem { get; set; }
     private bool showStickyNav = false;
@@ -326,7 +328,7 @@
         if(menuItem != null)
         {
             // Track menu item click
-            if (Menu != null && !Preview)
+            if (Menu != null && !Preview && !DisableTracking)
             {
                 var sessionId = TrackingService.GetOrCreateSessionId();
                 await TrackingService.RecordMenuItemClickAsync(sessionId, menuItem.Id, Menu.Id);
