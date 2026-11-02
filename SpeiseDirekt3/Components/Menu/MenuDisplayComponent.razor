@@ -3,12 +3,13 @@
 
 @if (Menu != null)
 {
-    <ComplexMenuDisplayComp Preview="Preview" Menu="Menu" />
-    
-    @* <SimpleMenuDisplayComp Menu="Menu" /> *@
+    <ComplexMenuDisplayComp Preview="Preview" DisableTracking="DisableTracking" Menu="Menu" />
+
 }
 
 @code {
     [Parameter] public Menu? Menu { get; set; }
     [Parameter] public bool Preview { get; set; }
+    /// <summary>Full guest layout, but item clicks are not recorded in the analytics (owner preview).</summary>
+    [Parameter] public bool DisableTracking { get; set; }
 }
