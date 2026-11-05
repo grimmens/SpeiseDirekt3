@@ -35,7 +35,7 @@
 
 <!-- Content -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <!-- Form Card -->
         <div class="bg-white rounded-xl border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-6">Menu Details</h2>
@@ -128,12 +128,37 @@
             </EditForm>
         </div>
 
-        <!-- Preview Card -->
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Preview</h2>
+        <!-- Preview Card: the guest menu in a phone-sized frame with its own scrollbar -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 lg:sticky lg:top-6">
+            <div class="flex items-start justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Preview</h2>
+                    <p class="text-sm text-gray-500">As guests see it on their phone. Scroll inside the frame.</p>
+                </div>
+                @if (!IsNew)
+                {
+                    <a href="@($"menu/preview/{Id}")" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800">
+                        Full screen
+                        <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                    </a>
+                }
+            </div>
             @if (Menu != null)
             {
-                <MenuDisplayComponent Preview="true" Menu="Menu" />
+                <div class="flex justify-center">
+                    @* Geometry is inline so the frame keeps its size even without the Tailwind CDN. The transform
+                       makes the frame the containing block of position:fixed children, so the item overlay opens
+                       inside the phone instead of covering the whole page. *@
+                    <div data-testid="menu-preview-frame"
+                         class="relative w-full rounded-[2.25rem] border-[10px] border-gray-900 bg-gray-900 shadow-xl"
+                         style="max-width: 380px; height: 640px; overflow: hidden; transform: translateZ(0);">
+                        <div data-testid="menu-preview-scroll" class="bg-white rounded-[1.6rem] [&>div]:min-h-full"
+                             style="height: 100%; overflow-y: auto; overscroll-behavior: contain;">
+                            <MenuDisplayComponent Preview="true" Menu="Menu" />
+                        </div>
+                    </div>
+                </div>
             }
         </div>
     </div>
