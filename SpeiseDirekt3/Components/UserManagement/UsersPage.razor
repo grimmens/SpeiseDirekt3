@@ -1,6 +1,7 @@
 @page "/users"
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @inject ApplicationDbContext DbContext
@@ -54,17 +55,18 @@
     else
     {
         <!-- Role Legend -->
-        <div class="flex flex-wrap gap-2 mb-6">
+        <div class="flex flex-wrap gap-2 mb-6" data-testid="role-legend">
             @foreach (var role in Enum.GetValues<TenantRole>())
             {
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium @GetRoleBadgeClass(role)">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-help @GetRoleBadgeClass(role)"
+                      title="@RoleSummary(role)" data-role="@role">
                     @role
                 </span>
             }
         </div>
 
-        <!-- Users Table -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Users Table (scrolls sideways on phones instead of cutting off the Edit column) -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -144,6 +146,35 @@
 
     private void InviteUser() => NavManager.NavigateTo("/users/invite");
     private void EditUser(Guid id) => NavManager.NavigateTo($"/users/edit/{id}");
+
+    // Areas and actions for the role legend's tooltips (default permissions from PermissionDefaults)
+    private static readonly (string Area, (string Action, Permission Value)[] Actions)[] permissionAreas =
+    {
+        ("Menus", new[] { ("view", Permission.MenusView), ("create", Permission.MenusCreate), ("edit", Permission.MenusEdit), ("delete", Permission.MenusDelete) }),
+        ("Categories", new[] { ("view", Permission.CategoriesView), ("create", Permission.CategoriesCreate), ("edit", Permission.CategoriesEdit), ("delete", Permission.CategoriesDelete) }),
+        ("Menu items", new[] { ("view", Permission.MenuItemsView), ("create", Permission.MenuItemsCreate), ("edit", Permission.MenuItemsEdit), ("delete", Permission.MenuItemsDelete) }),
+        ("Allergens", new[] { ("view", Permission.AllergensView), ("create", Permission.AllergensCreate), ("edit", Permission.AllergensEdit), ("delete", Permission.AllergensDelete) }),
+        ("Combos", new[] { ("view", Permission.MenuCombosView), ("create", Permission.MenuCombosCreate), ("edit", Permission.MenuCombosEdit), ("delete", Permission.MenuCombosDelete) }),
+        ("QR codes", new[] { ("view", Permission.QrCodesView), ("create", Permission.QrCodesCreate), ("edit", Permission.QrCodesEdit), ("delete", Permission.QrCodesDelete) }),
+        ("Analytics", new[] { ("view", Permission.AnalyticsView) }),
+        ("Team", new[] { ("view", Permission.UsersView), ("invite", Permission.UsersCreate), ("edit", Permission.UsersEdit), ("remove", Permission.UsersDelete) }),
+        ("Delivery", new[] { ("view", Permission.DeliveryView), ("manage", Permission.DeliveryManage) }),
+        ("Subscription", new[] { ("manage", Permission.SubscriptionManage) }),
+    };
+
+    /// <summary>Tooltip text: what a role may do by default (one line per area).</summary>
+    private static string RoleSummary(TenantRole role)
+    {
+        var permissions = PermissionDefaults.GetDefaultPermissions(role);
+        var lines = permissionAreas
+            .Select(a => (a.Area, Actions: a.Actions.Where(x => permissions.HasFlag(x.Value)).Select(x => x.Action).ToList()))
+            .Where(a => a.Actions.Count > 0)
+            .Select(a => $"{a.Area}: {string.Join(", ", a.Actions)}")
+            .ToList();
+        return lines.Count == 0
+            ? $"{role}: no permissions by default"
+            : $"{role} by default:\n{string.Join("\n", lines)}";
+    }
 
     private static string GetRoleBadgeClass(TenantRole role) => role switch
     {
