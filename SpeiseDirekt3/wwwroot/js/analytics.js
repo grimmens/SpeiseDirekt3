@@ -52,19 +52,20 @@ const commonOptions = {
     }
 };
 
-function renderAnalyticsCharts(userTrafficData, menuTrafficData, menuItemTrafficData, timeRange) {
+function renderAnalyticsCharts(sessionsPerBucket, menuTrafficData, menuItemTrafficData, timeRange) {
     console.log('renderAnalyticsCharts called with data:');
-    console.log('userTrafficData:', userTrafficData);
+    console.log('sessionsPerBucket:', sessionsPerBucket);
     console.log('menuTrafficData:', menuTrafficData);
     console.log('menuItemTrafficData:', menuItemTrafficData);
     console.log('timeRange:', timeRange);
 
-    renderUserTrafficChart(userTrafficData, timeRange);
+    renderSessionsChart(sessionsPerBucket, timeRange);
     renderMenuTrafficChart(menuTrafficData, timeRange);
     renderMenuItemTrafficChart(menuItemTrafficData, timeRange);
 }
 
-function renderUserTrafficChart(userTrafficData, timeRange) {
+// Sessions (anonymous guest devices) active per hour/day as one series: [{ date, count }]
+function renderSessionsChart(sessionsPerBucket, timeRange) {
     const ctx = document.getElementById('userTrafficChart');
     if (!ctx) return;
 
@@ -73,85 +74,30 @@ function renderUserTrafficChart(userTrafficData, timeRange) {
         userChart.destroy();
     }
 
-    // Handle empty data
-    if (!userTrafficData || userTrafficData.length === 0) {
-        userChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: []
-            },
-            options: {
-                ...commonOptions,
-                plugins: {
-                    ...commonOptions.plugins,
-                    title: {
-                        display: true,
-                        text: 'User Activity Over Time - No Data'
-                    }
-                }
-            }
-        });
-        return;
-    }
-
-    // Prepare data - show top 10 users
-    const topUsers = userTrafficData.slice(0, 10);
-
-    const datasets = topUsers.map((user, index) => ({
-        label: `User ${user.sessionId.substring(0, 8)}...`,
-        data: user.data.map(d => ({
-            x: new Date(d.date).getTime(),
-            y: d.count
-        })),
-        borderColor: borderColors[index % borderColors.length],
-        backgroundColor: colors[index % colors.length],
-        tension: 0.4,
-        fill: false
+    const points = (sessionsPerBucket || []).map(d => ({
+        x: new Date(d.date).getTime(),
+        y: d.count
     }));
-
-    // Configure X-axis based on time range
-
-    const xAxisConfig = {
-        type: 'time',
-        time: {
-            unit: timeRange === 'Last24Hours' ? 'hour' : 'day',
-            displayFormats: {
-                hour: 'HH:00',
-                day: 'MMM dd' // e.g. "Jul 20"
-            }
-        },
-        title: {
-            display: true,
-            text: timeRange === 'Last24Hours' ? 'Hour' : 'Date'
-        },
-        stacked: true,
-        ticks: {
-            source: 'auto'
-        }
-    };
-
-    const yAxisConfig = {
-        stacked: true,
-        beginAtZero: true,
-        title: {
-            display: true,
-            text: 'Count'
-        }
-    };
-
 
     userChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            datasets: datasets
+            datasets: points.length === 0 ? [] : [{
+                label: 'Sessions',
+                data: points,
+                borderColor: borderColors[2],
+                backgroundColor: colors[2],
+                borderWidth: 1
+            }]
         },
         options: {
             ...commonOptions,
             plugins: {
                 ...commonOptions.plugins,
+                legend: { display: false },
                 title: {
                     display: true,
-                    text: 'User Activity Over Time'
+                    text: points.length === 0 ? 'Sessions Over Time - No Data' : 'Sessions Over Time'
                 },
                 tooltip: {
                     callbacks: {
@@ -167,31 +113,49 @@ function renderUserTrafficChart(userTrafficData, timeRange) {
 
                                 const pad = n => String(n).padStart(2, '0');
 
-                                const startTime = `${pad(startHour.getHours())}:00`;
-                                const endTime = `${pad(endHour.getHours())}:00`;
-
-                                return `${date.toLocaleDateString()} ${startTime} - ${endTime}`;
-                            } else {
-                                return date.toLocaleDateString(undefined, {
-                                    year: 'numeric',
-                                    month: 'short',
-                                    day: 'numeric'
-                                });
+                                return `${date.toLocaleDateString()} ${pad(startHour.getHours())}:00 - ${pad(endHour.getHours())}:00`;
                             }
+                            return date.toLocaleDateString(undefined, {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                            });
                         },
                         label: function (tooltipItem) {
-                            return `${tooltipItem.dataset.label}: ${tooltipItem.parsed.y}`;
+                            const n = tooltipItem.parsed.y;
+                            return `${n} ${n === 1 ? 'session' : 'sessions'}`;
                         }
                     }
                 }
             },
             scales: {
                 ...commonOptions.scales,
-                x: xAxisConfig,
-                y: yAxisConfig
+                x: {
+                    type: 'time',
+                    time: {
+                        unit: timeRange === 'Last24Hours' ? 'hour' : 'day',
+                        displayFormats: {
+                            hour: 'HH:00',
+                            day: 'MMM dd' // e.g. "Jul 20"
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: timeRange === 'Last24Hours' ? 'Hour' : 'Date'
+                    },
+                    grid: { display: false },
+                    ticks: { source: 'auto' }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 },
+                    title: {
+                        display: true,
+                        text: 'Sessions'
+                    }
+                }
             }
         }
-
     });
 }
 
