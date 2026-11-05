@@ -79,11 +79,16 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await using var db = await DbFactory.CreateDbContextAsync();
-        menus = await db.Menus.OrderBy(m => m.Name).ToListAsync();
+        await LoadMenusAsync();
         currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
         ResolveActiveMenu();
         NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private async Task LoadMenusAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        menus = await db.Menus.AsNoTracking().OrderBy(m => m.Name).ToListAsync();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
@@ -91,6 +96,21 @@
         currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
         ResolveActiveMenu();
         StateHasChanged();
+
+        // The layout (and this tree) survives navigation: pick up menus created, renamed or deleted meanwhile
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                await LoadMenusAsync();
+                ResolveActiveMenu();
+                StateHasChanged();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Circuit went away while loading
+            }
+        });
     }
 
     private void ResolveActiveMenu()
