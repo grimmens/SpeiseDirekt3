@@ -11,7 +11,7 @@
 
 <PageTitle>Categories</PageTitle>
 
-<div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+<div class="max-w-6xl mx-auto p-[1rem] sm:p-6 space-y-6">
 
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-600" aria-label="breadcrumb">
@@ -45,7 +45,7 @@
 
         <!-- Categories List -->
         <div class="@(canCreate ? "lg:col-span-2" : "lg:col-span-3") bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="px-4 sm:px-6 py-4 border-b border-gray-200 flex flex-wrap items-baseline justify-between gap-2">
+            <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200 flex flex-wrap items-baseline justify-between gap-2">
                 <h2 class="text-lg font-semibold text-gray-900">
                     Categories <span class="font-normal text-gray-400">(@Categories.Count)</span>
                 </h2>
@@ -94,11 +94,11 @@
                                         </div>
                                     </td>
                                 }
-                                <td class="px-3 sm:px-4 py-3 min-w-0">
+                                <td class="px-[0.75rem] sm:px-4 py-[0.75rem] min-w-0">
                                     <a href="@($"/MenuItems/Category/{item.Id}")" class="font-semibold text-blue-600 hover:underline hover:text-blue-800 break-words transition">@item.Name</a>
                                     <span class="block sm:inline sm:ml-2 text-sm text-gray-500" data-testid="category-item-count">@ItemCountText(item)</span>
                                 </td>
-                                <td class="pr-2 sm:pr-4 py-3 w-px whitespace-nowrap text-right">
+                                <td class="pr-2 sm:pr-4 py-[0.75rem] w-px whitespace-nowrap text-right">
                                     @if (canEdit || canDelete)
                                     {
                                         <SpeiseDirekt3.Components.HelperComp.ActionSubMenu Edit="canEdit ? () => EditCategory(item) : null"
@@ -126,10 +126,10 @@
         {
             <!-- Add New Category Form -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div class="px-4 sm:px-6 py-4 border-b border-gray-200">
+                <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200">
                     <h2 class="text-lg font-semibold text-gray-900">Add New Category</h2>
                 </div>
-                <div class="p-4 sm:p-6">
+                <div class="p-[1rem] sm:p-6">
                     <EditForm @ref="editForm" EditContext="editContext" OnValidSubmit="SaveAsync">
                         <DataAnnotationsValidator />
 

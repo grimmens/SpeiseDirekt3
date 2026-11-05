@@ -13,7 +13,7 @@
 
 @if (state != State.Loading)
 {
-    <div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+    <div class="max-w-6xl mx-auto p-[1rem] sm:p-6 space-y-6">
         @if (menu is not null)
         {
             <nav class="text-sm text-gray-600" aria-label="breadcrumb">
@@ -41,7 +41,7 @@
             {
                 <h1 class="text-lg font-semibold text-gray-900 mb-1">Menu not found</h1>
                 <p class="text-sm text-gray-500 mb-6">It may have been deleted.</p>
-                <a href="/menus" class="inline-flex items-center px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors no-underline">Back to the menus</a>
+                <a href="/menus" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors no-underline">Back to the menus</a>
             }
             else
             {
@@ -52,7 +52,7 @@
                 </p>
                 @if (canCreateCategories)
                 {
-                    <a href="@($"/Categories/{MenuId}")" class="inline-flex items-center px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors no-underline">
+                    <a href="@($"/Categories/{MenuId}")" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors no-underline">
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
