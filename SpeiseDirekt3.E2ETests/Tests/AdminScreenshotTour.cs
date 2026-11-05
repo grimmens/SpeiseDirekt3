@@ -155,6 +155,8 @@ public class AdminScreenshotTour : BackOfficeTestBase
             var desserts = new Category { Id = Guid.NewGuid(), Name = "Desserts", MenuId = menuId };
             var getraenke = new Category { Id = Guid.NewGuid(), Name = "Getränke", MenuId = menuId };
             firstCategoryId = vorspeisen.Id;
+            // Menu card order (starters first), not alphabetical
+            (vorspeisen.SortOrder, haupt.SortOrder, desserts.SortOrder, getraenke.SortOrder) = (0, 1, 2, 3);
 
             db.Menus.Add(new Menu
             {
