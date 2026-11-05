@@ -18,7 +18,7 @@
             <h1 class="text-3xl font-bold text-gray-900 font-display">Analytics Dashboard</h1>
             <p class="mt-2 text-gray-600">Track your menu performance and guest engagement</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="Time range">
+        <div class="flex flex-wrap items-center gap-2 xl:shrink-0" role="group" aria-label="Time range">
             <button @onclick="() => SetTimeRange(TimeRange.Last24Hours)"
                     class="@GetTimeRangeButtonClass(TimeRange.Last24Hours)">
                 Last 24 Hours
@@ -48,47 +48,47 @@
 else
 {
     <!-- Summary Stats -->
-    <div class="grid grid-cols-3 gap-3 sm:gap-6 mb-6" data-testid="analytics-summary">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6" data-testid="summary-views">
-            <div class="flex items-center">
-                <div class="hidden sm:flex shrink-0 p-3 rounded-full bg-blue-100 text-blue-600">
+    <div class="grid grid-cols-3 gap-[12px] sm:gap-6 mb-6" data-testid="analytics-summary">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[12px] sm:p-6" data-testid="summary-views">
+            <div class="flex h-full items-stretch sm:items-center">
+                <div class="hidden sm:flex shrink-0 self-center p-3 rounded-full bg-blue-100 text-blue-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                     </svg>
                 </div>
-                <div class="min-w-0 sm:ml-4">
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Total Views</p>
-                    <p class="text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@totalViews</p>
+                <div class="min-w-0 sm:ml-4 flex flex-col justify-between">
+                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">Total Views</p>
+                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@totalViews</p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6" data-testid="summary-clicks">
-            <div class="flex items-center">
-                <div class="hidden sm:flex shrink-0 p-3 rounded-full bg-green-100 text-green-600">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[12px] sm:p-6" data-testid="summary-clicks">
+            <div class="flex h-full items-stretch sm:items-center">
+                <div class="hidden sm:flex shrink-0 self-center p-3 rounded-full bg-green-100 text-green-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path>
                     </svg>
                 </div>
-                <div class="min-w-0 sm:ml-4">
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Total Clicks</p>
-                    <p class="text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@totalClicks</p>
+                <div class="min-w-0 sm:ml-4 flex flex-col justify-between">
+                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">Total Clicks</p>
+                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@totalClicks</p>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6" data-testid="summary-sessions"
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[12px] sm:p-6" data-testid="summary-sessions"
              title="A session is one guest device; guests stay anonymous.">
-            <div class="flex items-center">
-                <div class="hidden sm:flex shrink-0 p-3 rounded-full bg-purple-100 text-purple-600">
+            <div class="flex h-full items-stretch sm:items-center">
+                <div class="hidden sm:flex shrink-0 self-center p-3 rounded-full bg-purple-100 text-purple-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                 </div>
-                <div class="min-w-0 sm:ml-4">
-                    <p class="text-xs sm:text-sm font-medium text-gray-600">Sessions</p>
-                    <p class="text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@userTrafficData.Count</p>
+                <div class="min-w-0 sm:ml-4 flex flex-col justify-between">
+                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">Sessions</p>
+                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@userTrafficData.Count</p>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@ else
     <!-- Charts Grid -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6" data-testid="analytics-charts">
         <!-- Traffic per Menu Chart -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">Traffic per Menu</h3>
                 <div class="text-sm text-gray-500">
@@ -110,7 +110,7 @@ else
         </div>
 
         <!-- Sessions Chart: guest devices active per hour/day (anonymous, so one series in total) -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-1">
                 <h3 class="text-lg font-semibold text-gray-900">Sessions</h3>
                 <div class="text-sm text-gray-500">
@@ -124,7 +124,7 @@ else
         </div>
 
         <!-- Traffic per Menu Item Chart -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 xl:col-span-2">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 xl:col-span-2">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">Traffic per Menu Item</h3>
                 <div class="text-sm text-gray-500">

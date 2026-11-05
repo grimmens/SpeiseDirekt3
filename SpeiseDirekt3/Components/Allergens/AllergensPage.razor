@@ -42,11 +42,10 @@
             {
                 <div class="sm:text-right sm:max-w-xs">
                     <button type="button" data-testid="eu-quick-fill"
-                            class="inline-flex w-full sm:w-auto items-center justify-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:cursor-not-allowed"
+                            class="block w-full sm:inline-block sm:w-auto text-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:cursor-not-allowed"
                             disabled="@(AllEuAllergensPresent || quickFillBusy)"
                             @onclick="AddEuAllergensAsync">
-                        <i class="bi bi-list-check mr-2" aria-hidden="true"></i>
-                        Add the 14 EU allergens
+                        <i class="bi bi-list-check mr-2" aria-hidden="true"></i>Add the 14 EU allergens
                     </button>
                     <p class="mt-2 text-xs text-gray-500" data-testid="eu-quick-fill-hint">
                         @if (AllEuAllergensPresent)
@@ -55,7 +54,7 @@
                         }
                         else
                         {
-                            <text>Codes A–R with @(UsesGermanNames ? "German" : "English") names. Codes that already exist are kept.</text>
+                            <text>Codes A–R, @(UsesGermanNames ? "German" : "English") names; existing codes are kept.</text>
                         }
                     </p>
                 </div>
@@ -81,18 +80,18 @@
             <h2 class="text-lg font-semibold text-gray-900">Allergens on this menu</h2>
             <span class="text-sm text-gray-500">@rows.Count</span>
         </div>
-        <div class="px-2 py-2 sm:px-4">
+        <div class="px-[8px] sm:px-[16px] py-2">
             @if (rows.Any())
             {
                 <table class="w-full text-left text-sm">
                     <thead class="text-xs text-gray-500 uppercase">
                         <tr>
-                            <th class="py-2 px-2 sm:px-3 font-medium w-12">Code</th>
-                            <th class="py-2 px-2 sm:px-3 font-medium">Name</th>
-                            <th class="py-2 px-2 sm:px-3 font-medium whitespace-nowrap">Used by</th>
+                            <th class="py-2 px-2 font-medium w-10">Code</th>
+                            <th class="py-2 px-2 font-medium">Name</th>
+                            <th class="py-2 px-2 font-medium whitespace-nowrap">Used by</th>
                             @if (canEdit || canDelete)
                             {
-                                <th class="py-2 px-2 sm:px-3"><span class="sr-only">Actions</span></th>
+                                <th class="py-2 px-2"><span class="sr-only">Actions</span></th>
                             }
                         </tr>
                     </thead>
@@ -101,9 +100,9 @@
                         {
                             var item = row.Allergen;
                             <tr class="hover:bg-gray-50">
-                                <td class="py-2 px-2 sm:px-3 font-mono font-semibold text-gray-900">@item.Code</td>
-                                <td class="py-2 px-2 sm:px-3 text-gray-800">@item.Name</td>
-                                <td class="py-2 px-2 sm:px-3 whitespace-nowrap" data-testid="allergen-usage">
+                                <td class="py-2 px-2 font-mono font-semibold text-gray-900">@item.Code</td>
+                                <td class="py-2 px-2 text-gray-800">@item.Name</td>
+                                <td class="py-2 px-2 whitespace-nowrap" data-testid="allergen-usage">
                                     @if (row.UsageCount > 0)
                                     {
                                         <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">@ItemCount(row.UsageCount)</span>
@@ -115,7 +114,7 @@
                                 </td>
                                 @if (canEdit || canDelete)
                                 {
-                                    <td class="py-2 px-2 sm:px-3 text-right">
+                                    <td class="py-2 px-2 text-right">
                                         <SpeiseDirekt3.Components.HelperComp.ActionSubMenu Edit="canEdit ? () => EditAllergen(item) : null"
                                                                                            Delete="canDelete ? () => DeleteAllergen(item.Id) : null" />
                                     </td>
