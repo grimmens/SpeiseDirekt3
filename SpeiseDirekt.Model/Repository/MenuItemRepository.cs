@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 
 namespace SpeiseDirekt.Repository;
@@ -22,7 +23,7 @@ public class MenuItemRepository : IMenuItemRepository
         if (categoryId.HasValue)
             query = query.Where(mi => mi.CategoryId == categoryId.Value);
 
-        return await query.ToListAsync();
+        return await query.InDisplayOrder().ToListAsync();
     }
 
     public async Task<MenuItem?> GetByIdAsync(Guid id)
@@ -72,4 +73,6 @@ public class MenuItemRepository : IMenuItemRepository
     {
         return await _db.Categories.AnyAsync(c => c.Id == categoryId);
     }
+
+    public Task<int> NextSortOrderAsync(Guid categoryId) => _db.NextMenuItemSortOrderAsync(categoryId);
 }

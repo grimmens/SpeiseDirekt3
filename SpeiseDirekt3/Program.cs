@@ -160,6 +160,8 @@ namespace SpeiseDirekt3
                     .Build();
             });
             builder.Services.AddTransient<IMenuItemGenerator, AiMenuItemGenerator>();
+            builder.Services.Configure<Components.MenuItem.MenuItemGeneratorOptions>(
+                builder.Configuration.GetSection(Components.MenuItem.MenuItemGeneratorOptions.SectionName));
             builder.Services.AddTransient<IImageUploadService, ImageDatabaseUploadService>();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
             builder.Services.AddTransient<IAuthorizationHandler, PaidTenantHandler>();

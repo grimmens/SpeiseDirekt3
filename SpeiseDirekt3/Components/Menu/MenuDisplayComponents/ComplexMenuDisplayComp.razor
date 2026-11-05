@@ -3,6 +3,7 @@
 @using SpeiseDirekt.Model
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Data
+@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.ServiceInterface
 @layout MenuLayout
 @inject IJSRuntime JSRuntime
@@ -258,6 +259,7 @@
         {
             categories = Menu.Categories
                 .Where(c => c.MenuItems?.Any() == true)
+                .InDisplayOrder()
                 .Select(c => c.Name)
                 .ToList();
 
@@ -316,7 +318,7 @@
         if (Menu?.Categories == null) return new List<MenuItem>();
 
         var category = Menu.Categories.FirstOrDefault(c => c.Name == categoryName);
-        return category?.MenuItems?.ToList() ?? new List<MenuItem>();
+        return category?.MenuItems?.InDisplayOrder().ToList() ?? new List<MenuItem>();
     }
 
 

@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt3.Components.MenuCombos.Components
+@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @inject ApplicationDbContext Context
@@ -93,8 +94,8 @@
                                 <p class="text-sm text-gray-500 mt-0.5">@combo.Description</p>
                             }
                         </div>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-semibold bg-green-100 text-green-800">
-                            @combo.ComboPrice.ToString("C")
+                        <span class="inline-flex items-center flex-shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-sm font-semibold bg-green-100 text-green-800">
+                            @PriceFormat.Euro(combo.ComboPrice)
                         </span>
                     </div>
 

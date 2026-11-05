@@ -1,4 +1,5 @@
 ﻿@layout MenuLayout
+@using SpeiseDirekt.Infrastructure
 
 <HeadContent>
     <link href="css/@(Menu.Theme.ToString().ToLower()).css" rel="stylesheet" />
@@ -13,7 +14,7 @@
             <ul class="menu-items">
                 @if (category.MenuItems is not null && category.MenuItems.Any())
                 {
-                    @foreach (var item in category.MenuItems.OrderBy(mi => mi.Name))
+                    @foreach (var item in category.MenuItems.InDisplayOrder())
                     {
                         <li class="menu-item">
                             <div class="item-title">
@@ -46,6 +47,6 @@
 
     private IEnumerable<Category> DisplayCategories =>
     Menu.Categories != null && Menu.Categories.Any()
-        ? Menu.Categories.OrderBy(c => c.Name) : [];
+        ? Menu.Categories.InDisplayOrder() : [];
 
 }
