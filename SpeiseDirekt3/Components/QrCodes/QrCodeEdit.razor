@@ -56,6 +56,17 @@
 <!-- Content Section -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200">
     <div class="p-4 sm:p-8">
+        @if (editContext is null)
+        {
+            @* Interactive render before the QR code is loaded: no form yet, so nothing typed or clicked in a
+               throw-away form is lost when the real one replaces it *@
+            <div class="flex items-center justify-center py-12">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <span class="ml-3 text-gray-600">Loading QR code...</span>
+            </div>
+        }
+        else
+        {
         <EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit" class="space-y-8">
             <DataAnnotationsValidator />
             <ValidationSummary class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" />
@@ -228,6 +239,7 @@
                 </button>
             </div>
         </EditForm>
+        }
     </div>
 </div>
 
@@ -241,7 +253,7 @@
     private enum DisplayMode { Direct, Schedule, Calendar }
 
     private QRCode Item = new();
-    private EditContext editContext { get; set; } = new(new QRCode());
+    private EditContext? editContext;
     private List<Menu> menus = new();
     private DisplayMode mode;
     private bool IsNew => !Id.HasValue;
