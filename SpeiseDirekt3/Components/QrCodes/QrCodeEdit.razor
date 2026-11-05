@@ -1,11 +1,12 @@
 ﻿@page "/qrcode/edit/{Id:guid?}"
 @using Microsoft.EntityFrameworkCore
-@using QRCoder
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
+@inject TimeProvider Clock
+@inject IJSRuntime JS
 
 <PageTitle>@(IsNew ? "Create QR Code" : "Edit QR Code") - Speise-Direkt</PageTitle>
 
@@ -54,7 +55,7 @@
 
 <!-- Content Section -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-    <div class="p-8">
+    <div class="p-4 sm:p-8">
         <EditForm EditContext="editContext" OnValidSubmit="HandleValidSubmit" class="space-y-8">
             <DataAnnotationsValidator />
             <ValidationSummary class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" />
@@ -81,10 +82,10 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-4">Menu Display Mode</label>
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <InputRadioGroup Name="displayMode" @bind-Value="@Item.IsTimeTableBased" class="space-y-4">
+                    <InputRadioGroup Name="displayMode" TValue="DisplayMode" Value="mode" ValueChanged="OnModeChanged" ValueExpression="() => mode" class="space-y-4">
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
-                                <InputRadio id="simple" name="displayMode" Value="false" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
+                                <InputRadio id="simple" name="displayMode" Value="DisplayMode.Direct" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
                             </div>
                             <div class="ml-3">
                                 <label for="simple" class="font-medium text-gray-900 cursor-pointer">Simple Menu</label>
@@ -93,18 +94,27 @@
                         </div>
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
-                                <InputRadio id="timetable" name="displayMode" Value="true" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
+                                <InputRadio id="timetable" name="displayMode" Value="DisplayMode.Schedule" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
                             </div>
                             <div class="ml-3">
                                 <label for="timetable" class="font-medium text-gray-900 cursor-pointer">Schedule-based Menu</label>
                                 <p class="text-gray-500 text-sm">Display different menus based on time schedules (breakfast, lunch, dinner)</p>
                             </div>
                         </div>
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                <InputRadio id="calendar" name="displayMode" Value="DisplayMode.Calendar" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
+                            </div>
+                            <div class="ml-3">
+                                <label for="calendar" class="font-medium text-gray-900 cursor-pointer">Calendar-based Menu</label>
+                                <p class="text-gray-500 text-sm">Show a different menu on specific dates or weekdays (holidays, festival weeks, a weekly special)</p>
+                            </div>
+                        </div>
                     </InputRadioGroup>
                 </div>
             </div>
 
-            @if (Item.IsNotTimeTableBased)
+            @if (mode == DisplayMode.Direct)
             {
                 <!-- Simple Menu Selection -->
                 <div>
@@ -128,46 +138,81 @@
                     <p class="mt-1 text-xs text-gray-500">Choose which menu will be displayed when customers scan this QR code</p>
                 </div>
             }
-            else
+            else if (mode == DisplayMode.Schedule)
             {
                 <!-- Schedule-based Menu Configuration -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-4">Time-based Menu Schedule</label>
-                    <div class="bg-gray-50 rounded-lg p-6">
-                        <QrCodeTimeTableEntries QRCodeId="@Item.Id" TimeTableEntries="@Item.TimeTableEntries">
+                    <div class="bg-gray-50 rounded-lg p-3 sm:p-6">
+                        <QrCodeTimeTableEntries QRCodeId="@Item.Id" TimeTableEntries="@Item.TimeTableEntries" Menus="@menus">
                             <ValidationMessage For="@(() => Item.TimeTableEntries)" class="mt-1 text-sm text-red-600" />
                         </QrCodeTimeTableEntries>
                     </div>
                 </div>
             }
+            else
+            {
+                <!-- Calendar-based Menu Configuration -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-4">Calendar</label>
+                    <div class="bg-gray-50 rounded-lg p-3 sm:p-6">
+                        <QrCodeCalendarEntries QRCodeId="@Item.Id" CalendarEntries="@Item.CalendarEntries" Menus="@menus" Today="@Today">
+                            <ValidationMessage For="@(() => Item.CalendarEntries)" class="mt-1 text-sm text-red-600" />
+                        </QrCodeCalendarEntries>
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500">A single date beats a weekly entry on the same day.</p>
+                </div>
+
+                @if (Item.IsTimeTableBased)
+                {
+                    @* Only possible via the API: calendar plus time schedule. Without a matching entry the schedule applies. *@
+                    <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-4 py-3 text-sm" data-testid="calendar-schedule-fallback">
+                        Without a matching calendar entry this QR code follows its time schedule
+                        (@ScheduleText()). Switch to <span class="font-medium">Schedule-based Menu</span> to edit it.
+                    </div>
+                }
+                else
+                {
+                    <div>
+                        <label for="fallbackMenuSelect" class="block text-sm font-medium text-gray-700 mb-2">Fallback Menu</label>
+                        <InputSelect @bind-Value="Item.MenuId" id="fallbackMenuSelect"
+                                     class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                            <option value="">-- No menu --</option>
+                            @foreach (var m in menus)
+                            {
+                                <option value="@m.Id">@m.Name</option>
+                            }
+                        </InputSelect>
+                        <p class="mt-1 text-xs text-gray-500">Shown when no calendar entry matches today</p>
+                    </div>
+                }
+            }
 
             <!-- QR Code Preview -->
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-4">QR Code Preview</label>
-                <div class="bg-gray-50 rounded-lg p-6 text-center">
-                    @if (!string.IsNullOrEmpty(qrDataUrl))
-                    {
-                        <div class="inline-block p-4 bg-white rounded-lg shadow-sm">
-                            <QrCodePreview QrId="@Item.Id" ThumbnailSize="150" />
+                <div class="bg-gray-50 rounded-lg p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+                        <div class="flex-shrink-0 p-3 bg-white rounded-lg shadow-sm">
+                            <QrCodePreview QrId="@Item.Id" ThumbnailSize="150" Title="@Item.Title" />
                         </div>
-                        <p class="mt-3 text-sm text-gray-600">This is how your QR code will appear</p>
-                    }
-                    else
-                    {
-                        <div class="py-8">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                            </svg>
-                            <p class="mt-2 text-sm text-gray-500">Configure your menu settings to see the QR code preview</p>
+                        <div class="min-w-0 w-full sm:flex-1 text-center sm:text-left">
+                            <p class="text-sm text-gray-600">Guests who scan this code open</p>
+                            <p class="mt-1 text-sm font-medium text-gray-900 break-all" data-testid="qr-url">@GuestUrl</p>
+                            @if (IsNew)
+                            {
+                                <p class="mt-1 text-xs text-gray-500">The link works once you have created the QR code.</p>
+                            }
+                            <QrCodeShareActions QrId="@Item.Id" Title="@Item.Title" Class="mt-4 justify-center sm:justify-start" />
                         </div>
-                    }
+                    </div>
                 </div>
             </div>
 
             <!-- Action Buttons -->
-            <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+            <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 sm:gap-4 pt-6 border-t border-gray-200">
                 <button type="button"
-                        class="inline-flex items-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                        class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
                         @onclick="Cancel">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -175,7 +220,7 @@
                     Cancel
                 </button>
                 <button type="submit"
-                        class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
@@ -189,11 +234,19 @@
 @code {
     [Parameter] public Guid? Id { get; set; }
 
+    /// <summary>
+    /// What the editor shows. Derived from the QR code's flags on load; changing it sets the flags
+    /// (<see cref="OnModeChanged"/>). Entries of the other modes stay stored but inactive.
+    /// </summary>
+    private enum DisplayMode { Direct, Schedule, Calendar }
+
     private QRCode Item = new();
     private EditContext editContext { get; set; } = new(new QRCode());
     private List<Menu> menus = new();
-    private string qrDataUrl = "";
+    private DisplayMode mode;
     private bool IsNew => !Id.HasValue;
+    private DateOnly Today => DateOnly.FromDateTime(Clock.GetLocalNow().DateTime);
+    private string GuestUrl => NavManager.BaseUri + QrCodeLinks.GuestPath(Item.Id);
 
     protected override async Task OnInitializedAsync()
     {
@@ -208,53 +261,63 @@
 
         if (IsNew)
         {
-            // give it a code immediately so preview shows
+            // The id is fixed right away, so the preview (and a PNG downloaded before saving) matches the saved code
             Item.Id = Guid.NewGuid();
         }
         else
         {
             var existing = await DbContext.QRCodes
                 .Include(e => e.TimeTableEntries)
+                .Include(e => e.CalendarEntries)
                 .SingleOrDefaultAsync(e => e.Id == Id.Value);
             if (existing != null)
                 Item = existing;
         }
 
-        Item.TimeTableEntries = Item.TimeTableEntries?
+        Item.TimeTableEntries = (Item.TimeTableEntries ?? new())
             .OrderBy(e => e.StartTime)
             .ToList();
+        Item.CalendarEntries = (Item.CalendarEntries ?? new())
+            .OrderBy(e => e.Date)
+            .ThenBy(e => e.RecurringDayOfWeek.HasValue)
+            .ToList();
+
+        // Calendar wins over the schedule, as in MenuService
+        mode = Item.IsCalendarBased ? DisplayMode.Calendar
+            : Item.IsTimeTableBased ? DisplayMode.Schedule
+            : DisplayMode.Direct;
 
         editContext = new EditContext(Item);
-        editContext.OnFieldChanged += (_, __) => GeneratePreview();
-        GeneratePreview();
     }
 
-    private void GeneratePreview()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Item.Id == Guid.Empty)
-        {
-            qrDataUrl = "";
-            return;
-        }
-
-        var url = $"{NavManager.BaseUri}qr/{Item.Id}";
-        using var generator = new QRCodeGenerator();
-        using var data = generator.CreateQrCode(url, QRCodeGenerator.ECCLevel.Q);
-        using var png = new PngByteQRCode(data);
-        var bytes = png.GetGraphic(20);
-        qrDataUrl = $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+        if (firstRender)
+            await JS.InvokeVoidAsync("import", "./js/qr-codes.js"); // "Copy link"
     }
+
+    private void OnModeChanged(DisplayMode value)
+    {
+        mode = value;
+        Item.IsTimeTableBased = value == DisplayMode.Schedule;
+        Item.IsCalendarBased = value == DisplayMode.Calendar;
+    }
+
+    private string MenuName(Guid menuId) => menus.FirstOrDefault(m => m.Id == menuId)?.Name ?? "(no menu)";
+
+    private string ScheduleText() =>
+        string.Join(" · ", (Item.TimeTableEntries ?? new()).Select(e => $"{e.StartTime:HH\\:mm}–{e.EndTime:HH\\:mm} {MenuName(e.MenuId)}"));
 
     private async Task HandleValidSubmit()
     {
         if (IsNew)
         {
-            Item.Id = Guid.NewGuid();
             Item.CreatedAt = DateTime.UtcNow;
             DbContext.QRCodes.Add(Item);
         }
         else
         {
+            // Entries removed in the editor are no longer in the collections and are deleted as orphans
             DbContext.QRCodes.Update(Item);
         }
 

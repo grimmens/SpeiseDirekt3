@@ -1,67 +1,67 @@
-﻿@using Microsoft.EntityFrameworkCore
-@using SpeiseDirekt.Model
+﻿@using SpeiseDirekt.Model
 @using Microsoft.AspNetCore.Components.Forms
-@inject ApplicationDbContext DbContext
 
-<div class="container">
-    <div class="card shadow">
-        <div class="card-header bg-success text-white">
-            <h4>Time Entries</h4>
+@* Time windows of a schedule-based QR code. Rendered inside the editor's EditForm; the parent saves the
+   collection with the QR code. *@
+<div class="space-y-3">
+    @if (TimeTableEntries.Count == 0)
+    {
+        <p class="text-sm text-gray-500">No time windows yet. Add one per service, e.g. lunch 11:00–14:00 and dinner 17:00–22:00.</p>
+    }
+    @{ var index = 0; }
+    @foreach (var timeTableEntry in TimeTableEntries)
+    {
+        var i = index++;
+        <div @key="timeTableEntry" class="bg-white rounded-lg border border-gray-200 p-3 sm:p-4" data-testid="timetable-entry">
+            <div class="flex items-start justify-between gap-3 mb-3">
+                <p class="text-sm font-medium text-gray-800 min-w-0">@Describe(timeTableEntry)</p>
+                <button type="button"
+                        class="flex-shrink-0 inline-flex items-center px-2.5 py-1 text-sm font-medium text-red-700 bg-white border border-red-200 hover:bg-red-50 rounded-lg transition-colors duration-200"
+                        @onclick="() => RemoveTimeTableEntry(timeTableEntry)">
+                    Remove
+                </button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="col-span-2">
+                    <label for="@($"tt-{i}-menu")" class="block text-xs font-medium text-gray-600 mb-1">Menu</label>
+                    <InputSelect @bind-Value="timeTableEntry.MenuId" id="@($"tt-{i}-menu")" class="@FieldClass">
+                        <option value="@Guid.Empty">-- Select Menu --</option>
+                        @foreach (var m in Menus)
+                        {
+                            <option value="@m.Id">@m.Name</option>
+                        }
+                    </InputSelect>
+                </div>
+                <div>
+                    <label for="@($"tt-{i}-start")" class="block text-xs font-medium text-gray-600 mb-1">Start Time</label>
+                    <InputTime @bind-Value="timeTableEntry.StartTime" id="@($"tt-{i}-start")" class="@FieldClass" />
+                </div>
+                <div>
+                    <label for="@($"tt-{i}-end")" class="block text-xs font-medium text-gray-600 mb-1">End Time</label>
+                    <InputTime @bind-Value="timeTableEntry.EndTime" id="@($"tt-{i}-end")" class="@FieldClass" />
+                </div>
+            </div>
         </div>
-        <div class="card-body">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Menu</th>
-                        <th>Start Time</th>
-                        <th>End Time</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var timeTableEntry in TimeTableEntries)
-                    {
-                        <tr>
-                            <td>
-                                <InputSelect @bind-Value="timeTableEntry.MenuId" class="form-select">
-                                    <option value="">-- Select Menu --</option>
-                                    @foreach (var m in menus)
-                                    {
-                                        <option value="@m.Id">@m.Name</option>
-                                    }
-                                </InputSelect>
-                            </td>
-                            <td>
-                                <InputTime @bind-Value="timeTableEntry.StartTime" class="form-control" />
-                            </td>
-                            <td>
-                                <InputTime @bind-Value="timeTableEntry.EndTime" class="form-control" />
-                            </td>
-                            <td>
-                                <a class="btn btn-danger" @onclick="() => RemoveTimeTableEntry(timeTableEntry)">Remove</a>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            @ChildContent
-        </div>
-        <div class="card-footer">
-            <a class="btn btn-primary" @onclick="AddTimeTableEntry">Add Time Entry</a>
-        </div>
-    </div>
+    }
+    @ChildContent
+    <button type="button"
+            class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200"
+            @onclick="AddTimeTableEntry">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+        </svg>
+        Add Time Entry
+    </button>
 </div>
 
 @code {
-    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
     [Parameter, EditorRequired] public Guid QRCodeId { get; set; }
-    [Parameter] public ICollection<TimeTableEntry> TimeTableEntries { get; set; }
-    private List<Menu> menus = new();
+    [Parameter, EditorRequired] public List<TimeTableEntry> TimeTableEntries { get; set; } = new();
+    [Parameter, EditorRequired] public List<Menu> Menus { get; set; } = new();
 
-    protected override async Task OnInitializedAsync()
-    {
-        menus = await DbContext.Menus.OrderBy(m => m.Name).ToListAsync();
-    }
+    private const string FieldClass =
+        "block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
     private void AddTimeTableEntry()
     {
@@ -79,5 +79,14 @@
     private void RemoveTimeTableEntry(TimeTableEntry timeTableEntry)
     {
         TimeTableEntries.Remove(timeTableEntry);
+    }
+
+    /// <summary>The window as text, e.g. "11:00 – 14:00" or "22:00 – 02:00 (past midnight)".</summary>
+    private static string Describe(TimeTableEntry entry)
+    {
+        if (entry.StartTime is not { } start || entry.EndTime is not { } end)
+            return "Set a start and an end time";
+        var text = $"{start:HH\\:mm} – {end:HH\\:mm}";
+        return end < start ? $"{text} (past midnight)" : text;
     }
 }
