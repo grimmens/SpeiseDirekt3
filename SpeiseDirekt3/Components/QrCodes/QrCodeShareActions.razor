@@ -1,0 +1,41 @@
+﻿@inject NavigationManager NavManager
+
+@* Download PNG + Copy link for one QR code, followed by optional extra buttons (Edit, Delete) in the same
+   wrapping row. "Copy link" is handled client-side by wwwroot/js/qr-codes.js, which the page imports. *@
+<div class="flex flex-wrap items-center gap-2 @Class">
+    <a href="@QrCodeLinks.DownloadPath(QrId, Title)"
+       download="@QrCodeLinks.DownloadFileName(Title)"
+       data-testid="qr-download"
+       class="inline-flex items-center px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg no-underline hover:no-underline transition-colors duration-200">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg>
+        Download PNG
+    </a>
+    <button type="button"
+            data-copy-url="@GuestUrl"
+            data-testid="qr-copy"
+            class="inline-flex items-center px-3 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+        </svg>
+        <span data-copy-state="idle">Copy link</span>
+        <span data-copy-state="done" class="hidden text-green-700" role="status">Copied</span>
+        <span data-copy-state="failed" class="hidden text-red-700" role="status">Copy failed</span>
+    </button>
+    @ChildContent
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Guid QrId { get; set; }
+
+    /// <summary>QR code title; names the downloaded file (<c>qr-tisch-1.png</c>).</summary>
+    [Parameter] public string? Title { get; set; }
+
+    /// <summary>Further buttons placed in the same row (e.g. Edit, Delete).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    private string GuestUrl => NavManager.BaseUri + QrCodeLinks.GuestPath(QrId);
+}

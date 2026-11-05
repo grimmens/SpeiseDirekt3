@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SpeiseDirekt.Data;
 using QRCoder;
+using SpeiseDirekt3.Components.QrCodes;
 
 namespace SpeiseDirekt3.Controller
 {
@@ -30,9 +31,13 @@ namespace SpeiseDirekt3.Controller
             return NotFound();
         }
 
+        /// <summary>
+        /// QR code PNG that encodes the guest link <c>/qr/{qrId}</c>. With <c>?download=1</c> it is sent as an
+        /// attachment named <c>name</c> (see <see cref="QrCodeLinks.DownloadFileName"/>), e.g. <c>qr-tisch-1.png</c>.
+        /// </summary>
         [HttpGet("qr/{qrId}")]
         [ResponseCache(Duration = 3600)]
-        public IActionResult GetQrCode([FromRoute] Guid qrId)
+        public IActionResult GetQrCode([FromRoute] Guid qrId, [FromQuery] string? download = null, [FromQuery] string? name = null)
         {
             var targetUrl = $"{Request.Scheme}://{Request.Host}/qr/{qrId}";
 
@@ -41,7 +46,10 @@ namespace SpeiseDirekt3.Controller
             using var png = new PngByteQRCode(qrData);
             var bytes = png.GetGraphic(20);
 
-            return File(bytes, "image/png");
+            // "1" as in the links on the QR pages (bool binding would reject it)
+            return download is "1" or "true"
+                ? File(bytes, "image/png", QrCodeLinks.SanitizeDownloadName(name) ?? QrCodeLinks.DownloadFileName(null))
+                : File(bytes, "image/png");
         }
     }
 }

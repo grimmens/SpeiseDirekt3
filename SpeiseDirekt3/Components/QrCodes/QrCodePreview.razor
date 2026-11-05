@@ -4,12 +4,17 @@
 <div class="qr-preview">
     @if (QrId != Guid.Empty)
     {
-        <img src="@_imageUrl"
-             alt="QR Code"
-             width="@ThumbnailSize"
-             style="cursor:pointer;"
-             data-bs-toggle="modal"
-             data-bs-target="#@ModalId" />
+        <button type="button"
+                class="block p-0 border-0 bg-transparent"
+                title="Click to enlarge"
+                data-bs-toggle="modal"
+                data-bs-target="#@ModalId">
+            <img src="@_imageUrl"
+                 alt="@(string.IsNullOrEmpty(Title) ? "QR Code" : $"QR code {Title}")"
+                 width="@ThumbnailSize"
+                 height="@ThumbnailSize"
+                 style="cursor:pointer;" />
+        </button>
     }
     else
     {
@@ -21,7 +26,7 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="@($"{ModalId}Label")">QR Code Preview</h5>
+                <h5 class="modal-title" id="@($"{ModalId}Label")">@(string.IsNullOrEmpty(Title) ? "QR Code Preview" : Title)</h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
@@ -30,6 +35,7 @@
             <div class="modal-body text-center">
                 <img src="@_imageUrl"
                      alt="QR Code Large"
+                     loading="lazy"
                      class="img-fluid" />
             </div>
         </div>
@@ -51,6 +57,9 @@
     /// Width in pixels for the thumbnail image.
     /// </summary>
     [Parameter] public int ThumbnailSize { get; set; } = 80;
+
+    /// <summary>QR code title for the alt text and the enlarged view's heading (optional).</summary>
+    [Parameter] public string? Title { get; set; }
 
     private string _imageUrl => $"{NavManager.BaseUri}Image/qr/{QrId}";
 }
