@@ -3,16 +3,17 @@
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt3.Components.MenuItem.Components
 @using SpeiseDirekt.Data
+@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @attribute [Authorize]
 
 <PageTitle>Menu Items</PageTitle>
 
-<div class="container mt-5">
+<div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
     <!-- Tailwind Breadcrumb -->
-    <nav class="text-sm text-gray-600 mb-4" aria-label="breadcrumb">
-        <ol class="flex space-x-2">
+    <nav class="text-sm text-gray-600" aria-label="breadcrumb">
+        <ol class="flex flex-wrap gap-y-1 space-x-2">
             <li>
                 <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
                 <span class="mx-2">/</span>
@@ -31,9 +32,12 @@
         Categories="@(Categories ?? [])"
         CategoryChanged="OnCategoryChanged" />
     }
-    else
+    else if (loaded)
     {
-        <p class="text-muted">Invalid category or no data found.</p>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-10 text-center">
+            <h1 class="text-lg font-semibold text-gray-900">Category not found</h1>
+            <p class="mt-1 text-sm text-gray-500">It may have been deleted. <a href="/menus" class="text-blue-600 hover:underline">Back to the menus</a></p>
+        </div>
     }
 </div>
 
@@ -47,18 +51,22 @@
     public List<Category>? Categories { get; set; }
     public Category? Category { get; set; }
     public Menu? Menu { get; set; }
+    private bool loaded;
 
     protected override async Task OnParametersSetAsync()
     {
         Category = await Context.Categories
             .Include(c => c.Menu)
             .FirstOrDefaultAsync(c => c.Id == CategoryId);
-        if(Category != null)
+        if(Category != null && (Categories is null || Categories.FirstOrDefault()?.MenuId != Category.MenuId))
         {
-            Categories ??= await Context.Categories
-                    .Where(e => e.MenuId == Category.MenuId).ToListAsync();
+            Categories = await Context.Categories
+                    .Where(e => e.MenuId == Category.MenuId)
+                    .InDisplayOrder()
+                    .ToListAsync();
         }
         Menu = Category?.Menu;
+        loaded = true;
     }
 
     void OnCategoryChanged(Category category)

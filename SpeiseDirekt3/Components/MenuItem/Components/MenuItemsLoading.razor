@@ -2,17 +2,64 @@
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Data
+@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
 @attribute [Authorize]
 @inject NavigationManager Navigation
+@inject IPermissionService PermissionService
 
-<PageTitle>Loading...</PageTitle>
+<PageTitle>@(state == State.Loading ? "Loading..." : "Menu Items")</PageTitle>
 
-@if (showNoCategories)
+@if (state != State.Loading)
 {
-    <div class="container mt-5">
-        <div class="text-center">
-            <h3 class="text-muted">No categories available. Please add some first.</h3>
+    <div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
+        @if (menu is not null)
+        {
+            <nav class="text-sm text-gray-600" aria-label="breadcrumb">
+                <ol class="flex flex-wrap gap-y-1 space-x-2">
+                    <li>
+                        <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
+                        <span class="mx-2">/</span>
+                    </li>
+                    <li>
+                        <a href="@($"/menudetail/{menu.Id}")" class="text-blue-600 hover:underline">@menu.Name</a>
+                        <span class="mx-2">/</span>
+                    </li>
+                    <li class="text-gray-800">Menu items</li>
+                </ol>
+            </nav>
+        }
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-12 text-center" data-testid="menu-items-no-categories">
+            <div class="mx-auto h-12 w-12 text-gray-400 mb-3">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h7"></path>
+                </svg>
+            </div>
+            @if (state == State.MenuNotFound)
+            {
+                <h1 class="text-lg font-semibold text-gray-900 mb-1">Menu not found</h1>
+                <p class="text-sm text-gray-500 mb-6">It may have been deleted.</p>
+                <a href="/menus" class="inline-flex items-center px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors no-underline">Back to the menus</a>
+            }
+            else
+            {
+                <h1 class="text-lg font-semibold text-gray-900 mb-1">No categories yet</h1>
+                <p class="text-sm text-gray-500 mb-6">
+                    Menu items belong to a category, e.g. Starters, Mains or Drinks.
+                    @(canCreateCategories ? "Add a category first, then add the items to it." : "A category has to be added first.")
+                </p>
+                @if (canCreateCategories)
+                {
+                    <a href="@($"/Categories/{MenuId}")" class="inline-flex items-center px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors no-underline">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add a category
+                    </a>
+                }
+            }
         </div>
     </div>
 }
@@ -23,30 +70,33 @@
     public string MenuId { get; set; }
     [Inject] public ApplicationDbContext Context { get; set; }
 
-    private bool showNoCategories = false;
+    private enum State { Loading, MenuNotFound, NoCategories }
+    private State state = State.Loading;
+    private Menu? menu;
+    private bool canCreateCategories;
 
     protected override async Task OnInitializedAsync()
     {
-        var menu = await Context.Menus.FindAsync(new Guid(MenuId));
-        
+        menu = Guid.TryParse(MenuId, out var menuId) ? await Context.Menus.FindAsync(menuId) : null;
+
         if (menu == null)
         {
-            showNoCategories = true;
+            state = State.MenuNotFound;
             return;
         }
 
-        var categories = await Context.Categories
+        var firstCategory = await Context.Categories
             .Where(c => c.MenuId == menu.Id)
-            .OrderBy(c => c.Name)
-            .ToListAsync();
+            .InDisplayOrder()
+            .FirstOrDefaultAsync();
 
-        if (!categories.Any())
+        if (firstCategory is null)
         {
-            showNoCategories = true;
+            canCreateCategories = await PermissionService.HasPermissionAsync(Permission.CategoriesCreate);
+            state = State.NoCategories;
             return;
         }
 
-        var firstCategory = categories.First();
         Navigation.NavigateTo($"/MenuItems/Category/{firstCategory.Id}", replace: true);
     }
 }

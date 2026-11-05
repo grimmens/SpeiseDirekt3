@@ -1,0 +1,38 @@
+﻿@using SpeiseDirekt.Model
+@* Dietary labels and allergen codes of a menu item as small chips (back office, English). *@
+
+@if (HasLabels)
+{
+    <div class="flex flex-wrap gap-1 @Class" data-testid="item-labels">
+        @if (Item.IsVegan)
+        {
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-50 text-green-700 border border-green-200">Vegan</span>
+        }
+        @if (Item.IsVegetarian)
+        {
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-lime-50 text-lime-700 border border-lime-200">Vegetarian</span>
+        }
+        @if (Item.IsSpicy)
+        {
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-red-50 text-red-700 border border-red-200">Spicy</span>
+        }
+        @foreach (var allergen in Item.Allergens.OrderBy(a => a.Code, StringComparer.Ordinal))
+        {
+            <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200"
+                  title="@($"Allergen {allergen.Code}: {allergen.Name}")" data-testid="allergen-chip">@allergen.Code</span>
+        }
+    </div>
+}
+else if (ShowPlaceholder)
+{
+    <span class="text-gray-300" aria-label="No labels">—</span>
+}
+
+@code {
+    [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Render a dash when the item has no labels (table cells).</summary>
+    [Parameter] public bool ShowPlaceholder { get; set; }
+
+    private bool HasLabels => Item.IsVegan || Item.IsVegetarian || Item.IsSpicy || Item.Allergens.Any();
+}
