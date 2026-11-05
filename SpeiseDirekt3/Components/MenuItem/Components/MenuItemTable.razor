@@ -361,6 +361,8 @@
             {
                 try
                 {
+                    // Guest click rows reference the item without cascade; they mean nothing without it
+                    await Context.MenuItemClicks.Where(c => c.MenuItemId == id).ExecuteDeleteAsync();
                     Context.MenuItems.Remove(item);
                     await Context.SaveChangesAsync();
                 }
@@ -368,7 +370,7 @@
                 {
                     Console.WriteLine($"Error deleting menu item: {ex}");
                     Context.ChangeTracker.Clear();
-                    errorMessage = $"\"{item.Name}\" could not be deleted. It is probably still used by a combo or by the guest statistics.";
+                    errorMessage = $"\"{item.Name}\" could not be deleted. It is still used by a combo.";
                 }
                 await LoadItems();
             }
@@ -573,6 +575,9 @@
         isWorking = true;
         try
         {
+            await Context.MenuItemClicks
+                .Where(c => Context.MenuItems.Any(i => i.Id == c.MenuItemId && i.CategoryId == Category.Id))
+                .ExecuteDeleteAsync();
             Context.RemoveRange(Context.MenuItems.Where(e => e.CategoryId == Category.Id));
             await Context.SaveChangesAsync();
         }
@@ -580,7 +585,7 @@
         {
             Console.WriteLine($"Error deleting all menu items: {ex}");
             Context.ChangeTracker.Clear();
-            errorMessage = $"The items of \"{Category.Name}\" could not be deleted. Some of them are probably still used by a combo or by the guest statistics.";
+            errorMessage = $"The items of \"{Category.Name}\" could not be deleted. Some of them are still used by a combo.";
         }
         finally
         {

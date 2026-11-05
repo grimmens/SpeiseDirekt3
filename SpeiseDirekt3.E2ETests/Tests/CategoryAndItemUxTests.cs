@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Playwright;
 using SpeiseDirekt.Model;
@@ -267,6 +268,38 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         await confirmation.Locator("#confirmBtn").ClickAsync();
         await Assertions.Expect(Page.GetByTestId("menu-items-empty")).ToContainTextAsync("No items in Getränke yet");
         await Assertions.Expect(ItemRows).ToHaveCountAsync(0);
+    }
+
+    [Fact]
+    public async Task Items_WithGuestClicks_CanBeDeleted_SinglyAndAll()
+    {
+        var email = await RegisterNewOwnerAsync();
+        var ownerId = await OwnerIdAsync(email);
+        var cola = new MenuItem { Id = Guid.NewGuid(), Name = "Cola", Description = "0,33 l", Price = 3.50m };
+        var wasser = new MenuItem { Id = Guid.NewGuid(), Name = "Wasser", Description = "", Price = 2.50m };
+        var (menuId, _) = await SeedMenuAsync(ownerId, "Klick Menü", "Getränke", cola, wasser);
+        // MenuItemClick.MenuItemId is a NoAction foreign key; the back office must remove the clicks first
+        await App.SeedAsync(ownerId, db =>
+        {
+            db.MenuItemClicks.Add(new MenuItemClick { Id = Guid.NewGuid(), SessionId = "s1", MenuId = menuId, MenuItemId = cola.Id });
+            db.MenuItemClicks.Add(new MenuItemClick { Id = Guid.NewGuid(), SessionId = "s2", MenuId = menuId, MenuItemId = wasser.Id });
+            return Task.CompletedTask;
+        });
+
+        await GotoInteractiveAsync($"/MenuItems/{menuId}");
+        var confirmation = Page.Locator("#confirmationModal");
+        await ExactButton("Delete Cola").ClickAsync();
+        await confirmation.Locator("#confirmBtn").ClickAsync();
+        await Assertions.Expect(ItemRows).ToHaveCountAsync(1);
+        await Assertions.Expect(Page.GetByText("could not be deleted")).ToHaveCountAsync(0);
+
+        await ExactButton("Delete All").ClickAsync();
+        await confirmation.Locator("#confirmBtn").ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("menu-items-empty")).ToBeVisibleAsync();
+
+        await using var db = App.CreateDbContext(ownerId);
+        (await db.MenuItems.AnyAsync(i => i.Id == cola.Id || i.Id == wasser.Id)).Should().BeFalse();
+        (await db.MenuItemClicks.AnyAsync(c => c.MenuId == menuId)).Should().BeFalse();
     }
 
     // --- Empty states ---
