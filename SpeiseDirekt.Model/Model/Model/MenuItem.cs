@@ -11,6 +11,8 @@ namespace SpeiseDirekt.Model
         public string Name { get; set; } = string.Empty;
         [Required]
         public string Description { get; set; } = string.Empty;
+        /// <summary>Position within the category (ascending, ties by name). New items get max + 1.</summary>
+        public int SortOrder { get; set; }
         public ICollection<Allergen> Allergens { get; set; } = new List<Allergen>();
         [Precision(18,2)]
         public decimal Price { get; set; }
