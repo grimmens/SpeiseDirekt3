@@ -13,8 +13,8 @@
     @foreach (var entry in CalendarEntries)
     {
         var i = index++;
-        <div @key="entry" class="bg-white rounded-lg border border-gray-200 p-3 sm:p-4" data-testid="calendar-entry">
-            <div class="flex items-start justify-between gap-3 mb-3">
+        <div @key="entry" class="bg-white rounded-lg border border-gray-200 p-3.5" data-testid="calendar-entry">
+            <div class="flex items-start justify-between gap-x-3 mb-2.5">
                 <p class="text-sm font-medium text-gray-800 min-w-0" data-testid="calendar-entry-summary">@Describe(entry)</p>
                 <button type="button"
                         class="flex-shrink-0 inline-flex items-center px-2.5 py-1 text-sm font-medium text-red-700 bg-white border border-red-200 hover:bg-red-50 rounded-lg transition-colors duration-200"
@@ -22,8 +22,8 @@
                     Remove
                 </button>
             </div>
-            <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
-                <div class="col-span-2 xl:col-span-1">
+            <div class="grid grid-cols-2 xl:grid-cols-4 gap-x-3 gap-y-3">
+                <div class="col-span-2 sm:col-span-1">
                     <label for="@($"cal-{i}-menu")" class="block text-xs font-medium text-gray-600 mb-1">Menu</label>
                     <InputSelect @bind-Value="entry.MenuId" id="@($"cal-{i}-menu")" class="@FieldClass">
                         <option value="@Guid.Empty">-- Select Menu --</option>
@@ -33,11 +33,7 @@
                         }
                     </InputSelect>
                 </div>
-                <div>
-                    <label for="@($"cal-{i}-date")" class="block text-xs font-medium text-gray-600 mb-1">Date</label>
-                    <InputDate @bind-Value="entry.Date" id="@($"cal-{i}-date")" class="@FieldClass" />
-                </div>
-                <div>
+                <div class="col-span-2 sm:col-span-1">
                     <label for="@($"cal-{i}-weekly")" class="block text-xs font-medium text-gray-600 mb-1">Repeats weekly on</label>
                     <InputSelect @bind-Value="entry.RecurringDayOfWeek" id="@($"cal-{i}-weekly")" class="@FieldClass">
                         <option value="">Does not repeat</option>
@@ -48,6 +44,10 @@
                     </InputSelect>
                 </div>
                 <div>
+                    <label for="@($"cal-{i}-date")" class="block text-xs font-medium text-gray-600 mb-1">Date</label>
+                    <InputDate @bind-Value="entry.Date" id="@($"cal-{i}-date")" class="@FieldClass" />
+                </div>
+                <div>
                     <label for="@($"cal-{i}-until")" class="block text-xs font-medium text-gray-600 mb-1">Until (optional)</label>
                     <InputDate @bind-Value="entry.EndDate" id="@($"cal-{i}-until")" class="@FieldClass" />
                 </div>
@@ -56,7 +56,7 @@
     }
     @ChildContent
     <button type="button"
-            class="inline-flex items-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200"
+            class="inline-flex items-center px-3.5 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200"
             @onclick="AddEntry">
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -77,7 +77,7 @@
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
     private const string FieldClass =
-        "block w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+        "block w-full px-2.5 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
     private static readonly DayOfWeek[] Weekdays =
     {

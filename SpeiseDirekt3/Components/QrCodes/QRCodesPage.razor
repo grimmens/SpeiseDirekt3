@@ -88,22 +88,22 @@
     else
     {
         <!-- QR Codes Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-x-4 gap-y-4">
             @foreach (var qrCode in codes)
             {
                 var mode = ModeOf(qrCode);
-                <div @key="qrCode.Id" class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 p-4 sm:p-5" data-testid="qr-card">
-                    <div class="flex items-start gap-4">
+                <div @key="qrCode.Id" class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 p-3.5 sm:p-5" data-testid="qr-card">
+                    <div class="flex items-start gap-x-3.5 sm:gap-x-4">
                         <!-- QR Code Preview (click to enlarge) -->
                         <div class="flex-shrink-0 p-1.5 bg-gray-50 rounded-lg border border-gray-100">
-                            <QrCodePreview QrId="@qrCode.Id" ThumbnailSize="112" Title="@qrCode.Title" />
+                            <QrCodePreview QrId="@qrCode.Id" ThumbnailSize="112" Title="@qrCode.Title" ImageClass="w-24 h-24 sm:w-28 sm:h-28" />
                         </div>
 
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <h3 class="text-lg font-bold text-gray-900 min-w-0 break-words">
+                                <h3 class="text-base sm:text-lg font-bold text-gray-900 min-w-0 break-words">
                                     <a href="@QrCodeLinks.GuestPath(qrCode.Id)" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 hover:underline">
-                                        @qrCode.Title<svg class="inline w-4 h-4 ml-1 -mt-0.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        @qrCode.Title&#8288;<svg class="inline w-4 h-4 ml-1 -mt-0.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                         </svg>
                                     </a>
@@ -111,15 +111,15 @@
                                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium @BadgeClass(mode)" data-testid="qr-mode">@mode</span>
                             </div>
                             <p class="mt-1.5 text-sm text-gray-700 break-words" data-testid="qr-target">@TargetText(qrCode)</p>
-                            <p class="mt-1 text-xs text-gray-500 break-all" data-testid="qr-url">@GuestUrl(qrCode.Id)</p>
+                            <p class="mt-1 text-xs text-gray-500 truncate" title="@GuestUrl(qrCode.Id)" data-testid="qr-url">@GuestUrl(qrCode.Id)</p>
                         </div>
                     </div>
 
                     <!-- Actions -->
-                    <QrCodeShareActions QrId="@qrCode.Id" Title="@qrCode.Title" Class="mt-4">
+                    <QrCodeShareActions QrId="@qrCode.Id" Title="@qrCode.Title" Class="mt-3.5">
                         @if (canEditQr)
                         {
-                            <button class="inline-flex items-center px-3 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200"
+                            <button class="inline-flex items-center px-3.5 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200"
                                     @onclick="() => Edit(qrCode.Id)">
                                 <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>

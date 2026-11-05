@@ -13,6 +13,7 @@
                  alt="@(string.IsNullOrEmpty(Title) ? "QR Code" : $"QR code {Title}")"
                  width="@ThumbnailSize"
                  height="@ThumbnailSize"
+                 class="@ImageClass"
                  style="cursor:pointer;" />
         </button>
     }
@@ -60,6 +61,9 @@
 
     /// <summary>QR code title for the alt text and the enlarged view's heading (optional).</summary>
     [Parameter] public string? Title { get; set; }
+
+    /// <summary>CSS classes for the thumbnail, e.g. responsive sizes (override <see cref="ThumbnailSize"/>).</summary>
+    [Parameter] public string? ImageClass { get; set; }
 
     private string _imageUrl => $"{NavManager.BaseUri}Image/qr/{QrId}";
 }
