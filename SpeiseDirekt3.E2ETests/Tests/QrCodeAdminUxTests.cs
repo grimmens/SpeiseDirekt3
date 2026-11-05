@@ -447,6 +447,12 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
                 new() { Id = Guid.NewGuid(), StartTime = new TimeOnly(17, 0), EndTime = new TimeOnly(22, 0), MenuId = menu }
             }
         });
+        // A recorded scan: MenuView.QRCodeId is a NoAction foreign key, so the delete must detach it first
+        await App.SeedAsync(ownerId, db =>
+        {
+            db.MenuViews.Add(new MenuView { Id = Guid.NewGuid(), SessionId = "s1", MenuId = menu, QRCodeId = qrId });
+            return Task.CompletedTask;
+        });
 
         await GotoInteractiveAsync("/qrcodes");
         await Card("Zeitplan weg").GetByRole(AriaRole.Button, new() { Name = "Delete Zeitplan weg" }).ClickAsync();
@@ -457,6 +463,8 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
         await using var db = App.CreateDbContext(ownerId);
         (await db.QRCodes.AnyAsync(q => q.Id == qrId)).Should().BeFalse();
         (await db.TimeTableEntries.AnyAsync(e => e.QRCodeId == qrId)).Should().BeFalse();
+        var view = await db.MenuViews.SingleAsync(v => v.SessionId == "s1" && v.MenuId == menu);
+        view.QRCodeId.Should().BeNull("the scan stays in the statistics without its code");
     }
 
     // --- Editor preview ---

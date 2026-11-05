@@ -184,6 +184,9 @@
         if (await NotificationService.ShowConfirmation(("Delete QR Code",
                 $"Are you sure you want to delete the QR code “{code.Title}”?")))
         {
+            // Views keep their menu but lose the code: MenuView.QRCodeId is a NoAction foreign key
+            await DbContext.MenuViews.Where(v => v.QRCodeId == id)
+                .ExecuteUpdateAsync(s => s.SetProperty(v => v.QRCodeId, (Guid?)null));
             DbContext.QRCodes.Remove(code);
             await DbContext.SaveChangesAsync();
             codes!.RemoveAll(q => q.Id == id);
