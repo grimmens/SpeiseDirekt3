@@ -9,7 +9,7 @@ namespace SpeiseDirekt.Model
         public Guid Id { get; set; }
         [Required]
         public string Name { get; set; } = string.Empty;
-        [Required]
+        /// <summary>Optional (e.g. drinks); never null, empty when not set.</summary>
         public string Description { get; set; } = string.Empty;
         /// <summary>Position within the category (ascending, ties by name). New items get max + 1.</summary>
         public int SortOrder { get; set; }

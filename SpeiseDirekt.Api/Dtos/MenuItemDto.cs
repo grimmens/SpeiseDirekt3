@@ -7,8 +7,8 @@ public record MenuItemDto
     [Required]
     public string Name { get; init; } = string.Empty;
 
-    [Required]
-    public string Description { get; init; } = string.Empty;
+    /// <summary>Optional (e.g. drinks); stored as an empty string when missing.</summary>
+    public string? Description { get; init; }
 
     public List<Guid> AllergenIds { get; init; } = new();
 

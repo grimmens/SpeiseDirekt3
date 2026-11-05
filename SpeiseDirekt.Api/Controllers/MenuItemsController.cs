@@ -59,7 +59,7 @@ public class MenuItemsController : ControllerBase
         {
             Id = Guid.NewGuid(),
             Name = dto.Name,
-            Description = dto.Description,
+            Description = dto.Description ?? string.Empty,
             Allergens = allergens,
             Price = dto.Price,
             CategoryId = dto.CategoryId,
@@ -89,7 +89,7 @@ public class MenuItemsController : ControllerBase
         var menuItem = await _menuItemRepository.UpdateAsync(id, mi =>
         {
             mi.Name = dto.Name;
-            mi.Description = dto.Description;
+            mi.Description = dto.Description ?? string.Empty;
             mi.Allergens.Clear();
             foreach (var allergen in allergens)
                 mi.Allergens.Add(allergen);

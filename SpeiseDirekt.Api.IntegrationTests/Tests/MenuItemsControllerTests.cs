@@ -238,6 +238,26 @@ public class MenuItemsControllerTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task Create_And_Update_WithoutDescription_AreAccepted()
+    {
+        // Drinks often have no description; the field is optional and stored as an empty string
+        var json = $$"""{"name":"Almdudler 0,35 l","price":3.6,"categoryId":"{{TestSeedData.Category1Id}}"}""";
+
+        var createResponse = await Client.PostAsync("/api/menuitems", new StringContent(json, Encoding.UTF8, "application/json"));
+
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await createResponse.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions);
+        created!.Description.Should().BeEmpty();
+
+        var updateResponse = await Client.PutAsync($"/api/menuitems/{created.Id}",
+            new StringContent(json.Replace("3.6", "3.9"), Encoding.UTF8, "application/json"));
+        updateResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+        var updated = await updateResponse.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions);
+        updated!.Description.Should().BeEmpty();
+        updated.Price.Should().Be(3.9m);
+    }
+
+    [Fact]
     public async Task GetAll_ByCategory_IsInSortOrderThenName_NewItemsGoLast()
     {
         // Seeded "Caesar Salad" and "Tomato Soup" both have SortOrder 0, so they are alphabetical
