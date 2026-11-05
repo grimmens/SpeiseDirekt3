@@ -167,4 +167,52 @@ public class CategoriesControllerTests : BaseIntegrationTest
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
+
+    [Fact]
+    public async Task Create_WithoutSortOrder_GoesLast_AndGetAllIsInSortOrder()
+    {
+        // The seeded "Starters" has SortOrder 0
+        var appended = await PostAsync(new CategoryDto { Name = "Aperitifs", MenuId = TestSeedData.Menu1Id });
+        appended.SortOrder.Should().Be(1);
+        var top = await PostAsync(new CategoryDto { Name = "Zuppe", MenuId = TestSeedData.Menu1Id, SortOrder = -1 });
+        top.SortOrder.Should().Be(-1);
+
+        var categories = await Client.GetFromJsonAsync<List<Category>>($"/api/categories?menuId={TestSeedData.Menu1Id}", JsonOptions);
+        categories!.Select(c => c.Name).Should().Equal("Zuppe", "Starters", "Aperitifs");
+    }
+
+    [Fact]
+    public async Task GetAll_SameSortOrder_IsAlphabetical()
+    {
+        // Seed data: "Starters" and "Main Courses" both have SortOrder 0
+        var categories = await Client.GetFromJsonAsync<List<Category>>("/api/categories", JsonOptions);
+        categories!.Select(c => c.Name).Should().Equal("Main Courses", "Starters");
+    }
+
+    [Fact]
+    public async Task Update_KeepsSortOrder_UnlessGiven()
+    {
+        var withOrder = await PutAsync(new CategoryDto { Name = "Starters", MenuId = TestSeedData.Menu1Id, SortOrder = 5 });
+        withOrder.SortOrder.Should().Be(5);
+
+        var withoutOrder = await PutAsync(new CategoryDto { Name = "Vorspeisen", MenuId = TestSeedData.Menu1Id });
+        withoutOrder.Name.Should().Be("Vorspeisen");
+        withoutOrder.SortOrder.Should().Be(5);
+
+        async Task<Category> PutAsync(CategoryDto dto)
+        {
+            var response = await Client.PutAsync($"/api/categories/{TestSeedData.Category1Id}",
+                new StringContent(JsonSerializer.Serialize(dto, JsonOptions), Encoding.UTF8, "application/json"));
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            return (await response.Content.ReadFromJsonAsync<Category>(JsonOptions))!;
+        }
+    }
+
+    private async Task<Category> PostAsync(CategoryDto dto)
+    {
+        var response = await Client.PostAsync("/api/categories",
+            new StringContent(JsonSerializer.Serialize(dto, JsonOptions), Encoding.UTF8, "application/json"));
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<Category>(JsonOptions))!;
+    }
 }

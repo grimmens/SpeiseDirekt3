@@ -237,6 +237,44 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
+    [Fact]
+    public async Task GetAll_ByCategory_IsInSortOrderThenName_NewItemsGoLast()
+    {
+        // Seeded "Caesar Salad" and "Tomato Soup" both have SortOrder 0, so they are alphabetical
+        var appended = await PostAsync(new MenuItemDto { Name = "Antipasti", Price = 9m, CategoryId = TestSeedData.Category1Id });
+        appended.SortOrder.Should().Be(1);
+        var top = await PostAsync(new MenuItemDto { Name = "Zucchini Fritters", Price = 6m, CategoryId = TestSeedData.Category1Id, SortOrder = -1 });
+        top.SortOrder.Should().Be(-1);
+
+        var items = await Client.GetFromJsonAsync<List<MenuItemResponse>>($"/api/menuitems?categoryId={TestSeedData.Category1Id}", JsonOptions);
+        items!.Select(i => i.Name).Should().Equal("Zucchini Fritters", "Caesar Salad", "Tomato Soup", "Antipasti");
+    }
+
+    [Fact]
+    public async Task Update_KeepsSortOrder_UnlessGiven()
+    {
+        var dto = new MenuItemDto { Name = "Caesar Salad", Description = "Romaine", Price = 8.5m, CategoryId = TestSeedData.Category1Id, SortOrder = 7 };
+
+        (await PutAsync(dto)).SortOrder.Should().Be(7);
+        (await PutAsync(dto with { SortOrder = null, Price = 9m })).SortOrder.Should().Be(7);
+
+        async Task<MenuItemResponse> PutAsync(MenuItemDto body)
+        {
+            var response = await Client.PutAsync($"/api/menuitems/{TestSeedData.MenuItem1Id}",
+                new StringContent(JsonSerializer.Serialize(body, JsonOptions), Encoding.UTF8, "application/json"));
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            return (await response.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions))!;
+        }
+    }
+
+    private async Task<MenuItemResponse> PostAsync(MenuItemDto dto)
+    {
+        var response = await Client.PostAsync("/api/menuitems",
+            new StringContent(JsonSerializer.Serialize(dto, JsonOptions), Encoding.UTF8, "application/json"));
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        return (await response.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions))!;
+    }
+
     // Helper record for deserialization since MenuItem entity has navigation properties
     private record MenuItemResponse
     {
@@ -249,6 +287,7 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         public bool IsVegan { get; init; }
         public bool IsVegetarian { get; init; }
         public bool IsSpicy { get; init; }
+        public int SortOrder { get; init; }
     }
 
     private record AllergenResponse

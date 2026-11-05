@@ -65,7 +65,8 @@ public class MenuItemsController : ControllerBase
             CategoryId = dto.CategoryId,
             IsVegan = dto.IsVegan,
             IsVegetarian = dto.IsVegetarian,
-            IsSpicy = dto.IsSpicy
+            IsSpicy = dto.IsSpicy,
+            SortOrder = dto.SortOrder ?? await _menuItemRepository.NextSortOrderAsync(dto.CategoryId)
         };
 
         await _menuItemRepository.CreateAsync(menuItem);
@@ -97,6 +98,8 @@ public class MenuItemsController : ControllerBase
             mi.IsVegan = dto.IsVegan;
             mi.IsVegetarian = dto.IsVegetarian;
             mi.IsSpicy = dto.IsSpicy;
+            if (dto.SortOrder is { } sortOrder)
+                mi.SortOrder = sortOrder;
         });
 
         if (menuItem is null)
