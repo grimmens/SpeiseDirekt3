@@ -1,4 +1,5 @@
 ﻿@page "/qrcodes"
+@using System.Globalization
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
@@ -8,6 +9,7 @@
 @inject INotificationService NotificationService
 @inject IMenuItemGenerator MenuItemGenerator
 @inject IPermissionService PermissionService
+@inject IJSRuntime JS
 @inherits PaidTenantComponentBase
 @attribute [Authorize]
 
@@ -86,73 +88,56 @@
     else
     {
         <!-- QR Codes Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-3 gap-x-4 gap-y-4">
             @foreach (var qrCode in codes)
             {
-                <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-200 overflow-hidden group">
-                    <!-- Card Header -->
-                    <div class="p-6 border-b border-gray-100">
-                        <div class="flex items-start justify-between mb-4">
-                            <h3 class="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                                <a href="@($"qr/{qrCode.Id}")" target="_blank" rel="noopener noreferrer" class="hover:underline flex items-center">
-                                    @qrCode.Title
-                                    <svg class="w-4 h-4 ml-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                                    </svg>
-                                </a>
-                            </h3>
+                var mode = ModeOf(qrCode);
+                <div @key="qrCode.Id" class="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 p-3.5 sm:p-5" data-testid="qr-card">
+                    <div class="flex items-start gap-x-3.5 sm:gap-x-4">
+                        <!-- QR Code Preview (click to enlarge) -->
+                        <div class="flex-shrink-0 p-1.5 bg-gray-50 rounded-lg border border-gray-100">
+                            <QrCodePreview QrId="@qrCode.Id" ThumbnailSize="112" Title="@qrCode.Title" ImageClass="w-24 h-24 sm:w-28 sm:h-28" />
                         </div>
 
-                        <!-- QR Code Preview -->
-                        <div class="flex justify-center mb-4">
-                            <div class="p-3 bg-gray-50 rounded-lg">
-                                <QrCodePreview QrId="@qrCode.Id" ThumbnailSize="120" />
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <h3 class="text-base sm:text-lg font-bold text-gray-900 min-w-0 break-words">
+                                    <a href="@QrCodeLinks.GuestPath(qrCode.Id)" target="_blank" rel="noopener noreferrer" class="hover:text-blue-600 hover:underline">
+                                        @qrCode.Title&#8288;<svg class="inline w-4 h-4 ml-1 -mt-0.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                        </svg>
+                                    </a>
+                                </h3>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium @BadgeClass(mode)" data-testid="qr-mode">@mode</span>
                             </div>
+                            <p class="mt-1.5 text-sm text-gray-700 break-words" data-testid="qr-target">@TargetText(qrCode)</p>
+                            <p class="mt-1 text-xs text-gray-500 truncate" title="@GuestUrl(qrCode.Id)" data-testid="qr-url">@GuestUrl(qrCode.Id)</p>
                         </div>
                     </div>
 
-                    <!-- Card Body -->
-                    <div class="p-6">
-                        <div class="space-y-3 mb-6">
-                            <div class="flex items-center text-sm">
-                                <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    <!-- Actions -->
+                    <QrCodeShareActions QrId="@qrCode.Id" Title="@qrCode.Title" Class="mt-3.5">
+                        @if (canEditQr)
+                        {
+                            <button class="inline-flex items-center px-3.5 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200"
+                                    @onclick="() => Edit(qrCode.Id)">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                                 </svg>
-                                <span class="text-gray-600">Menu:</span>
-                                <span class="ml-1 font-medium text-gray-900">@qrCode.Menu?.Name</span>
-                            </div>
-                            <div class="flex items-center text-sm">
-                                <svg class="w-4 h-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                Edit
+                            </button>
+                        }
+                        @if (canDeleteQr)
+                        {
+                            <button class="inline-flex items-center px-2.5 py-2 border border-red-200 bg-white hover:bg-red-50 text-red-600 text-sm font-medium rounded-lg transition-colors duration-200"
+                                    title="Delete" aria-label="@($"Delete {qrCode.Title}")"
+                                    @onclick="() => Delete(qrCode.Id)">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                 </svg>
-                                <span class="text-gray-600">Created:</span>
-                                <span class="ml-1 text-gray-900">@qrCode.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy")</span>
-                            </div>
-                        </div>
-
-                        <!-- Actions -->
-                        <div class="flex space-x-3">
-                            @if (canEditQr)
-                            {
-                                <button class="flex-1 inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-                                        @onclick="() => Edit(qrCode.Id)">
-                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                    </svg>
-                                    Edit
-                                </button>
-                            }
-                            @if (canDeleteQr)
-                            {
-                                <button class="inline-flex items-center justify-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
-                                        @onclick="() => Delete(qrCode.Id)">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            }
-                        </div>
-                    </div>
+                            </button>
+                        }
+                    </QrCodeShareActions>
                 </div>
             }
         </div>
@@ -162,16 +147,26 @@
     private List<QRCode>? codes;
     private bool canEditQr, canDeleteQr;
 
+    private enum QrMode { Direct, Schedule, Calendar }
+
     protected override async Task OnInitializedAsync()
     {
         canEditQr = await PermissionService.HasPermissionAsync(Permission.QrCodesEdit);
         canDeleteQr = await PermissionService.HasPermissionAsync(Permission.QrCodesDelete);
         codes = await DbContext.QRCodes
             .Include(q => q.Menu)
+            .Include(q => q.TimeTableEntries!).ThenInclude(e => e.Menu)
+            .Include(q => q.CalendarEntries)
             .OrderByDescending(q => q.CreatedAt)
             .ToListAsync();
         await base.OnInitializedAsync();
         InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await JS.InvokeVoidAsync("import", "./js/qr-codes.js"); // "Copy link"
     }
 
     Task Create100Menus() => MenuItemGenerator.CreateMenus(async () => await OnInitializedAsync(), 10);
@@ -187,7 +182,7 @@
         if (code == null) return;
 
         if (await NotificationService.ShowConfirmation(("Delete QR Code",
-                $"Are you sure you want to delete the QR code for “{code.Menu.Name}”?")))
+                $"Are you sure you want to delete the QR code “{code.Title}”?")))
         {
             DbContext.QRCodes.Remove(code);
             await DbContext.SaveChangesAsync();
@@ -197,7 +192,45 @@
         await base.ReloadAuthState();
     }
 
-    // Generates the URL that the QR code points to:
-    string GetQrUrl(Guid qrId)
-        => $"{NavManager.BaseUri}qr/{qrId}";
+    // Calendar wins over the schedule, as in MenuService
+    private static QrMode ModeOf(QRCode q) =>
+        q.IsCalendarBased ? QrMode.Calendar : q.IsTimeTableBased ? QrMode.Schedule : QrMode.Direct;
+
+    private static string BadgeClass(QrMode mode) => mode switch
+    {
+        QrMode.Schedule => "bg-amber-100 text-amber-800",
+        QrMode.Calendar => "bg-violet-100 text-violet-800",
+        _ => "bg-blue-100 text-blue-800"
+    };
+
+    /// <summary>What a guest gets: the menu, the time windows, or the number of calendar entries and the fallback.</summary>
+    private static string TargetText(QRCode q)
+    {
+        switch (ModeOf(q))
+        {
+            case QrMode.Calendar:
+                var count = q.CalendarEntries?.Count ?? 0;
+                var otherwise = q.IsTimeTableBased ? $"otherwise the schedule: {ScheduleText(q)}"
+                    : q.Menu is { } fallback ? $"otherwise {fallback.Name}"
+                    : "otherwise no menu";
+                return $"{count} {(count == 1 ? "entry" : "entries")}, {otherwise}";
+            case QrMode.Schedule:
+                return ScheduleText(q);
+            default:
+                return q.Menu?.Name ?? "No menu selected";
+        }
+    }
+
+    /// <summary>Time windows as "11:00–14:00 Mittagskarte · 17:00–22:00 Gasthaus Zur Post".</summary>
+    private static string ScheduleText(QRCode q)
+    {
+        var entries = (q.TimeTableEntries ?? new()).OrderBy(e => e.StartTime).ToList();
+        if (entries.Count == 0)
+            return "No time windows yet";
+        return string.Join(" · ", entries.Select(e =>
+            $"{e.StartTime?.ToString("HH:mm", CultureInfo.InvariantCulture)}–{e.EndTime?.ToString("HH:mm", CultureInfo.InvariantCulture)} {e.Menu?.Name ?? "(no menu)"}"));
+    }
+
+    // The absolute URL the QR code encodes (shown and copied)
+    string GuestUrl(Guid qrId) => NavManager.BaseUri + QrCodeLinks.GuestPath(qrId);
 }
