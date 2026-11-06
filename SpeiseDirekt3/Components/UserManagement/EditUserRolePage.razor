@@ -13,7 +13,7 @@
 
 <PageTitle>Edit User - Speise-Direkt</PageTitle>
 
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-3xl mx-auto">
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-600 mb-6" aria-label="breadcrumb">
         <ol class="flex space-x-2">
@@ -35,7 +35,7 @@
     {
         <div class="space-y-6">
             <!-- User Info Card -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
                 <h2 class="text-xl font-bold text-gray-900 mb-4">User Details</h2>
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
@@ -67,7 +67,7 @@
             </div>
 
             <!-- Role Selection -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
                 <h2 class="text-lg font-bold text-gray-900 mb-4">Role</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     @foreach (var role in Enum.GetValues<TenantRole>())
@@ -83,7 +83,7 @@
             </div>
 
             <!-- Permission Overrides -->
-            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-bold text-gray-900">Permission Overrides</h2>
                     <button type="button" class="text-sm text-blue-600 hover:underline" @onclick="ResetToDefaults">

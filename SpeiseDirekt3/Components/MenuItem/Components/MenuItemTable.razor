@@ -1,6 +1,8 @@
 ﻿@using Microsoft.EntityFrameworkCore
+@using Microsoft.Extensions.Options
 @using SpeiseDirekt3.Components.Shared
 @using SpeiseDirekt.Data
+@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.Model
 @using Microsoft.AspNetCore.Components.Forms
 @using SpeiseDirekt.ServiceInterface
@@ -8,200 +10,183 @@
 @inject INotificationService NotificationService
 @inject IImageUploadService ImageUploadService
 @inject IPermissionService PermissionService
-
-<div class="mb-4 flex flex-col sm:flex-row gap-2 sm:gap-4">
-    @if (canCreate)
-    {
-        <button @onclick="CreateNewMenuItem"
-        class="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        disabled="@isWorking">
-            ➕ New Menu Entry
-        </button>
-
-        <button @onclick="CreateNewMenuEntries"
-        class="px-4 py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        disabled="@isWorking">
-            @if (isWorking)
-            {
-                <svg class="inline w-4 h-4 me-2 animate-spin text-white" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                </svg>
-                <span>Generating...</span>
-            }
-            else
-            {
-                <span>🍽️✨ Generate Menu Items</span>
-            }
-        </button>
-    }
-
-    @if (canDelete)
-    {
-        <button type="button"
-        class="px-4 py-2 text-sm font-medium rounded-lg bg-gray-500 text-white hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
-        @onclick="DeleteAll"
-        disabled="@isWorking">
-            Delete All
-        </button>
-    }
-</div>
-
+@inject IOptions<MenuItemGeneratorOptions> GeneratorOptions
 
 @if (Category != null)
 {
-    <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden mb-8">
-        <!-- Header -->
-        <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-4 sm:px-6 py-4">
-            <h5 class="text-lg sm:text-xl font-bold text-white mb-0">@Category.Name Menu Items</h5>
-        </div>
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200" data-testid="menu-items">
+        @if (errorMessage is not null)
+        {
+            <div class="mx-[1rem] sm:mx-6 mt-[1rem] rounded-lg border border-red-200 bg-red-50 px-[1rem] py-[0.75rem] text-sm text-red-700 flex items-start justify-between gap-3" role="alert">
+                <span>@errorMessage</span>
+                <button type="button" class="text-red-500 hover:text-red-700" aria-label="Dismiss" @onclick="() => errorMessage = null">&times;</button>
+            </div>
+        }
 
-        <!-- Body -->
-        <div class="p-4 sm:p-6">
-            @if (MenuItems.Any())
-            {
-                <!-- Desktop Table View -->
-                <div class="hidden xl:block overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-300">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @foreach (var item in PagedMenuItems)
-                            {
-                                <tr class="hover:bg-gray-50 transition-colors duration-200">
-                                    <td class="px-4 py-4 whitespace-nowrap">
-                                        <img src="@ImageUploadService.GetImageUrl(item.ImagePath)"
-                                        alt="@item.Name"
-                                        class="w-12 h-12 object-cover rounded-lg border border-gray-200" />
-                                    </td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">@item.Name</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-sm font-semibold text-blue-600">@item.Price.ToString("C")</td>
-                                    <td class="px-4 py-4 text-sm text-gray-600 max-w-[200px] truncate">@item.Description</td>
-                                    <td class="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <div class="flex justify-end flex-wrap gap-2">
-                                            @if (canEdit)
-                                            {
-                                                <button class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors"
-                                                @onclick="() => EditMenuItem(item)">
-                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                                    </svg>
-                                                    Edit
-                                                </button>
-                                            }
-                                            @if (canDelete)
-                                            {
-                                                <button class="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-md transition-colors"
-                                                @onclick="() => DeleteMenuItem(item.Id)">
-                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                    </svg>
-                                                    Delete
-                                                </button>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Mobile/Tablet Card View -->
-                <div class="xl:hidden space-y-4">
-                    @foreach (var item in PagedMenuItems)
-                    {
-                        <div class="bg-white rounded-lg shadow-md border border-gray-200 p-4 hover:shadow-lg transition-shadow duration-200">
-                            <div class="flex items-start space-x-4">
-                                <!-- Image -->
-                                <div class="flex-shrink-0">
-                                    <img src="@ImageUploadService.GetImageUrl(item.ImagePath)"
-                                    alt="@item.Name"
-                                    class="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-gray-200" />
-                                </div>
-
-                                <!-- Content -->
-                                <div class="flex-1 min-w-0">
-                                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-                                        <div class="flex-1">
-                                            <h3 class="text-lg font-semibold text-gray-900 mb-1">@item.Name</h3>
-                                            <p class="text-xl font-bold text-blue-600 mb-2">@item.Price.ToString("C")</p>
-                                            <p class="text-sm text-gray-600 line-clamp-2">@item.Description</p>
-                                        </div>
-
-                                        <!-- Actions -->
-                                        @if (canEdit || canDelete)
-                                        {
-                                            <div class="flex flex-row sm:flex-col gap-2 mt-3 sm:mt-0 sm:ml-4">
-                                                @if (canEdit)
-                                                {
-                                                    <button class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors flex-1 sm:flex-none justify-center"
-                                                    @onclick="() => EditMenuItem(item)">
-                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                                        </svg>
-                                                        Edit
-                                                    </button>
-                                                }
-                                                @if (canDelete)
-                                                {
-                                                    <button class="inline-flex items-center px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-md transition-colors flex-1 sm:flex-none justify-center"
-                                                    @onclick="() => DeleteMenuItem(item.Id)">
-                                                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                        </svg>
-                                                        Delete
-                                                    </button>
-                                                }
-                                            </div>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    }
-                </div>
-
-                <!-- Pagination -->
-                <div class="mt-6">
-                    <PaginationComponent CurrentPage="@currentPage"
-                    PageSize="@pageSize"
-                    TotalNumberOfItems="@MenuItems.Count"
-                    SetPage="@SetPageHandler" />
-                </div>
-            }
-            else
-            {
-                <!-- Empty State -->
-                <div class="text-center py-12">
-                    <div class="mx-auto h-16 w-16 text-gray-400 mb-4">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        @if (MenuItems.Any())
+        {
+            <!-- Toolbar -->
+            <div class="px-[1rem] sm:px-6 py-[0.75rem] border-b border-gray-200 flex flex-wrap items-center gap-2">
+                @if (canCreate)
+                {
+                    <button type="button" @onclick="CreateNewMenuItem"
+                            class="inline-flex items-center px-[1rem] py-2 text-sm font-medium rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                            disabled="@isWorking">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">No menu items</h3>
-                    <p class="text-gray-500 mb-6">Get started by adding your first menu item to this category.</p>
-                    @if (canCreate)
+                        New Menu Entry
+                    </button>
+                    @if (GeneratorEnabled)
                     {
-                        <button class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-                        @onclick="CreateNewMenuItem">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                            </svg>
-                            Add Menu Item
+                        @GenerateButton
+                    }
+                }
+                <div class="ml-auto flex items-center gap-2">
+                    <span class="text-sm text-gray-500" data-testid="menu-item-count">@MenuItems.Count item@(MenuItems.Count == 1 ? "" : "s")</span>
+                    @if (canDelete)
+                    {
+                        <button type="button"
+                                class="inline-flex items-center px-[0.75rem] py-2 text-sm font-medium rounded-lg border border-red-300 text-red-600 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                                @onclick="DeleteAll"
+                                disabled="@isWorking">
+                            Delete All
                         </button>
                     }
                 </div>
-            }
-        </div>
+            </div>
+
+            <!-- Desktop Table View -->
+            <div class="hidden xl:block overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            @if (canEdit)
+                            {
+                                <th class="pl-4 pr-1 py-[0.75rem] text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-px"><span class="sr-only">Order</span></th>
+                            }
+                            <th class="px-[0.75rem] py-[0.75rem] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-[0.75rem] py-[0.75rem] text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                            <th class="px-[0.75rem] py-[0.75rem] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Labels</th>
+                            <th class="px-[0.75rem] py-[0.75rem] text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            @if (canEdit || canDelete)
+                            {
+                                <th class="pl-[0.75rem] pr-4 py-[0.75rem] text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-px"><span class="sr-only">Actions</span></th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        @for (var i = 0; i < MenuItems.Count; i++)
+                        {
+                            var index = i;
+                            var item = MenuItems[index];
+                            <tr @key="item.Id" class="hover:bg-gray-50 transition-colors duration-150" data-testid="menu-item-row">
+                                @if (canEdit)
+                                {
+                                    <td class="pl-4 pr-1 py-2 whitespace-nowrap align-middle">@MoveButtons(item, index)</td>
+                                }
+                                <td class="px-[0.75rem] py-[0.75rem] text-sm font-medium text-gray-900 align-middle">
+                                    <div class="flex items-center gap-x-3 min-w-[10rem]">
+                                        @if (!string.IsNullOrEmpty(item.ImagePath))
+                                        {
+                                            <img src="@ImageUploadService.GetImageUrl(item.ImagePath)" alt=""
+                                                 class="w-9 h-9 flex-shrink-0 object-cover rounded-md border border-gray-200" />
+                                        }
+                                        <span>@item.Name</span>
+                                    </div>
+                                </td>
+                                <td class="px-[0.75rem] py-[0.75rem] whitespace-nowrap text-right text-sm font-semibold text-gray-900 tabular-nums align-middle">@PriceFormat.Euro(item.Price)</td>
+                                <td class="px-[0.75rem] py-[0.75rem] align-middle"><MenuItemLabels Item="item" ShowPlaceholder="true" /></td>
+                                <td class="px-[0.75rem] py-[0.75rem] text-sm text-gray-600 align-middle max-w-md">
+                                    @if (string.IsNullOrWhiteSpace(item.Description))
+                                    {
+                                        <span class="text-gray-300" aria-label="No description">—</span>
+                                    }
+                                    else
+                                    {
+                                        <p class="line-clamp-2 mb-0" title="@item.Description">@item.Description</p>
+                                    }
+                                </td>
+                                @if (canEdit || canDelete)
+                                {
+                                    <td class="pl-[0.75rem] pr-4 py-2 whitespace-nowrap align-middle">@ItemActions(item)</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Mobile/Tablet Card View -->
+            <ul class="xl:hidden divide-y divide-gray-100 list-none m-0 p-0">
+                @for (var i = 0; i < MenuItems.Count; i++)
+                {
+                    var index = i;
+                    var item = MenuItems[index];
+                    <li @key="item.Id" class="px-[1rem] py-[0.875rem] sm:px-6" data-testid="menu-item-card">
+                        <div class="flex items-start gap-x-3">
+                            @if (!string.IsNullOrEmpty(item.ImagePath))
+                            {
+                                <img src="@ImageUploadService.GetImageUrl(item.ImagePath)" alt=""
+                                     class="w-12 h-12 flex-shrink-0 object-cover rounded-lg border border-gray-200" />
+                            }
+                            <div class="min-w-0 flex-1">
+                                <div class="flex items-start justify-between gap-x-3">
+                                    <h3 class="text-base font-semibold text-gray-900 break-words mb-0">@item.Name</h3>
+                                    <span class="text-base font-semibold text-gray-900 whitespace-nowrap tabular-nums">@PriceFormat.Euro(item.Price)</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(item.Description))
+                                {
+                                    <p class="mt-1 mb-0 text-sm text-gray-600 line-clamp-2 break-words" title="@item.Description">@item.Description</p>
+                                }
+                                <MenuItemLabels Item="item" Class="mt-2" />
+                            </div>
+                        </div>
+                        @if (canEdit || canDelete)
+                        {
+                            <div class="mt-[0.75rem] flex items-center justify-between gap-2">
+                                <div>
+                                    @if (canEdit)
+                                    {
+                                        @MoveButtons(item, index)
+                                    }
+                                </div>
+                                @ItemActions(item)
+                            </div>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+        else
+        {
+            <!-- Empty State -->
+            <div class="text-center px-6 py-12" data-testid="menu-items-empty">
+                <div class="mx-auto h-12 w-12 text-gray-400 mb-3">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-1">No items in @Category.Name yet</h3>
+                <p class="text-sm text-gray-500 mb-6">Add the dishes or drinks guests can order in this category.</p>
+                @if (canCreate)
+                {
+                    <div class="flex flex-wrap justify-center gap-2">
+                        <button type="button" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
+                                @onclick="CreateNewMenuItem" disabled="@isWorking">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            New Menu Entry
+                        </button>
+                        @if (GeneratorEnabled)
+                        {
+                            @GenerateButton
+                        }
+                    </div>
+                }
+            </div>
+        }
     </div>
 }
 
@@ -240,19 +225,69 @@
     MenuItemEditor menuItemEditor;
 
     private bool isWorking;
-    // Pagination parameters.
-    private int currentPage = 1;
-    private int pageSize = 10;
+    private bool isMoving;
+    private string? errorMessage;
 
-    // Return only the items for the current page.
-    private IEnumerable<MenuItem> PagedMenuItems =>
-        MenuItems.Skip((currentPage - 1) * pageSize).Take(pageSize);
+    /// <summary>The Ollama generator only works where an Ollama server runs (configuration MenuItemGenerator:Enabled).</summary>
+    private bool GeneratorEnabled => GeneratorOptions.Value.Enabled;
 
-    // Update current page based on the pagination component's event.
-    private void SetPageHandler(int page)
-    {
-        currentPage = page;
-    }
+    /// <summary>Secondary button for the Ollama generator; rendered only when <see cref="GeneratorEnabled"/>.</summary>
+    private RenderFragment GenerateButton => @<button type="button" @onclick="CreateNewMenuEntries"
+                class="inline-flex items-center px-[1rem] py-2 text-sm font-medium rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                disabled="@isWorking">
+            @if (isWorking)
+            {
+                <svg class="inline w-4 h-4 me-2 animate-spin" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+                <span>Generating...</span>
+            }
+            else
+            {
+                <span>Generate Menu Items</span>
+            }
+        </button>;
+
+    private RenderFragment MoveButtons(MenuItem item, int index) => @<div class="flex items-center gap-0.5">
+        <button type="button" title="Move up" aria-label="@($"Move {item.Name} up")"
+                class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                disabled="@(index == 0 || isMoving)" @onclick="() => MoveMenuItem(item, -1)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+            </svg>
+        </button>
+        <button type="button" title="Move down" aria-label="@($"Move {item.Name} down")"
+                class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                disabled="@(index == MenuItems.Count - 1 || isMoving)" @onclick="() => MoveMenuItem(item, 1)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+    </div>;
+
+    private RenderFragment ItemActions(MenuItem item) => @<div class="flex items-center justify-end gap-1">
+        @if (canEdit)
+        {
+            <button type="button" title="Edit" aria-label="@($"Edit {item.Name}")"
+                    class="p-2 rounded-md text-gray-500 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                    @onclick="() => EditMenuItem(item)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+            </button>
+        }
+        @if (canDelete)
+        {
+            <button type="button" title="Delete" aria-label="@($"Delete {item.Name}")"
+                    class="p-2 rounded-md text-gray-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                    @onclick="() => DeleteMenuItem(item.Id)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        }
+    </div>;
 
     async Task OnCategoryChangedAsync()
     {
@@ -276,6 +311,7 @@
             MenuItems = await Context.MenuItems
                 .Include(m => m.Allergens)
                 .Where(m => m.CategoryId == Category.Id)
+                .InDisplayOrder()
                 .ToListAsync();
             availableAllergens = await Context.Allergens
                 .Where(a => a.MenuId == Category.MenuId)
@@ -289,16 +325,28 @@
         }
     }
 
-    async Task SaveAsync()
+    async Task MoveMenuItem(MenuItem item, int offset)
     {
-        if (!editContext.Validate()) return;
-
-        Input.CategoryId = Category.Id;
-        Context.MenuItems.Add(Input);
-        await Context.SaveChangesAsync();
-
-        Input = new MenuItem { CategoryId = Category.Id };
-        editContext = new EditContext(Input);
+        if (!canEdit || isMoving) return;
+        isMoving = true;
+        try
+        {
+            // Renumber all items of the category in their current order, then save the changed rows
+            var siblings = await Context.MenuItems
+                .Where(m => m.CategoryId == Category.Id)
+                .InDisplayOrder()
+                .ToListAsync();
+            if (DisplayOrder.Move(siblings, siblings.FindIndex(m => m.Id == item.Id), offset, (m, i) => m.SortOrder = i))
+                await Context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error moving menu item: {ex}");
+        }
+        finally
+        {
+            isMoving = false;
+        }
         await LoadItems();
     }
 
@@ -311,8 +359,19 @@
             var confirm = await NotificationService.ShowConfirmation(("Delete", $"Delete \"{item.Name}\"?"));
             if (confirm)
             {
-                Context.MenuItems.Remove(item);
-                await Context.SaveChangesAsync();
+                try
+                {
+                    // Guest click rows reference the item without cascade; they mean nothing without it
+                    await Context.MenuItemClicks.Where(c => c.MenuItemId == id).ExecuteDeleteAsync();
+                    Context.MenuItems.Remove(item);
+                    await Context.SaveChangesAsync();
+                }
+                catch (DbUpdateException ex)
+                {
+                    Console.WriteLine($"Error deleting menu item: {ex}");
+                    Context.ChangeTracker.Clear();
+                    errorMessage = $"\"{item.Name}\" could not be deleted. It is still used by a combo.";
+                }
                 await LoadItems();
             }
         }
@@ -334,9 +393,19 @@
     async Task HandleOk(MenuItem item)
     {
         if (item.Id == Guid.Empty)
+        {
+            // New items go to the end of their category
+            item.SortOrder = await Context.NextMenuItemSortOrderAsync(item.CategoryId);
             Context.Add(item);
+        }
         else
+        {
+            // Moved to another category in the editor: append it there
+            var entry = Context.Entry(item);
+            if (entry.State != EntityState.Detached && entry.Property(m => m.CategoryId).OriginalValue != item.CategoryId)
+                item.SortOrder = await Context.NextMenuItemSortOrderAsync(item.CategoryId);
             Context.MenuItems.Update(item);
+        }
         await Context.SaveChangesAsync();
         await LoadItems();
     }
@@ -349,16 +418,18 @@
 
     async Task CreateNewMenuEntries()
     {
+        if (!GeneratorEnabled) return;
         isWorking = true;
         try
         {
-            var newEntries = await MenuItemGenerator.CreateMockMenuEntriesAsync(Category, 10);
+            var newEntries = (await MenuItemGenerator.CreateMockMenuEntriesAsync(Category, 10)).ToList();
             if (newEntries.Any())
             {
+                await AppendInOrderAsync(newEntries);
                 await Context.AddRangeAsync(newEntries);
                 await Context.SaveChangesAsync();
                 await LoadItems();
-                Console.WriteLine($"Successfully generated {newEntries.Count()} AI menu items!");
+                Console.WriteLine($"Successfully generated {newEntries.Count} AI menu items!");
             }
             else
             {
@@ -378,11 +449,20 @@
         }
     }
 
+    /// <summary>Gives generated items consecutive SortOrder values after the existing items.</summary>
+    async Task AppendInOrderAsync(IEnumerable<MenuItem> items)
+    {
+        var next = await Context.NextMenuItemSortOrderAsync(Category.Id);
+        foreach (var item in items)
+            item.SortOrder = next++;
+    }
+
     async Task CreateFallbackMenuItems()
     {
         try
         {
             var fallbackItems = GenerateFallbackMenuItems(Category, 5);
+            await AppendInOrderAsync(fallbackItems);
             await Context.AddRangeAsync(fallbackItems);
             await Context.SaveChangesAsync();
             await LoadItems();
@@ -486,11 +566,31 @@
 
     async Task DeleteAll()
     {
-        if (!canDelete) return;
+        if (!canDelete || !MenuItems.Any()) return;
+        var count = MenuItems.Count;
+        var confirm = await NotificationService.ShowConfirmation(("Delete all items",
+            $"Delete all {count} item{(count == 1 ? "" : "s")} in \"{Category.Name}\"? This cannot be undone."));
+        if (!confirm) return;
+
         isWorking = true;
-        Context.RemoveRange(Context.MenuItems.Where(e => e.CategoryId == Category.Id));
-        await Context.SaveChangesAsync();
+        try
+        {
+            await Context.MenuItemClicks
+                .Where(c => Context.MenuItems.Any(i => i.Id == c.MenuItemId && i.CategoryId == Category.Id))
+                .ExecuteDeleteAsync();
+            Context.RemoveRange(Context.MenuItems.Where(e => e.CategoryId == Category.Id));
+            await Context.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            Console.WriteLine($"Error deleting all menu items: {ex}");
+            Context.ChangeTracker.Clear();
+            errorMessage = $"The items of \"{Category.Name}\" could not be deleted. Some of them are still used by a combo.";
+        }
+        finally
+        {
+            isWorking = false;
+        }
         await LoadItems();
-        isWorking = false;
     }
 }

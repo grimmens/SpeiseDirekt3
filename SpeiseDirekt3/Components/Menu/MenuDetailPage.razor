@@ -12,96 +12,132 @@
 <PageTitle>@(menu?.Name ?? "Menu") - Speise-Direkt</PageTitle>
 
 <!-- Header -->
-<div class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex items-center text-sm text-gray-500 mb-3">
-            <a href="menus" class="hover:text-blue-600 transition-colors">Menus</a>
-            <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+    <div class="p-[1rem] sm:p-6">
+        <nav class="flex items-center text-sm text-gray-500 mb-3 min-w-0" aria-label="Breadcrumb">
+            <a href="menus" class="hover:text-blue-600 transition-colors flex-shrink-0">Menus</a>
+            <svg class="mx-2 h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
-            <span class="text-gray-900 font-medium">@menu?.Name</span>
-        </div>
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <div class="flex items-center gap-3">
-                    <h1 class="text-3xl font-bold text-gray-900 font-display">@menu?.Name</h1>
+            <span class="text-gray-900 font-medium truncate">@menu?.Name</span>
+        </nav>
+        <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+            <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    <h1 class="text-3xl font-bold text-gray-900 font-display break-words min-w-0">@menu?.Name</h1>
                     @if (menu != null)
                     {
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" title="Design theme">
                             @menu.Theme
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" title="Menu language">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="mr-1 shrink-0" aria-hidden="true"><path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286zm1.634-.736L5.5 3.956h-.049l-.679 2.022z"/> <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm7.138 9.995q.289.451.63.846c-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6 6 0 0 1-.415-.492 2 2 0 0 1-.94.31"/></svg>@menu.Language
                         </span>
                     }
                 </div>
-                <p class="mt-1 text-gray-600">@menu?.Description</p>
-            </div>
-            <div class="mt-4 sm:mt-0 flex gap-2">
-                <a href="@($"menu/preview/{MenuId}")" target="_blank" rel="noopener noreferrer"
-                   class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                    Preview
-                </a>
-                @if (canEdit)
+                @if (menu != null)
                 {
-                    <button class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
-                            @onclick="EditMenu">
-                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                        </svg>
-                        Edit
-                    </button>
-                }
-                @if (canDelete)
-                {
-                    <button class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
-                            @onclick="DeleteMenu">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
+                    @if (string.IsNullOrWhiteSpace(menu.Description))
+                    {
+                        <p class="mt-1 italic text-gray-400">No description</p>
+                    }
+                    else
+                    {
+                        <p class="mt-1 text-gray-600 break-words">@menu.Description</p>
+                    }
                 }
             </div>
+            @if (menu != null)
+            {
+                <div class="flex flex-wrap gap-2 flex-shrink-0">
+                    <a href="@($"menu/preview/{MenuId}")" target="_blank" rel="noopener noreferrer" title="See the menu as your guests do (new tab)"
+                       class="inline-flex items-center px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Preview
+                    </a>
+                    @if (canEdit)
+                    {
+                        <button class="inline-flex items-center px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                                @onclick="EditMenu">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit
+                        </button>
+                    }
+                    @if (canDelete)
+                    {
+                        <button class="inline-flex items-center px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+                                title="Delete menu" aria-label="Delete menu"
+                                @onclick="DeleteMenu">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    }
+                </div>
+            }
         </div>
     </div>
 </div>
 
 <!-- Content -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    @if (menu == null)
+<div>
+    @if (!loaded)
     {
         <div class="flex items-center justify-center py-12">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             <span class="ml-3 text-gray-600">Loading...</span>
         </div>
     }
+    else if (menu == null)
+    {
+        <div class="text-center py-12" data-testid="menu-not-found">
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Menu not found</h2>
+            <p class="text-gray-600 mb-6">It may have been deleted.</p>
+            <a href="menus" class="inline-flex items-center px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">Back to menus</a>
+        </div>
+    }
     else
     {
         <!-- Stats Row -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center">
                 <div class="text-2xl font-bold text-gray-900">@categoryCount</div>
                 <div class="text-sm text-gray-500">Categories</div>
             </div>
-            <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+            <div class="bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center">
                 <div class="text-2xl font-bold text-gray-900">@menuItemCount</div>
                 <div class="text-sm text-gray-500">Menu Items</div>
             </div>
-            <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+            <div class="bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center">
                 <div class="text-2xl font-bold text-gray-900">@allergenCount</div>
                 <div class="text-sm text-gray-500">Allergens</div>
             </div>
-            <div class="bg-white rounded-lg border border-gray-200 p-4 text-center">
+            <div class="bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center">
                 <div class="text-2xl font-bold text-gray-900">@comboCount</div>
                 <div class="text-sm text-gray-500">Combos</div>
             </div>
+            <a href="qrcodes" class="group col-span-2 sm:col-span-1 bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center hover:border-blue-300 hover:shadow-sm transition-all duration-200"
+               data-testid="menu-qr-tile" title="QR codes that show this menu directly or through their schedule">
+                <div class="text-2xl font-bold text-gray-900">@qrCodeCount</div>
+                <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">
+                    @(qrCodeCount == 1 ? "QR Code" : "QR Codes") <span aria-hidden="true">&rarr;</span>
+                </div>
+                @if (qrCodeCount > directQrCodeCount)
+                {
+                    <div class="mt-1 text-xs text-gray-400">@directQrCodeCount direct, @(qrCodeCount - directQrCodeCount) via schedule</div>
+                }
+            </a>
         </div>
 
         <!-- Navigation Cards -->
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Manage</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Categories -->
-            <a href="@($"categories/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+            <a href="@($"categories/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200">
                 <div class="flex items-center mb-3">
                     <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                         <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -117,7 +153,7 @@
             </a>
 
             <!-- Menu Items -->
-            <a href="@($"menuitems/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+            <a href="@($"menuitems/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200">
                 <div class="flex items-center mb-3">
                     <div class="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
                         <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -133,7 +169,7 @@
             </a>
 
             <!-- Allergens -->
-            <a href="@($"allergens/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+            <a href="@($"allergens/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200">
                 <div class="flex items-center mb-3">
                     <div class="p-2 bg-amber-100 rounded-lg group-hover:bg-amber-200 transition-colors">
                         <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -149,7 +185,7 @@
             </a>
 
             <!-- Combos -->
-            <a href="@($"combos/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+            <a href="@($"combos/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200">
                 <div class="flex items-center mb-3">
                     <div class="p-2 bg-orange-100 rounded-lg group-hover:bg-orange-200 transition-colors">
                         <svg class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -165,7 +201,7 @@
             </a>
 
             <!-- Settings -->
-            <a href="@($"menu/edit/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
+            <a href="@($"menu/edit/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200">
                 <div class="flex items-center mb-3">
                     <div class="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
                         <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -180,24 +216,6 @@
                 </div>
                 <p class="text-sm text-gray-600">Configure menu name, design theme, and language</p>
             </a>
-
-            <!-- Preview -->
-            <a href="@($"menu/preview/{MenuId}")" target="_blank" rel="noopener noreferrer"
-               class="group bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md hover:border-blue-300 transition-all duration-200">
-                <div class="flex items-center mb-3">
-                    <div class="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                    </div>
-                    <div class="ml-3">
-                        <h3 class="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">Preview</h3>
-                        <p class="text-sm text-gray-500">Opens in new tab</p>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-600">See how your menu looks to customers</p>
-            </a>
         </div>
     }
 </div>
@@ -206,10 +224,12 @@
     [Parameter] public Guid MenuId { get; set; }
 
     private Menu? menu;
+    private bool loaded;
     private int categoryCount;
     private int menuItemCount;
     private int allergenCount;
     private int comboCount;
+    private int qrCodeCount, directQrCodeCount;
     private bool canEdit, canDelete;
 
     protected override async Task OnParametersSetAsync()
@@ -223,7 +243,12 @@
             menuItemCount = await DbContext.MenuItems.CountAsync(mi => DbContext.Categories.Any(c => c.MenuId == MenuId && c.Id == mi.CategoryId));
             allergenCount = await DbContext.Allergens.CountAsync(a => a.MenuId == MenuId);
             comboCount = await DbContext.MenuCombos.CountAsync(c => c.MenuId == MenuId);
+            directQrCodeCount = await DbContext.QRCodes.CountAsync(q => q.MenuId == MenuId);
+            qrCodeCount = await DbContext.QRCodes.CountAsync(q => q.MenuId == MenuId
+                || q.TimeTableEntries!.Any(t => t.MenuId == MenuId)
+                || q.CalendarEntries!.Any(c => c.MenuId == MenuId));
         }
+        loaded = true;
     }
 
     private void EditMenu()
@@ -235,12 +260,10 @@
     {
         if (menu == null || !canDelete) return;
 
-        var confirm = await NotificationService.ShowConfirmation(("Delete", $"Delete \"{menu.Name}\"?"));
-        if (confirm)
+        var message = await MenuPage.DeleteConfirmationTextAsync(DbContext, menu);
+        if (await NotificationService.ShowConfirmation(("Delete menu", message)))
         {
-            DbContext.QRCodes.RemoveRange(DbContext.QRCodes.Where(e => e.MenuId == menu.Id).ToList());
-            DbContext.Menus.Remove(menu);
-            await DbContext.SaveChangesAsync();
+            await MenuPage.DeleteMenuAsync(DbContext, menu.Id);
             NavManager.NavigateTo("/menus");
         }
     }

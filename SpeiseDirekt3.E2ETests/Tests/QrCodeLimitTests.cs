@@ -55,4 +55,29 @@ public class QrCodeLimitTests : BackOfficeTestBase
         await Assertions.Expect(CreateButton).ToBeDisabledAsync();
         await Assertions.Expect(Page.GetByText("Cannot create a new QR code at this time")).ToBeVisibleAsync();
     }
+
+    [Fact]
+    public async Task FreeTier_With100QrCodes_DirectCreateUrl_RedirectsToList()
+    {
+        await SetUpOwnerWithQrCodesAsync(100);
+
+        // The limit is enforced on /qrcode/edit itself, not only by the disabled button
+        await GotoInteractiveAsync("/qrcode/edit");
+
+        await Assertions.Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/qrcodes$"));
+        await Assertions.Expect(Page.Locator("#qrTitle")).ToHaveCountAsync(0);
+        await Assertions.Expect(CreateButton).ToBeDisabledAsync();
+    }
+
+    [Fact]
+    public async Task FreeTier_With100QrCodes_EditingAnExistingQrCode_IsStillAllowed()
+    {
+        await SetUpOwnerWithQrCodesAsync(100);
+        await GotoInteractiveAsync("/qrcodes");
+
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Edit" }).First.ClickAsync();
+
+        await Assertions.Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/qrcode/edit/"));
+        await Assertions.Expect(Page.Locator("#qrTitle")).ToBeVisibleAsync();
+    }
 }

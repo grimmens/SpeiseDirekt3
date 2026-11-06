@@ -12,16 +12,16 @@
 <PageTitle>Menus - Speise-Direkt</PageTitle>
 
 <!-- Header Section -->
-<div class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+    <div class="p-[1rem] sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900 font-display">Your Menus</h1>
                 <p class="mt-2 text-gray-600">Create and manage your restaurant's digital menus</p>
             </div>
             @if (canCreate)
             {
-                <div class="mt-4 sm:mt-0">
+                <div>
                     <button class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                             @onclick="CreateNewMenu">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,27 +36,28 @@
 </div>
 
 <!-- Content Section -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    @if (menus == null)
-    {
-        <!-- Loading State -->
-        <div class="flex items-center justify-center py-12">
-            <div class="flex items-center space-x-3">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span class="text-lg text-gray-600">Loading menus...</span>
-            </div>
+@if (cards == null)
+{
+    <!-- Loading State -->
+    <div class="flex items-center justify-center py-12">
+        <div class="flex items-center space-x-3">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span class="text-lg text-gray-600">Loading menus...</span>
         </div>
-    }
-    else if (!menus.Any())
-    {
-        <!-- Empty State -->
-        <div class="text-center py-12">
-            <div class="mx-auto h-24 w-24 text-gray-400 mb-6">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                </svg>
-            </div>
-            <h3 class="text-xl font-semibold text-gray-900 mb-2">No menus yet</h3>
+    </div>
+}
+else if (!cards.Any())
+{
+    <!-- Empty State -->
+    <div class="text-center py-12">
+        <div class="mx-auto h-24 w-24 text-gray-400 mb-6">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+        </div>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">No menus yet</h3>
+        @if (canCreate)
+        {
             <p class="text-gray-600 mb-6">Get started by creating your first digital menu</p>
             <button class="inline-flex items-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                     @onclick="CreateNewMenu">
@@ -65,66 +66,113 @@
                 </svg>
                 Create Your First Menu
             </button>
-        </div>
-    }
-    else
-    {
-        <!-- Menus Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            @foreach (var menu in menus)
-            {
-                <a href="@($"menudetail/{menu.Id}")" class="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-200 overflow-hidden group block">
-                    <div class="p-4">
-                        <div class="flex items-start justify-between mb-1">
-                            <h3 class="text-sm font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate">
-                                @menu.Name
-                            </h3>
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 flex-shrink-0 ml-2">
-                                @menu.Theme
-                            </span>
-                        </div>
-                        <p class="text-gray-500 text-xs line-clamp-2">@menu.Description</p>
+        }
+        else
+        {
+            <p class="text-gray-600">Menus created in your restaurant's account appear here.</p>
+        }
+    </div>
+}
+else
+{
+    <!-- Menus Grid: the card body links to the menu, the actions sit below it (never inside the link) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
+        @foreach (var card in cards)
+        {
+            var menu = card.Menu;
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200 flex flex-col" data-testid="menu-card">
+                <a href="@($"menudetail/{menu.Id}")" class="group block flex-1 p-[1rem] sm:p-6 rounded-t-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500">
+                    <h3 class="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors break-words">@menu.Name</h3>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium @ThemeBadgeClass(menu.Theme)" title="Design theme">@menu.Theme</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" title="Menu language">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="mr-1 shrink-0" aria-hidden="true"><path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286zm1.634-.736L5.5 3.956h-.049l-.679 2.022z"/> <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm7.138 9.995q.289.451.63.846c-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6 6 0 0 1-.415-.492 2 2 0 0 1-.94.31"/></svg>@menu.Language
+                        </span>
                     </div>
-                    @if (canEdit || canDelete)
+                    @if (string.IsNullOrWhiteSpace(menu.Description))
                     {
-                        <div class="px-4 pb-3 flex justify-end gap-2" @onclick:stopPropagation="true">
-                            @if (canEdit)
-                            {
-                                <button class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors"
-                                        @onclick="() => EditMenu(menu.Id)">
-                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                    </svg>
-                                    Edit
-                                </button>
-                            }
-                            @if (canDelete)
-                            {
-                                <button class="inline-flex items-center px-2 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-md transition-colors"
-                                        @onclick="() => DeleteMenu(menu.Id)">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            }
-                        </div>
+                        <p class="mt-3 text-sm italic text-gray-400">No description</p>
                     }
+                    else
+                    {
+                        <p class="mt-3 text-sm text-gray-600 line-clamp-2">@menu.Description</p>
+                    }
+                    <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-500" data-testid="menu-card-counts">
+                        <span class="inline-flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="mr-1.5 text-gray-400 shrink-0" aria-hidden="true"><path d="M2.5 3.5a.5.5 0 0 1 0-1h11a.5.5 0 0 1 0 1zm2-2a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1zM0 13a1.5 1.5 0 0 0 1.5 1.5h13A1.5 1.5 0 0 0 16 13V6a1.5 1.5 0 0 0-1.5-1.5h-13A1.5 1.5 0 0 0 0 6zm1.5.5A.5.5 0 0 1 1 13V6a.5.5 0 0 1 .5-.5h13a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5z"/></svg>@Count(card.Categories, "category", "categories")</span>
+                        <span class="inline-flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="mr-1.5 text-gray-400 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2m0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2"/></svg>@Count(card.Items, "item", "items")</span>
+                        <span class="inline-flex items-center"><svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="mr-1.5 text-gray-400 shrink-0" aria-hidden="true"><path d="M2 2h2v2H2z"/> <path d="M6 0v6H0V0zM5 1H1v4h4zM4 12H2v2h2z"/> <path d="M6 10v6H0v-6zm-5 1v4h4v-4zm11-9h2v2h-2z"/> <path d="M10 0v6h6V0zm5 1v4h-4V1zM8 1V0h1v2H8v2H7V1zm0 5V4h1v2zM6 8V7h1V6h1v2h1V7h5v1h-4v1H7V8zm0 0v1H2V8H1v1H0V7h3v1zm10 1h-1V7h1zm-1 0h-1v2h2v-1h-1zm-4 0h2v1h-1v1h-1zm2 3v-1h-1v1h-1v1H9v1h3v-2zm0 0h3v1h-2v1h-1zm-4-1v1h1v-2H7v1z"/> <path d="M7 12h1v3h4v1H7zm9 2v2h-3v-1h2v-1z"/></svg>@Count(card.QrCodes, "QR code", "QR codes")</span>
+                    </div>
                 </a>
-            }
-        </div>
-    }
-</div>
+                <div class="flex flex-wrap items-center gap-2 border-t border-gray-100 px-[1rem] sm:px-6 py-3">
+                    <a href="@($"menudetail/{menu.Id}")"
+                       class="inline-flex items-center px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors">
+                        Open
+                    </a>
+                    @if (canEdit)
+                    {
+                        <button class="inline-flex items-center px-2.5 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
+                                @onclick="() => EditMenu(menu.Id)">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Edit
+                        </button>
+                    }
+                    <a href="@($"menu/preview/{menu.Id}")" target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center px-2.5 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Preview
+                    </a>
+                    @if (canDelete)
+                    {
+                        <button class="ml-auto inline-flex items-center justify-center w-9 h-9 rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+                                title="Delete menu" aria-label="@($"Delete menu {menu.Name}")"
+                                @onclick="() => DeleteMenu(card)">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
 
 @code {
-    private List<Menu> menus = new();
+    private List<MenuCard>? cards;
     private bool canCreate, canEdit, canDelete;
+
+    private sealed class MenuCard
+    {
+        public required Menu Menu { get; init; }
+        public int Categories { get; init; }
+        public int Items { get; init; }
+        /// <summary>QR codes showing this menu directly or through a time table / calendar entry.</summary>
+        public int QrCodes { get; init; }
+    }
 
     protected override async Task OnInitializedAsync()
     {
         canCreate = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
         canEdit = await PermissionService.HasPermissionAsync(Permission.MenusEdit);
         canDelete = await PermissionService.HasPermissionAsync(Permission.MenusDelete);
-        menus = await DbContext.Menus.ToListAsync();
+
+        // One query: the menus with their counts as correlated subqueries (query filters apply to all of them)
+        cards = await DbContext.Menus
+            .OrderBy(m => m.Name)
+            .Select(m => new MenuCard
+            {
+                Menu = m,
+                Categories = m.Categories!.Count(),
+                Items = m.Categories!.SelectMany(c => c.MenuItems!).Count(),
+                QrCodes = DbContext.QRCodes.Count(q => q.MenuId == m.Id
+                    || q.TimeTableEntries!.Any(t => t.MenuId == m.Id)
+                    || q.CalendarEntries!.Any(c => c.MenuId == m.Id))
+            })
+            .ToListAsync();
     }
 
     private void CreateNewMenu()
@@ -139,25 +187,83 @@
         NavManager.NavigateTo($"/menu/edit/{menuId}");
     }
 
-    private async Task DeleteMenu(Guid menuId)
+    private async Task DeleteMenu(MenuCard card)
     {
         if (!canDelete) return;
-        var menu = await DbContext.Menus.FindAsync(menuId);
-        if (menu != null)
-        {
-            var confirm = await NotificationService
-                .ShowConfirmation(("Delete", $"Delete \"{menu.Name}\"?"));
 
-            if (confirm)
-            {
-                DbContext.QRCodes.RemoveRange(DbContext.QRCodes.Where(e => e.MenuId == menu.Id).ToList());
-                DbContext.Menus.Remove(menu);
-                await DbContext.SaveChangesAsync();
+        var message = await DeleteConfirmationTextAsync(DbContext, card.Menu);
+        if (!await NotificationService.ShowConfirmation(("Delete menu", message))) return;
 
-                // Remove from local list to update UI instantly
-                menus.Remove(menu);
-                StateHasChanged();
-            }
-        }
+        await DeleteMenuAsync(DbContext, card.Menu.Id);
+
+        // Remove from local list to update UI instantly
+        cards?.Remove(card);
+        StateHasChanged();
+    }
+
+    private static string Count(int count, string singular, string plural) =>
+        $"{count} {(count == 1 ? singular : plural)}";
+
+    private static string ThemeBadgeClass(DesignTheme theme) => theme switch
+    {
+        DesignTheme.Elegant => "bg-purple-100 text-purple-800",
+        DesignTheme.Modern => "bg-blue-100 text-blue-800",
+        DesignTheme.Classic => "bg-amber-100 text-amber-800",
+        DesignTheme.Minimal => "bg-gray-100 text-gray-700",
+        DesignTheme.Fancy => "bg-pink-100 text-pink-800",
+        DesignTheme.Dark => "bg-gray-800 text-white",
+        _ => "bg-gray-100 text-gray-700"
+    };
+
+    /// <summary>
+    /// Confirmation text for deleting <paramref name="menu"/> (also used by the menu detail page). Names the
+    /// QR codes that are deleted with it and the other QR codes whose schedule loses entries.
+    /// </summary>
+    internal static async Task<string> DeleteConfirmationTextAsync(ApplicationDbContext db, Menu menu)
+    {
+        var text = $"Delete \"{menu.Name}\" with its categories and items?";
+
+        var directQrCodes = await db.QRCodes.CountAsync(q => q.MenuId == menu.Id);
+        if (directQrCodes > 0)
+            text += directQrCodes == 1
+                ? " This also deletes 1 QR code pointing at this menu."
+                : $" This also deletes {directQrCodes} QR codes pointing at this menu.";
+
+        var scheduledQrCodes = await db.QRCodes.CountAsync(q => q.MenuId != menu.Id
+            && (q.TimeTableEntries!.Any(t => t.MenuId == menu.Id) || q.CalendarEntries!.Any(c => c.MenuId == menu.Id)));
+        if (scheduledQrCodes > 0)
+            text += scheduledQrCodes == 1
+                ? " It is also removed from the schedule of 1 other QR code."
+                : $" It is also removed from the schedules of {scheduledQrCodes} other QR codes.";
+
+        return text;
+    }
+
+    /// <summary>
+    /// Deletes a menu of the current tenant together with everything that cannot exist without it: its QR codes
+    /// (as before), allergens and combos, and its analytics rows (like <c>MenuRepository.DeleteAsync</c> in the API).
+    /// Those relationships are configured without cascading, so the database would reject the delete otherwise.
+    /// Categories, items and time table / calendar entries pointing at the menu cascade in the database.
+    /// </summary>
+    internal static async Task DeleteMenuAsync(ApplicationDbContext db, Guid menuId)
+    {
+        var menu = await db.Menus.FindAsync(menuId); // tenant query filter applies
+        if (menu is null) return;
+
+        await using var transaction = await db.Database.BeginTransactionAsync();
+
+        await db.MenuItemClicks.Where(c => c.MenuId == menuId).ExecuteDeleteAsync();
+        await db.MenuViews.Where(v => v.MenuId == menuId).ExecuteDeleteAsync();
+        // Views that a deleted QR code led to another menu (time table / calendar) stay, without the QR code
+        await db.MenuViews
+            .Where(v => v.QRCodeId != null && db.QRCodes.Any(q => q.Id == v.QRCodeId && q.MenuId == menuId))
+            .ExecuteUpdateAsync(s => s.SetProperty(v => v.QRCodeId, (Guid?)null));
+        await db.QRCodes.Where(q => q.MenuId == menuId).ExecuteDeleteAsync();
+        await db.MenuCombos.Where(c => c.MenuId == menuId).ExecuteDeleteAsync();
+        await db.Allergens.Where(a => a.MenuId == menuId).ExecuteDeleteAsync();
+
+        db.Menus.Remove(menu);
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
 }

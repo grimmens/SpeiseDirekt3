@@ -128,8 +128,11 @@ namespace SpeiseDirekt.Model
                         }
                     }
 
-                    // Check for overlapping date ranges
+                    // Check for overlapping date ranges. A single date (or date range) beats a weekly entry on
+                    // the same day (MenuService), so only entries of the same kind collide: two date ranges, or
+                    // two weekly entries on the same weekday whose periods overlap.
                     var sortedCalendar = CalendarEntries
+                        .Where(e => e.RecurringDayOfWeek == null)
                         .OrderBy(e => e.Date)
                         .ToList();
 
@@ -147,6 +150,27 @@ namespace SpeiseDirekt.Model
                                 new[] { nameof(CalendarEntries) }
                             );
                             yield break;
+                        }
+                    }
+
+                    foreach (var weekday in CalendarEntries.Where(e => e.RecurringDayOfWeek != null).GroupBy(e => e.RecurringDayOfWeek!.Value))
+                    {
+                        var sortedWeekly = weekday.OrderBy(e => e.Date).ToList();
+                        for (int i = 1; i < sortedWeekly.Count; i++)
+                        {
+                            var prev = sortedWeekly[i - 1];
+                            var curr = sortedWeekly[i];
+
+                            // Without an end date a weekly entry repeats forever
+                            if ((prev.EndDate ?? DateOnly.MaxValue) >= curr.Date)
+                            {
+                                var dayName = System.Globalization.CultureInfo.GetCultureInfo("de-DE").DateTimeFormat.GetDayName(weekday.Key);
+                                yield return new ValidationResult(
+                                    $"Die wöchentlichen Einträge am {dayName} überschneiden sich: ab {prev.Date:dd.MM.yyyy}{(prev.EndDate is { } end ? $" bis {end:dd.MM.yyyy}" : "")} und ab {curr.Date:dd.MM.yyyy}.",
+                                    new[] { nameof(CalendarEntries) }
+                                );
+                                yield break;
+                            }
                         }
                     }
                 }

@@ -94,9 +94,24 @@ public class PermissionTests : BackOfficeTestBase
         await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/users$"));
         await Assertions.Expect(employee.GetByPlaceholder("employee@example.com")).ToHaveCountAsync(0);
 
-        // Creating a QR code requires QrCodesCreate
-        await GotoInteractiveAsync(employee, "/qrcode/edit");
-        await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/qrcodes$"));
+        // Creating a QR code requires QrCodesCreate; the redirect target /qrcodes needs QrCodesView,
+        // which an Employee does not have either → access denied
+        await employee.GotoAsync("/qrcode/edit");
+        await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/Account/AccessDenied$"));
         await Assertions.Expect(employee.Locator("#qrTitle")).ToHaveCountAsync(0);
+    }
+
+    [Fact]
+    public async Task Employee_QrCodeList_IsDenied()
+    {
+        var (_, employee) = await SetUpOwnerAndEmployeeAsync("QR Menü");
+        await CreateDirectQrViaUiAsync("Owner Tisch 1", "QR Menü"); // owner (Page) creates a QR code
+
+        // Employees have no QrCodesView permission
+        await employee.GotoAsync("/qrcodes");
+
+        await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/Account/AccessDenied$"));
+        await Assertions.Expect(employee.GetByRole(AriaRole.Heading, new() { Name = "Access denied" })).ToBeVisibleAsync();
+        await Assertions.Expect(employee.GetByText("Owner Tisch 1")).ToHaveCountAsync(0);
     }
 }

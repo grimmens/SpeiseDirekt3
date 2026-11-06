@@ -1,11 +1,14 @@
 ﻿@inherits LayoutComponentBase
+@using System.Security.Claims
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
 
 <div class="min-h-screen bg-gray-50 flex">
     <!-- Sidebar -->
     <div class="hidden lg:flex lg:flex-shrink-0">
         <div class="flex flex-col w-64">
             <div class="flex flex-col flex-grow bg-gradient-to-b from-blue-900 via-blue-800 to-blue-900 overflow-y-auto shadow-xl">
-                <NavMenu />
+                <NavMenu DisplayName="@userDisplayName" RoleLabel="@userRoleLabel" />
             </div>
         </div>
     </div>
@@ -22,7 +25,7 @@
                     </svg>
                 </button>
             </div>
-            <NavMenu />
+            <NavMenu DisplayName="@userDisplayName" RoleLabel="@userRoleLabel" />
         </div>
     </div>
 
@@ -47,7 +50,7 @@
         <!-- Page content -->
         <main class="flex-1 relative overflow-y-auto focus:outline-none">
             <div class="py-6">
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="max-w-7xl mx-auto px-[1rem] sm:px-6 lg:px-8">
                     @Body
                 </div>
             </div>
@@ -82,4 +85,58 @@
             sidebar.style.display = 'none';
         }
     }
+
+    // The overlay is opened by script, so Blazor's navigation does not reset it: close it as soon as a
+    // link inside it is followed (the expand/collapse buttons of the menu tree keep it open) or on Escape.
+    if (!window.mobileSidebarAutoClose) {
+        window.mobileSidebarAutoClose = true;
+        const closeMobileSidebar = () => {
+            const sidebar = document.getElementById('mobile-sidebar');
+            if (sidebar) sidebar.style.display = 'none';
+        };
+        document.addEventListener('click', e => {
+            if (e.target instanceof Element && e.target.closest('#mobile-sidebar a[href]')) closeMobileSidebar();
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') closeMobileSidebar();
+        });
+    }
 </script>
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private string? userDisplayName;
+    private string? userRoleLabel;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is null) return;
+        var user = (await AuthState).User;
+        if (user.Identity?.IsAuthenticated != true) return;
+
+        var tenantOwnerId = user.FindFirstValue("TenantOwnerId");
+        if (string.IsNullOrEmpty(tenantOwnerId))
+        {
+            userRoleLabel = "Owner";
+            return;
+        }
+
+        // Sub-account: show the name the owner gave it (falls back to the e-mail in NavMenu)
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var tenantUser = await db.TenantUsers.AsNoTracking()
+            .Where(tu => tu.ApplicationUserId == userId && tu.TenantOwnerId == tenantOwnerId)
+            .Select(tu => new { tu.DisplayName, tu.Role })
+            .FirstOrDefaultAsync();
+        if (tenantUser is null) return;
+        userDisplayName = string.IsNullOrWhiteSpace(tenantUser.DisplayName) ? null : tenantUser.DisplayName;
+        userRoleLabel = RoleName(tenantUser.Role);
+    }
+
+    private static string RoleName(TenantRole role) => role switch
+    {
+        TenantRole.GeneralManager => "General manager",
+        _ => role.ToString()
+    };
+}

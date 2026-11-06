@@ -8,14 +8,16 @@
 
 <!-- Modern Modal Overlay -->
 <div class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 @(isVisible ? "" : "hidden")" id="menuItemEditModal">
-    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    @* Header and footer stay put, only the fields scroll: Save is always reachable on short screens *@
+    <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden"
+         role="dialog" aria-modal="true" aria-labelledby="menuItemEditModalTitle">
         <!-- Modal Header -->
-        <div class="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4 rounded-t-xl">
+        <div class="flex-shrink-0 bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 px-6 py-4">
             <div class="flex items-center justify-between">
-                <h3 class="text-xl font-bold text-white">
+                <h3 class="text-xl font-bold text-white mb-0" id="menuItemEditModalTitle">
                     @(Input.Id == Guid.Empty ? "Add New Menu Item" : "Edit Menu Item")
                 </h3>
-                <button type="button" class="text-white hover:text-gray-200 transition-colors" @onclick="Cancel">
+                <button type="button" class="text-white hover:text-gray-200 transition-colors" aria-label="Close" @onclick="Cancel">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -23,11 +25,11 @@
             </div>
         </div>
 
-        <!-- Modal Body -->
-        <div class="p-6">
-            <EditForm @ref="editForm" EditContext="editContext" OnSubmit="OnSubmit" class="space-y-6">
-                <DataAnnotationsValidator />
+        <EditForm @ref="editForm" EditContext="editContext" OnSubmit="OnSubmit" class="flex flex-col flex-1 min-h-0">
+            <DataAnnotationsValidator />
 
+            <!-- Modal Body -->
+            <div class="flex-1 min-h-0 overflow-y-auto p-6 space-y-6">
                 <!-- Image Upload Section -->
                 <div class="space-y-4">
                     <label class="block text-sm font-medium text-gray-700">Menu Item Image</label>
@@ -69,7 +71,7 @@
 
                 <!-- Description Field -->
                 <div class="space-y-2">
-                    <label for="MenuItem.Description" class="block text-sm font-medium text-gray-700">Description *</label>
+                    <label for="MenuItem.Description" class="block text-sm font-medium text-gray-700">Description <span class="font-normal text-gray-400">(optional)</span></label>
                     <InputTextArea @bind-Value="Input.Description" id="MenuItem.Description" rows="4"
                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" />
                     <ValidationMessage For="() => Input.Description" class="text-red-600 text-sm" />
@@ -126,7 +128,7 @@
 
                 <!-- Price Field -->
                 <div class="space-y-2">
-                    <label for="MenuItem.Price" class="block text-sm font-medium text-gray-700">Price *</label>
+                    <label for="MenuItem.Price" class="block text-sm font-medium text-gray-700">Price (€) *</label>
                     <InputNumber @bind-Value="Input.Price" id="MenuItem.Price"
                                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
                     <ValidationMessage For="() => Input.Price" class="text-red-600 text-sm" />
@@ -145,9 +147,10 @@
                     </InputSelect>
                     <ValidationMessage For="() => Input.CategoryId" class="text-red-600 text-sm" />
                 </div>
+            </div>
 
-                <!-- Modal Footer -->
-                <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+            <!-- Modal Footer -->
+            <div class="flex-shrink-0 flex justify-between items-center px-6 py-[1rem] border-t border-gray-200 bg-gray-50">
                     <button type="button" @onclick="Cancel"
                             class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                         Cancel
@@ -167,9 +170,8 @@
                             <span>Save Menu Item</span>
                         }
                     </button>
-                </div>
-            </EditForm>
-        </div>
+            </div>
+        </EditForm>
     </div>
 </div>
 
