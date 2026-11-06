@@ -99,6 +99,10 @@ public class AdminScreenshotTour : BackOfficeTestBase
         await Shot("qrcodes", "/qrcodes");
         await Shot("qrcode-edit-timetable", $"/qrcode/edit/{s.TimeTableQrId}");
         await Shot("analytics", "/analytics");
+        await Shot("menu-edit", $"/menu/edit/{s.MenuId}");
+        await Shot("allergens", $"/allergens/{s.MenuId}");
+        await Shot("combos", $"/combos/{s.MenuId}");
+        await Shot("users", "/users");
 
         if (phoneSubset)
         {
@@ -116,16 +120,12 @@ public class AdminScreenshotTour : BackOfficeTestBase
             await p.GetByRole(AriaRole.Button, new() { Name = "New Menu Entry" }).ClickAsync();
             await Assertions.Expect(p.Locator("#menuItemEditModal")).ToBeVisibleAsync();
         });
-        await Shot("menu-edit", $"/menu/edit/{s.MenuId}");
         await Shot("menu-new", "/menu/edit");
         await Shot("menudetail-empty-menu", $"/menudetail/{s.EmptyMenuId}");
         await Shot("categories-empty-menu", $"/Categories/{s.EmptyMenuId}");
         await Shot("menuitems-empty-menu", $"/MenuItems/{s.EmptyMenuId}");
-        await Shot("allergens", $"/allergens/{s.MenuId}");
-        await Shot("combos", $"/combos/{s.MenuId}");
         await Shot("qrcode-new", "/qrcode/edit");
         await Shot("qrcode-edit-calendar", $"/qrcode/edit/{s.CalendarQrId}");
-        await Shot("users", "/users");
         await Shot("users-invite", "/users/invite");
         await Shot("users-edit", $"/users/edit/{s.TenantUserId}");
 

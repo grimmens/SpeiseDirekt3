@@ -23,6 +23,12 @@ namespace SpeiseDirekt3
         /// </summary>
         public const string E2EEnvironment = "E2E";
 
+        /// <summary>
+        /// Environment of the PR preview on server2 (<c>ASPNETCORE_ENVIRONMENT=Preview</c>): production code paths plus
+        /// <c>appsettings.Preview.json</c>; <see cref="Preview.PreviewSeedHostedService"/> adds demo data at startup.
+        /// </summary>
+        public const string PreviewEnvironment = "Preview";
+
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
@@ -175,6 +181,14 @@ namespace SpeiseDirekt3
                 builder.Services.AddHostedService<E2EDatabaseInitializer>();
                 // Static web assets (_content/*, scoped CSS) are only enabled automatically in Development
                 builder.WebHost.UseStaticWebAssets();
+            }
+
+            if (builder.Environment.IsEnvironment(PreviewEnvironment))
+            {
+                // Demo data for the tenant named in appsettings.Preview.json, see Preview/PreviewSeeder.cs
+                builder.Services.Configure<Preview.PreviewSeedOptions>(
+                    builder.Configuration.GetSection(Preview.PreviewSeedOptions.SectionName));
+                builder.Services.AddHostedService<Preview.PreviewSeedHostedService>();
             }
 
             var app = builder.Build();

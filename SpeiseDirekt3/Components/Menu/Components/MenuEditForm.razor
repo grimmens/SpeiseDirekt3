@@ -9,8 +9,8 @@
 <PageTitle>@(IsNew ? "New Menu" : $"Edit {Menu.Name}") - Speise-Direkt</PageTitle>
 
 <!-- Header -->
-<div class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+    <div class="p-[1rem] sm:p-6">
         <div class="flex items-center text-sm text-gray-500 mb-3">
             <a href="menus" class="hover:text-blue-600 transition-colors">Menus</a>
             @if (!IsNew)
@@ -34,10 +34,10 @@
 </div>
 
 <!-- Content -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <!-- Form Card -->
-        <div class="bg-white rounded-xl border border-gray-200 p-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-6">Menu Details</h2>
             <EditForm EditContext="EditContext" OnValidSubmit="HandleValidSubmit">
                 <DataAnnotationsValidator />
@@ -130,7 +130,7 @@
         </div>
 
         <!-- Preview Card: the guest menu in a phone-sized frame with its own scrollbar -->
-        <div class="bg-white rounded-xl border border-gray-200 p-6 lg:sticky lg:top-6">
+        <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-6 lg:sticky lg:top-6">
             <div class="flex items-start justify-between gap-3 mb-4">
                 <div>
                     <h2 class="text-lg font-semibold text-gray-900">Preview</h2>

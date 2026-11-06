@@ -18,7 +18,7 @@
         {
             <!-- Header -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-                <div class="p-6">
+                <div class="p-[1rem] sm:p-6">
                     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
                         <div class="min-w-0 flex-1">
                             <h1 class="text-3xl font-bold text-gray-900 font-display">Welcome back</h1>
@@ -129,7 +129,7 @@
                 {
                     <!-- Getting started -->
                     <section class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm" data-testid="getting-started">
-                        <div class="p-6 border-b border-gray-100">
+                        <div class="p-[1rem] sm:p-6 border-b border-gray-100">
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
                                     <h2 class="text-lg font-semibold text-gray-900">Getting started</h2>
@@ -145,7 +145,7 @@
                             @foreach (var step in d.Steps)
                             {
                                 var isCurrent = step == d.CurrentStep;
-                                <li class="flex items-start gap-4 px-6 py-4" data-testid="checklist-step" data-step="@step.Number" data-state="@(step.Done ? "done" : "open")">
+                                <li class="flex items-start gap-4 px-[1rem] sm:px-6 py-4" data-testid="checklist-step" data-step="@step.Number" data-state="@(step.Done ? "done" : "open")">
                                     <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold @(step.Done ? "bg-green-100 text-green-700" : isCurrent ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600")">
                                         @if (step.Done)
                                         {
@@ -192,13 +192,13 @@
 
                 <!-- Menus -->
                 <section class="@(d.ShowChecklist ? "" : "lg:col-span-3") bg-white rounded-xl border border-gray-200 shadow-sm self-start" data-testid="dashboard-menus">
-                    <div class="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-100">
+                    <div class="flex items-center justify-between gap-4 px-[1rem] sm:px-6 py-4 border-b border-gray-100">
                         <h2 class="text-lg font-semibold text-gray-900">Your menus</h2>
                         <a href="menus" class="flex-shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700">All menus <span aria-hidden="true">&rarr;</span></a>
                     </div>
                     @if (d.Menus.Count == 0)
                     {
-                        <div class="px-6 py-8 text-center text-sm text-gray-500">
+                        <div class="px-[1rem] sm:px-6 py-8 text-center text-sm text-gray-500">
                             No menus yet.
                             @if (d.CanCreateMenu)
                             {
@@ -208,7 +208,7 @@
                     }
                     else
                     {
-                        <ul class="list-none mb-0 grid grid-cols-1 gap-3 p-6 @(d.ShowChecklist ? "sm:grid-cols-2 lg:grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3")">
+                        <ul class="list-none mb-0 grid grid-cols-1 gap-3 p-[1rem] sm:p-6 @(d.ShowChecklist ? "sm:grid-cols-2 lg:grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3")">
                             @foreach (var menu in d.Menus)
                             {
                                 <li>
@@ -227,7 +227,7 @@
                         </ul>
                         @if (d.MenuCount > d.Menus.Count)
                         {
-                            <div class="px-6 pb-6 -mt-2 text-sm text-gray-500">and @(d.MenuCount - d.Menus.Count) more</div>
+                            <div class="px-[1rem] sm:px-6 pb-[1rem] sm:pb-6 -mt-2 text-sm text-gray-500">and @(d.MenuCount - d.Menus.Count) more</div>
                         }
                     }
                 </section>

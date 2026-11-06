@@ -13,7 +13,7 @@
 
 <!-- Header -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-    <div class="p-6">
+    <div class="p-[1rem] sm:p-6">
         <nav class="flex flex-wrap items-center text-sm text-gray-500 mb-3" aria-label="breadcrumb">
             <a href="/menus" class="hover:text-blue-600 transition-colors">Menus</a>
             <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -76,7 +76,7 @@
 
     <!-- Allergens List -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+        <div class="flex items-center justify-between px-[1rem] sm:px-6 py-4 border-b border-gray-200">
             <h2 class="text-lg font-semibold text-gray-900">Allergens on this menu</h2>
             <span class="text-sm text-gray-500">@rows.Count</span>
         </div>
@@ -141,10 +141,10 @@
     {
         <!-- Add New Allergen Form -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="px-6 py-4 border-b border-gray-200">
+            <div class="px-[1rem] sm:px-6 py-4 border-b border-gray-200">
                 <h2 class="text-lg font-semibold text-gray-900">Add New Allergen</h2>
             </div>
-            <div class="p-6">
+            <div class="p-[1rem] sm:p-6">
                 <EditForm @ref="editForm" EditContext="editContext" OnValidSubmit="SaveAsync">
                     <DataAnnotationsValidator />
 

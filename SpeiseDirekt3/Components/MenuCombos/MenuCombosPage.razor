@@ -14,8 +14,8 @@
 <PageTitle>Combos - @menu?.Name</PageTitle>
 
 <!-- Header -->
-<div class="bg-white shadow-sm border-b border-gray-200">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+    <div class="p-[1rem] sm:p-6">
         <div class="flex items-center text-sm text-gray-500 mb-3">
             <a href="menus" class="hover:text-blue-600 transition-colors">Menus</a>
             <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,7 +49,7 @@
 </div>
 
 <!-- Content -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div>
     @if (combos == null)
     {
         <div class="flex items-center justify-center py-12">
@@ -85,7 +85,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             @foreach (var combo in combos)
             {
-                <div class="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-all duration-200">
+                <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-5 hover:shadow-md transition-all duration-200">
                     <div class="flex items-start justify-between mb-3">
                         <div>
                             <h3 class="font-semibold text-gray-900">@combo.Name</h3>

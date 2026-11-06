@@ -13,7 +13,7 @@
 
 <!-- Header with time range -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-    <div class="p-6 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+    <div class="p-[1rem] sm:p-6 flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-bold text-gray-900 font-display">Analytics Dashboard</h1>
             <p class="mt-2 text-gray-600">Track your menu performance and guest engagement</p>
@@ -97,7 +97,7 @@ else
     <!-- Charts Grid -->
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6" data-testid="analytics-charts">
         <!-- Traffic per Menu Chart -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">Traffic per Menu</h3>
                 <div class="text-sm text-gray-500">
@@ -110,7 +110,7 @@ else
         </div>
 
         <!-- Sessions Chart: guest devices active per hour/day (anonymous, so one series in total) -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-1">
                 <h3 class="text-lg font-semibold text-gray-900">Sessions</h3>
                 <div class="text-sm text-gray-500">
@@ -124,7 +124,7 @@ else
         </div>
 
         <!-- Traffic per Menu Item Chart -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 xl:col-span-2">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6 xl:col-span-2">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">Traffic per Menu Item</h3>
                 <div class="text-sm text-gray-500">
