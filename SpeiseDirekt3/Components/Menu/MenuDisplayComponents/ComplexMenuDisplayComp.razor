@@ -11,15 +11,15 @@
 @inject ApplicationDbContext Context
 
 
-<div class="relative min-h-screen bg-gray-50">
+<div class="sd-menu relative min-h-screen bg-gray-50" data-theme="@ThemeKey" data-testid="menu-display">
     @if (SelectedItem != null)
     {
         <ComplexMenuDisplayMenuItemOverlayComp SelectedItem="SelectedItem" SelectedItemChanged="e => SelectMenuItem(e)" Combos="GetCombosForItem(SelectedItem)" />
     }
     <!-- Main Menu View -->
     <!-- Restaurant Header -->
-    <div class="relative h-48 bg-gradient-to-br from-orange-200 via-teal-200 to-blue-200 overflow-hidden">
-        <div class="absolute inset-0 bg-black bg-opacity-20"></div>
+    <div class="sd-header relative h-48 bg-gradient-to-br from-orange-200 via-teal-200 to-blue-200 overflow-hidden">
+        <div class="sd-header-shade absolute inset-0 bg-black/20"></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center text-white">
             <div class="w-16 h-16 bg-teal-600 rounded-full flex items-center justify-center mb-3 shadow-lg">
                 <div class="w-6 h-6 bg-orange-300 rounded-full relative">
@@ -121,7 +121,7 @@
                                             }
                                             else
                                             {
-                                                <div class="absolute inset-0 bg-gradient-to-t from-black from-opacity-10 to-transparent"></div>
+                                                <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
                                                 <div class="absolute inset-0 flex items-center justify-center">
                                                     <div class="w-24 h-24 bg-teal-100 rounded-full flex items-center justify-center border-3 border-yellow-200 shadow-lg">
                                                         <div class="text-xl">🥙</div>
@@ -135,11 +135,11 @@
                                             </div>
                                             <p class="text-gray-600 text-xs mb-3 line-clamp-2 leading-relaxed">@item.Description</p>
                                             <DietaryBadges Item="item" Class="mb-3" />
-                                            <div class="flex justify-between items-center">
-                                                <span class="font-bold text-gray-900 text-sm">€ @item.Price.ToString("F2")</span>
+                                            <div class="flex flex-wrap justify-between items-center gap-x-2 gap-y-1">
+                                                <span class="font-bold text-gray-900 text-sm whitespace-nowrap shrink-0" data-testid="item-price">€ @item.Price.ToString("F2")</span>
                                                 @if (item.Allergens.Any())
                                                 {
-                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-medium">@string.Join(", ", item.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</span>
+                                                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded font-medium whitespace-nowrap" data-testid="item-allergens">@string.Join(", ", item.Allergens.OrderBy(a => a.Code).Select(a => a.Code))</span>
                                                 }
                                             </div>
                                         </div>
@@ -155,7 +155,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <div class="absolute inset-0 bg-gradient-to-t from-black from-opacity-10 to-transparent"></div>
+                                                    <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
                                                     <div class="absolute inset-0 flex items-center justify-center">
                                                         <div class="w-12 h-12 bg-teal-100 rounded-full flex items-center justify-center border-2 border-yellow-200 shadow-lg">
                                                             <div class="text-sm">🥙</div>
@@ -166,7 +166,7 @@
                                             <div class="flex-1 py-2">
                                                 <div class="flex justify-between items-start mb-1">
                                                     <h3 class="font-bold text-gray-900 text-base leading-tight">@item.Name</h3>
-                                                    <span class="font-bold text-gray-900 text-base ml-2">€ @item.Price.ToString("F2")</span>
+                                                    <span class="font-bold text-gray-900 text-base ml-2 whitespace-nowrap shrink-0" data-testid="item-price">€ @item.Price.ToString("F2")</span>
                                                 </div>
                                                 <p class="text-gray-600 text-sm mb-2 line-clamp-2 leading-relaxed">@item.Description</p>
                                                 <DietaryBadges Item="item" Class="mb-2 mr-1" />
@@ -205,6 +205,11 @@
 @code {
         [Parameter] public Menu? Menu { get; set; }
         [Parameter] public bool Preview { get; set; }
+        /// <summary>Design theme of the menu (css/menu-themes.css), e.g. "elegant"; "modern" is the default look.</summary>
+        private string ThemeKey => (Menu?.Theme ?? DesignTheme.Modern).ToString().ToLowerInvariant();
+
+        /// <summary>Do not record item clicks (e.g. the owner's full-page preview).</summary>
+        [Parameter] public bool DisableTracking { get; set; }
     private string activeCategory = "";
     private MenuItem? SelectedItem { get; set; }
     private bool showStickyNav = false;
@@ -328,7 +333,7 @@
         if(menuItem != null)
         {
             // Track menu item click
-            if (Menu != null && !Preview)
+            if (Menu != null && !Preview && !DisableTracking)
             {
                 var sessionId = TrackingService.GetOrCreateSessionId();
                 await TrackingService.RecordMenuItemClickAsync(sessionId, menuItem.Id, Menu.Id);

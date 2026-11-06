@@ -151,6 +151,12 @@
 
     protected override async Task OnInitializedAsync()
     {
+        if (!await PermissionService.HasPermissionAsync(Permission.QrCodesView))
+        {
+            NavManager.NavigateTo("/Account/AccessDenied", forceLoad: true);
+            return;
+        }
+
         canEditQr = await PermissionService.HasPermissionAsync(Permission.QrCodesEdit);
         canDeleteQr = await PermissionService.HasPermissionAsync(Permission.QrCodesDelete);
         codes = await DbContext.QRCodes

@@ -2,11 +2,16 @@
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using SpeiseDirekt.Infrastructure
 @inject ApplicationDbContext DbContext
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
 @inject TimeProvider Clock
 @inject IJSRuntime JS
+@inject IAuthorizationService AuthorizationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 <PageTitle>@(IsNew ? "Create QR Code" : "Edit QR Code") - Speise-Direkt</PageTitle>
 
@@ -269,6 +274,13 @@
             return;
         }
 
+        // Free tier: creating a QR code is limited (PaidTenant policy), also when the URL is opened directly
+        if (IsNew && !await CanCreateQrCodeAsync())
+        {
+            NavManager.NavigateTo("/qrcodes");
+            return;
+        }
+
         menus = await DbContext.Menus.OrderBy(m => m.Name).ToListAsync();
 
         if (IsNew)
@@ -320,8 +332,21 @@
     private string ScheduleText() =>
         string.Join(" · ", (Item.TimeTableEntries ?? new()).Select(e => $"{e.StartTime:HH\\:mm}–{e.EndTime:HH\\:mm} {MenuName(e.MenuId)}"));
 
+    private async Task<bool> CanCreateQrCodeAsync()
+    {
+        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        return (await AuthorizationService.AuthorizeAsync(user, PolicyNames.PaidTenant)).Succeeded;
+    }
+
     private async Task HandleValidSubmit()
     {
+        // Check again on save: the limit may have been reached meanwhile (e.g. in another tab)
+        if (IsNew && !await CanCreateQrCodeAsync())
+        {
+            NavManager.NavigateTo("/qrcodes");
+            return;
+        }
+
         if (IsNew)
         {
             Item.CreatedAt = DateTime.UtcNow;

@@ -56,6 +56,16 @@ public class AdminScreenshotTour : BackOfficeTestBase
         var phone = await phoneContext.NewPageAsync();
         await ShootAsync(phone, dir, "phone", seeded, phoneSubset: true);
 
+        // Guest view of the same menu in every design theme (phone)
+        foreach (var theme in Enum.GetValues<DesignTheme>())
+        {
+            await App.SeedAsync(ownerId, async db =>
+                (await db.Menus.SingleAsync(m => m.Id == seeded.MenuId)).Theme = theme);
+            await OpenPublicMenuPageAsync(phone, $"/menu/{seeded.MenuId}");
+            await SettleAsync(phone);
+            await phone.ScreenshotAsync(new() { Path = Path.Combine(dir, $"guest-{theme.ToString().ToLowerInvariant()}.png"), FullPage = true });
+        }
+
         // Empty tenant (first-run experience)
         var (emptyContext, emptyPage) = await NewContextAsync();
         await using (emptyContext)
