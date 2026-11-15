@@ -314,6 +314,10 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Property<Guid>("ApplicationUserId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
                     b.Property<Guid>("MenuId")
                         .HasColumnType("uniqueidentifier");
 
@@ -461,6 +465,18 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Property<string>("ImagePath")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("IsAlcoholFree")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsHalal")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsNew")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPopular")
+                        .HasColumnType("bit");
+
                     b.Property<bool>("IsSpicy")
                         .HasColumnType("bit");
 
@@ -531,6 +547,40 @@ namespace SpeiseDirekt.Data.Migrations
                     b.HasIndex("SessionId", "MenuItemId", "ClickedAt");
 
                     b.ToTable("MenuItemClicks");
+                });
+
+            modelBuilder.Entity("SpeiseDirekt.Model.MenuItemPriceOption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("MenuItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MenuItemId");
+
+                    b.ToTable("MenuItemPriceOptions");
                 });
 
             modelBuilder.Entity("SpeiseDirekt.Model.MenuView", b =>
@@ -607,6 +657,72 @@ namespace SpeiseDirekt.Data.Migrations
                     b.HasIndex("MenuId");
 
                     b.ToTable("QRCodes");
+                });
+
+            modelBuilder.Entity("SpeiseDirekt.Model.RestaurantProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<Guid>("ApplicationUserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CoverImagePath")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("FacebookUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("GoogleReviewUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("InstagramUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("LogoImagePath")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("OpeningHours")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationUserId")
+                        .IsUnique();
+
+                    b.ToTable("RestaurantProfiles");
                 });
 
             modelBuilder.Entity("SpeiseDirekt.Model.TenantSubscription", b =>
@@ -932,6 +1048,17 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Navigation("MenuItem");
                 });
 
+            modelBuilder.Entity("SpeiseDirekt.Model.MenuItemPriceOption", b =>
+                {
+                    b.HasOne("SpeiseDirekt.Model.MenuItem", "MenuItem")
+                        .WithMany("PriceOptions")
+                        .HasForeignKey("MenuItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MenuItem");
+                });
+
             modelBuilder.Entity("SpeiseDirekt.Model.MenuView", b =>
                 {
                     b.HasOne("SpeiseDirekt.Model.Menu", "Menu")
@@ -1030,6 +1157,11 @@ namespace SpeiseDirekt.Data.Migrations
             modelBuilder.Entity("SpeiseDirekt.Model.MenuCombo", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("SpeiseDirekt.Model.MenuItem", b =>
+                {
+                    b.Navigation("PriceOptions");
                 });
 
             modelBuilder.Entity("SpeiseDirekt.Model.QRCode", b =>

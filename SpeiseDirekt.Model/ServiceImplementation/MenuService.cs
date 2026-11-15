@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceInterface;
 
@@ -52,6 +53,10 @@ namespace SpeiseDirekt.ServiceImplementation
                 .ThenInclude(e => e.Categories)
                 .ThenInclude(e => e.MenuItems)
                 .ThenInclude(e => e.Allergens)
+                .Include(q => q.Menu)
+                .ThenInclude(e => e.Categories)
+                .ThenInclude(e => e.MenuItems)
+                .ThenInclude(e => e.PriceOptions.OrderBy(o => o.Kind).ThenBy(o => o.SortOrder).ThenBy(o => o.Name))
                 .Include(q => q.TimeTableEntries)
                 .Include(q => q.CalendarEntries)
                 .FirstOrDefaultAsync(q => q.Id == qrCodeId);
@@ -98,9 +103,7 @@ namespace SpeiseDirekt.ServiceImplementation
             return await _db.Menus
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Include(e => e.Categories)
-                .ThenInclude(e => e.MenuItems)
-                .ThenInclude(e => e.Allergens)
+                .IncludeGuestContent()
                 .SingleOrDefaultAsync(e => e.Id == menuId);
         }
 

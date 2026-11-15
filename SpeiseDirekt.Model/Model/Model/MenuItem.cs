@@ -22,9 +22,22 @@ namespace SpeiseDirekt.Model
         public Guid ApplicationUserId { get; set; }
         public string? ImagePath { get; set; }
 
-        /// <summary>Dietary labels shown to guests (icons on the menu card).</summary>
+        /// <summary>
+        /// Labels shown to guests (badges on the menu card). The list of all labels, their texts and display order
+        /// lives in <see cref="Infrastructure.ItemLabels"/>.
+        /// </summary>
         public bool IsVegan { get; set; }
         public bool IsVegetarian { get; set; }
         public bool IsSpicy { get; set; }
+        public bool IsHalal { get; set; }
+        public bool IsAlcoholFree { get; set; }
+        public bool IsNew { get; set; }
+        public bool IsPopular { get; set; }
+
+        /// <summary>
+        /// Price variants and extras (<see cref="PriceOptionKind"/>). With at least one variant, <see cref="Price"/>
+        /// equals the lowest variant price (<see cref="Infrastructure.PriceOptions"/>).
+        /// </summary>
+        public ICollection<MenuItemPriceOption> PriceOptions { get; set; } = new List<MenuItemPriceOption>();
     }
 }

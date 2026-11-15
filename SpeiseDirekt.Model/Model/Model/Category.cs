@@ -9,6 +9,12 @@ namespace SpeiseDirekt.Model
         [Required(AllowEmptyStrings = false, ErrorMessage = "Name is required.")]
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>Optional subtitle shown under the category name, e.g. "Mezze" or "served until 22:00".</summary>
+        [StringLength(DescriptionMaxLength, ErrorMessage = "The subtitle can have at most 200 characters.")]
+        public string? Description { get; set; }
+
+        public const int DescriptionMaxLength = 200;
+
         /// <summary>Position within the menu (ascending, ties by name). New categories get max + 1.</summary>
         public int SortOrder { get; set; }
 
