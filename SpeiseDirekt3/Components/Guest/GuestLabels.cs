@@ -9,7 +9,7 @@ using MenuItem = SpeiseDirekt.Model.MenuItem;
 
 /// <summary>A label chip of a menu item in the guest view.</summary>
 /// <param name="Key">Stable key: CSS modifier <c>gm-label--{Key}</c>, <c>data-label</c>, <c>data-labels</c> on cards, test id <c>label-{Key}</c>.</param>
-/// <param name="Text">German text of the chip.</param>
+/// <param name="Text">Text of the chip in the UI language (<see cref="GuestText.Label"/>).</param>
 /// <param name="Icon">Name of the <see cref="GuestIcon"/> shown in front of the text, or null.</param>
 public sealed record GuestLabel(string Key, string Text, string? Icon)
 {
@@ -18,8 +18,9 @@ public sealed record GuestLabel(string Key, string Text, string? Icon)
 }
 
 /// <summary>
-/// The labels of a menu item for the guest view. Which labels exist, their German text and their order come from
-/// the shared list <see cref="ItemLabels"/> (also used by the back office); this class only adds the guest icon.
+/// The labels of a menu item for the guest view. Which labels exist, their German and English guest texts and their
+/// order come from the shared list <see cref="ItemLabels"/> (also used by the back office); this class only adds the
+/// guest icon.
 /// A new label therefore needs a line in <see cref="ItemLabels"/>, optionally an icon here (+ <c>GuestIcon.razor</c>)
 /// and a color in <c>guest-menu.css</c>. Icons are neutral pictograms; halal is text only on purpose.
 /// </summary>
@@ -39,14 +40,14 @@ public static class GuestLabels
     /// <c>CompactLimit - 1</c> are shown plus a "+n" chip (all of them in the item sheet).</summary>
     public const int CompactLimit = 3;
 
-    /// <summary>The chip of one shared label.</summary>
-    public static GuestLabel Of(ItemLabel label) =>
-        new(label.Key, label.GuestText, Icons.GetValueOrDefault(label.Key)) { Highlight = label.Kind == ItemLabelKind.Highlight };
+    /// <summary>The chip of one shared label, in the UI language of <paramref name="text"/>.</summary>
+    public static GuestLabel Of(ItemLabel label, GuestText text) =>
+        new(label.Key, text.Label(label), Icons.GetValueOrDefault(label.Key)) { Highlight = label.Kind == ItemLabelKind.Highlight };
 
     /// <summary>All labels that apply to <paramref name="item"/>, in display order ("vegan" hides "Vegetarisch").</summary>
-    public static IReadOnlyList<GuestLabel> For(MenuItem item) =>
-        ItemLabels.ActiveFor(item).Select(Of).ToList();
+    public static IReadOnlyList<GuestLabel> For(MenuItem item, GuestText text) =>
+        ItemLabels.ActiveFor(item).Select(l => Of(l, text)).ToList();
 
     /// <summary>Space separated label keys for <c>data-labels</c> on cards (<c>vegan spicy</c>).</summary>
-    public static string Data(MenuItem item) => string.Join(' ', For(item).Select(l => l.Key));
+    public static string Data(MenuItem item) => string.Join(' ', ItemLabels.ActiveFor(item).Select(l => l.Key));
 }

@@ -4,37 +4,15 @@ using SpeiseDirekt.Infrastructure;
 namespace SpeiseDirekt3.Components.Guest;
 
 /// <summary>
-/// Formatting for the guest view, in one place: prices in German notation (<c>€ 9,90</c>), image URLs,
-/// anchors and item links. Independent of the server culture (the back office uses
-/// <see cref="SpeiseDirekt.Infrastructure.PriceFormat"/> with <c>€ 9.90</c>).
+/// Formatting for the guest view, in one place: image URLs, anchors, item links, public paths and origin. Prices are
+/// formatted by <see cref="GuestText"/> (<c>€ 9,90</c> on German menus, <c>€9.90</c> on all others), independent of the
+/// server culture (the back office uses <see cref="SpeiseDirekt.Infrastructure.PriceFormat"/> with <c>€ 9.90</c>).
 /// </summary>
 public static class GuestFormat
 {
-    private static readonly NumberFormatInfo GermanNumbers = new()
-    {
-        NumberDecimalSeparator = ",",
-        NumberGroupSeparator = ".",
-        NumberGroupSizes = new[] { 3 }
-    };
-
-    /// <summary>Guest price: <c>€ 9,90</c>, <c>€ 1.234,50</c>. The space is a normal one; the price elements
-    /// are <c>white-space: nowrap</c> in <c>guest-menu.css</c>.</summary>
-    public static string Price(decimal price) => "€ " + Amount(price);
-
-    /// <summary>
-    /// The price of an item as guests read it on cards, rows, search results and the favourites list:
-    /// <c>ab € 3,40</c> when its price variants differ in price (<c>MenuItem.Price</c> is then the lowest
-    /// variant, see <c>PriceOptions.ApplyLowestVariantPrice</c>), otherwise <c>€ 3,40</c>.
-    /// </summary>
-    public static string ItemPrice(SpeiseDirekt.Model.MenuItem item) =>
-        (HasPriceRange(item) ? "ab " : "") + Price(item.Price);
-
-    /// <summary>Whether the item's variants have more than one price (then its price is a "from" price).</summary>
+    /// <summary>Whether the item's variants have more than one price (then its price is a "from" price, <see cref="GuestText.ItemPrice"/>).</summary>
     public static bool HasPriceRange(SpeiseDirekt.Model.MenuItem item) =>
         item.Variants().Select(v => v.Price).Distinct().Skip(1).Any();
-
-    /// <summary>Just the amount in German notation: <c>9,90</c>.</summary>
-    public static string Amount(decimal price) => price.ToString("#,##0.00", GermanNumbers);
 
     /// <summary>Machine-readable price for <c>data-price</c> (invariant, <c>9.90</c>), e.g. for sorting or filters in JS.</summary>
     public static string PriceData(decimal price) => price.ToString("0.00", CultureInfo.InvariantCulture);
@@ -76,9 +54,6 @@ public static class GuestFormat
 
     // --- Price options (variants, extras) ---------------------------------------------------------------
 
-    /// <summary>Price of an extra: <c>+ € 1,50</c>.</summary>
-    public static string ExtraPrice(decimal price) => "+ " + Price(price);
-
     /// <summary>
     /// Name of an extra without a leading "+" (owners often type "+ Halloumi"; the price column carries the plus).
     /// </summary>
@@ -92,6 +67,9 @@ public static class GuestFormat
 
     /// <summary>Public, canonical path of a menu: <c>/menu/{id}</c> (also for links shared from <c>/qr/…</c> or the preview).</summary>
     public static string PublicMenuPath(Guid menuId) => $"/menu/{menuId}";
+
+    /// <summary>Owner preview of a menu: <c>/menu/preview/{id}</c>.</summary>
+    public static string PreviewMenuPath(Guid menuId) => $"/menu/preview/{menuId}";
 
     /// <summary><c>tel:</c> link of a phone number as typed (<c>+43 1 234 56 78</c> → <c>tel:+4312345678</c>).</summary>
     public static string TelHref(string phone)

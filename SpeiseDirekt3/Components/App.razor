@@ -1,10 +1,13 @@
 @using SpeiseDirekt3.Components.Guest
+@implements IDisposable
+@inject GuestDocument GuestDocument
 <!DOCTYPE html>
 @if (IsGuestPage)
 {
     @* Guest pages (/qr, /menu, /menu/preview): own assets only, static SSR, no blazor.web.js — see Components/Guest.
        No <base href>: every URL on these pages is absolute (fragment and ?item= links must stay on the page). *@
-    <html lang="de" data-guest-page>
+    @* lang: the menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages) *@
+    <html lang="@GuestDocument.Language" data-guest-page>
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -110,6 +113,13 @@ else
         HttpContext.Request.Path.StartsWithSegments("/Account") || !HttpContext.AcceptsInteractiveRouting()
             ? null
             : InteractiveServer;
+
+    protected override void OnInitialized() => GuestDocument.Changed += OnGuestDocumentChanged;
+
+    /// <summary>A guest page set its language after this component rendered: render &lt;html lang&gt; again.</summary>
+    private void OnGuestDocumentChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => GuestDocument.Changed -= OnGuestDocumentChanged;
 
     /// <summary>The page carries <see cref="GuestPageAttribute"/>: render the guest document.</summary>
     private bool IsGuestPage => HttpContext.GetEndpoint()?.Metadata.GetMetadata<GuestPageAttribute>() is not null;

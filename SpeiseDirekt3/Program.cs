@@ -1,4 +1,4 @@
-using BytexDigital.Blazor.Components.CookieConsent;
+﻿using BytexDigital.Blazor.Components.CookieConsent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -43,6 +43,8 @@ namespace SpeiseDirekt3
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
             builder.Services.AddScoped<IImageResizeService, ImageResizeService>();
+            // <html lang> of the guest pages (App.razor, set by GuestMenuView)
+            builder.Services.AddScoped<SpeiseDirekt3.Components.Guest.GuestDocument>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.ConfigureServices();
 

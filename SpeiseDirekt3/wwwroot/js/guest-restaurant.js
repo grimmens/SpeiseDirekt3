@@ -10,7 +10,7 @@
  *
  * Share ("Teilen" in the item sheet, [data-share], markup in GuestItemDetail.razor):
  *   1. navigator.share({ title, text, url }) — a cancelled share (AbortError) is not an error;
- *   2. otherwise the clipboard: "Link kopiert" in [data-share-status] (role="status");
+ *   2. otherwise the clipboard: "Link kopiert" / "Link copied" (ctx.t('shareCopied')) in [data-share-status] (role="status");
  *   3. otherwise the link in the read-only field [data-share-fallback], selected for copying by hand.
  * The url is always the public page /menu/{menuId}?item={itemId} — also from /qr/… and from the owner preview.
  * No tracking request for sharing.
@@ -18,7 +18,7 @@
 
 const STATUS_CLEAR_MS = 5000;
 
-/** @param {{ root: HTMLElement, menuId: string|null }} ctx */
+/** @param {{ root: HTMLElement, menuId: string|null, t: (key: string, values?: object) => string }} ctx */
 export function initRestaurant(ctx) {
     ctx.root?.addEventListener('click', e => {
         const button = e.target instanceof Element ? e.target.closest('[data-share]') : null;
@@ -65,11 +65,11 @@ async function shareItem(ctx, button) {
     }
 
     if (await copyToClipboard(url)) {
-        setStatus(status, 'Link kopiert');
+        setStatus(status, ctx.t('shareCopied'));
         return;
     }
 
-    // Last resort: the link in a read-only field, selected (its label "Link zum Kopieren" is read on focus)
+    // Last resort: the link in a read-only field, selected (its label "Link zum Kopieren" / "Link to copy" is read on focus)
     if (fallback) {
         const field = fallback.querySelector('[data-share-url]');
         fallback.hidden = false;

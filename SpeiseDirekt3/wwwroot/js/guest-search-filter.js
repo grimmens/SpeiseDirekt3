@@ -2,7 +2,8 @@
  * guest-search-filter.js — search sheet and filter sheet of the guest menu. A behavior of guest-menu.js (which imports
  * and registers it; this module must not import guest-menu.js, see there). No network requests, no markup built from
  * menu text: the server renders everything (Components/Guest: GuestSearchSheet, GuestFilterSheet, GuestFilterNotice,
- * GuestFilterButton), this module only shows/hides it and writes counts.
+ * GuestFilterButton), this module only shows/hides it and writes counts. Every text it writes comes from the server in
+ * the menu's UI language (ctx.t: German menus German, all others English).
  *
  * Filter: label chips (aria-pressed, data-filter-label = ItemLabel key; several = all must match, matched against the
  * cards' data-filter-labels, where a vegan item is vegetarian too) and allergen checkboxes (data-filter-allergen =
@@ -80,8 +81,9 @@ function setUpFilter(ctx) {
         chips.forEach(c => c.setAttribute('aria-pressed', String(f.labels.includes(c.dataset.filterLabel))));
         boxes.forEach(b => { b.checked = f.allergens.includes(b.dataset.filterAllergen); });
     };
+    const dishes = n => ctx.t(n === 1 ? 'dishOne' : 'dishOther', { n });
     const updateApplyButton = () => {
-        applyButton.textContent = `${dishes(countFor(readDraft()))} anzeigen`;
+        applyButton.textContent = ctx.t('filterApply', { dishes: dishes(countFor(readDraft())) });
     };
 
     function render() {
@@ -105,7 +107,7 @@ function setUpFilter(ctx) {
 
         const n = applied.labels.length + applied.allergens.length;
         if (badge) { badge.textContent = String(n); badge.hidden = n === 0; }
-        button?.setAttribute('aria-label', n === 0 ? 'Filter' : `Filter (${n} aktiv)`);
+        button?.setAttribute('aria-label', n === 0 ? ctx.t('filterButton') : ctx.t('filterButtonActive', { n }));
 
         ctx.refreshCategoryNav?.();
         listeners.forEach(fn => fn());
@@ -229,18 +231,18 @@ function setUpSearch(ctx, filter) {
 
         const none = terms.length > 0 && count === 0;
         status.textContent = terms.length === 0 ? ''
-            : none ? `Keine Treffer für „${raw}“`
-            : count === 1 ? '1 Ergebnis' : `${count} Ergebnisse`;
+            : none ? ctx.t('searchNoResults', { query: raw })
+            : ctx.t(count === 1 ? 'searchResultOne' : 'searchResultOther', { n: count });
         status.classList.toggle('gm-visually-hidden', none);   // the empty state shows the same text, larger
         if (empty) empty.hidden = !none;
-        if (emptyText) emptyText.textContent = none ? `Keine Treffer für „${raw}“` : '';
+        if (emptyText) emptyText.textContent = none ? ctx.t('searchNoResults', { query: raw }) : '';
 
         if (note) {
             const show = filter.active() && terms.length > 0;
             note.hidden = !show;
             if (show && noteText) {
-                noteText.textContent = hiddenByFilter === 0 ? 'Filter aktiv: nur passende Gerichte'
-                    : `Filter aktiv: ${hiddenByFilter} ${hiddenByFilter === 1 ? 'weiterer Treffer' : 'weitere Treffer'} ausgeblendet`;
+                noteText.textContent = hiddenByFilter === 0 ? ctx.t('searchFilterOnly')
+                    : ctx.t(hiddenByFilter === 1 ? 'searchFilterHiddenOne' : 'searchFilterHiddenOther', { n: hiddenByFilter });
             }
         }
         if (clear) clear.hidden = raw.length === 0;
@@ -337,6 +339,3 @@ function tokens(value) {
     return new Set((value ?? '').split(/\s+/).filter(Boolean));
 }
 
-function dishes(n) {
-    return n === 1 ? '1 Gericht' : `${n} Gerichte`;
-}

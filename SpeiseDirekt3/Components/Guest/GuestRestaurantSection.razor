@@ -10,12 +10,14 @@
             <GuestRestaurantInfo Profile="profile" HeadingLevel="2" NameId="gm-info-title" />
         </div>
     </footer>
-    <GuestSheet Name="info" Title="Informationen" TestId="info-sheet" Class="gm-sheet--info">
+    <GuestSheet Name="info" Title="@T.InfoTitle" TestId="info-sheet" Class="gm-sheet--info">
         <GuestRestaurantInfo Profile="profile" HeadingLevel="3" />
     </GuestSheet>
 }
 
 @code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
     /// <summary>Id of the footer, target of the info button without JS (<c>#gm-info</c>).</summary>
     public const string FooterId = "gm-info";
 

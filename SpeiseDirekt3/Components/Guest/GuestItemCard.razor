@@ -28,10 +28,10 @@
             }
             <GuestLabelChips Item="Item" />
             <div class="gm-card-foot">
-                <span class="gm-price" data-testid="item-price">@GuestFormat.ItemPrice(Item)</span>
+                <span class="gm-price" data-testid="item-price">@T.ItemPrice(Item)</span>
                 @if (codes.Length > 0)
                 {
-                    <span class="gm-allergen-codes" data-testid="item-allergens" title="Allergene">@codes</span>
+                    <span class="gm-allergen-codes" data-testid="item-allergens" title="@T.Allergens">@codes</span>
                 }
             </div>
         </div>
@@ -40,6 +40,8 @@
 </li>
 
 @code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
     [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
     /// <summary>Link that opens the item (<see cref="GuestMenuModel.ItemUrl"/>).</summary>
     [Parameter, EditorRequired] public string Href { get; set; } = "";

@@ -7,8 +7,9 @@
  * data-label-add / data-label-remove) follow. The floating button ([data-fav-fab], count) is visible while the list is
  * not empty and opens the "favorites" sheet. The sheet's rows are server-rendered (GuestFavoritesSheet: one hidden row
  * per item in menu order, with the variant <select> and its prices); this module shows the remembered ones, sets the
- * variant and quantity (1–20), writes line totals ("2 × € 3,40" below them) and the sum in German notation and handles remove and "Liste leeren"
- * with a confirmation step. It never builds markup from menu text and never talks to the server.
+ * variant and quantity (1–20), writes line totals ("2 × € 3,40" below them) and the sum in the menu's price notation
+ * (ctx.formatPrice: "€ 3,40" on German menus, "€3.40" on all others) and handles remove and "Liste leeren" with a
+ * confirmation step. It never builds markup from menu text and never talks to the server.
  *
  * Storage: localStorage "sd-merkliste:<menuId>" = { v: 1, items: [{ id, variant?, qty }] }. Unknown items are
  * dropped and unknown variants fall back to the default (the menu changed); every access is in try/catch and the list
@@ -18,7 +19,6 @@
 const STORAGE_PREFIX = 'sd-merkliste:';
 const STORAGE_VERSION = 1;
 const MAX_QTY = 20;
-const euroFormat = new Intl.NumberFormat('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export function initFavorites(ctx) {
     const { root } = ctx;
@@ -44,6 +44,7 @@ export function initFavorites(ctx) {
         price: cents(row.dataset.price)
     }]));
     const storageKey = STORAGE_PREFIX + (ctx.menuId ?? location.pathname);
+    const euro = ctx.formatPrice;
 
     /** itemId → { variant: string | null, qty: number }, in the order the guest added them */
     let list = sanitize(readStorage(storageKey), rows);
@@ -84,7 +85,7 @@ export function initFavorites(ctx) {
             r.line.textContent = euro(line);
             if (r.unit) {
                 r.unit.hidden = entry.qty <= 1;
-                r.unit.textContent = entry.qty > 1 ? `${entry.qty} × ${euro(unit)}` : '';
+                r.unit.textContent = entry.qty > 1 ? ctx.t('favoriteUnit', { qty: entry.qty, price: euro(unit) }) : '';
             }
         }
         if (sum) sum.textContent = euro(total);
@@ -231,11 +232,6 @@ function writeStorage(key, data) {
 function cents(value) {
     const n = Number.parseFloat(value);
     return Number.isFinite(n) ? Math.round(n * 100) : 0;
-}
-
-/** 2380 → "€ 23,80" (same notation as GuestFormat.Price on the server). */
-function euro(amountInCents) {
-    return '€ ' + euroFormat.format(amountInCents / 100);
 }
 
 function cssEscape(value) {

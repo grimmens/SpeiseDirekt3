@@ -10,7 +10,7 @@
         <header class="gm-sheet-head">
             <div class="gm-sheet-head-start">@HeaderStart</div>
             <h2 class="gm-sheet-title" id="@TitleId">@Title</h2>
-            <button type="button" class="gm-iconbtn gm-sheet-close" data-sheet-close aria-label="Schließen">
+            <button type="button" class="gm-iconbtn gm-sheet-close" data-sheet-close aria-label="@T.Close">
                 <GuestIcon Name="close" />
             </button>
         </header>
@@ -25,9 +25,11 @@
 </dialog>
 
 @code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
     /// <summary>Name for <c>data-sheet</c>/<c>data-sheet-open</c> and <c>openSheet(name)</c>.</summary>
     [Parameter, EditorRequired] public string Name { get; set; } = "";
-    /// <summary>German title, also the dialog's accessible name.</summary>
+    /// <summary>Title in the UI language (<see cref="GuestText"/>), also the dialog's accessible name.</summary>
     [Parameter, EditorRequired] public string Title { get; set; } = "";
     [Parameter] public string? TestId { get; set; }
     [Parameter] public string? Class { get; set; }

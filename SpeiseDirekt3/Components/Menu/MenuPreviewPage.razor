@@ -1,7 +1,10 @@
-﻿@page "/menu/preview/{id}"
+@page "/menu/preview/{id}"
 @* Owner preview: the real guest page (static SSR) for logged-in users, own tenant only (query filters apply).
-   Item clicks are not recorded. ?theme=<key> shows another design theme (the menu editor's phone frame uses it
-   to follow the theme select before saving). *@
+   Item clicks are not recorded. ?theme=<key> shows another design theme and ?lang=<code> (de, en, fr, …) another menu
+   language — UI texts, price notation, lang — without saving: the menu editor's phone frame uses them for the unsaved
+   theme and language (name and description arrive live by postMessage, js/guest-preview.js). Both only exist here; the
+   public pages ignore them. The language links of the preview go to the other versions' previews. *@
+@using SpeiseDirekt.Infrastructure
 @attribute [Authorize]
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [GuestPage]
@@ -26,6 +29,8 @@ else
     [SupplyParameterFromQuery(Name = "item")] public string? Item { get; set; }
     /// <summary>Design theme to preview instead of the saved one (case-insensitive name, e.g. <c>dark</c>).</summary>
     [SupplyParameterFromQuery(Name = "theme")] public string? Theme { get; set; }
+    /// <summary>Menu language to preview instead of the saved one (ISO code, e.g. <c>en</c>).</summary>
+    [SupplyParameterFromQuery(Name = "lang")] public string? Lang { get; set; }
 
     private GuestMenuModel? model;
 
@@ -39,7 +44,8 @@ else
             return;
 
         DesignTheme? theme = Enum.TryParse<DesignTheme>(Theme, ignoreCase: true, out var t) && Enum.IsDefined(t) ? t : null;
+        var language = MenuLanguages.All.FirstOrDefault(l => string.Equals(l.Code, Lang, StringComparison.OrdinalIgnoreCase))?.Language;
         model = await GuestMenuLoader.BuildAsync(Db, Profiles, menu, $"/menu/preview/{menuId}", Item,
-            trackClicks: false, isPreview: true, themeOverride: theme);
+            trackClicks: false, isPreview: true, themeOverride: theme, languageOverride: language);
     }
 }

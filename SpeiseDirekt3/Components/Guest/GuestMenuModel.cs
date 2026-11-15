@@ -20,6 +20,11 @@ public sealed record GuestCategory(Category Category, IReadOnlyList<MenuItem> It
     public string Anchor => GuestFormat.CategoryAnchor(Category.Id);
 }
 
+/// <summary>A language version of the menu in the language switch (<see cref="Menu.TranslationGroupId"/>).</summary>
+/// <param name="Href">Where the switch goes: the public <c>/menu/{id}</c> (also from <c>/qr/…</c>), in the owner preview <c>/menu/preview/{id}</c>.</param>
+/// <param name="PublicPath">Public path for <c>hreflang</c> alternates (<c>/menu/{id}</c>).</param>
+public sealed record GuestLanguageVersion(Guid MenuId, MenuLanguageInfo Language, string Href, string PublicPath, bool IsCurrent);
+
 /// <summary>
 /// Everything the guest menu view (<see cref="GuestMenuView"/>) renders, loaded once per request by
 /// <see cref="GuestMenuLoader"/>. The three guest pages differ only in how they find the menu and in
@@ -56,6 +61,21 @@ public sealed class GuestMenuModel
     /// <c>null</c> when the tenant has none — the page then looks exactly like a menu without a restaurant.
     /// </summary>
     public RestaurantProfile? Profile { get; init; }
+
+    /// <summary>Language of the menu (<c>lang</c>, the language button); in the owner preview possibly the editor's draft (<c>?lang=</c>).</summary>
+    public MenuLanguageInfo Language { get; init; } = MenuLanguages.Of(MenuLanguage.German);
+
+    /// <summary>The guest chrome's texts and price notation: German on German menus, English on all others.</summary>
+    public GuestText Text { get; init; } = GuestText.German;
+
+    /// <summary>
+    /// Every language version of the menu including this one (<see cref="GuestLanguageVersion.IsCurrent"/>), in
+    /// language order; just this menu when it is not linked.
+    /// </summary>
+    public IReadOnlyList<GuestLanguageVersion> Versions { get; init; } = Array.Empty<GuestLanguageVersion>();
+
+    /// <summary>The menu has at least one other language version: language button, sheet, list and hreflang links.</summary>
+    public bool HasLanguageVersions => Versions.Count > 1;
 
     /// <summary>
     /// The restaurant name is shown above the menu name (the h1) — only when it differs from the menu name, so a
@@ -106,7 +126,7 @@ public static class GuestMenuLoader
     /// </summary>
     public static async Task<GuestMenuModel> BuildAsync(
         ApplicationDbContext db, IRestaurantProfileService profiles, Menu menu, string basePath, string? selectedItem,
-        bool trackClicks = true, bool isPreview = false, DesignTheme? themeOverride = null)
+        bool trackClicks = true, bool isPreview = false, DesignTheme? themeOverride = null, MenuLanguage? languageOverride = null)
     {
         var categories = (menu.Categories ?? Enumerable.Empty<Category>())
             .Where(c => c.MenuItems?.Any() == true)
@@ -128,6 +148,7 @@ public static class GuestMenuLoader
             selected = categories.SelectMany(c => c.Items).FirstOrDefault(i => i.Id == selectedId);
 
         var profile = await profiles.GetForOwnerAsync(menu.ApplicationUserId);
+        var language = languageOverride ?? menu.Language;
 
         return new GuestMenuModel
         {
@@ -135,11 +156,42 @@ public static class GuestMenuLoader
             Categories = categories,
             Combos = combos,
             Profile = profile,
+            Language = MenuLanguages.Of(language),
+            Text = GuestText.For(language),
+            Versions = await LoadVersionsAsync(db, menu, language, isPreview),
             BasePath = basePath,
             ThemeKey = GuestMenuModel.ThemeKeyOf(themeOverride ?? menu.Theme),
             TrackClicks = trackClicks,
             IsPreview = isPreview,
             SelectedItem = selected
         };
+    }
+
+    /// <summary>
+    /// The menu's language versions (same <see cref="Menu.TranslationGroupId"/>, same tenant) including itself with
+    /// <paramref name="language"/>. Public pages ignore the query filter but stay within the menu's tenant; the owner
+    /// preview keeps the filter and links to the previews.
+    /// </summary>
+    private static async Task<IReadOnlyList<GuestLanguageVersion>> LoadVersionsAsync(
+        ApplicationDbContext db, Menu menu, MenuLanguage language, bool isPreview)
+    {
+        string Href(Guid id) => isPreview ? GuestFormat.PreviewMenuPath(id) : GuestFormat.PublicMenuPath(id);
+        var current = new GuestLanguageVersion(menu.Id, MenuLanguages.Of(language), Href(menu.Id), GuestFormat.PublicMenuPath(menu.Id), IsCurrent: true);
+        if (menu.TranslationGroupId is not { } groupId)
+            return new[] { current };
+
+        IQueryable<Menu> menus = db.Menus.AsNoTracking();
+        if (!isPreview)
+            menus = menus.IgnoreQueryFilters().Where(m => m.ApplicationUserId == menu.ApplicationUserId);
+        var others = await menus
+            .Where(m => m.TranslationGroupId == groupId && m.Id != menu.Id)
+            .Select(m => new { m.Id, m.Language })
+            .ToListAsync();
+
+        return others
+            .Select(o => new GuestLanguageVersion(o.Id, MenuLanguages.Of(o.Language), Href(o.Id), GuestFormat.PublicMenuPath(o.Id), IsCurrent: false))
+            .Append(current)
+            .InLanguageOrder(v => v.Language.Language)
+            .ToList();
     }
 }

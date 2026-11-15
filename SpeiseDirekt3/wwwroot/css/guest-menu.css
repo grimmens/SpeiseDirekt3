@@ -932,3 +932,53 @@ button.gm-button { border: 0; cursor: pointer; }
     .gm-fav, .gm-fav .gm-icon { transition: none; }
     .gm-fav-fab { animation: none; }
 }
+
+/* --- AP5: language versions, live draft in the editor's preview --------------------------------------------------- */
+/* Components/Guest: GuestLanguageButton, GuestLanguageSection, GuestLanguageList; js/guest-preview.js */
+
+/* Owner preview: hero parts the editor's draft can show or hide (the class display would win over [hidden]) */
+.gm-hero-brand[hidden] { display: none; }
+
+/* Language button in the top bar: globe + language code, a pill as tall as the icon buttons */
+.gm-langbtn { width: auto; min-width: 40px; gap: 5px; padding: 0 12px 0 10px; }
+.gm-langbtn .gm-icon { width: 18px; height: 18px; }
+.gm-langbtn-code {
+    font-family: var(--gm-font-ui); font-size: 13px; font-weight: 700; line-height: 1;
+    letter-spacing: 0.04em;
+}
+
+/* Language list: in the language sheet and in the band at the end of the page (#gm-languages, works without JS) */
+.gm-langlist { display: grid; }
+.gm-langlist li + li { border-top: 1px solid var(--gm-border); }
+.gm-langlist-link { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 8px 2px; }
+.gm-langlist-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.gm-langlist-name {
+    font-family: var(--gm-font-ui); font-size: 16px; font-weight: 600; line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+.gm-langlist-hint { font-family: var(--gm-font-ui); font-size: 12.5px; color: var(--gm-muted); }
+.gm-langlist-link.is-current .gm-langlist-name { color: var(--gm-accent); font-weight: 700; }
+.gm-langlist-check { width: 20px; height: 20px; color: var(--gm-accent); }
+@media (hover: hover) {
+    .gm-langlist-link:not(.is-current):hover .gm-langlist-name { text-decoration: underline; text-underline-offset: 3px; }
+}
+
+.gm-lang-footer {
+    padding: 24px 0 32px;
+    border-top: 1px solid var(--gm-border);
+    background: var(--gm-card-bg);
+    scroll-margin-top: var(--gm-sticky-offset);   /* #gm-languages without JS: below the sticky bars */
+}
+.gm-lang-footer-title {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 4px;
+    font-family: var(--gm-font-ui); font-size: 13px; font-weight: 700; line-height: 1.3;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--gm-muted);
+}
+.gm-lang-footer-title .gm-icon { width: 18px; height: 18px; }
+/* The floating favourites button must not cover the last row */
+.gm[data-fav-active] .gm-lang-footer { padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+@media (min-width: 640px) {
+    .gm-lang-footer .gm-langlist { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); column-gap: 32px; }
+    .gm-lang-footer .gm-langlist li { border-top: 1px solid var(--gm-border); }
+}

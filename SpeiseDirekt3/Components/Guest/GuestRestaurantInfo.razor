@@ -26,7 +26,7 @@
         @if (Has(p.OpeningHours))
         {
             <section class="gm-info-block">
-                @Heading(sub, "gm-detail-section-title", "Öffnungszeiten")
+                @Heading(sub, "gm-detail-section-title", T.OpeningHours)
                 <p class="gm-info-hours" data-testid="info-hours">@p.OpeningHours</p>
             </section>
         }
@@ -38,23 +38,23 @@
             @if (hasLinks)
             {
                 <section class="gm-info-block">
-                    @Heading(sub, "gm-detail-section-title", "Kontakt")
+                    @Heading(sub, "gm-detail-section-title", T.Contact)
                     <ul class="gm-info-links" role="list">
                         @if (Has(p.Address))
                         {
-                            @Link(GuestFormat.MapsUrl(p.Name, p.Address!), "map-pin", p.Address!, "Route in Google Maps", external: true, testId: "info-address", multiline: true)
+                            @Link(GuestFormat.MapsUrl(p.Name, p.Address!), "map-pin", p.Address!, T.MapsHint, external: true, testId: "info-address", multiline: true)
                         }
                         @if (Has(p.Phone))
                         {
-                            @Link(GuestFormat.TelHref(p.Phone!), "phone", p.Phone!, "Anrufen", external: false, testId: "info-phone")
+                            @Link(GuestFormat.TelHref(p.Phone!), "phone", p.Phone!, T.Call, external: false, testId: "info-phone")
                         }
                         @if (Has(p.Email))
                         {
-                            @Link("mailto:" + p.Email, "mail", p.Email!, "E-Mail schreiben", external: false, testId: "info-email")
+                            @Link("mailto:" + p.Email, "mail", p.Email!, T.WriteEmail, external: false, testId: "info-email")
                         }
                         @if (Has(p.Website))
                         {
-                            @Link(p.Website!, "globe", GuestFormat.DisplayUrl(p.Website!), "Website", external: true, testId: "info-website")
+                            @Link(p.Website!, "globe", GuestFormat.DisplayUrl(p.Website!), T.Website, external: true, testId: "info-website")
                         }
                         @if (Has(p.InstagramUrl))
                         {
@@ -71,7 +71,7 @@
             {
                 <a class="gm-button gm-info-review" href="@p.GoogleReviewUrl" target="_blank" rel="noopener" data-testid="info-review">
                     <GuestIcon Name="star" />
-                    <span>Bewertung schreiben</span>
+                    <span>@T.WriteReview</span>
                 </a>
             }
         </div>
@@ -79,6 +79,8 @@
 </div>
 
 @code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
     [Parameter, EditorRequired] public RestaurantProfile Profile { get; set; } = default!;
     /// <summary>Level of the restaurant name's heading (footer: 2, inside the sheet under its own h2: 3); section titles are one below.</summary>
     [Parameter] public int HeadingLevel { get; set; } = 2;

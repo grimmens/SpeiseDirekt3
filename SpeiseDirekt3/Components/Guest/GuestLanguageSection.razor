@@ -1,0 +1,24 @@
+@* The menu's language versions (only rendered when it has at least one other version):
+   - #gm-languages at the very end of the page: always there, the target of the language button without JS;
+   - the language sheet (<dialog data-sheet="language">) the button opens with JS.
+   Both list the same links (GuestLanguageList). *@
+<nav class="gm-lang-footer" id="@ListId" aria-labelledby="gm-languages-title" data-testid="language-footer">
+    <div class="gm-container">
+        <h2 class="gm-lang-footer-title" id="gm-languages-title">
+            <GuestIcon Name="globe" />
+            <span>@T.Languages</span>
+        </h2>
+        <GuestLanguageList Model="Model" TestId="language-list" />
+    </div>
+</nav>
+<GuestSheet Name="language" Title="@T.ChooseLanguage" TestId="language-sheet" Class="gm-sheet--language">
+    <GuestLanguageList Model="Model" TestId="language-sheet-list" />
+</GuestSheet>
+
+@code {
+    /// <summary>Id of the list at the end of the page, target of the language button without JS (<c>#gm-languages</c>).</summary>
+    public const string ListId = "gm-languages";
+
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+}

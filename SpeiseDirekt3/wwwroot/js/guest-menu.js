@@ -16,9 +16,13 @@
  *
  * EXTENSION POINTS (import from this module, or add code to it):
  *   registerBehavior(name, init)      init(ctx) runs once the page is ready (immediately if it already is).
- *                                     ctx = { root, menuId, isPreview, trackClicks, basePath,
+ *                                     ctx = { root, menuId, isPreview, trackClicks, basePath, lang,
  *                                             openSheet, closeSheet, openItem, trackItemClick, onItemOpen,
- *                                             registerSheet, refreshCategoryNav }
+ *                                             registerSheet, refreshCategoryNav, t, formatPrice }
+ *   ctx.t(key, values)                a UI text of the menu's language from the server (GuestText.ScriptJson in the
+ *                                     root's data-guest-strings): German menus German, all others English; {name}
+ *                                     placeholders are replaced from values. Modules never hard-code UI text.
+ *   ctx.formatPrice(cents)            "€ 9,90" / "€9.90" — the server's notation (prefix, separators from the JSON)
  *   registerSheet(name, hooks)        hooks.onOpen(dialog, detail) / hooks.onClose(dialog) for
  *                                     <dialog data-sheet="name">. Any dialog[data-sheet] is a sheet anyway.
  *   openSheet(name, options)          options: { opener, history = true, detail }
@@ -33,6 +37,9 @@
  * create a second instance. They get everything through ctx; this file imports and registers them.
  * Declarative hooks in the markup:
  *   [data-sheet-open="name"]  opens that sheet      [data-sheet-close]   closes the sheet it is in
+ *   a[data-sheet-leave]       a link in a sheet that leaves the page (language versions): the sheet is closed first
+ *                             (its history entry is taken back), then the link is followed — so the back button
+ *                             returns to the page, not to an open sheet
  *   a[data-item-link]         opens the item sheet  [data-category-link="cat-…"] jumps to the section
  *   cards/rows: [data-item-id] with data-category-id, data-labels, data-allergens, data-price, data-has-image,
  *   data-filter-labels; [data-slot="favorite"] holds the heart button of each card/row.
@@ -40,11 +47,15 @@
  *   guest-search-filter.js   search sheet, filter sheet and filter notice
  *   guest-favorites.js       hearts, floating button and the favourites sheet ("Merkliste")
  *   guest-restaurant.js      share button of the item sheet (the info sheet is plain markup)
+ *   guest-preview.js         owner preview inside the menu editor only: shows the editor's unsaved draft (postMessage)
+ * The language sheet needs no code of its own: the button is <a href="#gm-languages" data-sheet-open="language">, its
+ * options are plain links to the other versions (a[data-sheet-leave]; no tracking, no MenuView).
  */
 
 import { initSearchAndFilter } from './guest-search-filter.js';
 import { initFavorites } from './guest-favorites.js';
 import { initRestaurant } from './guest-restaurant.js';
+import { initPreview } from './guest-preview.js';
 
 const ITEM_CLICK_URL = '/guest/api/item-click';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -55,6 +66,9 @@ const state = {
     basePath: location.pathname,
     trackClicks: false,
     isPreview: false,
+    lang: 'de',
+    strings: {},
+    price: { prefix: '€ ', decimal: ',', group: '.' },
     ready: false,
     sheets: new Map(),          // name -> { dialog, hooks, opener, pushed }
     openName: null,
@@ -170,6 +184,22 @@ export function trackItemClick(itemId) {
         credentials: 'same-origin',
         keepalive: true
     }).then(r => r.ok).catch(() => false);
+}
+
+/** A UI text from the server (data-guest-strings) with {placeholders} replaced; the key itself if it is missing. */
+export function t(key, values = {}) {
+    const text = state.strings[key] ?? key;
+    return text.replace(/\{(\w+)\}/g, (match, name) => (name in values ? String(values[name]) : match));
+}
+
+/** Integer cents → "€ 9,90" / "€9.90" (thousands grouped), in the notation the server uses for this menu. */
+export function formatPrice(cents) {
+    const { prefix, decimal, group } = state.price;
+    const value = Math.round(Number(cents) || 0);
+    const sign = value < 0 ? '-' : '';
+    const abs = Math.abs(value);
+    const whole = String(Math.floor(abs / 100)).replace(/\B(?=(\d{3})+(?!\d))/g, group);
+    return `${sign}${prefix}${whole}${decimal}${String(abs % 100).padStart(2, '0')}`;
 }
 
 /** Smoothly scrolls to a category section (id "cat-…"); scroll-margin-top keeps it below the sticky bars. */
@@ -343,6 +373,17 @@ function onClick(e) {
         return;
     }
 
+    const leave = target.closest('a[data-sheet-leave]');
+    if (leave) {
+        const dialog = leave.closest('dialog[data-sheet]');
+        if (dialog && state.openName === dialog.dataset.sheet) {
+            e.preventDefault();
+            const href = leave.href;
+            closeSheet(dialog.dataset.sheet, () => location.assign(href));
+        }
+        return;
+    }
+
     const closer = target.closest('[data-sheet-close]');
     if (closer) {
         const dialog = closer.closest('dialog[data-sheet]');
@@ -472,11 +513,23 @@ function runBehavior(behavior) {
     try {
         behavior.init({
             root: state.root, menuId: state.menuId, isPreview: state.isPreview, trackClicks: state.trackClicks,
-            basePath: state.basePath, openSheet, closeSheet, openItem, trackItemClick, onItemOpen,
-            registerSheet, refreshCategoryNav
+            basePath: state.basePath, lang: state.lang, openSheet, closeSheet, openItem, trackItemClick, onItemOpen,
+            registerSheet, refreshCategoryNav, t, formatPrice, setThemeColor
         });
     } catch (e) {
         console.error(`guest-menu behavior "${behavior.name}" failed`, e);
+    }
+}
+
+/** Texts and price notation of the menu's UI language (GuestText.ScriptJson, attribute data-guest-strings). */
+function readStrings(root) {
+    try {
+        const data = JSON.parse(root.dataset.guestStrings || '{}');
+        if (typeof data.lang === 'string') state.lang = data.lang;
+        if (data.strings && typeof data.strings === 'object') state.strings = data.strings;
+        if (data.price && typeof data.price === 'object') state.price = { ...state.price, ...data.price };
+    } catch (e) {
+        console.error('guest-menu: data-guest-strings is not valid JSON', e);
     }
 }
 
@@ -498,6 +551,7 @@ function setThemeColor() {
 registerBehavior('search-filter', initSearchAndFilter);
 registerBehavior('favorites', initFavorites);
 registerBehavior('restaurant', initRestaurant);
+registerBehavior('preview', initPreview);
 
 // --- Start ------------------------------------------------------------------------------------------------
 
@@ -509,6 +563,7 @@ function init() {
         state.basePath = root.dataset.basePath || location.pathname;
         state.trackClicks = root.dataset.trackClicks === 'true';
         state.isPreview = root.dataset.preview === 'true';
+        readStrings(root);
 
         setUpCategoryNav(root);
         setUpHero(root);

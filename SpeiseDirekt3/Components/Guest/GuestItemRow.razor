@@ -3,7 +3,7 @@
    Same link and data-* attributes as GuestItemCard; the favourite slot (heart button) sits at the end of the row. *@
 @{
     var codes = GuestFormat.AllergenCodes(Item);
-    var labels = GuestLabels.For(Item);
+    var labels = GuestLabels.For(Item, T);
 }
 <li class="gm-row" id="@GuestFormat.ItemAnchor(Item.Id)" data-testid="list-row"
     data-item-id="@Item.Id" data-category-id="@Item.CategoryId" data-labels="@GuestLabels.Data(Item)"
@@ -24,10 +24,10 @@
             }
         </div>
         <div class="gm-row-aside">
-            <span class="gm-price" data-testid="item-price">@GuestFormat.ItemPrice(Item)</span>
+            <span class="gm-price" data-testid="item-price">@T.ItemPrice(Item)</span>
             @if (codes.Length > 0)
             {
-                <span class="gm-allergen-codes" data-testid="item-allergens" title="Allergene">@codes</span>
+                <span class="gm-allergen-codes" data-testid="item-allergens" title="@T.Allergens">@codes</span>
             }
         </div>
     </a>
@@ -35,6 +35,8 @@
 </li>
 
 @code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
     [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
     [Parameter, EditorRequired] public string Href { get; set; } = "";
     /// <summary>Content at the end of the row (reserved for the heart button).</summary>

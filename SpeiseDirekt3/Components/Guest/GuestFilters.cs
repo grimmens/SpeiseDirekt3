@@ -46,16 +46,16 @@ public static class GuestFilters
     public static bool HasFilters(GuestMenuModel model) => LabelsIn(model).Count > 0 || AllergensIn(model).Count > 0;
 
     /// <summary>
-    /// Text the search matches (<c>data-search-text</c>): name, description, category and the German texts of every
-    /// label the item matches (so "vegetarisch" finds vegan dishes too, like the filter).
+    /// Text the search matches (<c>data-search-text</c>): name, description, category and the texts (UI language) of every
+    /// label the item matches (so "vegetarisch" / "vegetarian" finds vegan dishes too, like the filter).
     /// </summary>
-    public static string SearchText(MenuItem item, string categoryName) =>
+    public static string SearchText(MenuItem item, string categoryName, GuestText text) =>
         string.Join(' ', new[] { item.Name, item.Description, categoryName }
-            .Concat(ItemLabels.All.Where(l => ItemLabels.Matches(item, l)).Select(l => l.GuestText))
+            .Concat(ItemLabels.All.Where(l => ItemLabels.Matches(item, l)).Select(text.Label))
             .Where(s => !string.IsNullOrWhiteSpace(s)));
 
     /// <summary>The shown label texts of an item for the meta line of a search result (<c>Vegan, Scharf</c>).</summary>
-    public static string LabelTexts(MenuItem item) => string.Join(", ", GuestLabels.For(item).Select(l => l.Text));
+    public static string LabelTexts(MenuItem item, GuestText text) => string.Join(", ", GuestLabels.For(item, text).Select(l => l.Text));
 
     /// <summary>
     /// The item's price variants for the favourites list (display order; the first is the default). Empty when the

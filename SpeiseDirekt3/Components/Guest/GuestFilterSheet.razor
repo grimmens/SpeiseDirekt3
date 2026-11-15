@@ -10,17 +10,17 @@
     var highlights = labels.Where(l => l.Kind == ItemLabelKind.Highlight).ToList();
     var allergens = GuestFilters.AllergensIn(Model);
 }
-<GuestSheet Name="filter" Title="Filter" TestId="filter-sheet" Class="gm-sheet--filter">
+<GuestSheet Name="filter" Title="@T.Filter" TestId="filter-sheet" Class="gm-sheet--filter">
     <ChildContent>
         <div class="gm-filter" data-filter-form>
             @if (dietary.Count > 0)
             {
                 <section class="gm-filter-group" aria-labelledby="gm-filter-dietary">
-                    <h3 class="gm-filter-title" id="gm-filter-dietary">Ernährung</h3>
+                    <h3 class="gm-filter-title" id="gm-filter-dietary">@T.Diet</h3>
                     <div class="gm-filter-chips">
                         @foreach (var label in dietary)
                         {
-                            @Chip(GuestLabels.Of(label))
+                            @Chip(GuestLabels.Of(label, T))
                         }
                     </div>
                 </section>
@@ -28,11 +28,11 @@
             @if (highlights.Count > 0)
             {
                 <section class="gm-filter-group" aria-labelledby="gm-filter-highlights">
-                    <h3 class="gm-filter-title" id="gm-filter-highlights">Hinweise</h3>
+                    <h3 class="gm-filter-title" id="gm-filter-highlights">@T.Highlights</h3>
                     <div class="gm-filter-chips">
                         @foreach (var label in highlights)
                         {
-                            @Chip(GuestLabels.Of(label))
+                            @Chip(GuestLabels.Of(label, T))
                         }
                     </div>
                 </section>
@@ -40,8 +40,8 @@
             @if (allergens.Count > 0)
             {
                 <fieldset class="gm-filter-group gm-filter-allergens" aria-describedby="gm-filter-allergens-hint">
-                    <legend class="gm-filter-title">Ohne Allergene</legend>
-                    <p class="gm-filter-hint" id="gm-filter-allergens-hint">Gerichte mit den gewählten Allergenen werden ausgeblendet.</p>
+                    <legend class="gm-filter-title">@T.WithoutAllergens</legend>
+                    <p class="gm-filter-hint" id="gm-filter-allergens-hint">@T.WithoutAllergensHint</p>
                     <ul class="gm-filter-allergen-list" role="list">
                         @foreach (var allergen in allergens)
                         {
@@ -60,13 +60,15 @@
     </ChildContent>
     <Footer>
         <div class="gm-filter-footer">
-            <button type="button" class="gm-button gm-button--quiet" data-filter-reset data-testid="filter-reset">Zurücksetzen</button>
-            <button type="button" class="gm-button" data-filter-apply data-testid="filter-apply">Gerichte anzeigen</button>
+            <button type="button" class="gm-button gm-button--quiet" data-filter-reset data-testid="filter-reset">@T.Reset</button>
+            <button type="button" class="gm-button" data-filter-apply data-testid="filter-apply">@T.ShowDishes</button>
         </div>
     </Footer>
 </GuestSheet>
 
 @code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
     [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
 
     /// <summary>A toggle chip for one label (aria-pressed), with the label's guest text and icon.</summary>

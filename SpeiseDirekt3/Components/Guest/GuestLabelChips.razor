@@ -4,12 +4,12 @@
    shown plus a "+n" chip; the others stay in the markup for screen readers (visually hidden) and all of them are
    shown in the item sheet (Large). *@
 @{
-    var labels = GuestLabels.For(Item);
+    var labels = GuestLabels.For(Item, T);
     var visible = !Large && labels.Count > GuestLabels.CompactLimit ? GuestLabels.CompactLimit - 1 : labels.Count;
 }
 @if (labels.Count > 0)
 {
-    <ul class="gm-labels @(Large ? "gm-labels--lg" : null) @Class" data-testid="item-labels" aria-label="Merkmale">
+    <ul class="gm-labels @(Large ? "gm-labels--lg" : null) @Class" data-testid="item-labels" aria-label="@T.LabelsList">
         @foreach (var (label, index) in labels.Select((l, i) => (l, i)))
         {
             <li class="gm-label gm-label--@label.Key @(label.Highlight ? "gm-label--highlight" : null) @(index >= visible ? "gm-visually-hidden" : null)"
@@ -29,6 +29,8 @@
 }
 
 @code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
     [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
     /// <summary>Item sheet: bigger chips, always all labels.</summary>
     [Parameter] public bool Large { get; set; }

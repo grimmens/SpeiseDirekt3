@@ -1,6 +1,9 @@
 @* <title> and <head> meta of a guest menu page: description, canonical link and Open Graph tags for link previews
    (messengers, social networks). Every URL points to the public page /menu/{id} (also from /qr/… and the owner
    preview); a page with ?item= describes that item. The owner preview is noindex.
+   Language: og:locale of the menu's language; public pages of a menu with language versions also list every version
+   (this one included) as <link rel="alternate" hreflang> and og:locale:alternate — not the preview. Texts of our own
+   (the "Speisekarte"/"Menu" suffix) follow the UI language (GuestText).
    Absolute URLs use the origin the guest's browser sees (GuestFormat.PublicOrigin: forwarded headers first). *@
 @using Microsoft.AspNetCore.Http
 @{
@@ -8,14 +11,15 @@
     var profile = Model.Profile;
     var item = Model.SelectedItem;
     var origin = GuestFormat.PublicOrigin(HttpContext?.Request);
+    var text = Model.Text;
 
     var pageTitle = item is not null
         ? $"{item.Name} – {Model.SiteName}"
-        : Model.ShowsRestaurantName ? $"{menu.Name} – {profile!.Name}" : $"{menu.Name} – Speisekarte";
+        : Model.ShowsRestaurantName ? $"{menu.Name} – {profile!.Name}" : $"{menu.Name} – {text.MenuWord}";
 
     var description = item is not null
-        ? string.Join(" · ", new[] { item.Description, GuestFormat.ItemPrice(item) }.Where(s => !string.IsNullOrWhiteSpace(s)))
-        : FirstText(menu.Description, profile?.Description) ?? $"Speisekarte von {Model.SiteName}";
+        ? string.Join(" · ", new[] { item.Description, text.ItemPrice(item) }.Where(s => !string.IsNullOrWhiteSpace(s)))
+        : FirstText(menu.Description, profile?.Description) ?? text.MenuOf(Model.SiteName);
     description = GuestFormat.Excerpt(description);
 
     var path = item is not null ? GuestFormat.ItemUrl(Model.PublicPath, item.Id) : Model.PublicPath;
@@ -42,6 +46,21 @@
         <meta property="og:url" content="@url" />
     }
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="@Model.Language.OgLocale" />
+    @if (!Model.IsPreview && Model.HasLanguageVersions)
+    {
+        foreach (var version in Model.Versions)
+        {
+            if (GuestFormat.Absolute(origin, version.PublicPath) is { } alternate)
+            {
+                <link rel="alternate" hreflang="@version.Language.Code" href="@alternate" />
+            }
+            if (!version.IsCurrent)
+            {
+                <meta property="og:locale:alternate" content="@version.Language.OgLocale" />
+            }
+        }
+    }
     <meta property="og:site_name" content="@Model.SiteName" />
     <meta property="og:title" content="@pageTitle" />
     <meta property="og:description" content="@description" />
