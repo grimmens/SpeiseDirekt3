@@ -70,7 +70,7 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
 
     private static async Task ExpectGuestSeesMenuAsync(IPage guest, Guid qrId, string menuName)
     {
-        await OpenPublicMenuPageAsync(guest, $"/qr/{qrId}");
+        await OpenGuestPageAsync(guest, $"/qr/{qrId}");
         await Assertions.Expect(guest.Locator("h1").First).ToHaveTextAsync(menuName);
         await Assertions.Expect(guest.Locator("h3", new() { HasTextString = $"{menuName} Gericht" }).First).ToBeVisibleAsync();
     }

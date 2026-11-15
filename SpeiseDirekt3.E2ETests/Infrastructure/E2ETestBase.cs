@@ -19,8 +19,6 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
     protected IBrowserContext Context { get; private set; } = default!;
     protected IPage Page { get; private set; } = default!;
 
-    private static readonly Regex ComplexMenuModule = new(@"^/js/complex-menu(\.[a-z0-9]+)?\.js$");
-
     /// <summary>
     /// Sent by the server once the router has rendered interactively in a new circuit; from then on
     /// the page reacts to clicks (before that, during prerendering, clicks are lost).
@@ -58,12 +56,17 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
                     ? route.ContinueAsync()
                     : route.AbortAsync());
 
-            // Adopted stylesheets survive Blazor's DOM patching of <head> (enhanced navigation)
+            // Adopted stylesheets survive Blazor's DOM patching of <head> (enhanced navigation).
+            // Guest pages (<html data-guest-page>) do not use Tailwind: the stand-in is removed there again.
             await context.AddInitScriptAsync($$"""
                 (() => {
                     const sheet = new CSSStyleSheet();
                     sheet.replaceSync({{System.Text.Json.JsonSerializer.Serialize(E2ESettings.TailwindVisibilityCss)}});
                     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+                    document.addEventListener('DOMContentLoaded', () => {
+                        if (document.documentElement.hasAttribute('data-guest-page'))
+                            document.adoptedStyleSheets = document.adoptedStyleSheets.filter(s => s !== sheet);
+                    });
                 })();
                 """);
         }
@@ -129,37 +132,59 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
             await accept.First.ClickAsync();
     }
 
-    // --- Public menu page ---
+    // --- Guest pages (static SSR + js/guest-menu.js) ---
+
+    /// <summary>Opens the public menu page <c>/menu/{id}</c> and waits until the guest script is ready.</summary>
+    protected Task OpenMenuAsync(Guid menuId) => OpenGuestPageAsync(Page, $"/menu/{menuId}");
 
     /// <summary>
-    /// Opens the public menu page and waits until the Blazor circuit is interactive.
-    /// <c>ComplexMenuDisplayComp</c> imports <c>js/complex-menu.js</c> in its first interactive render,
-    /// so that response marks the point from which clicks are handled. The URL may be fingerprinted
-    /// (<c>complex-menu.{hash}.js</c>).
+    /// Full page load of a guest page (<c>/menu/{id}</c>, <c>/qr/{id}</c>, <c>/menu/preview/{id}</c>). They render
+    /// statically (no circuit); <c>js/guest-menu.js</c> sets <c>data-guest-ready</c> on <c>&lt;html&gt;</c> once
+    /// sheets, chips and item links react. Notice pages set it too.
     /// </summary>
-    protected Task OpenMenuAsync(Guid menuId) => OpenPublicMenuPageAsync(Page, $"/menu/{menuId}");
-
-    /// <summary>Like <see cref="OpenMenuAsync"/> for any URL that shows the complex menu display (e.g. <c>/qr/{id}</c>).</summary>
-    protected static async Task OpenPublicMenuPageAsync(IPage page, string url)
+    protected static async Task OpenGuestPageAsync(IPage page, string url)
     {
-        var interactive = page.WaitForResponseAsync(r =>
-            ComplexMenuModule.IsMatch(new Uri(r.Url).AbsolutePath));
-        await page.GotoAsync(url);
-        var module = await interactive;
-        if (!module.Ok)
-            throw new InvalidOperationException($"{module.Url} returned HTTP {module.Status}; static web assets are not served.");
+        var response = await page.GotoAsync(url);
+        if (response is { Ok: false })
+            throw new InvalidOperationException($"{url} returned HTTP {response.Status}.");
+        await WaitForGuestReadyAsync(page);
     }
 
-    /// <summary>The item overlay (fixed backdrop) that opens when a guest clicks an item.</summary>
-    protected ILocator Overlay => OverlayOf(Page);
+    /// <summary>Waits for <c>data-guest-ready</c> (set by <c>js/guest-menu.js</c>; fails if the module did not load).</summary>
+    protected static Task WaitForGuestReadyAsync(IPage page) =>
+        page.Locator("html[data-guest-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
 
-    protected static ILocator OverlayOf(IPage page) => page.Locator("div.fixed.inset-0.z-\\[9999\\]");
+    /// <summary>The item sheet (<c>&lt;dialog data-sheet="item"&gt;</c>); visible while an item is open.</summary>
+    protected ILocator ItemSheet => ItemSheetOf(Page);
 
-    /// <summary>Clicks a menu item card in the category list by its name.</summary>
+    protected static ILocator ItemSheetOf(IPage page) => page.GetByTestId("item-sheet");
+
+    /// <summary>The card (photo category) or list row (text-only category) of an item, by its exact name.</summary>
+    protected static ILocator ItemEntry(IPage page, string itemName) =>
+        page.Locator("[data-testid='item-card'], [data-testid='list-row']",
+            new() { Has = page.Locator("h3", new() { HasTextRegex = ExactText(itemName) }) });
+
+    protected ILocator ItemEntry(string itemName) => ItemEntry(Page, itemName);
+
+    /// <summary>Opens an item by clicking its card/row (exact name) and waits for the item sheet.</summary>
     protected Task ClickMenuItemAsync(string itemName) => ClickMenuItemAsync(Page, itemName);
 
-    protected static Task ClickMenuItemAsync(IPage page, string itemName) =>
-        page.Locator("h3", new PageLocatorOptions { HasTextString = itemName }).First.ClickAsync();
+    protected static async Task ClickMenuItemAsync(IPage page, string itemName)
+    {
+        await ItemEntry(page, itemName).Locator("a[data-item-link]").ClickAsync();
+        var sheet = ItemSheetOf(page);
+        await Assertions.Expect(sheet).ToBeVisibleAsync();
+        await Assertions.Expect(sheet.GetByRole(AriaRole.Heading, new() { Name = itemName, Exact = true })).ToBeVisibleAsync();
+    }
+
+    /// <summary>Closes the item sheet with its close button and waits until it is hidden.</summary>
+    protected static async Task CloseItemSheetAsync(IPage page)
+    {
+        await ItemSheetOf(page).Locator("[data-sheet-close]").ClickAsync();
+        await Assertions.Expect(ItemSheetOf(page)).ToBeHiddenAsync();
+    }
+
+    protected static Regex ExactText(string text) => new($"^\\s*{Regex.Escape(text)}\\s*$");
 
     // --- Accounts ---
 

@@ -1,0 +1,47 @@
+@* A category of the guest menu: heading (+ optional subtitle) and its items — a grid of cards when at least one
+   item has a photo, otherwise a compact list. The section id (cat-…) is the target of the category chips;
+   scroll-margin-top in guest-menu.css keeps the heading below the sticky bars. *@
+<section class="gm-section" id="@Category.Anchor" data-category="@Category.Category.Name" data-category-id="@Category.Category.Id"
+         data-layout="@(Category.HasPhotos ? "grid" : "list")" aria-labelledby="@TitleId" data-testid="category-section">
+    <div class="gm-section-head">
+        <h2 class="gm-section-title" id="@TitleId" tabindex="-1">@Category.Category.Name</h2>
+        @if (SubtitleContent is not null)
+        {
+            <div class="gm-section-subtitle">@SubtitleContent</div>
+        }
+        else if (!string.IsNullOrWhiteSpace(Subtitle))
+        {
+            <p class="gm-section-subtitle">@Subtitle</p>
+        }
+    </div>
+    @if (Category.HasPhotos)
+    {
+        <ul class="gm-grid" role="list">
+            @foreach (var item in Category.Items)
+            {
+                <GuestItemCard @key="item.Id" Item="item" Href="@ItemHref(item)" />
+            }
+        </ul>
+    }
+    else
+    {
+        <ul class="gm-list" role="list">
+            @foreach (var item in Category.Items)
+            {
+                <GuestItemRow @key="item.Id" Item="item" Href="@ItemHref(item)" />
+            }
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public GuestCategory Category { get; set; } = default!;
+    /// <summary>Builds the link of an item (<see cref="GuestMenuModel.ItemUrl"/>).</summary>
+    [Parameter, EditorRequired] public Func<MenuItem, string> ItemHref { get; set; } = default!;
+    /// <summary>Optional line under the heading (e.g. the category description).</summary>
+    [Parameter] public string? Subtitle { get; set; }
+    /// <summary>Markup under the heading; wins over <see cref="Subtitle"/>.</summary>
+    [Parameter] public RenderFragment? SubtitleContent { get; set; }
+
+    private string TitleId => $"{Category.Anchor}-title";
+}

@@ -4,7 +4,7 @@ using SpeiseDirekt3.E2ETests.Infrastructure;
 
 namespace SpeiseDirekt3.E2ETests.Tests;
 
-/// <summary>Public menu page (/menu/{id}): menu, categories, items, item overlay.</summary>
+/// <summary>Public menu page (/menu/{id}): menu, categories, items, item sheet.</summary>
 public class MenuDisplayTests : E2ETestBase
 {
     public MenuDisplayTests(E2EFixture fixture) : base(fixture) { }
@@ -22,18 +22,18 @@ public class MenuDisplayTests : E2ETestBase
     }
 
     [Fact]
-    public async Task ClickItem_OpensOverlayWithDetails_AndBackButtonClosesIt()
+    public async Task ClickItem_OpensSheetWithDetails_AndCloseButtonClosesIt()
     {
         await OpenMenuAsync(E2ESeedData.MenuId);
 
         await ClickMenuItemAsync("Gartensalat");
 
-        await Assertions.Expect(Overlay).ToBeVisibleAsync();
-        await Assertions.Expect(Overlay).ToContainTextAsync("Saisonal");
-        await Assertions.Expect(Overlay).ToContainTextAsync("Hauptspeisen".ToUpperInvariant(), new() { IgnoreCase = true });
+        await Assertions.Expect(ItemSheet).ToBeVisibleAsync();
+        await Assertions.Expect(ItemSheet).ToContainTextAsync("Saisonal");
+        await Assertions.Expect(ItemSheet).ToContainTextAsync("Hauptspeisen", new() { IgnoreCase = true });
 
-        await Overlay.Locator("button").First.ClickAsync();
-        await Assertions.Expect(Overlay).ToHaveCountAsync(0);
+        await ItemSheet.GetByRole(AriaRole.Link, new() { Name = "Schließen" }).ClickAsync();
+        await Assertions.Expect(ItemSheet).ToBeHiddenAsync();
     }
 
     [Fact]

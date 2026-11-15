@@ -1,0 +1,41 @@
+@* One item in a text-only category (typically drinks): name, description and labels left, price and allergen
+   codes right, thin separator.
+   Same link and data-* attributes as GuestItemCard; the favourite slot sits at the end of the row. *@
+@{
+    var codes = GuestFormat.AllergenCodes(Item);
+    var labels = GuestLabels.For(Item);
+}
+<li class="gm-row" id="@GuestFormat.ItemAnchor(Item.Id)" data-testid="list-row"
+    data-item-id="@Item.Id" data-category-id="@Item.CategoryId" data-labels="@GuestLabels.Data(Item)"
+    data-allergens="@GuestFormat.AllergenData(Item)" data-price="@GuestFormat.PriceData(Item.Price)" data-has-image="false">
+    <a class="gm-row-link" href="@Href" data-item-link>
+        <div class="gm-row-main">
+            <h3 class="gm-row-title">@Item.Name</h3>
+            @if (!string.IsNullOrWhiteSpace(Item.Description))
+            {
+                <p class="gm-row-desc">@Item.Description</p>
+            }
+            @if (labels.Count > 0)
+            {
+                <div class="gm-row-meta">
+                    <GuestLabelChips Item="Item" />
+                </div>
+            }
+        </div>
+        <div class="gm-row-aside">
+            <span class="gm-price" data-testid="item-price">@GuestFormat.Price(Item.Price)</span>
+            @if (codes.Length > 0)
+            {
+                <span class="gm-allergen-codes" data-testid="item-allergens" title="Allergene">@codes</span>
+            }
+        </div>
+    </a>
+    <div class="gm-row-corner" data-slot="favorite">@Corner</div>
+</li>
+
+@code {
+    [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
+    [Parameter, EditorRequired] public string Href { get; set; } = "";
+    /// <summary>Content at the end of the row (reserved for the heart button).</summary>
+    [Parameter] public RenderFragment? Corner { get; set; }
+}

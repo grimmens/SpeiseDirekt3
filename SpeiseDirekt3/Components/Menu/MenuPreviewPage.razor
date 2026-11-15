@@ -1,53 +1,43 @@
 ﻿@page "/menu/preview/{id}"
-@using Microsoft.AspNetCore.Authorization
-@using Microsoft.EntityFrameworkCore
-@using SpeiseDirekt.Data
-@using SpeiseDirekt.Model
-@inject ApplicationDbContext DbContext
-@inject NavigationManager NavManager
-@layout MenuLayout
-@* Owner preview: only for logged-in users and only menus of their own tenant (query filters apply) *@
+@* Owner preview: the real guest page (static SSR) for logged-in users, own tenant only (query filters apply).
+   Item clicks are not recorded. ?theme=<key> shows another design theme (the menu editor's phone frame uses it
+   to follow the theme select before saving). *@
 @attribute [Authorize]
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [GuestPage]
+@layout GuestLayout
+@using Microsoft.AspNetCore.Authorization
+@inject ApplicationDbContext Db
 
-<!-- Content wrapper with top padding to account for fixed banner -->
-<div class="">
-
-@if (loading)
-    {
-        <GuestNotice Kind="GuestNotice.GuestNoticeKind.Loading" Title="Menü wird geladen…" />
-    }
-    else if (menu == null)
-    {
-        <GuestNotice Kind="GuestNotice.GuestNoticeKind.NotFound" Title="Menü nicht gefunden"
-                     Message="Dieses Menü existiert nicht oder wurde gelöscht." ShowHomeLink="true" />
-    }
-    else
-    {
-        <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" DisableTracking="true" />
-    }
-
-</div>
+@if (model is null)
+{
+    <GuestNotice Kind="GuestNotice.GuestNoticeKind.NotFound" Title="Menü nicht gefunden"
+                 Message="Dieses Menü existiert nicht oder wurde gelöscht." ShowHomeLink="true" />
+}
+else
+{
+    <GuestMenuView Model="model" />
+}
 
 @code {
     [Parameter] public string Id { get; set; } = string.Empty;
+    [SupplyParameterFromQuery(Name = "item")] public string? Item { get; set; }
+    /// <summary>Design theme to preview instead of the saved one (case-insensitive name, e.g. <c>dark</c>).</summary>
+    [SupplyParameterFromQuery(Name = "theme")] public string? Theme { get; set; }
 
-    private Menu? menu;
-    private bool loading = true;
+    private GuestMenuModel? model;
 
     protected override async Task OnInitializedAsync()
     {
-        if (Guid.TryParse(Id, out var menuId))
-        {
-            menu = await DbContext.Menus
-                .Include(m => m.Categories)
-                    .ThenInclude(c => c.MenuItems)
-                        .ThenInclude(i => i.Allergens)
-                .AsNoTracking()
-                .Where(m => m.Id == menuId)
-                .FirstOrDefaultAsync();
-        }
-            
-        loading = false;
-        await InvokeAsync(StateHasChanged);
+        if (!Guid.TryParse(Id, out var menuId))
+            return;
+
+        var menu = await GuestMenuLoader.LoadMenuAsync(Db, menuId, publicAccess: false);
+        if (menu is null)
+            return;
+
+        DesignTheme? theme = Enum.TryParse<DesignTheme>(Theme, ignoreCase: true, out var t) && Enum.IsDefined(t) ? t : null;
+        model = await GuestMenuLoader.BuildAsync(Db, menu, $"/menu/preview/{menuId}", Item,
+            trackClicks: false, isPreview: true, themeOverride: theme);
     }
 }

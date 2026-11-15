@@ -142,7 +142,7 @@ public class PreviewSeedTests : E2ETestBase
         await using (var db = App.CreateDbContext(E2ESeedData.OwnerId))
             qrId = (await db.QRCodes.SingleAsync(q => q.Title == PreviewSeeder.QrCodeTitles[2])).Id; // "Bar" → Dark theme
 
-        await OpenPublicMenuPageAsync(Page, $"/qr/{qrId}");
+        await OpenGuestPageAsync(Page, $"/qr/{qrId}");
 
         await Assertions.Expect(Page.Locator("h1").First).ToHaveTextAsync(PreviewSeeder.MenuNames[2]);
         await Assertions.Expect(Page.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "dark");

@@ -9,8 +9,6 @@ public class ComboEditorTests : BackOfficeTestBase
 {
     public ComboEditorTests(E2EFixture fixture) : base(fixture) { }
 
-    private static Regex Price(string value) => new(Regex.Escape(value).Replace("\\.", "[.,]"));
-
     /// <summary>Owner with a menu (Burger, Pommes, Cola) and a combo created via the combo editor.</summary>
     private async Task<Guid> SetUpMenuWithComboViaUiAsync()
     {
@@ -54,37 +52,34 @@ public class ComboEditorTests : BackOfficeTestBase
         return menuId;
     }
 
-    private static async Task ExpectComboInOverlayAsync(IPage page)
+    private static async Task ExpectComboInItemSheetAsync(IPage page)
     {
         await ClickMenuItemAsync(page, "Burger");
-        var section = OverlayOf(page).Locator("div", new()
-        {
-            Has = page.Locator("h2", new() { HasTextString = "Kombi-Angebote" })
-        }).Last;
+        var section = ItemSheetOf(page).GetByTestId("combo-offers");
         await Assertions.Expect(section).ToBeVisibleAsync();
         await Assertions.Expect(section).ToContainTextAsync("Burger Menü");
         await Assertions.Expect(section).ToContainTextAsync("Burger mit Pommes und Cola");
         await Assertions.Expect(section.Locator("li")).ToHaveCountAsync(2);
-        await Assertions.Expect(section).ToContainTextAsync(Price("€ 6.00"));
-        await Assertions.Expect(section).ToContainTextAsync(Price("Sie sparen € 1.50"));
+        await Assertions.Expect(section).ToContainTextAsync("€ 6,00");
+        await Assertions.Expect(section).ToContainTextAsync("Sie sparen € 1,50");
     }
 
     [Fact]
-    public async Task ComboCreatedInEditor_IsShownToGuestsInItemOverlay()
+    public async Task ComboCreatedInEditor_IsShownToGuestsInItemSheet()
     {
         var menuId = await SetUpMenuWithComboViaUiAsync();
 
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
-        await OpenPublicMenuPageAsync(guest, $"/menu/{menuId}");
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
 
-        await ExpectComboInOverlayAsync(guest);
+        await ExpectComboInItemSheetAsync(guest);
 
         // Included item that is no trigger: no combo offer
-        await OverlayOf(guest).Locator("button").First.ClickAsync();
+        await CloseItemSheetAsync(guest);
         await ClickMenuItemAsync(guest, "Pommes");
-        await Assertions.Expect(OverlayOf(guest)).ToContainTextAsync("Knusprig");
-        await Assertions.Expect(OverlayOf(guest).GetByText("Kombi-Angebote")).ToHaveCountAsync(0);
+        await Assertions.Expect(ItemSheetOf(guest)).ToContainTextAsync("Knusprig");
+        await Assertions.Expect(ItemSheetOf(guest).GetByText("Kombi-Angebote")).ToHaveCountAsync(0);
     }
 
     [Fact]
@@ -92,10 +87,10 @@ public class ComboEditorTests : BackOfficeTestBase
     {
         var menuId = await SetUpMenuWithComboViaUiAsync();
 
-        await OpenPublicMenuPageAsync(Page, $"/menu/preview/{menuId}");
+        await OpenGuestPageAsync(Page, $"/menu/preview/{menuId}");
 
         await Assertions.Expect(Page.Locator("h1").First).ToHaveTextAsync("Combo Bistro");
-        await ExpectComboInOverlayAsync(Page);
+        await ExpectComboInItemSheetAsync(Page);
     }
 
     [Fact]

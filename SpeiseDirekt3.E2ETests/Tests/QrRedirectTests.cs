@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Playwright;
 using SpeiseDirekt.Model;
 using SpeiseDirekt3.E2ETests.Infrastructure;
@@ -17,7 +18,7 @@ public class QrRedirectTests : E2ETestBase
 
     // --- Seeding helpers ---
 
-    /// <summary>A menu with one category and one item, so the complex display renders it.</summary>
+    /// <summary>A menu with one category and one item ("{name} Gericht").</summary>
     private async Task<Guid> SeedMenuAsync(string name)
     {
         var menuId = Guid.NewGuid();
@@ -77,7 +78,7 @@ public class QrRedirectTests : E2ETestBase
     /// <summary>Opens <c>/qr/{id}</c> and asserts that the menu named <paramref name="menuName"/> is shown.</summary>
     private async Task ExpectQrShowsMenuAsync(Guid qrId, string menuName)
     {
-        await OpenPublicMenuPageAsync(Page, $"/qr/{qrId}");
+        await OpenGuestPageAsync(Page, $"/qr/{qrId}");
         await Assertions.Expect(Page.Locator("h1").First).ToHaveTextAsync(menuName);
         await Assertions.Expect(Page.Locator("h3", new() { HasTextString = $"{menuName} Gericht" }).First).ToBeVisibleAsync();
     }
@@ -97,6 +98,37 @@ public class QrRedirectTests : E2ETestBase
         var qrId = await SeedQrAsync(directMenuId: menuId);
 
         await ExpectQrShowsMenuAsync(qrId, "Direktmenü");
+    }
+
+    [Fact]
+    public async Task QrPage_RecordsOneMenuViewPerPageRequest_ItemClicksDoNotAddViews()
+    {
+        var menuId = await SeedMenuAsync("Zählmenü");
+        var qrId = await SeedQrAsync(directMenuId: menuId);
+        async Task<(int Views, int Clicks)> CountAsync()
+        {
+            await using var db = App.CreateDbContext(Guid.Empty);
+            return (await db.MenuViews.CountAsync(v => v.QRCodeId == qrId), await db.MenuItemClicks.CountAsync(c => c.MenuId == menuId));
+        }
+
+        await ExpectQrShowsMenuAsync(qrId, "Zählmenü");
+        (await CountAsync()).Should().Be((1, 0));
+
+        // Opening an item (client side, URL ?item=) records a click, not another scan
+        await ClickMenuItemAsync("Zählmenü Gericht");
+        await Assertions.Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex($@"/qr/{qrId}\?item="));
+        for (var i = 0; i < 50 && (await CountAsync()).Clicks == 0; i++) await Task.Delay(100);
+        (await CountAsync()).Should().Be((1, 1));
+
+        // Reloading that URL (or opening it without JS) counts the item, not a second scan
+        await Page.ReloadAsync();
+        await WaitForGuestReadyAsync(Page);
+        await Assertions.Expect(ItemSheet).ToBeVisibleAsync();
+        (await CountAsync()).Should().Be((1, 2));
+
+        // A new scan is a new view
+        await ExpectQrShowsMenuAsync(qrId, "Zählmenü");
+        (await CountAsync()).Should().Be((2, 2));
     }
 
     [Fact]

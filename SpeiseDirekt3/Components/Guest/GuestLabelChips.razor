@@ -1,0 +1,26 @@
+@* Label chips of a menu item (vegan, vegetarisch, scharf, …) from GuestLabels.For — the one place that decides
+   which labels an item has and in which order. *@
+@{
+    var labels = GuestLabels.For(Item);
+}
+@if (labels.Count > 0)
+{
+    <ul class="gm-labels @(Large ? "gm-labels--lg" : null) @Class" data-testid="item-labels" aria-label="Merkmale">
+        @foreach (var label in labels)
+        {
+            <li class="gm-label gm-label--@label.Key" data-label="@label.Key" data-testid="label-@label.Key">
+                @if (label.Icon is not null)
+                {
+                    <GuestIcon Name="@label.Icon" Class="gm-label-icon" />
+                }
+                <span>@label.Text</span>
+            </li>
+        }
+    </ul>
+}
+
+@code {
+    [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
+    [Parameter] public bool Large { get; set; }
+    [Parameter] public string? Class { get; set; }
+}
