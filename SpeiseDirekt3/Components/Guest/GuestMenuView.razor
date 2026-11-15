@@ -1,17 +1,36 @@
 @* The guest menu (static SSR): top bar, intro, sticky category chips, the sections, and the sheets (categories,
    search, item). Rendered by /qr/{id}, /menu/{id} and /menu/preview/{id}; js/guest-menu.js adds the behaviour.
    The root carries what the script needs: data-menu-id, data-track-clicks, data-base-path. *@
-<PageTitle>@Model.Menu.Name – Speisekarte</PageTitle>
-<HeadContent>
-    @* Browser UI (scrollbars, form controls) before the CSS applies; the colors themselves live in guest-themes.css *@
-    <meta name="color-scheme" content="@(Model.ThemeKey == "dark" ? "dark" : "light")" />
-</HeadContent>
+<GuestMenuHead Model="Model" />
 
 <div class="gm" data-theme="@Model.ThemeKey" data-guest-root data-testid="menu-display" data-menu-id="@Model.Menu.Id"
      data-track-clicks="@(Model.TrackClicks ? "true" : "false")" data-base-path="@Model.BasePath" data-preview="@(Model.IsPreview ? "true" : null)">
     <a class="gm-skip" href="#gm-main">Zur Speisekarte springen</a>
 
     <GuestTopBar Title="@Model.Menu.Name">
+        @* Restaurant profile: info button (a link to the footer #gm-info without JS) and, once the hero scrolled away, the logo *@
+        <Start>
+            @if (Model.Profile is not null)
+            {
+                <a class="gm-iconbtn" href="#@GuestRestaurantSection.FooterId" data-sheet-open="info" aria-haspopup="dialog"
+                   aria-label="Informationen zum Restaurant" data-testid="info-button">
+                    <GuestIcon Name="info" />
+                </a>
+            }
+        </Start>
+        <Center>
+            @if (GuestFormat.ImageUrl(Model.Profile?.LogoImagePath) is { } topbarLogo)
+            {
+                <span class="gm-topbar-brand">
+                    <img class="gm-topbar-logo" src="@topbarLogo" alt="" width="64" height="64" decoding="async" />
+                    <span class="gm-topbar-title">@Model.Menu.Name</span>
+                </span>
+            }
+            else
+            {
+                <span class="gm-topbar-title">@Model.Menu.Name</span>
+            }
+        </Center>
         <End>
             <button type="button" class="gm-iconbtn" data-js-only data-sheet-open="search" aria-haspopup="dialog"
                     aria-label="Speisekarte durchsuchen" data-testid="search-button">
@@ -20,7 +39,7 @@
         </End>
     </GuestTopBar>
 
-    <GuestHero Title="@Model.Menu.Name" Description="@Model.Menu.Description" />
+    <GuestHero Model="Model" />
 
     @if (Model.Categories.Count > 0)
     {
@@ -30,13 +49,15 @@
     <main class="gm-main gm-container" id="gm-main">
         @foreach (var category in Model.Categories)
         {
-            <GuestCategorySection @key="category.Category.Id" Category="category" ItemHref="Model.ItemUrl" />
+            <GuestCategorySection @key="category.Category.Id" Category="category" ItemHref="Model.ItemUrl" Subtitle="@category.Category.Description" />
         }
         @if (Model.Categories.Count == 0)
         {
             <p class="gm-empty">Auf dieser Speisekarte stehen noch keine Gerichte.</p>
         }
     </main>
+
+    <GuestRestaurantSection Model="Model" />
 
     <GuestCategorySheet Categories="Model.Categories" />
     <GuestSearchSheet Model="Model" />

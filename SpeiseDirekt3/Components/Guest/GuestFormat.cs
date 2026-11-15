@@ -73,4 +73,89 @@ public static class GuestFormat
     /// <summary>Space separated allergen codes for <c>data-allergens</c> (<c>A C G</c>).</summary>
     public static string AllergenData(SpeiseDirekt.Model.MenuItem item) =>
         string.Join(' ', item.Allergens.OrderBy(a => a.Code, StringComparer.Ordinal).Select(a => a.Code));
+
+    // --- Price options (variants, extras) ---------------------------------------------------------------
+
+    /// <summary>Price of an extra: <c>+ € 1,50</c>.</summary>
+    public static string ExtraPrice(decimal price) => "+ " + Price(price);
+
+    /// <summary>
+    /// Name of an extra without a leading "+" (owners often type "+ Halloumi"; the price column carries the plus).
+    /// </summary>
+    public static string ExtraName(string name)
+    {
+        var trimmed = name.TrimStart('+', ' ', ' ');
+        return trimmed.Length > 0 ? trimmed : name;
+    }
+
+    // --- Restaurant profile -------------------------------------------------------------------------------
+
+    /// <summary>Public, canonical path of a menu: <c>/menu/{id}</c> (also for links shared from <c>/qr/…</c> or the preview).</summary>
+    public static string PublicMenuPath(Guid menuId) => $"/menu/{menuId}";
+
+    /// <summary><c>tel:</c> link of a phone number as typed (<c>+43 1 234 56 78</c> → <c>tel:+4312345678</c>).</summary>
+    public static string TelHref(string phone)
+    {
+        var digits = new string(phone.Where(c => char.IsDigit(c) || c == '+').ToArray());
+        return "tel:" + (digits.Length > 0 ? digits : phone.Trim());
+    }
+
+    /// <summary>
+    /// Outbound link to a map search for the restaurant (a plain link, no embedded map, nothing loaded with the page):
+    /// <c>https://www.google.com/maps/search/?api=1&amp;query=Name, Street 1, 1010 Wien</c>.
+    /// </summary>
+    public static string MapsUrl(string? name, string address)
+    {
+        var lines = address.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var query = string.Join(", ", string.IsNullOrWhiteSpace(name) ? lines : lines.Prepend(name.Trim()));
+        return "https://www.google.com/maps/search/?api=1&query=" + Uri.EscapeDataString(query);
+    }
+
+    /// <summary>A web address as people read it: <c>https://www.example.com/team/</c> → <c>example.com/team</c>.</summary>
+    public static string DisplayUrl(string url)
+    {
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            return url;
+        var host = uri.Host.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? uri.Host[4..] : uri.Host;
+        var path = uri.AbsolutePath.TrimEnd('/');
+        return host + path;
+    }
+
+    /// <summary>
+    /// Scheme and host of the page as the guest's browser sees it, for absolute URLs in meta tags (<c>og:url</c>,
+    /// <c>og:image</c>, canonical link): behind the reverse proxy the forwarded headers win over Kestrel's own
+    /// <c>http://localhost:…</c>. <c>null</c> without a request.
+    /// </summary>
+    public static string? PublicOrigin(Microsoft.AspNetCore.Http.HttpRequest? request)
+    {
+        if (request is null)
+            return null;
+        static string? First(string? value) =>
+            value?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault();
+        var scheme = First(request.Headers["X-Forwarded-Proto"]) ?? request.Scheme;
+        var host = First(request.Headers["X-Forwarded-Host"]) ?? request.Host.Value;
+        if (string.IsNullOrEmpty(host) || (scheme != "http" && scheme != "https"))
+            return null;
+        return $"{scheme}://{host}";
+    }
+
+    /// <summary>Absolute URL of <paramref name="path"/> (<c>/menu/…</c>, an image URL) on <paramref name="origin"/>.</summary>
+    public static string? Absolute(string? origin, string? path)
+    {
+        if (string.IsNullOrEmpty(path))
+            return null;
+        if (path.StartsWith("http://", StringComparison.OrdinalIgnoreCase) || path.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            return path;
+        return origin is null ? null : origin + (path.StartsWith('/') ? path : "/" + path);
+    }
+
+    /// <summary>One line of plain text for meta descriptions: line breaks become spaces, cut at a word to ≤ <paramref name="max"/> characters.</summary>
+    public static string Excerpt(string text, int max = 200)
+    {
+        var flat = string.Join(' ', text.Split((char[])['\n', '\r', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        if (flat.Length <= max)
+            return flat;
+        var cut = flat.LastIndexOf(' ', max - 1);
+        return flat[..(cut > max / 2 ? cut : max - 1)].TrimEnd(' ', ',', '.', ';', ':', '·', '–') + "…";
+    }
 }

@@ -1,0 +1,112 @@
+@* What guests learn about the restaurant (RestaurantProfile): logo, name, description, opening hours (line breaks
+   kept), address as a link to a map search, phone (tel:), e-mail (mailto:), website, Instagram, Facebook and
+   "Bewertung schreiben". Rendered twice by GuestRestaurantSection: as the page footer (#gm-info, reachable without
+   JS) and inside the info sheet. External links open in a new tab (rel="noopener"); nothing is loaded from other
+   hosts. Empty fields are left out. *@
+@{
+    var p = Profile;
+    var logo = GuestFormat.ImageUrl(p.LogoImagePath);
+    var sub = HeadingLevel + 1;
+    // Stored profiles have empty fields as null (RestaurantProfileService); be lenient with "" from other writers
+    var hasLinks = Has(p.Address) || Has(p.Phone) || Has(p.Email) || Has(p.Website) || Has(p.InstagramUrl) || Has(p.FacebookUrl);
+}
+<div class="gm-info" data-testid="restaurant-info">
+    <div class="gm-info-about">
+        <div class="gm-info-head">
+            @if (logo is not null)
+            {
+                <img class="gm-info-logo" src="@logo" alt="" width="160" height="160" loading="lazy" decoding="async" />
+            }
+            @Heading(HeadingLevel, "gm-info-name", p.Name, NameId)
+        </div>
+        @if (Has(p.Description))
+        {
+            <p class="gm-info-desc" data-testid="info-description">@p.Description</p>
+        }
+        @if (Has(p.OpeningHours))
+        {
+            <section class="gm-info-block">
+                @Heading(sub, "gm-detail-section-title", "Öffnungszeiten")
+                <p class="gm-info-hours" data-testid="info-hours">@p.OpeningHours</p>
+            </section>
+        }
+    </div>
+
+    @if (hasLinks || Has(p.GoogleReviewUrl))
+    {
+        <div class="gm-info-contact">
+            @if (hasLinks)
+            {
+                <section class="gm-info-block">
+                    @Heading(sub, "gm-detail-section-title", "Kontakt")
+                    <ul class="gm-info-links" role="list">
+                        @if (Has(p.Address))
+                        {
+                            @Link(GuestFormat.MapsUrl(p.Name, p.Address!), "map-pin", p.Address!, "Route in Google Maps", external: true, testId: "info-address", multiline: true)
+                        }
+                        @if (Has(p.Phone))
+                        {
+                            @Link(GuestFormat.TelHref(p.Phone!), "phone", p.Phone!, "Anrufen", external: false, testId: "info-phone")
+                        }
+                        @if (Has(p.Email))
+                        {
+                            @Link("mailto:" + p.Email, "mail", p.Email!, "E-Mail schreiben", external: false, testId: "info-email")
+                        }
+                        @if (Has(p.Website))
+                        {
+                            @Link(p.Website!, "globe", GuestFormat.DisplayUrl(p.Website!), "Website", external: true, testId: "info-website")
+                        }
+                        @if (Has(p.InstagramUrl))
+                        {
+                            @Link(p.InstagramUrl!, "instagram", "Instagram", GuestFormat.DisplayUrl(p.InstagramUrl!), external: true, testId: "info-instagram")
+                        }
+                        @if (Has(p.FacebookUrl))
+                        {
+                            @Link(p.FacebookUrl!, "facebook", "Facebook", GuestFormat.DisplayUrl(p.FacebookUrl!), external: true, testId: "info-facebook")
+                        }
+                    </ul>
+                </section>
+            }
+            @if (Has(p.GoogleReviewUrl))
+            {
+                <a class="gm-button gm-info-review" href="@p.GoogleReviewUrl" target="_blank" rel="noopener" data-testid="info-review">
+                    <GuestIcon Name="star" />
+                    <span>Bewertung schreiben</span>
+                </a>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public RestaurantProfile Profile { get; set; } = default!;
+    /// <summary>Level of the restaurant name's heading (footer: 2, inside the sheet under its own h2: 3); section titles are one below.</summary>
+    [Parameter] public int HeadingLevel { get; set; } = 2;
+    /// <summary>Optional id of the name heading (e.g. the footer's aria-labelledby).</summary>
+    [Parameter] public string? NameId { get; set; }
+
+    private static bool Has(string? value) => !string.IsNullOrWhiteSpace(value);
+
+    private static RenderFragment Heading(int level, string cssClass, string text, string? id = null) => builder =>
+    {
+        builder.OpenElement(0, "h" + Math.Clamp(level, 2, 6));
+        builder.AddAttribute(1, "class", cssClass);
+        if (id is not null)
+            builder.AddAttribute(2, "id", id);
+        builder.AddContent(3, text);
+        builder.CloseElement();
+    };
+
+    /// <summary>One row of the contact list: icon, main text (may span lines), hint, and an arrow for external links.</summary>
+    private RenderFragment Link(string href, string icon, string text, string hint, bool external, string testId, bool multiline = false) =>
+        @<li>
+            <a class="gm-info-link" href="@href" target="@(external ? "_blank" : null)" rel="@(external ? "noopener" : null)" data-testid="@testId">
+                <span class="gm-info-link-icon"><GuestIcon Name="@icon" /></span>
+                <span class="gm-info-link-text">
+                    <span class="gm-info-link-main @(multiline ? "gm-info-link-main--lines" : null)">@text</span>
+                    <span class="gm-info-link-hint">@hint</span>
+                </span>
+                <GuestIcon Name="@(external ? "external" : "chevron-right")" Class="gm-info-link-end" />
+            </a>
+        </li>;
+}

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
+using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt3.Components.Guest;
 
@@ -50,6 +51,25 @@ public sealed class GuestMenuModel
     /// <summary>Item from <c>?item=</c>: the server renders its sheet open (deep link, no-JS click).</summary>
     public MenuItem? SelectedItem { get; init; }
 
+    /// <summary>
+    /// Restaurant profile of the menu's owner (hero with cover/logo, info sheet, footer, page title and meta tags);
+    /// <c>null</c> when the tenant has none — the page then looks exactly like a menu without a restaurant.
+    /// </summary>
+    public RestaurantProfile? Profile { get; init; }
+
+    /// <summary>
+    /// The restaurant name is shown above the menu name (the h1) — only when it differs from the menu name, so a
+    /// menu named like its restaurant does not repeat it.
+    /// </summary>
+    public bool ShowsRestaurantName =>
+        Profile is not null && !string.Equals(Profile.Name.Trim(), Menu.Name.Trim(), StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>Name for page titles, Open Graph's site name and the share text: the restaurant, else the menu.</summary>
+    public string SiteName => Profile?.Name ?? Menu.Name;
+
+    /// <summary>Public, canonical path of the menu (<c>/menu/{id}</c>) — also from <c>/qr/…</c> and the owner preview.</summary>
+    public string PublicPath => GuestFormat.PublicMenuPath(Menu.Id);
+
     public IEnumerable<MenuItem> AllItems => Categories.SelectMany(c => c.Items);
 
     public IReadOnlyList<MenuCombo> CombosFor(MenuItem item) =>
@@ -81,10 +101,11 @@ public static class GuestMenuLoader
 
     /// <summary>
     /// Builds the view model for a loaded menu (from <see cref="LoadMenuAsync"/> or <c>IMenuService</c>): orders
-    /// categories and items, loads the combos and resolves <paramref name="selectedItem"/> (<c>?item=</c>).
+    /// categories and items, loads the combos and the owner's restaurant profile (also in the preview) and resolves
+    /// <paramref name="selectedItem"/> (<c>?item=</c>).
     /// </summary>
     public static async Task<GuestMenuModel> BuildAsync(
-        ApplicationDbContext db, Menu menu, string basePath, string? selectedItem,
+        ApplicationDbContext db, IRestaurantProfileService profiles, Menu menu, string basePath, string? selectedItem,
         bool trackClicks = true, bool isPreview = false, DesignTheme? themeOverride = null)
     {
         var categories = (menu.Categories ?? Enumerable.Empty<Category>())
@@ -106,11 +127,14 @@ public static class GuestMenuLoader
         if (Guid.TryParse(selectedItem, out var selectedId))
             selected = categories.SelectMany(c => c.Items).FirstOrDefault(i => i.Id == selectedId);
 
+        var profile = await profiles.GetForOwnerAsync(menu.ApplicationUserId);
+
         return new GuestMenuModel
         {
             Menu = menu,
             Categories = categories,
             Combos = combos,
+            Profile = profile,
             BasePath = basePath,
             ThemeKey = GuestMenuModel.ThemeKeyOf(themeOverride ?? menu.Theme),
             TrackClicks = trackClicks,

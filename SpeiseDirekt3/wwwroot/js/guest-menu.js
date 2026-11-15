@@ -30,7 +30,11 @@
  *   a[data-item-link]         opens the item sheet  [data-category-link="cat-…"] jumps to the section
  *   cards/rows: [data-item-id] with data-category-id, data-labels, data-allergens, data-price, data-has-image;
  *   [data-slot="favorite"] is an empty slot in each card/row for a heart button.
+ * Behaviour modules (imported below, registered at the end; they must not import this module):
+ *   guest-restaurant.js   share button of the item sheet (the info sheet is plain markup)
  */
+
+import { initRestaurant } from './guest-restaurant.js';
 
 const ITEM_CLICK_URL = '/guest/api/item-click';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -501,6 +505,8 @@ function setThemeColor() {
 }
 
 // --- Start ------------------------------------------------------------------------------------------------
+
+registerBehavior('restaurant', initRestaurant);
 
 function init() {
     const root = document.querySelector('[data-guest-root]');

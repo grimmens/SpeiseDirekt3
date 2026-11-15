@@ -509,3 +509,187 @@ html:not([data-guest-ready]) .gm-catnav-scroll { padding-right: var(--gm-gutter)
     background: var(--gm-accent); color: var(--gm-on-accent);
     font-family: var(--gm-font-ui); font-size: 15px; font-weight: 600;
 }
+
+/* --- AP3: restaurant, item detail --- */
+/* Restaurant profile (GuestHero, GuestRestaurantSection/-Info), category subtitles, label chips, item detail
+   (variants, extras, share). Colors only from the theme variables. */
+
+/* Hero with a restaurant profile: cover (cropped), logo overlapping its lower edge, restaurant name above the h1 */
+.gm-hero { --gm-logo-size: 72px; }
+@media (min-width: 640px) { .gm-hero { --gm-logo-size: 96px; } }
+.gm-hero-cover-frame {
+    position: relative; overflow: hidden;
+    width: 100%; aspect-ratio: 2 / 1; max-height: 340px;
+    border-radius: var(--gm-radius);
+    background: var(--gm-media-bg);
+}
+.gm-hero-cover-frame img { width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 640px) { .gm-hero-cover-frame { aspect-ratio: 3 / 1; } }
+.gm-hero--cover .gm-hero-text { padding-top: 14px; }
+.gm-hero-brand {
+    display: flex; align-items: flex-end; gap: 14px;
+    min-width: 0; margin-bottom: 10px;
+}
+.gm-hero--cover.gm-hero--logo .gm-hero-brand {
+    margin-top: calc(-14px - var(--gm-logo-size) / 2);   /* half of the logo over the cover */
+    padding-left: 12px;
+    position: relative;
+}
+.gm-hero-logo {
+    flex: none;
+    width: var(--gm-logo-size); height: var(--gm-logo-size);
+    border-radius: max(6px, calc(var(--gm-radius) * 1.25));
+    object-fit: cover;
+    background: var(--gm-surface);
+    box-shadow: 0 0 0 3px var(--gm-bg), var(--gm-shadow-btn);
+}
+.gm-hero-restaurant {
+    min-width: 0; padding-bottom: 2px;
+    font-family: var(--gm-font-ui); font-size: 13px; font-weight: 700; line-height: 1.3;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--gm-accent);
+    overflow-wrap: anywhere;
+}
+.gm-hero--logo .gm-hero-restaurant { padding-bottom: 6px; }
+@media (min-width: 640px) {
+    .gm-hero--cover .gm-hero-text { padding-top: 18px; }
+    .gm-hero--cover.gm-hero--logo .gm-hero-brand { margin-top: calc(-18px - var(--gm-logo-size) / 2); padding-left: 20px; }
+    .gm-hero-restaurant { font-size: 14px; }
+}
+
+/* Top bar: logo + menu name once the hero scrolled away (fades in like the plain title) */
+.gm-topbar-brand {
+    display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
+    vertical-align: middle;
+    transition: opacity .2s ease;
+}
+.gm-topbar-logo {
+    flex: none; width: 28px; height: 28px;
+    border-radius: max(4px, calc(var(--gm-radius) * 0.5));
+    object-fit: cover; background: var(--gm-surface);
+}
+.gm-topbar-brand .gm-topbar-title { min-width: 0; }
+html[data-guest-ready] .gm:not([data-hero-hidden]) .gm-topbar-brand { opacity: 0; }
+
+/* Category subtitle: muted, at most two lines */
+.gm-section-subtitle {
+    max-width: 62ch;
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+}
+
+/* Label chips: highlights (beliebt, neu) in the accent color, dietary ones neutral; "+n" on compact cards */
+.gm .gm-label.gm-label--highlight {
+    background: var(--gm-accent-soft); color: var(--gm-accent);
+    box-shadow: inset 0 0 0 1px var(--gm-accent-border);
+}
+.gm-label--highlight .gm-label-icon { color: currentColor; }
+.gm-label--alcohol-free .gm-label-icon { color: var(--gm-muted); }
+.gm .gm-label.gm-label--more {
+    padding: 0 7px;
+    background: transparent; color: var(--gm-muted);
+    box-shadow: inset 0 0 0 1px var(--gm-border);
+}
+
+/* Item detail: variants instead of the single price, price row with the share button, extras */
+.gm-variants {
+    border: 1px solid var(--gm-border);
+    border-radius: max(6px, calc(var(--gm-radius) - 4px));
+    overflow: hidden;
+}
+.gm-variant {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+    padding: 11px 14px;
+    font-family: var(--gm-font-ui); font-size: 15px;
+}
+.gm-variant + .gm-variant { border-top: 1px solid var(--gm-border); }
+.gm-variant-name { min-width: 0; overflow-wrap: anywhere; }
+.gm-variant .gm-price { font-size: 16px; font-weight: 700; }
+
+.gm-detail-price-start { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-width: 0; }
+.gm-share-button {
+    display: inline-flex; align-items: center; gap: 8px; flex: none;
+    height: 40px; margin-left: auto; padding: 0 16px;
+    border: 1px solid var(--gm-border); border-radius: var(--gm-chip-radius);
+    background: var(--gm-surface); color: var(--gm-text);
+    font-family: var(--gm-font-ui); font-size: 14px; font-weight: 600; line-height: 1;
+    cursor: pointer;
+    transition: background-color .15s ease, transform .1s ease;
+}
+.gm-share-button .gm-icon { width: 18px; height: 18px; }
+@media (hover: hover) { .gm-share-button:hover { background: var(--gm-surface-2); } }
+.gm-share-button:active { transform: scale(.97); }
+.gm-share-status { min-height: 0; font-family: var(--gm-font-ui); font-size: 13px; font-weight: 600; color: var(--gm-accent); }
+.gm-share-status:empty { display: none; }
+.gm-share-fallback { display: grid; gap: 6px; }
+.gm-share-fallback[hidden] { display: none; }
+.gm-share-fallback-label { font-family: var(--gm-font-ui); font-size: 13px; color: var(--gm-muted); }
+.gm-share-fallback-input {
+    display: block; width: 100%; padding: 10px 12px;
+    border: 1px solid var(--gm-border); border-radius: 10px;
+    background: var(--gm-surface-2); color: var(--gm-text);
+    font-family: var(--gm-font-ui); font-size: 16px; line-height: 1.4;   /* 16 px: iOS does not zoom into the field */
+    word-break: break-all; resize: none;
+}
+
+.gm-extra { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 8px 0; line-height: 1.35; }
+.gm-extra + .gm-extra { border-top: 1px solid var(--gm-border); }
+.gm-extra-name { min-width: 0; overflow-wrap: anywhere; }
+.gm-extra-price { font-size: 14px; font-weight: 600; color: var(--gm-muted); }
+
+/* Restaurant info: footer band (#gm-info) and info sheet */
+.gm-info-footer {
+    padding: 36px 0 44px;
+    border-top: 1px solid var(--gm-border);
+    background: var(--gm-card-bg);
+    scroll-margin-top: var(--gm-sticky-offset);   /* #gm-info without JS: below the sticky bars */
+}
+.gm-info { display: grid; gap: 22px; }
+.gm-info-about, .gm-info-contact { display: grid; gap: 16px; align-content: start; min-width: 0; }
+@media (min-width: 768px) {
+    .gm-info-footer { padding: 48px 0 56px; }
+    .gm-info-footer .gm-info { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 56px; }
+}
+.gm-info-head { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.gm-info-logo {
+    flex: none; width: 56px; height: 56px;
+    border-radius: max(6px, calc(var(--gm-radius) * 1.25));
+    object-fit: cover; background: var(--gm-surface);
+    box-shadow: var(--gm-shadow-btn);
+}
+.gm-info-name {
+    min-width: 0;
+    font-family: var(--gm-font-heading); font-weight: var(--gm-heading-weight);
+    font-size: 22px; line-height: var(--gm-heading-line, 1.2);
+    overflow-wrap: anywhere;
+}
+.gm-info-desc { color: var(--gm-muted); line-height: 1.5; }
+.gm-info-hours { white-space: pre-line; line-height: 1.6; }
+.gm-info-block .gm-detail-section-title { margin-bottom: 6px; }
+
+.gm-info-links { display: grid; }
+.gm-info-links li + li { border-top: 1px solid var(--gm-border); }
+.gm-info-link {
+    display: flex; align-items: center; gap: 12px;
+    min-height: 56px; padding: 8px 2px;
+}
+.gm-info-link-icon {
+    flex: none; display: inline-flex; align-items: center; justify-content: center;
+    width: 40px; height: 40px; border-radius: var(--gm-iconbtn-radius, 999px);
+    background: var(--gm-surface-2); color: var(--gm-text);
+}
+.gm-info-link-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.gm-info-link-main { overflow-wrap: anywhere; line-height: 1.35; }
+.gm-info-link-main--lines { white-space: pre-line; }
+.gm-info-link-hint { font-family: var(--gm-font-ui); font-size: 12.5px; color: var(--gm-muted); overflow-wrap: anywhere; }
+.gm-info-link-end { width: 18px; height: 18px; color: var(--gm-muted); }
+@media (hover: hover) { .gm-info-link:hover .gm-info-link-main { text-decoration: underline; text-underline-offset: 3px; } }
+.gm-info-review { gap: 8px; margin-top: 4px; justify-self: start; }
+.gm-info-review .gm-icon { width: 18px; height: 18px; }
+
+/* Info sheet: the same content, a bit tighter */
+.gm-sheet--info .gm-info { gap: 18px; padding-top: 2px; }
+.gm-sheet--info .gm-info-name { font-size: 20px; }
+
+@media (prefers-reduced-motion: reduce) {
+    .gm-topbar-brand, .gm-share-button { transition: none; }
+}

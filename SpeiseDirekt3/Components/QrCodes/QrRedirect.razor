@@ -10,6 +10,7 @@
 @inject ApplicationDbContext Db
 @inject IMenuService MenuService
 @inject ITrackingService Tracking
+@inject IRestaurantProfileService Profiles
 
 @if (!qrExists)
 {
@@ -45,7 +46,7 @@ else
         if (menu is null)
             return;
 
-        model = await GuestMenuLoader.BuildAsync(Db, menu, $"/qr/{QrId}", Item);
+        model = await GuestMenuLoader.BuildAsync(Db, Profiles, menu, $"/qr/{QrId}", Item);
 
         var sessionId = Tracking.GetOrCreateSessionId();
         if (model.SelectedItem is { } item)

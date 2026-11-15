@@ -1,25 +1,50 @@
-@* Compact intro at the top of the guest menu: optional media (logo/cover), the menu name as the page's h1, the
-   description and optional extra content (links, opening hours, …). *@
-<div class="gm-hero @(Media is not null ? "gm-hero--media" : null)" data-hero>
-    @if (Media is not null)
+@* Intro at the top of the guest menu. Without a restaurant profile: the menu name as the page's h1 and the menu
+   description (the compact intro of every menu). With a profile (GuestMenuModel.Profile) also:
+   - the cover image (wide, cropped with object-fit: cover; width/height attributes avoid a layout shift),
+   - the logo, overlapping the cover's lower edge (or on its own line without a cover),
+   - the restaurant name above the h1 when it differs from the menu name (GuestMenuModel.ShowsRestaurantName).
+   The h1 stays the menu name (data-hero-title: guest-menu.js fades the top bar title in once it scrolled away). *@
+@{
+    var profile = Model.Profile;
+    var cover = GuestFormat.ImageUrl(profile?.CoverImagePath);
+    var logo = GuestFormat.ImageUrl(profile?.LogoImagePath);
+    var showBrand = logo is not null || Model.ShowsRestaurantName;
+}
+<div class="gm-hero @(profile is not null ? "gm-hero--profile" : null) @(cover is not null ? "gm-hero--cover" : null) @(logo is not null ? "gm-hero--logo" : null)"
+     data-hero data-testid="guest-hero">
+    @if (cover is not null)
     {
-        <div class="gm-hero-media">@Media</div>
+        <div class="gm-hero-cover gm-container">
+            <div class="gm-hero-cover-frame">
+                <img src="@cover" alt="" width="1200" height="600" fetchpriority="high" decoding="async" data-testid="hero-cover" />
+            </div>
+        </div>
     }
     <div class="gm-hero-text gm-container">
-        <h1 class="gm-hero-title" data-hero-title>@Title</h1>
-        @if (!string.IsNullOrWhiteSpace(Description))
+        @if (showBrand)
         {
-            <p class="gm-hero-desc">@Description</p>
+            <div class="gm-hero-brand">
+                @if (logo is not null)
+                {
+                    <img class="gm-hero-logo" src="@logo" alt="" width="160" height="160" decoding="async" data-testid="hero-logo" />
+                }
+                @if (Model.ShowsRestaurantName)
+                {
+                    <p class="gm-hero-restaurant" data-testid="hero-restaurant">@profile!.Name</p>
+                }
+            </div>
+        }
+        <h1 class="gm-hero-title" data-hero-title>@Model.Menu.Name</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Menu.Description))
+        {
+            <p class="gm-hero-desc">@Model.Menu.Description</p>
         }
         @ChildContent
     </div>
 </div>
 
 @code {
-    [Parameter, EditorRequired] public string Title { get; set; } = "";
-    [Parameter] public string? Description { get; set; }
-    /// <summary>Above the title (cover image, logo).</summary>
-    [Parameter] public RenderFragment? Media { get; set; }
-    /// <summary>Below the description (links, opening hours, …).</summary>
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+    /// <summary>Below the description (e.g. a line with today's information).</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }
