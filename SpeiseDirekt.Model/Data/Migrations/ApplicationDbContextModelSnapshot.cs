@@ -379,7 +379,14 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Property<int>("Theme")
                         .HasColumnType("int");
 
+                    b.Property<Guid?>("TranslationGroupId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("TranslationGroupId", "Language")
+                        .IsUnique()
+                        .HasFilter("[TranslationGroupId] IS NOT NULL");
 
                     b.ToTable("Menus");
                 });

@@ -1,10 +1,11 @@
 using SpeiseDirekt.Model;
 
-namespace SpeiseDirekt3.Components.Allergens;
+namespace SpeiseDirekt.Infrastructure;
 
 /// <summary>
 /// The 14 allergens that EU Regulation 1169/2011 requires restaurants to declare, with the letter codes
-/// used on Austrian menu cards (A–R, without I, J, K and Q). Used by the quick-fill on the allergens page.
+/// used on Austrian menu cards (A–R, without I, J, K and Q). Used by the quick-fill on the allergens page and by
+/// the copy of a menu into another language (<see cref="ServiceInterface.IMenuTranslationService"/>).
 /// </summary>
 public static class EuAllergens
 {
@@ -40,5 +41,21 @@ public static class EuAllergens
     {
         var existing = existingCodes.Select(NormalizeCode).ToHashSet();
         return All.Where(e => !existing.Contains(e.Code)).ToList();
+    }
+
+    /// <summary>
+    /// The name of an allergen in a copy of its menu in <paramref name="target"/>: when <paramref name="code"/> is an
+    /// EU code and <paramref name="name"/> is that allergen's standard German or English name (as the quick-fill writes
+    /// it), the standard name for the target language; otherwise the owner's own text, unchanged.
+    /// </summary>
+    public static string NameIn(MenuLanguage target, string code, string name)
+    {
+        var entry = All.FirstOrDefault(e => e.Code == NormalizeCode(code));
+        if (entry is null)
+            return name;
+        var trimmed = name.Trim();
+        var isStandard = string.Equals(trimmed, entry.German, StringComparison.OrdinalIgnoreCase)
+                         || string.Equals(trimmed, entry.English, StringComparison.OrdinalIgnoreCase);
+        return isStandard ? entry.NameFor(target) : name;
     }
 }

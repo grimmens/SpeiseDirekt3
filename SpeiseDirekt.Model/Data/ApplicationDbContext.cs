@@ -35,6 +35,13 @@ namespace SpeiseDirekt.Data
             builder.Entity<MenuItemPriceOption>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<RestaurantProfile>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
 
+            // Language versions: at most one menu per language in a translation group. Filtered, so SQL Server allows
+            // any number of unlinked menus (NULL); SQLite (E2E, API tests) supports the same partial index.
+            builder.Entity<Menu>()
+                .HasIndex(e => new { e.TranslationGroupId, e.Language })
+                .IsUnique()
+                .HasFilter("[TranslationGroupId] IS NOT NULL");
+
             // One restaurant profile per tenant
             builder.Entity<RestaurantProfile>().HasIndex(e => e.ApplicationUserId).IsUnique();
 

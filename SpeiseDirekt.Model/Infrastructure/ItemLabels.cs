@@ -19,12 +19,14 @@ public enum ItemLabelKind
 /// <param name="PropertyName">The <see cref="MenuItem"/> property (also the editor checkbox id <c>MenuItem.{PropertyName}</c>).</param>
 /// <param name="BackOfficeText">English text in the back office.</param>
 /// <param name="GuestText">German text of the guest view's label chip (capitalised: "Vegetarisch").</param>
+/// <param name="GuestTextEnglish">English text of the guest view's label chip (menus in any language but German).</param>
 /// <param name="Order">Display order (ascending) everywhere.</param>
 public sealed record ItemLabel(
     string Key,
     string PropertyName,
     string BackOfficeText,
     string GuestText,
+    string GuestTextEnglish,
     ItemLabelKind Kind,
     int Order,
     Func<MenuItem, bool> Get,
@@ -36,26 +38,29 @@ public sealed record ItemLabel(
 /// </summary>
 public static class ItemLabels
 {
-    public static readonly ItemLabel Popular = new("popular", nameof(MenuItem.IsPopular), "Popular", "Beliebt",
+    public static readonly ItemLabel Popular = new("popular", nameof(MenuItem.IsPopular), "Popular", "Beliebt", "Popular",
         ItemLabelKind.Highlight, 10, i => i.IsPopular, (i, v) => i.IsPopular = v);
 
-    public static readonly ItemLabel New = new("new", nameof(MenuItem.IsNew), "New", "Neu",
+    public static readonly ItemLabel New = new("new", nameof(MenuItem.IsNew), "New", "Neu", "New",
         ItemLabelKind.Highlight, 20, i => i.IsNew, (i, v) => i.IsNew = v);
 
-    public static readonly ItemLabel Vegan = new("vegan", nameof(MenuItem.IsVegan), "Vegan", "Vegan",
+    public static readonly ItemLabel Vegan = new("vegan", nameof(MenuItem.IsVegan), "Vegan", "Vegan", "Vegan",
         ItemLabelKind.Dietary, 30, i => i.IsVegan, (i, v) => i.IsVegan = v);
 
-    public static readonly ItemLabel Vegetarian = new("vegetarian", nameof(MenuItem.IsVegetarian), "Vegetarian", "Vegetarisch",
+    public static readonly ItemLabel Vegetarian = new("vegetarian", nameof(MenuItem.IsVegetarian), "Vegetarian", "Vegetarisch", "Vegetarian",
         ItemLabelKind.Dietary, 40, i => i.IsVegetarian, (i, v) => i.IsVegetarian = v);
 
-    public static readonly ItemLabel Halal = new("halal", nameof(MenuItem.IsHalal), "Halal", "Halal",
+    public static readonly ItemLabel Halal = new("halal", nameof(MenuItem.IsHalal), "Halal", "Halal", "Halal",
         ItemLabelKind.Dietary, 50, i => i.IsHalal, (i, v) => i.IsHalal = v);
 
-    public static readonly ItemLabel AlcoholFree = new("alcohol-free", nameof(MenuItem.IsAlcoholFree), "Alcohol-free", "Alkoholfrei",
+    public static readonly ItemLabel AlcoholFree = new("alcohol-free", nameof(MenuItem.IsAlcoholFree), "Alcohol-free", "Alkoholfrei", "Alcohol-free",
         ItemLabelKind.Dietary, 60, i => i.IsAlcoholFree, (i, v) => i.IsAlcoholFree = v);
 
-    public static readonly ItemLabel Spicy = new("spicy", nameof(MenuItem.IsSpicy), "Spicy", "Scharf",
+    public static readonly ItemLabel Spicy = new("spicy", nameof(MenuItem.IsSpicy), "Spicy", "Scharf", "Spicy",
         ItemLabelKind.Dietary, 70, i => i.IsSpicy, (i, v) => i.IsSpicy = v);
+
+    /// <summary>The guest chip text: German on German menus, English on every other menu (<c>GuestText</c> in the app).</summary>
+    public static string GuestTextFor(this ItemLabel label, bool german) => german ? label.GuestText : label.GuestTextEnglish;
 
     /// <summary>All labels in display order.</summary>
     public static readonly IReadOnlyList<ItemLabel> All =
