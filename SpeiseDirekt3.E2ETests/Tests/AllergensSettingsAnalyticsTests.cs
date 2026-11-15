@@ -321,18 +321,20 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
         await GotoInteractiveAsync($"/menu/edit/{menuId}"); // 1280 x 900
 
         var frame = Page.GetByTestId("menu-preview-frame");
-        await Assertions.Expect(frame.Locator("h3", new() { HasTextRegex = new Regex(@"^\s*Gericht 13\s*$") })).ToHaveCountAsync(1);
+        var guest = Page.FrameLocator("[data-testid='menu-preview-iframe']");
+        await Assertions.Expect(guest.Locator("h3", new() { HasTextRegex = new Regex(@"^\s*Gericht 13\s*$") })).ToHaveCountAsync(1);
         var box = await frame.BoundingBoxAsync();
         box.Should().NotBeNull();
         box!.Height.Should().BeInRange(500, 700);
         box.Width.Should().BeLessThanOrEqualTo(400);
 
-        // The menu scrolls inside the frame, not the page
-        var scroll = Page.GetByTestId("menu-preview-scroll");
-        var heights = await scroll.EvaluateAsync<int[]>("e => [e.scrollHeight, e.clientHeight]");
+        // The guest page in the iframe sees a phone viewport and scrolls inside the frame, not the page
+        var guestFrame = Page.Frames.Single(f => f.Url.Contains($"/menu/preview/{menuId}"));
+        (await guestFrame.EvaluateAsync<int>("() => window.innerWidth")).Should().BeLessThan(400);
+        var heights = await guestFrame.EvaluateAsync<int[]>("() => [document.documentElement.scrollHeight, window.innerHeight]");
         heights[0].Should().BeGreaterThan(heights[1] + 200);
-        await scroll.EvaluateAsync("e => { e.scrollTop = e.scrollHeight; }");
-        (await scroll.EvaluateAsync<int>("e => Math.round(e.scrollTop)")).Should().BeGreaterThan(0);
+        await guestFrame.EvaluateAsync("() => window.scrollTo(0, document.documentElement.scrollHeight)");
+        (await guestFrame.EvaluateAsync<int>("() => Math.round(window.scrollY)")).Should().BeGreaterThan(0);
         (await Page.EvaluateAsync<int>("() => Math.round(window.scrollY)")).Should().Be(0);
 
         // The theme arrows still switch the theme; the preview stays rendered
@@ -343,7 +345,8 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
         await Page.Locator("button:has(+ #themeSelect)").ClickAsync();
         await Page.Locator("button:has(+ #themeSelect)").ClickAsync();
         await Assertions.Expect(theme).ToHaveValueAsync("Modern");
-        await Assertions.Expect(frame.Locator("h3", new() { HasTextRegex = new Regex(@"^\s*Gericht 1\s*$") })).ToHaveCountAsync(1);
+        await Assertions.Expect(guest.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "modern");
+        await Assertions.Expect(guest.Locator("h3", new() { HasTextRegex = new Regex(@"^\s*Gericht 1\s*$") })).ToHaveCountAsync(1);
     }
 
     // --- Analytics ---
@@ -469,8 +472,8 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
 
         await GotoInteractiveAsync($"/menu/edit/{menuId}");
         await Shot(Page, "desktop-menu-edit");
-        await Page.GetByTestId("menu-preview-frame").Locator("h3", new() { HasTextString = "Bruschetta" }).ClickAsync();
-        await Shot(Page, "desktop-menu-edit-overlay", fullPage: false);
+        await Page.FrameLocator("[data-testid='menu-preview-iframe']").Locator("h3", new() { HasTextString = "Bruschetta" }).ClickAsync();
+        await Shot(Page, "desktop-menu-edit-item-sheet", fullPage: false);
 
         // Phone: same cookies, narrow viewport
         var state = await Context.StorageStateAsync();

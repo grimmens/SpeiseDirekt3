@@ -6,53 +6,54 @@ using SpeiseDirekt3.E2ETests.Infrastructure;
 namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
-/// Guest-facing UI details: dietary badges (vegan/vegetarisch/scharf), allergen legend in the item
-/// overlay, the editor preview with allergens, and the unified notice pages.
+/// Guest-facing UI details: label chips (vegan/vegetarisch/scharf), allergen legend in the item sheet,
+/// the editor preview with allergens, prices, and the unified notice pages.
 /// </summary>
 public class GuestUiTests : BackOfficeTestBase
 {
     public GuestUiTests(E2EFixture fixture) : base(fixture) { }
 
-    private static Regex Exact(string text) => new($"^\\s*{Regex.Escape(text)}\\s*$");
+    private static ILocator DishCard(IPage page, string name) => ItemEntry(page, name);
 
-    private ILocator DishCard(IPage page, string name) =>
-        page.Locator("div.cursor-pointer", new() { Has = page.Locator("h3", new() { HasTextRegex = Exact(name) }) });
-
-    // --- Dietary badges (ramen card from the seed data) ---
+    // --- Label chips (ramen card from the seed data) ---
 
     [Fact]
-    public async Task RamenCard_ShowsDietaryBadgesLikeThePrintedMenu()
+    public async Task RamenCard_ShowsLabelChipsLikeThePrintedMenu()
     {
         await OpenMenuAsync(E2ESeedData.RamenMenuId);
 
         foreach (var dish in E2ESeedData.RamenDishes)
         {
             var card = DishCard(Page, dish.Name);
-            await Assertions.Expect(card.GetByTestId("badge-vegan")).ToHaveCountAsync(dish.Vegan ? 1 : 0);
-            // "vegan" implies vegetarian: only one of the two badges is shown
-            await Assertions.Expect(card.GetByTestId("badge-vegetarian")).ToHaveCountAsync(dish.Vegetarian && !dish.Vegan ? 1 : 0);
-            await Assertions.Expect(card.GetByTestId("badge-spicy")).ToHaveCountAsync(dish.Spicy ? 1 : 0);
+            await Assertions.Expect(card.GetByTestId("label-vegan")).ToHaveCountAsync(dish.Vegan ? 1 : 0);
+            // "vegan" implies vegetarian: only one of the two labels is shown
+            await Assertions.Expect(card.GetByTestId("label-vegetarian")).ToHaveCountAsync(dish.Vegetarian && !dish.Vegan ? 1 : 0);
+            await Assertions.Expect(card.GetByTestId("label-spicy")).ToHaveCountAsync(dish.Spicy ? 1 : 0);
         }
     }
 
     [Fact]
-    public async Task ItemOverlay_ShowsDietaryBadges()
+    public async Task ItemSheet_ShowsLabelChipsInFixedOrder()
     {
         await OpenMenuAsync(E2ESeedData.RamenMenuId);
 
-        await DishCard(Page, "Yasai Ramen").ClickAsync();
+        await ClickMenuItemAsync("Yasai Ramen");
 
-        await Assertions.Expect(Overlay.GetByTestId("badge-vegan")).ToHaveTextAsync(new Regex("vegan"));
-        await Assertions.Expect(Overlay.GetByTestId("badge-spicy")).ToHaveTextAsync(new Regex("scharf"));
-        await Assertions.Expect(Overlay.GetByTestId("badge-vegetarian")).ToHaveCountAsync(0);
+        await Assertions.Expect(ItemSheet.GetByTestId("label-vegan")).ToHaveTextAsync("Vegan");
+        await Assertions.Expect(ItemSheet.GetByTestId("label-spicy")).ToHaveTextAsync("Scharf");
+        await Assertions.Expect(ItemSheet.GetByTestId("label-vegetarian")).ToHaveCountAsync(0);
+        // One helper decides the order: vegan/vegetarisch first, then scharf
+        await Assertions.Expect(ItemSheet.GetByTestId("item-labels").Locator("li")).ToHaveTextAsync(new[] { "Vegan", "Scharf" });
+        // The card carries the label keys for scripts (filters)
+        await Assertions.Expect(DishCard(Page, "Yasai Ramen")).ToHaveAttributeAsync("data-labels", "vegan spicy");
     }
 
     [Fact]
-    public async Task DishWithoutLabels_ShowsNoBadges()
+    public async Task DishWithoutLabels_ShowsNoLabelChips()
     {
         await OpenMenuAsync(E2ESeedData.RamenMenuId);
 
-        await Assertions.Expect(DishCard(Page, "Tokyo Ramen").GetByTestId("dietary-badges")).ToHaveCountAsync(0);
+        await Assertions.Expect(DishCard(Page, "Tokyo Ramen").GetByTestId("item-labels")).ToHaveCountAsync(0);
     }
 
     [Fact]
@@ -66,27 +67,27 @@ public class GuestUiTests : BackOfficeTestBase
 
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
-        await OpenPublicMenuPageAsync(guest, $"/menu/{menuId}");
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
 
         var tofu = DishCard(guest, "Chili Tofu Bowl");
-        await Assertions.Expect(tofu.GetByTestId("badge-vegan")).ToBeVisibleAsync();
-        await Assertions.Expect(tofu.GetByTestId("badge-spicy")).ToBeVisibleAsync();
+        await Assertions.Expect(tofu.GetByTestId("label-vegan")).ToBeVisibleAsync();
+        await Assertions.Expect(tofu.GetByTestId("label-spicy")).ToBeVisibleAsync();
         var cheese = DishCard(guest, "Käse Bowl");
-        await Assertions.Expect(cheese.GetByTestId("badge-vegetarian")).ToBeVisibleAsync();
-        await Assertions.Expect(cheese.GetByTestId("badge-spicy")).ToHaveCountAsync(0);
+        await Assertions.Expect(cheese.GetByTestId("label-vegetarian")).ToBeVisibleAsync();
+        await Assertions.Expect(cheese.GetByTestId("label-spicy")).ToHaveCountAsync(0);
     }
 
     // --- Allergen legend ---
 
     [Fact]
-    public async Task ItemOverlay_ShowsAllergenLegendWithNames()
+    public async Task ItemSheet_ShowsAllergenLegendWithNames()
     {
         var dish = E2ESeedData.RamenDishes.Single(d => d.Name == "Hokkaido Ramen");
         await OpenMenuAsync(E2ESeedData.RamenMenuId);
 
-        await DishCard(Page, dish.Name).ClickAsync();
+        await ClickMenuItemAsync(dish.Name);
 
-        var legend = Overlay.GetByTestId("allergen-legend");
+        var legend = ItemSheet.GetByTestId("allergen-legend");
         await Assertions.Expect(legend).ToBeVisibleAsync();
         await Assertions.Expect(legend.Locator("li")).ToHaveCountAsync(dish.AllergenCodes.Length);
         foreach (var code in dish.AllergenCodes)
@@ -97,14 +98,14 @@ public class GuestUiTests : BackOfficeTestBase
     }
 
     [Fact]
-    public async Task ItemOverlay_WithoutAllergens_ShowsNoLegend()
+    public async Task ItemSheet_WithoutAllergens_ShowsNoLegend()
     {
         await OpenMenuAsync(E2ESeedData.MenuId);
 
         await ClickMenuItemAsync("Gartensalat");
 
-        await Assertions.Expect(Overlay).ToBeVisibleAsync();
-        await Assertions.Expect(Overlay.GetByTestId("allergen-legend")).ToHaveCountAsync(0);
+        await Assertions.Expect(ItemSheet).ToBeVisibleAsync();
+        await Assertions.Expect(ItemSheet.GetByTestId("allergen-legend")).ToHaveCountAsync(0);
     }
 
     [Fact]
@@ -118,11 +119,13 @@ public class GuestUiTests : BackOfficeTestBase
 
         await GotoInteractiveAsync($"/menu/edit/{menuId}");
 
-        var card = DishCard(Page, "Gemüsesuppe");
-        await Assertions.Expect(card).ToBeVisibleAsync();
-        await Assertions.Expect(card.Locator("span", new() { HasTextRegex = Exact("L") })).ToBeVisibleAsync();
+        // The phone frame shows the real guest page in an iframe
+        var frame = Page.FrameLocator("[data-testid='menu-preview-iframe']");
+        var row = frame.Locator("[data-testid='list-row']", new() { Has = frame.Locator("h3", new() { HasTextRegex = ExactText("Gemüsesuppe") }) });
+        await Assertions.Expect(row).ToBeVisibleAsync();
+        await Assertions.Expect(row.GetByTestId("item-allergens")).ToHaveTextAsync("L");
 
-        // Saving the menu afterwards still works (allergens are now part of the loaded graph)
+        // Saving the menu afterwards still works
         await Page.Locator("#menuDesc").FillAsync("Neue Beschreibung");
         await Button("Save Changes").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"/menudetail/{menuId}$"));
@@ -134,12 +137,12 @@ public class GuestUiTests : BackOfficeTestBase
     [Fact]
     public async Task MenuCard_PriceStaysOnOneLine_OnNarrowPhones()
     {
-        // Tokyo Ramen has six allergen codes next to the price; on narrow screens "€" and "17.40" used to wrap
+        // Tokyo Ramen has six allergen codes; on narrow screens "€" and the amount used to wrap
         await Page.SetViewportSizeAsync(360, 780);
         await OpenMenuAsync(E2ESeedData.RamenMenuId);
 
         var price = DishCard(Page, "Tokyo Ramen").GetByTestId("item-price");
-        await Assertions.Expect(price).ToHaveTextAsync(new Regex("€ 17[.,]40"));
+        await Assertions.Expect(price).ToHaveTextAsync("€ 17,40");
         await Assertions.Expect(price).ToHaveCSSAsync("white-space", "nowrap");
         var box = await price.BoundingBoxAsync();
         box!.Height.Should().BeLessThan(30, "the price must not wrap onto a second line");

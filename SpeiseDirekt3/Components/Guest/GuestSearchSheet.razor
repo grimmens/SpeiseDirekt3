@@ -1,0 +1,38 @@
+@* Search sheet: a simple client-side search over the menu. The server renders one hidden result row per item
+   (data-search-text = name, description, category); guest-menu.js shows the rows whose text contains every word
+   of the query (case and accents ignored). A result is a normal item link (opens the item sheet). *@
+<GuestSheet Name="search" Title="Suche" TestId="search-sheet" Class="gm-sheet--search">
+    <div class="gm-search" data-search>
+        <label class="gm-visually-hidden" for="gm-search-input">Speisen und Getränke suchen</label>
+        <div class="gm-search-field">
+            <GuestIcon Name="search" />
+            <input id="gm-search-input" class="gm-search-input" type="search" autocomplete="off" autocapitalize="off"
+                   spellcheck="false" enterkeyhint="search" placeholder="Gericht oder Zutat suchen" data-search-input autofocus />
+            <button type="button" class="gm-search-clear" data-search-clear aria-label="Eingabe löschen" hidden>
+                <GuestIcon Name="close" />
+            </button>
+        </div>
+        <p class="gm-search-status" data-search-status role="status" aria-live="polite"></p>
+        <ul class="gm-search-results" data-search-results role="list">
+            @foreach (var category in Model.Categories)
+            {
+                foreach (var item in category.Items)
+                {
+                    <li hidden data-search-row data-item-id="@item.Id" data-search-text="@($"{item.Name} {item.Description} {category.Category.Name}")" @key="item.Id">
+                        <a class="gm-search-row" href="@Model.ItemUrl(item)" data-item-link>
+                            <span class="gm-search-text">
+                                <span class="gm-search-name">@item.Name</span>
+                                <span class="gm-search-category">@category.Category.Name</span>
+                            </span>
+                            <span class="gm-price">@GuestFormat.Price(item.Price)</span>
+                        </a>
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+</GuestSheet>
+
+@code {
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+}

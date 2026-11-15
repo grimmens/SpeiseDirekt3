@@ -1,0 +1,48 @@
+@* The guest menu (static SSR): top bar, intro, sticky category chips, the sections, and the sheets (categories,
+   search, item). Rendered by /qr/{id}, /menu/{id} and /menu/preview/{id}; js/guest-menu.js adds the behaviour.
+   The root carries what the script needs: data-menu-id, data-track-clicks, data-base-path. *@
+<PageTitle>@Model.Menu.Name – Speisekarte</PageTitle>
+<HeadContent>
+    @* Browser UI (scrollbars, form controls) before the CSS applies; the colors themselves live in guest-themes.css *@
+    <meta name="color-scheme" content="@(Model.ThemeKey == "dark" ? "dark" : "light")" />
+</HeadContent>
+
+<div class="gm" data-theme="@Model.ThemeKey" data-guest-root data-testid="menu-display" data-menu-id="@Model.Menu.Id"
+     data-track-clicks="@(Model.TrackClicks ? "true" : "false")" data-base-path="@Model.BasePath" data-preview="@(Model.IsPreview ? "true" : null)">
+    <a class="gm-skip" href="#gm-main">Zur Speisekarte springen</a>
+
+    <GuestTopBar Title="@Model.Menu.Name">
+        <End>
+            <button type="button" class="gm-iconbtn" data-js-only data-sheet-open="search" aria-haspopup="dialog"
+                    aria-label="Speisekarte durchsuchen" data-testid="search-button">
+                <GuestIcon Name="search" />
+            </button>
+        </End>
+    </GuestTopBar>
+
+    <GuestHero Title="@Model.Menu.Name" Description="@Model.Menu.Description" />
+
+    @if (Model.Categories.Count > 0)
+    {
+        <GuestCategoryNav Categories="Model.Categories" />
+    }
+
+    <main class="gm-main gm-container" id="gm-main">
+        @foreach (var category in Model.Categories)
+        {
+            <GuestCategorySection @key="category.Category.Id" Category="category" ItemHref="Model.ItemUrl" />
+        }
+        @if (Model.Categories.Count == 0)
+        {
+            <p class="gm-empty">Auf dieser Speisekarte stehen noch keine Gerichte.</p>
+        }
+    </main>
+
+    <GuestCategorySheet Categories="Model.Categories" />
+    <GuestSearchSheet Model="Model" />
+    <GuestItemSheet Model="Model" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+}

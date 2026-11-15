@@ -1,21 +1,14 @@
-using System.Text.RegularExpressions;
 using Microsoft.Playwright;
 using SpeiseDirekt3.E2ETests.Infrastructure;
 
 namespace SpeiseDirekt3.E2ETests.Tests;
 
-/// <summary>Combo offers in the item overlay of the public menu page.</summary>
+/// <summary>Combo offers in the item sheet of the public menu page (German prices, <c>€ 6,00</c>).</summary>
 public class MenuComboDisplayTests : E2ETestBase
 {
     public MenuComboDisplayTests(E2EFixture fixture) : base(fixture) { }
 
-    // Prices are formatted with "F2" in the server's culture: accept "6.00" and "6,00"
-    private static Regex Price(string value) => new(Regex.Escape(value).Replace("\\.", "[.,]"));
-
-    private ILocator ComboSection => Overlay.Locator("div", new LocatorLocatorOptions
-    {
-        Has = Page.Locator("h2", new PageLocatorOptions { HasTextString = "Kombi-Angebote" })
-    }).Last;
+    private ILocator ComboSection => ItemSheet.GetByTestId("combo-offers");
 
     [Fact]
     public async Task TriggerItem_ShowsComboWithDescriptionItemsAndPrice()
@@ -24,14 +17,14 @@ public class MenuComboDisplayTests : E2ETestBase
 
         await ClickMenuItemAsync("Cheeseburger");
 
-        await Assertions.Expect(Overlay).ToBeVisibleAsync();
         await Assertions.Expect(ComboSection).ToBeVisibleAsync();
+        await Assertions.Expect(ComboSection.GetByRole(AriaRole.Heading, new() { Name = "Kombi-Angebote" })).ToBeVisibleAsync();
         await Assertions.Expect(ComboSection).ToContainTextAsync(E2ESeedData.ComboName);
         await Assertions.Expect(ComboSection).ToContainTextAsync(E2ESeedData.ComboDescription);
         await Assertions.Expect(ComboSection.Locator("li")).ToHaveCountAsync(2);
         await Assertions.Expect(ComboSection.Locator("li").Nth(0)).ToContainTextAsync("Cola");
         await Assertions.Expect(ComboSection.Locator("li").Nth(1)).ToContainTextAsync("Pommes");
-        await Assertions.Expect(ComboSection).ToContainTextAsync(Price("€ 6.00"));
+        await Assertions.Expect(ComboSection).ToContainTextAsync("€ 6,00");
     }
 
     [Fact]
@@ -42,8 +35,9 @@ public class MenuComboDisplayTests : E2ETestBase
         await ClickMenuItemAsync("Cheeseburger");
 
         // Pommes 4.00 + Cola 3.50 = 7.50 single, combo 6.00 → saves 1.50
-        await Assertions.Expect(ComboSection.Locator(".line-through")).ToHaveTextAsync(Price("€ 7.50"));
-        await Assertions.Expect(ComboSection).ToContainTextAsync(Price("Sie sparen € 1.50"));
+        await Assertions.Expect(ComboSection.Locator("del")).ToHaveTextAsync("€ 7,50");
+        await Assertions.Expect(ComboSection).ToContainTextAsync("einzeln € 7,50");
+        await Assertions.Expect(ComboSection).ToContainTextAsync("Sie sparen € 1,50");
     }
 
     [Fact]
@@ -54,9 +48,8 @@ public class MenuComboDisplayTests : E2ETestBase
         // Pommes is included in the combo, but does not trigger it
         await ClickMenuItemAsync("Pommes");
 
-        await Assertions.Expect(Overlay).ToBeVisibleAsync();
-        await Assertions.Expect(Overlay).ToContainTextAsync("Hausgemacht");
-        await Assertions.Expect(Overlay.GetByText("Kombi-Angebote")).ToHaveCountAsync(0);
+        await Assertions.Expect(ItemSheet).ToContainTextAsync("Hausgemacht");
+        await Assertions.Expect(ItemSheet.GetByText("Kombi-Angebote")).ToHaveCountAsync(0);
     }
 
     [Fact]
@@ -66,7 +59,6 @@ public class MenuComboDisplayTests : E2ETestBase
 
         await ClickMenuItemAsync("Espresso");
 
-        await Assertions.Expect(Overlay).ToBeVisibleAsync();
-        await Assertions.Expect(Overlay.GetByText("Kombi-Angebote")).ToHaveCountAsync(0);
+        await Assertions.Expect(ItemSheet.GetByText("Kombi-Angebote")).ToHaveCountAsync(0);
     }
 }

@@ -1,24 +1,24 @@
 ﻿@page "/qr/{QrId:guid}"
+@* Target of every QR code (anonymous): resolves the active menu (IMenuService) and shows it as the static SSR
+   guest menu. Records one MenuView per page request; a request with ?item= (an item opened without JS) records
+   the item click instead. *@
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [GuestPage]
+@layout GuestLayout
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.ServiceInterface
-@inject ApplicationDbContext DbContext
-@inject NavigationManager NavManager
-@inject ITrackingService TrackingService
-@inject IHttpContextAccessor HttpContextAccessor
-@layout MenuLayout
+@inject ApplicationDbContext Db
+@inject IMenuService MenuService
+@inject ITrackingService Tracking
 
-@if (loading)
-{
-    <GuestNotice Kind="GuestNotice.GuestNoticeKind.Loading" Title="Menü wird geladen…" />
-}
-else if (qr == null)
+@if (!qrExists)
 {
     <GuestNotice Kind="GuestNotice.GuestNoticeKind.NotFound" Title="Ungültiger QR-Code"
                  Message="Dieser QR-Code existiert nicht oder wurde gelöscht." ShowHomeLink="true" />
 }
-else if (menu != null)
+else if (model is not null)
 {
-    <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="menu" />
+    <GuestMenuView Model="model" />
 }
 else
 {
@@ -26,32 +26,31 @@ else
     <GuestNotice Kind="GuestNotice.GuestNoticeKind.Info" Title="Gerade ist kein Menü verfügbar"
                  Message="Zu dieser Uhrzeit ist für diesen QR-Code kein Menü hinterlegt. Bitte versuchen Sie es später noch einmal." />
 }
+
 @code {
     [Parameter] public Guid QrId { get; set; }
-    [Inject] public IMenuService MenuService { get; set; }
-    private QRCode? qr;
-    private Menu? menu;
-    private bool loading = true;
+    /// <summary>?item=&lt;id&gt;: render that item's sheet open (deep link, card click without JS).</summary>
+    [SupplyParameterFromQuery(Name = "item")] public string? Item { get; set; }
 
+    private bool qrExists;
+    private GuestMenuModel? model;
 
     protected override async Task OnInitializedAsync()
     {
-        var isPreRendering = !HttpContextAccessor.HttpContext.Response.HasStarted;
-        qr = await DbContext.QRCodes
-                .IgnoreQueryFilters()
-                .AsNoTracking()
-                .Where(q => q.Id == QrId)
-                .FirstOrDefaultAsync();
-        menu = await MenuService.GetMenuForQRCodeAsync(QrId);
+        qrExists = await Db.QRCodes.IgnoreQueryFilters().AnyAsync(q => q.Id == QrId);
+        if (!qrExists)
+            return;
 
-        // Track menu view if menu was found
-        if (menu != null && isPreRendering)
-        {
-            var sessionId = TrackingService.GetOrCreateSessionId();
-            await TrackingService.RecordMenuViewAsync(sessionId, menu.Id, QrId);
-        }
+        var menu = await MenuService.GetMenuForQRCodeAsync(QrId);
+        if (menu is null)
+            return;
 
-        loading = false;
-        await InvokeAsync(StateHasChanged);
+        model = await GuestMenuLoader.BuildAsync(Db, menu, $"/qr/{QrId}", Item);
+
+        var sessionId = Tracking.GetOrCreateSessionId();
+        if (model.SelectedItem is { } item)
+            await Tracking.RecordMenuItemClickAsync(sessionId, item.Id, menu.Id);
+        else
+            await Tracking.RecordMenuViewAsync(sessionId, menu.Id, QrId);
     }
 }

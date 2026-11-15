@@ -1,0 +1,29 @@
+@* Sticky top bar of the guest view: start slot | title (or Center content) | end slot.
+   The title fades in once the hero heading has scrolled away (guest-menu.js sets data-hero-hidden on the root;
+   without JS it is always visible). The slots are 40 px wide at least so the title stays centered. *@
+<header class="gm-topbar" data-testid="guest-topbar" data-topbar>
+    <div class="gm-topbar-inner gm-container">
+        <div class="gm-topbar-slot gm-topbar-start">@Start</div>
+        <div class="gm-topbar-center">
+            @if (Center is not null)
+            {
+                @Center
+            }
+            else
+            {
+                <span class="gm-topbar-title">@Title</span>
+            }
+        </div>
+        <div class="gm-topbar-slot gm-topbar-end">@End</div>
+    </div>
+</header>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    /// <summary>Replaces the title (e.g. a logo).</summary>
+    [Parameter] public RenderFragment? Center { get; set; }
+    /// <summary>Left slot (e.g. a back/home or info button).</summary>
+    [Parameter] public RenderFragment? Start { get; set; }
+    /// <summary>Right slot (icon buttons: search, …).</summary>
+    [Parameter] public RenderFragment? End { get; set; }
+}

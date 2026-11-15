@@ -145,21 +145,27 @@
                     </a>
                 }
             </div>
-            @if (Menu != null)
+            @if (IsNew)
+            {
+                <div data-testid="menu-preview-hint" class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-[1rem] py-6 text-sm text-gray-600">
+                    Save the menu to see how guests will see it.
+                </div>
+            }
+            else
             {
                 <div class="flex justify-center">
-                    @* Geometry is inline so the frame keeps its size even without the Tailwind CDN. The transform
-                       makes the frame the containing block of position:fixed children, so the item overlay opens
-                       inside the phone instead of covering the whole page. *@
+                    @* The real guest page (static SSR, its own CSS/JS) in an iframe, so its media queries see the
+                       380 px phone width. ?theme= makes the owner preview follow the select before saving; @key
+                       replaces the iframe instead of changing its src, so theme changes add no history entries. *@
                     <div data-testid="menu-preview-frame"
                          class="relative w-full rounded-[2.25rem] border-[10px] border-gray-900 bg-gray-900 shadow-xl"
-                         style="max-width: 380px; height: 640px; overflow: hidden; transform: translateZ(0);">
-                        <div data-testid="menu-preview-scroll" class="bg-white rounded-[1.6rem] [&>div]:min-h-full"
-                             style="height: 100%; overflow-y: auto; overscroll-behavior: contain;">
-                            <MenuDisplayComponent Preview="true" Menu="Menu" />
-                        </div>
+                         style="max-width: 380px; height: 640px; overflow: hidden;">
+                        <iframe @key="PreviewUrl" src="@PreviewUrl" title="Guest preview" data-testid="menu-preview-iframe"
+                                class="bg-white rounded-[1.6rem]"
+                                style="display: block; width: 100%; height: 100%; border: 0;"></iframe>
                     </div>
                 </div>
+                <p class="mt-3 text-xs text-gray-500">Shows the saved menu; the theme follows your selection right away.</p>
             }
         </div>
     </div>
@@ -171,6 +177,9 @@
     private Menu Menu { get; set; } = new();
     private EditContext EditContext { get; set; } = new EditContext(new Menu());
     private bool IsNew => !Id.HasValue;
+
+    /// <summary>Owner preview of the saved menu in the currently selected theme (shown in the phone frame).</summary>
+    private string PreviewUrl => $"/menu/preview/{Id}?theme={Menu.Theme.ToString().ToLowerInvariant()}";
 
     protected override async Task OnInitializedAsync()
     {
@@ -187,10 +196,8 @@
         }
         else
         {
+            // Only the menu itself: the preview is the guest page in an iframe and loads its own data
             Menu = (await Context.Menus
-                .Include(e => e.Categories)
-                .ThenInclude(e => e.MenuItems)
-                .ThenInclude(e => e.Allergens) // shown in the preview
                 .SingleOrDefaultAsync(e => e.Id == Id))
                ?? throw new InvalidOperationException($"Menu '{Id}' not found.");
         }

@@ -1,0 +1,48 @@
+@* The item sheet (<dialog data-sheet="item">) plus one <template data-item-template="<id>"> per item with its
+   server-rendered detail (GuestItemDetail). guest-menu.js clones the template into [data-sheet-body] and opens
+   the sheet; no markup is built in JS.
+   ?item=<id> (deep link, or a card click without JS): the server renders the sheet open (non-modal <dialog open>
+   plus a scrim link); the close links lead back to the plain page at the item's card. With JS the sheet becomes
+   modal right away. *@
+@{
+    var selected = Model.SelectedItem;
+}
+<dialog class="gm-sheet gm-sheet--item" data-sheet="item" data-testid="item-sheet" aria-modal="true"
+        aria-labelledby="@(selected is null ? null : GuestFormat.ItemTitleId(selected.Id))"
+        data-item-id="@selected?.Id" open="@(selected is not null)">
+    <div class="gm-sheet-panel">
+        <div class="gm-sheet-handle" aria-hidden="true"></div>
+        <a class="gm-iconbtn gm-sheet-close gm-sheet-close--float" href="@CloseHref(selected)" data-sheet-close aria-label="Schließen">
+            <GuestIcon Name="close" />
+        </a>
+        <div class="gm-sheet-body" data-sheet-body>
+            @if (selected is not null)
+            {
+                <GuestItemDetail Item="selected" CategoryName="@Model.CategoryOf(selected)?.Category.Name" Combos="Model.CombosFor(selected)" />
+            }
+        </div>
+    </div>
+</dialog>
+@if (selected is not null)
+{
+    <a class="gm-scrim" href="@CloseHref(selected)" data-scrim tabindex="-1" aria-hidden="true"></a>
+}
+<div class="gm-templates" hidden>
+    @foreach (var category in Model.Categories)
+    {
+        foreach (var item in category.Items)
+        {
+            <template data-item-template="@item.Id" @key="item.Id">
+                <GuestItemDetail Item="item" CategoryName="@category.Category.Name" Combos="Model.CombosFor(item)" />
+            </template>
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+
+    /// <summary>Without JS: back to the plain page, scrolled to the item's card.</summary>
+    private string CloseHref(MenuItem? item) =>
+        item is null ? Model.BasePath : $"{Model.BasePath}#{GuestFormat.ItemAnchor(item.Id)}";
+}

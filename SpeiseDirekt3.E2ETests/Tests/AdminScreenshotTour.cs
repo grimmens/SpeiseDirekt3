@@ -61,7 +61,7 @@ public class AdminScreenshotTour : BackOfficeTestBase
         {
             await App.SeedAsync(ownerId, async db =>
                 (await db.Menus.SingleAsync(m => m.Id == seeded.MenuId)).Theme = theme);
-            await OpenPublicMenuPageAsync(phone, $"/menu/{seeded.MenuId}");
+            await OpenGuestPageAsync(phone, $"/menu/{seeded.MenuId}");
             await SettleAsync(phone);
             await phone.ScreenshotAsync(new() { Path = Path.Combine(dir, $"guest-{theme.ToString().ToLowerInvariant()}.png"), FullPage = true });
         }

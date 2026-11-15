@@ -5,8 +5,8 @@ using SpeiseDirekt3.E2ETests.Infrastructure;
 namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
-/// Fonts, icons and Chart.js are served by the app itself. The only remaining external dependency is
-/// the Tailwind Play CDN (cdn.tailwindcss.com).
+/// Fonts, icons and Chart.js are served by the app itself. The back office still loads the Tailwind Play CDN
+/// (cdn.tailwindcss.com); the guest pages load nothing external at all — only their own CSS/JS and fonts.
 /// </summary>
 public class LocalAssetsTests : BackOfficeTestBase
 {
@@ -32,18 +32,40 @@ public class LocalAssetsTests : BackOfficeTestBase
             "fonts, icons, Bootstrap and Chart.js must come from the app, not from a CDN");
 
     [Fact]
-    public async Task PublicMenuPage_LoadsNothingExternalButTailwind_AndUsesSelfHostedFonts()
+    public async Task GuestPage_LoadsNothingExternal_OnlyItsOwnAssets_AndSelfHostedFonts()
     {
         var external = RecordExternalRequests(Page);
+        var local = new List<string>();
+        Page.Request += (_, r) => { lock (local) local.Add(new Uri(r.Url).AbsolutePath); };
 
         await OpenMenuAsync(E2ESeedData.RamenMenuId);
+        await ClickMenuItemAsync("Tokyo Ramen");
         await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-        ExpectOnlyTailwindCdn(external);
+        external.Should().BeEmpty("guest pages make no external request at all (no Tailwind CDN)");
+        // None of the back-office assets
+        local.Should().NotContain(p => p.Contains("bootstrap") || p.Contains("chartjs") || p.Contains("speise.js")
+            || p.Contains("analytics") || p.Contains("blazor.web") || p.Contains("tailwind") || p.Contains("app.css"));
+        local.Should().Contain(p => p.StartsWith("/css/guest-menu")).And.Contain(p => p.StartsWith("/css/guest-themes"))
+            .And.Contain(p => p.StartsWith("/js/guest-menu"));
+        await Assertions.Expect(Page.Locator("script[src*='tailwindcss'], link[href*='bootstrap']")).ToHaveCountAsync(0);
+
         (await Page.EvaluateAsync<bool>("async () => { await document.fonts.load('16px Inter'); return document.fonts.check('16px Inter'); }"))
             .Should().BeTrue("Inter is served from wwwroot/fonts");
         (await Page.EvaluateAsync<bool>("async () => (await document.fonts.load('700 16px \"Playfair Display\"')).length > 0"))
             .Should().BeTrue("theme fonts are self-hosted as well");
+    }
+
+    [Fact]
+    public async Task GuestNoticePage_LoadsNothingExternal()
+    {
+        var external = RecordExternalRequests(Page);
+
+        await OpenGuestPageAsync(Page, $"/qr/{Guid.NewGuid()}");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Assertions.Expect(Page.GetByTestId("guest-notice")).ToBeVisibleAsync();
+        external.Should().BeEmpty();
     }
 
     [Fact]

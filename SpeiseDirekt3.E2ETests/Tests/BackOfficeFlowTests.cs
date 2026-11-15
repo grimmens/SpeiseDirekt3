@@ -22,15 +22,14 @@ public class BackOfficeFlowTests : BackOfficeTestBase
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
 
-        await OpenPublicMenuPageAsync(guest, $"/qr/{qrId}");
+        await OpenGuestPageAsync(guest, $"/qr/{qrId}");
         await Assertions.Expect(guest.Locator("h1").First).ToHaveTextAsync("Bistro Flow");
         await Assertions.Expect(guest.Locator("h2", new() { HasTextString = "Suppen" }).First).ToBeVisibleAsync();
 
         await ClickMenuItemAsync(guest, "Kürbissuppe");
-        var overlay = OverlayOf(guest);
-        await Assertions.Expect(overlay).ToBeVisibleAsync();
-        await Assertions.Expect(overlay).ToContainTextAsync("Mit Kernöl");
-        await Assertions.Expect(overlay).ToContainTextAsync(new System.Text.RegularExpressions.Regex("6[.,]40"));
+        var sheet = ItemSheetOf(guest);
+        await Assertions.Expect(sheet).ToContainTextAsync("Mit Kernöl");
+        await Assertions.Expect(sheet.GetByTestId("item-price")).ToHaveTextAsync("€ 6,40");
     }
 
     [Fact]

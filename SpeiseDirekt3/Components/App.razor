@@ -1,4 +1,27 @@
-﻿<!DOCTYPE html>
+@using SpeiseDirekt3.Components.Guest
+<!DOCTYPE html>
+@if (IsGuestPage)
+{
+    @* Guest pages (/qr, /menu, /menu/preview): own assets only, static SSR, no blazor.web.js — see Components/Guest.
+       No <base href>: every URL on these pages is absolute (fragment and ?item= links must stay on the page). *@
+    <html lang="de" data-guest-page>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="stylesheet" href="@Asset("css/fonts.css")" />
+        <link rel="stylesheet" href="@Asset("css/guest-themes.css")" />
+        <link rel="stylesheet" href="@Asset("css/guest-menu.css")" />
+        <script type="module" src="@Asset("js/guest-menu.js")"></script>
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <HeadOutlet />
+    </head>
+    <body class="gm-body">
+        <Routes />
+    </body>
+    </html>
+}
+else
+{
 <html lang="en">
 
 <head>
@@ -52,7 +75,6 @@
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["SpeiseDirekt3.styles.css"]" />
     <link rel="stylesheet" href="@Assets["css/tailwind-overrides.css"]" />
-    <link rel="stylesheet" href="@Assets["css/menu-themes.css"]" />
     <script src="speise.js"></script>
     <!-- Bootstrap JS (required for modal to work) -->
     <script src="@Assets["lib/bootstrap/dist/js/bootstrap.bundle.min.js"]"></script>
@@ -74,13 +96,28 @@
 </body>
 
 </html>
+}
 
 @code {
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
+    /// <summary>
+    /// Back-office pages are Interactive Server. Static SSR: the Identity pages under /Account and every page with
+    /// [ExcludeFromInteractiveRouting] (the guest pages).
+    /// </summary>
     private IComponentRenderMode? RenderModeForPage =>
-    HttpContext.Request.Path.StartsWithSegments("/Account")
-        ? null
-        : InteractiveServer;
+        HttpContext.Request.Path.StartsWithSegments("/Account") || !HttpContext.AcceptsInteractiveRouting()
+            ? null
+            : InteractiveServer;
+
+    /// <summary>The page carries <see cref="GuestPageAttribute"/>: render the guest document.</summary>
+    private bool IsGuestPage => HttpContext.GetEndpoint()?.Metadata.GetMetadata<GuestPageAttribute>() is not null;
+
+    /// <summary>Fingerprinted asset URL, absolute (guest pages have no base href).</summary>
+    private string Asset(string path)
+    {
+        var url = Assets[path];
+        return url.StartsWith('/') ? url : "/" + url;
+    }
 }

@@ -1,0 +1,28 @@
+﻿@* Notice on the guest pages when there is no menu to show: not found, or "no menu right now" (a QR code outside
+   every time window). Uses the guest assets (default look = modern theme). *@
+<PageTitle>@Title</PageTitle>
+<div class="gm gm-notice-page">
+    <main class="gm-notice" data-testid="guest-notice" data-kind="@Kind.ToString().ToLowerInvariant()">
+        <div class="gm-notice-icon gm-notice-icon--@Kind.ToString().ToLowerInvariant()">
+            <GuestIcon Name="@(Kind == GuestNoticeKind.NotFound ? "search" : "clock")" />
+        </div>
+        <h1 class="gm-notice-title">@Title</h1>
+        @if (!string.IsNullOrEmpty(Message))
+        {
+            <p class="gm-notice-text">@Message</p>
+        }
+        @if (ShowHomeLink)
+        {
+            <a class="gm-button" href="/">Zur Startseite</a>
+        }
+    </main>
+</div>
+
+@code {
+    public enum GuestNoticeKind { Info, NotFound }
+
+    [Parameter] public GuestNoticeKind Kind { get; set; } = GuestNoticeKind.Info;
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Message { get; set; }
+    [Parameter] public bool ShowHomeLink { get; set; }
+}

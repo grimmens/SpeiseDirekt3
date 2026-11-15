@@ -1,0 +1,228 @@
+/* ==========================================================================
+   Design themes of the guest menu (Menu.Theme → data-theme on .gm, the root of GuestMenuView).
+   One block per theme with every color, font and radius the guest view uses; guest-menu.css reads only
+   these variables (no colors there). "modern" is the default and lives on :root, so notice pages use it.
+   ":root:has(.gm[data-theme=…])" carries the theme up to html/body (page background, overscroll, scrollbars).
+   Fonts are self-hosted (css/fonts.css).
+   ========================================================================== */
+
+:root {                                         /* modern: clean, white, teal accent */
+    --gm-bg: #ffffff;                           /* page */
+    --gm-surface: #ffffff;                      /* sheets */
+    --gm-surface-2: #f1f3f4;                    /* chips, icon buttons, search field */
+    --gm-card-bg: #f4f5f6;                      /* text cards (items without photo in a grid) */
+    --gm-media-bg: #eceef0;                     /* behind photos while they load */
+    --gm-text: #111827;
+    --gm-muted: #5b6370;
+    --gm-border: #e5e7eb;
+    --gm-accent: #0f766e;
+    --gm-on-accent: #ffffff;
+    --gm-accent-soft: #effaf8;
+    --gm-accent-border: #a7e3d9;
+    --gm-chip-active-bg: #111827;
+    --gm-chip-active-fg: #ffffff;
+    --gm-hero-title: #111827;
+    --gm-price: #111827;
+    --gm-label-bg: #f1f3f4;
+    --gm-label-fg: #1f2937;
+    --gm-label-green: #15803d;
+    --gm-label-red: #dc2626;
+    --gm-focus: #0f766e;
+    --gm-backdrop: rgba(17, 24, 39, 0.45);
+    --gm-shadow-sheet: 0 -6px 32px rgba(17, 24, 39, 0.14);
+    --gm-shadow-btn: 0 1px 4px rgba(17, 24, 39, 0.16);
+    --gm-radius: 16px;                          /* photos, text cards */
+    --gm-radius-sheet: 22px;
+    --gm-chip-radius: 999px;
+    --gm-iconbtn-radius: 999px;                 /* round icon buttons (search, close, all categories) */
+    --gm-heading-line: 1.15;
+    --gm-font-heading: 'Manrope', system-ui, sans-serif;
+    --gm-font-item: 'Manrope', system-ui, sans-serif;
+    --gm-font-body: 'Inter', system-ui, sans-serif;
+    --gm-font-ui: 'Inter', system-ui, sans-serif;  /* chips, prices, labels, buttons */
+    --gm-body-size: 15px;
+    --gm-heading-weight: 800;
+    --gm-item-weight: 700;
+    --gm-item-transform: none;
+    color-scheme: light;
+}
+
+.gm[data-theme="elegant"], :root:has(.gm[data-theme="elegant"]) {   /* "Golden Bliss": cream, brown, gold */
+    --gm-bg: #fcf8f4;
+    --gm-surface: #fffdfa;
+    --gm-surface-2: #f3ece4;
+    --gm-card-bg: #f5eee6;
+    --gm-media-bg: #efe6da;
+    --gm-text: #2f2924;
+    --gm-muted: #6b5d52;
+    --gm-border: #e6dccf;
+    --gm-accent: #8f6a0a;
+    --gm-on-accent: #ffffff;
+    --gm-accent-soft: #fbf3dc;
+    --gm-accent-border: #ecd28c;
+    --gm-chip-active-bg: #2f2924;
+    --gm-chip-active-fg: #f9d371;
+    --gm-hero-title: #2f2924;
+    --gm-price: #2f2924;
+    --gm-label-bg: #f3ece4;
+    --gm-label-fg: #3d342d;
+    --gm-label-green: #5f7a3a;
+    --gm-label-red: #b5412e;
+    --gm-focus: #8f6a0a;
+    --gm-backdrop: rgba(47, 41, 36, 0.5);
+    --gm-radius: 6px;
+    --gm-radius-sheet: 14px;
+    --gm-chip-radius: 4px;
+    --gm-font-heading: 'Playfair Display', Georgia, serif;
+    --gm-font-item: 'Playfair Display', Georgia, serif;
+    --gm-font-body: 'EB Garamond', Georgia, serif;
+    --gm-font-ui: 'Inter', system-ui, sans-serif;
+    --gm-body-size: 17px;
+    --gm-heading-weight: 700;
+    --gm-item-weight: 700;
+}
+
+.gm[data-theme="classic"], :root:has(.gm[data-theme="classic"]) {   /* "Rose Garden Café": blush, rose, sage */
+    --gm-bg: #fbf5f2;
+    --gm-surface: #ffffff;
+    --gm-surface-2: #f6e7e3;
+    --gm-card-bg: #f6e9e5;
+    --gm-media-bg: #f3e6e1;
+    --gm-text: #3e3e3e;
+    --gm-muted: #6c5f5b;
+    --gm-border: #ecdad4;
+    --gm-accent: #a14f5c;
+    --gm-on-accent: #ffffff;
+    --gm-accent-soft: #fbeef0;
+    --gm-accent-border: #eec9c3;
+    --gm-chip-active-bg: #a14f5c;
+    --gm-chip-active-fg: #ffffff;
+    --gm-hero-title: #3e3e3e;
+    --gm-price: #3e3e3e;
+    --gm-label-bg: #f6e7e3;
+    --gm-label-fg: #4a3f3c;
+    --gm-label-green: #4f7d57;
+    --gm-label-red: #b23a48;
+    --gm-focus: #a14f5c;
+    --gm-backdrop: rgba(62, 47, 44, 0.45);
+    --gm-radius: 12px;
+    --gm-radius-sheet: 20px;
+    --gm-chip-radius: 999px;
+    --gm-font-heading: 'Playfair Display', Georgia, serif;
+    --gm-font-item: 'Playfair Display', Georgia, serif;
+    --gm-font-body: 'Crimson Text', Georgia, serif;
+    --gm-font-ui: 'Inter', system-ui, sans-serif;
+    --gm-body-size: 17px;
+    --gm-heading-weight: 700;
+    --gm-item-weight: 700;
+}
+
+.gm[data-theme="minimal"], :root:has(.gm[data-theme="minimal"]) {   /* black on white, sand accent, square */
+    --gm-bg: #ffffff;
+    --gm-surface: #ffffff;
+    --gm-surface-2: #f4f4f4;
+    --gm-card-bg: #f6f3ee;
+    --gm-media-bg: #efefef;
+    --gm-text: #1a1a1a;
+    --gm-muted: #5f5f5f;
+    --gm-border: #e5e5e5;
+    --gm-accent: #1a1a1a;
+    --gm-on-accent: #ffffff;
+    --gm-accent-soft: #f6f3ee;
+    --gm-accent-border: #e0c097;
+    --gm-chip-active-bg: #1a1a1a;
+    --gm-chip-active-fg: #ffffff;
+    --gm-hero-title: #1a1a1a;
+    --gm-price: #1a1a1a;
+    --gm-label-bg: #ffffff;
+    --gm-label-fg: #1a1a1a;
+    --gm-label-green: #3f6b3f;
+    --gm-label-red: #a33a3a;
+    --gm-focus: #1a1a1a;
+    --gm-backdrop: rgba(0, 0, 0, 0.4);
+    --gm-radius: 2px;
+    --gm-radius-sheet: 6px;
+    --gm-chip-radius: 2px;
+    --gm-iconbtn-radius: 2px;
+    --gm-font-heading: 'Inter', system-ui, sans-serif;
+    --gm-font-item: 'Inter', system-ui, sans-serif;
+    --gm-font-body: 'Inter', system-ui, sans-serif;
+    --gm-font-ui: 'Inter', system-ui, sans-serif;
+    --gm-body-size: 15px;
+    --gm-heading-weight: 700;
+    --gm-item-weight: 600;
+}
+
+.gm[data-theme="fancy"], :root:has(.gm[data-theme="fancy"]) {       /* pink & salmon, playful script headings */
+    --gm-bg: #fffdfc;
+    --gm-surface: #ffffff;
+    --gm-surface-2: #ffe9f2;
+    --gm-card-bg: #fff0f5;
+    --gm-media-bg: #ffe6ef;
+    --gm-text: #4a2c3a;
+    --gm-muted: #8a5a6e;
+    --gm-border: #ffd6e6;
+    --gm-accent: #c8336f;
+    --gm-on-accent: #ffffff;
+    --gm-accent-soft: #fff0f6;
+    --gm-accent-border: #ffb6d9;
+    --gm-chip-active-bg: #c8336f;
+    --gm-chip-active-fg: #ffffff;
+    --gm-hero-title: #c8336f;
+    --gm-price: #4a2c3a;
+    --gm-label-bg: #ffe9f2;
+    --gm-label-fg: #4a2c3a;
+    --gm-label-green: #2f8a57;
+    --gm-label-red: #d63d55;
+    --gm-focus: #c8336f;
+    --gm-backdrop: rgba(74, 44, 58, 0.45);
+    --gm-radius: 22px;
+    --gm-radius-sheet: 26px;
+    --gm-chip-radius: 999px;
+    --gm-font-heading: 'Pacifico', cursive;
+    --gm-font-item: 'Raleway', system-ui, sans-serif;
+    --gm-font-body: 'Raleway', system-ui, sans-serif;
+    --gm-font-ui: 'Raleway', system-ui, sans-serif;
+    --gm-body-size: 15px;
+    --gm-heading-weight: 400;
+    --gm-heading-line: 1.4;                     /* Pacifico has tall ascenders/descenders */
+    --gm-item-weight: 700;
+}
+
+.gm[data-theme="dark"], :root:has(.gm[data-theme="dark"]) {         /* "Dark Rose": near black, rose accent */
+    --gm-bg: #121212;
+    --gm-surface: #1e1e1e;
+    --gm-surface-2: #2a2a2a;
+    --gm-card-bg: #1e1e1e;
+    --gm-media-bg: #242424;
+    --gm-text: #e8e8e8;
+    --gm-muted: #a8a8a8;
+    --gm-border: #333333;
+    --gm-accent: #d27b90;
+    --gm-on-accent: #1a1013;
+    --gm-accent-soft: #2b1d22;
+    --gm-accent-border: #6e3442;
+    --gm-chip-active-bg: #c46a7f;
+    --gm-chip-active-fg: #1a1013;
+    --gm-hero-title: #f2d4da;
+    --gm-price: #f2f2f2;
+    --gm-label-bg: #2a2a2a;
+    --gm-label-fg: #e0e0e0;
+    --gm-label-green: #8fd19e;
+    --gm-label-red: #f19393;
+    --gm-focus: #f2d4da;
+    --gm-backdrop: rgba(0, 0, 0, 0.6);
+    --gm-shadow-sheet: 0 -6px 32px rgba(0, 0, 0, 0.6);
+    --gm-shadow-btn: 0 1px 4px rgba(0, 0, 0, 0.5);
+    --gm-radius: 12px;
+    --gm-radius-sheet: 20px;
+    --gm-chip-radius: 999px;
+    --gm-font-heading: 'Playfair Display', Georgia, serif;
+    --gm-font-item: 'Playfair Display', Georgia, serif;
+    --gm-font-body: 'Crimson Text', Georgia, serif;
+    --gm-font-ui: 'Inter', system-ui, sans-serif;
+    --gm-body-size: 17px;
+    --gm-heading-weight: 700;
+    --gm-item-weight: 700;
+    color-scheme: dark;
+}

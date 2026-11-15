@@ -1,0 +1,25 @@
+@* Compact intro at the top of the guest menu: optional media (logo/cover), the menu name as the page's h1, the
+   description and optional extra content (links, opening hours, …). *@
+<div class="gm-hero @(Media is not null ? "gm-hero--media" : null)" data-hero>
+    @if (Media is not null)
+    {
+        <div class="gm-hero-media">@Media</div>
+    }
+    <div class="gm-hero-text gm-container">
+        <h1 class="gm-hero-title" data-hero-title>@Title</h1>
+        @if (!string.IsNullOrWhiteSpace(Description))
+        {
+            <p class="gm-hero-desc">@Description</p>
+        }
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Description { get; set; }
+    /// <summary>Above the title (cover image, logo).</summary>
+    [Parameter] public RenderFragment? Media { get; set; }
+    /// <summary>Below the description (links, opening hours, …).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}
