@@ -18,7 +18,7 @@ public enum ItemLabelKind
 /// <param name="Key">Stable key for markup, CSS and JS (<c>data-label="vegan"</c>); never changes.</param>
 /// <param name="PropertyName">The <see cref="MenuItem"/> property (also the editor checkbox id <c>MenuItem.{PropertyName}</c>).</param>
 /// <param name="BackOfficeText">English text in the back office.</param>
-/// <param name="GuestText">German text on the guest menu (lower case like the existing badges).</param>
+/// <param name="GuestText">German text of the guest view's label chip (capitalised: "Vegetarisch").</param>
 /// <param name="Order">Display order (ascending) everywhere.</param>
 public sealed record ItemLabel(
     string Key,
@@ -36,25 +36,25 @@ public sealed record ItemLabel(
 /// </summary>
 public static class ItemLabels
 {
-    public static readonly ItemLabel Popular = new("popular", nameof(MenuItem.IsPopular), "Popular", "beliebt",
+    public static readonly ItemLabel Popular = new("popular", nameof(MenuItem.IsPopular), "Popular", "Beliebt",
         ItemLabelKind.Highlight, 10, i => i.IsPopular, (i, v) => i.IsPopular = v);
 
-    public static readonly ItemLabel New = new("new", nameof(MenuItem.IsNew), "New", "neu",
+    public static readonly ItemLabel New = new("new", nameof(MenuItem.IsNew), "New", "Neu",
         ItemLabelKind.Highlight, 20, i => i.IsNew, (i, v) => i.IsNew = v);
 
-    public static readonly ItemLabel Vegan = new("vegan", nameof(MenuItem.IsVegan), "Vegan", "vegan",
+    public static readonly ItemLabel Vegan = new("vegan", nameof(MenuItem.IsVegan), "Vegan", "Vegan",
         ItemLabelKind.Dietary, 30, i => i.IsVegan, (i, v) => i.IsVegan = v);
 
-    public static readonly ItemLabel Vegetarian = new("vegetarian", nameof(MenuItem.IsVegetarian), "Vegetarian", "vegetarisch",
+    public static readonly ItemLabel Vegetarian = new("vegetarian", nameof(MenuItem.IsVegetarian), "Vegetarian", "Vegetarisch",
         ItemLabelKind.Dietary, 40, i => i.IsVegetarian, (i, v) => i.IsVegetarian = v);
 
-    public static readonly ItemLabel Halal = new("halal", nameof(MenuItem.IsHalal), "Halal", "halal",
+    public static readonly ItemLabel Halal = new("halal", nameof(MenuItem.IsHalal), "Halal", "Halal",
         ItemLabelKind.Dietary, 50, i => i.IsHalal, (i, v) => i.IsHalal = v);
 
-    public static readonly ItemLabel AlcoholFree = new("alcohol-free", nameof(MenuItem.IsAlcoholFree), "Alcohol-free", "alkoholfrei",
+    public static readonly ItemLabel AlcoholFree = new("alcohol-free", nameof(MenuItem.IsAlcoholFree), "Alcohol-free", "Alkoholfrei",
         ItemLabelKind.Dietary, 60, i => i.IsAlcoholFree, (i, v) => i.IsAlcoholFree = v);
 
-    public static readonly ItemLabel Spicy = new("spicy", nameof(MenuItem.IsSpicy), "Spicy", "scharf",
+    public static readonly ItemLabel Spicy = new("spicy", nameof(MenuItem.IsSpicy), "Spicy", "Scharf",
         ItemLabelKind.Dietary, 70, i => i.IsSpicy, (i, v) => i.IsSpicy = v);
 
     /// <summary>All labels in display order.</summary>

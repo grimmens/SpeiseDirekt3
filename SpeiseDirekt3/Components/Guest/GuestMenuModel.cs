@@ -66,7 +66,7 @@ public sealed class GuestMenuModel
 /// <summary>Loads the data of the guest menu view. Public pages ignore the tenant filter, the owner preview keeps it.</summary>
 public static class GuestMenuLoader
 {
-    /// <summary>The menu with categories, items and their allergens, or null.</summary>
+    /// <summary>The menu with categories, items, their allergens and price options (<c>IncludeGuestContent</c>), or null.</summary>
     /// <param name="publicAccess">true: anonymous guest page (<c>IgnoreQueryFilters</c>); false: owner preview (own tenant only).</param>
     public static async Task<Menu?> LoadMenuAsync(ApplicationDbContext db, Guid menuId, bool publicAccess)
     {
@@ -75,9 +75,7 @@ public static class GuestMenuLoader
             menus = menus.IgnoreQueryFilters();
 
         return await menus
-            .Include(m => m.Categories!)
-                .ThenInclude(c => c.MenuItems!)
-                    .ThenInclude(i => i.Allergens)
+            .IncludeGuestContent()
             .FirstOrDefaultAsync(m => m.Id == menuId);
     }
 

@@ -1,4 +1,5 @@
 using System.Globalization;
+using SpeiseDirekt.Infrastructure;
 
 namespace SpeiseDirekt3.Components.Guest;
 
@@ -19,6 +20,18 @@ public static class GuestFormat
     /// <summary>Guest price: <c>€ 9,90</c>, <c>€ 1.234,50</c>. The space is a normal one; the price elements
     /// are <c>white-space: nowrap</c> in <c>guest-menu.css</c>.</summary>
     public static string Price(decimal price) => "€ " + Amount(price);
+
+    /// <summary>
+    /// The price of an item as guests read it on cards, rows, search results and the favourites list:
+    /// <c>ab € 3,40</c> when its price variants differ in price (<c>MenuItem.Price</c> is then the lowest
+    /// variant, see <c>PriceOptions.ApplyLowestVariantPrice</c>), otherwise <c>€ 3,40</c>.
+    /// </summary>
+    public static string ItemPrice(SpeiseDirekt.Model.MenuItem item) =>
+        (HasPriceRange(item) ? "ab " : "") + Price(item.Price);
+
+    /// <summary>Whether the item's variants have more than one price (then its price is a "from" price).</summary>
+    public static bool HasPriceRange(SpeiseDirekt.Model.MenuItem item) =>
+        item.Variants().Select(v => v.Price).Distinct().Skip(1).Any();
 
     /// <summary>Just the amount in German notation: <c>9,90</c>.</summary>
     public static string Amount(decimal price) => price.ToString("#,##0.00", GermanNumbers);

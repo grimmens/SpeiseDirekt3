@@ -27,7 +27,7 @@
             }
             <GuestLabelChips Item="Item" />
             <div class="gm-card-foot">
-                <span class="gm-price" data-testid="item-price">@GuestFormat.Price(Item.Price)</span>
+                <span class="gm-price" data-testid="item-price">@GuestFormat.ItemPrice(Item)</span>
                 @if (codes.Length > 0)
                 {
                     <span class="gm-allergen-codes" data-testid="item-allergens" title="Allergene">@codes</span>
