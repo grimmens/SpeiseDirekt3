@@ -4,6 +4,24 @@
      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
     @switch (Name)
     {
+        @* AP4: favourites, filter, favourites list *@
+        case "heart":
+            <path d="M12 20.3C5.6 15.9 3.5 12.6 3.5 9.6 3.5 6.9 5.6 5 8 5c1.6 0 3 .8 4 2.2C13 5.8 14.4 5 16 5c2.4 0 4.5 1.9 4.5 4.6 0 3-2.1 6.3-8.5 10.7z" />
+            break;
+        case "sliders":
+            <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+            <circle cx="15" cy="7" r="2" />
+            <circle cx="9" cy="17" r="2" />
+            break;
+        case "trash":
+            <path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10.5 11v5M13.5 11v5" />
+            break;
+        case "minus":
+            <path d="M6 12h12" />
+            break;
+        case "plus":
+            <path d="M12 6v12M6 12h12" />
+            break;
         case "search":
             <circle cx="11" cy="11" r="6.5" />
             <path d="M20 20l-4.2-4.2" />
@@ -82,7 +100,7 @@
 
 @code {
     /// <summary>search, close, chevron-down, leaf, flame, info, clock, star, sparkle, glass-off, map-pin, phone, mail,
-    /// globe, instagram, facebook, share, external, chevron-right, check</summary>
+    /// globe, instagram, facebook, share, external, chevron-right, check, heart, sliders, trash, minus, plus</summary>
     [Parameter, EditorRequired] public string Name { get; set; } = "";
     [Parameter] public string? Class { get; set; }
     /// <summary>SVG stroke width as written in the attribute (a string, so no culture-specific decimal comma).</summary>

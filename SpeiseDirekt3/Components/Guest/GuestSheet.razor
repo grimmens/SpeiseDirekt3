@@ -17,6 +17,10 @@
         <div class="gm-sheet-body" data-sheet-body>
             @ChildContent
         </div>
+        @if (Footer is not null)
+        {
+            <div class="gm-sheet-foot">@Footer</div>
+        }
     </div>
 </dialog>
 
@@ -30,6 +34,8 @@
     /// <summary>Left of the title (e.g. a back or reset button).</summary>
     [Parameter] public RenderFragment? HeaderStart { get; set; }
     [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Pinned below the scrolling body (e.g. apply buttons, a sum); optional.</summary>
+    [Parameter] public RenderFragment? Footer { get; set; }
 
     private string TitleId => $"gm-sheet-{Name}-title";
 }
