@@ -692,6 +692,7 @@ html[data-guest-ready] .gm:not([data-hero-hidden]) .gm-topbar-brand { opacity: 0
 
 @media (prefers-reduced-motion: reduce) {
     .gm-topbar-brand, .gm-share-button { transition: none; }
+}
 
 /* --- AP4: search, filter, favourites ---------------------------------------------------------------------- */
 /* js/guest-search-filter.js, js/guest-favorites.js; Components/Guest: GuestSearchSheet, GuestFilterSheet,
