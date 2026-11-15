@@ -95,7 +95,7 @@
                                         <span>@item.Name</span>
                                     </div>
                                 </td>
-                                <td class="px-[0.75rem] py-[0.75rem] whitespace-nowrap text-right text-sm font-semibold text-gray-900 tabular-nums align-middle">@PriceFormat.Euro(item.Price)</td>
+                                <td class="px-[0.75rem] py-[0.75rem] whitespace-nowrap text-right text-sm font-semibold text-gray-900 tabular-nums align-middle">@PriceCell(item)</td>
                                 <td class="px-[0.75rem] py-[0.75rem] align-middle"><MenuItemLabels Item="item" ShowPlaceholder="true" /></td>
                                 <td class="px-[0.75rem] py-[0.75rem] text-sm text-gray-600 align-middle max-w-md">
                                     @if (string.IsNullOrWhiteSpace(item.Description))
@@ -133,7 +133,7 @@
                             <div class="min-w-0 flex-1">
                                 <div class="flex items-start justify-between gap-x-3">
                                     <h3 class="text-base font-semibold text-gray-900 break-words mb-0">@item.Name</h3>
-                                    <span class="text-base font-semibold text-gray-900 whitespace-nowrap tabular-nums">@PriceFormat.Euro(item.Price)</span>
+                                    <span class="text-base font-semibold text-gray-900 whitespace-nowrap tabular-nums text-right">@PriceCell(item)</span>
                                 </div>
                                 @if (!string.IsNullOrWhiteSpace(item.Description))
                                 {
@@ -249,6 +249,24 @@
             }
         </button>;
 
+    /// <summary>"€ 9.50", or "from € 3.40" plus "2 variants · 1 extra" when the item has price options.</summary>
+    private static RenderFragment PriceCell(MenuItem item) => __builder =>
+    {
+        var variants = item.Variants().Count;
+        var extras = item.Extras().Count;
+        <span data-testid="item-price">@(variants > 0 ? "from " : "")@PriceFormat.Euro(item.Price)</span>
+        @if (variants > 0 || extras > 0)
+        {
+            <span class="block text-xs font-normal text-gray-500" data-testid="item-price-options">@OptionSummary(variants, extras)</span>
+        }
+    };
+
+    private static string OptionSummary(int variants, int extras) => string.Join(" · ", new[]
+    {
+        variants > 0 ? $"{variants} variant{(variants == 1 ? "" : "s")}" : null,
+        extras > 0 ? $"{extras} extra{(extras == 1 ? "" : "s")}" : null
+    }.Where(t => t is not null));
+
     private RenderFragment MoveButtons(MenuItem item, int index) => @<div class="flex items-center gap-0.5">
         <button type="button" title="Move up" aria-label="@($"Move {item.Name} up")"
                 class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
@@ -310,6 +328,7 @@
         {
             MenuItems = await Context.MenuItems
                 .Include(m => m.Allergens)
+                .Include(m => m.PriceOptions)
                 .Where(m => m.CategoryId == Category.Id)
                 .InDisplayOrder()
                 .ToListAsync();
@@ -410,10 +429,13 @@
         await LoadItems();
     }
 
-    Task HandleCancel()
+    async Task HandleCancel()
     {
         menuItemEditor.Input = new();
-        return Task.CompletedTask;
+        // The editor works on the tracked item: drop unsaved changes (fields, labels, allergens, price options)
+        // so a later save (e.g. reordering) does not write them, and show the stored values again
+        Context.ChangeTracker.Clear();
+        await LoadItems();
     }
 
     async Task CreateNewMenuEntries()

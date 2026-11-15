@@ -1,5 +1,6 @@
 ﻿@using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Data
+@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @using Microsoft.AspNetCore.Components.Forms
@@ -104,35 +105,48 @@
                     </div>
                 </div>
 
-                <!-- Dietary Labels -->
-                <div class="space-y-2">
-                    <label class="block text-sm font-medium text-gray-700">Dietary Labels</label>
-                    <div class="flex flex-wrap gap-4 border border-gray-300 rounded-lg p-3">
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <InputCheckbox @bind-Value="Input.IsVegan" id="MenuItem.IsVegan"
-                                           class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                            <span class="text-sm text-gray-700">🌱 Vegan</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <InputCheckbox @bind-Value="Input.IsVegetarian" id="MenuItem.IsVegetarian"
-                                           class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded" />
-                            <span class="text-sm text-gray-700">🥕 Vegetarian</span>
-                        </label>
-                        <label class="flex items-center space-x-2 cursor-pointer">
-                            <InputCheckbox @bind-Value="Input.IsSpicy" id="MenuItem.IsSpicy"
-                                           class="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded" />
-                            <span class="text-sm text-gray-700">🌶️ Spicy</span>
-                        </label>
+                <!-- Labels (one list for back office and guests: ItemLabels) -->
+                <fieldset class="space-y-2" data-testid="item-label-options">
+                    <legend class="block text-sm font-medium text-gray-700 mb-2">Labels</legend>
+                    <div class="border border-gray-300 rounded-lg p-3 space-y-3">
+                        @foreach (var group in LabelGroups)
+                        {
+                            <div>
+                                <p class="text-xs font-medium uppercase tracking-wide text-gray-500 mb-1.5">@group.Title</p>
+                                <div class="flex flex-wrap gap-x-5 gap-y-2">
+                                    @foreach (var label in group.Labels)
+                                    {
+                                        <label class="flex items-center gap-x-2 cursor-pointer">
+                                            <input type="checkbox" id="@($"MenuItem.{label.PropertyName}")" checked="@label.Get(Input)"
+                                                   @onchange="e => label.Set(Input, e.Value is true)"
+                                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                                            <span class="text-sm text-gray-700">@label.BackOfficeText</span>
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        <p class="text-xs text-gray-500 mb-0">Shown as badges on the guest menu. Vegan items do not show “Vegetarian” as well.</p>
                     </div>
-                </div>
+                </fieldset>
 
                 <!-- Price Field -->
                 <div class="space-y-2">
                     <label for="MenuItem.Price" class="block text-sm font-medium text-gray-700">Price (€) *</label>
-                    <InputNumber @bind-Value="Input.Price" id="MenuItem.Price"
-                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                    <InputNumber @bind-Value="Input.Price" id="MenuItem.Price" readonly="@HasVariants" aria-describedby="@(HasVariants ? "MenuItem.PriceHint" : null)"
+                                class="@($"w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors {(HasVariants ? "bg-gray-100 text-gray-600 cursor-not-allowed" : "")}")" />
+                    @if (HasVariants)
+                    {
+                        <p id="MenuItem.PriceHint" class="text-xs text-gray-500 mb-0" data-testid="price-follows-variants">
+                            Set by the lowest variant price. Guests see “from @PriceFormat.Euro(Input.Price)”.
+                        </p>
+                    }
                     <ValidationMessage For="() => Input.Price" class="text-red-600 text-sm" />
                 </div>
+
+                <!-- Price variants and extras -->
+                @OptionSection(PriceOptionKind.Variant)
+                @OptionSection(PriceOptionKind.Extra)
 
                 <!-- Category Field -->
                 <div class="space-y-2">
@@ -200,15 +214,192 @@
         }
     }
 
+    private sealed record LabelGroup(string Title, IReadOnlyList<ItemLabel> Labels);
+
+    private static readonly IReadOnlyList<LabelGroup> LabelGroups = new[]
+    {
+        new LabelGroup("Dietary", ItemLabels.OfKind(ItemLabelKind.Dietary)),
+        new LabelGroup("Highlights", ItemLabels.OfKind(ItemLabelKind.Highlight))
+    };
+
+    private bool HasVariants => Input.HasVariants();
+
+    /// <summary>Name inputs of the option rows, to focus a freshly added row.</summary>
+    private readonly Dictionary<MenuItemPriceOption, InputText> optionNameInputs = new();
+    private MenuItemPriceOption? focusOption;
+
+    private static string KindText(PriceOptionKind kind) => kind == PriceOptionKind.Variant ? "variant" : "extra";
+
+    /// <summary>"Price variants" or "Extras": rows with name, price, reorder arrows and remove; an add button below.</summary>
+    private RenderFragment OptionSection(PriceOptionKind kind) => __builder =>
+    {
+        var options = Input.OfKind(kind);
+        var isVariant = kind == PriceOptionKind.Variant;
+        var noun = KindText(kind);
+        <section class="space-y-2" data-testid="@(isVariant ? "price-variants" : "price-extras")" aria-labelledby="@($"options-{noun}-heading")">
+            <div>
+                <h4 id="@($"options-{noun}-heading")" class="text-sm font-medium text-gray-700 mb-0">
+                    @(isVariant ? "Price variants" : "Extras") <span class="font-normal text-gray-400">(optional)</span>
+                </h4>
+                <p class="mt-0.5 mb-0 text-xs text-gray-500">
+                    @if (isVariant)
+                    {
+                        <text>Sizes or versions with their own price, e.g. “0,25 l” and “0,5 l” or “Standard” and “Vegan”. The price above then follows the lowest variant.</text>
+                    }
+                    else
+                    {
+                        <text>Add-ons guests can order with this item, e.g. “+ Halloumi”.</text>
+                    }
+                </p>
+            </div>
+            @if (options.Count > 0)
+            {
+                <ul class="list-none m-0 p-0 space-y-2">
+                    @for (var i = 0; i < options.Count; i++)
+                    {
+                        var index = i;
+                        var option = options[index];
+                        var position = index + 1;
+                        var title = string.IsNullOrWhiteSpace(option.Name) ? $"{noun} {position}" : $"{noun} {option.Name.Trim()}";
+                        <li @key="option" class="flex flex-wrap items-start gap-x-2 gap-y-1.5 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-2"
+                            data-testid="@(isVariant ? "variant-row" : "extra-row")">
+                            <div class="min-w-0 basis-full sm:basis-0 sm:flex-1">
+                                <InputText @ref="optionNameInputs[option]" @bind-Value="option.Name" maxlength="@MenuItemPriceOption.NameMaxLength"
+                                           placeholder="@(isVariant ? "e.g. 0,5 l" : "e.g. + Halloumi")" aria-label="@($"Name of {noun} {position}")"
+                                           class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                                <ValidationMessage For="() => option.Name" class="text-red-600 text-xs mt-1" />
+                            </div>
+                            <div class="w-32 flex-shrink-0">
+                                <div class="relative">
+                                    <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500" aria-hidden="true">€</span>
+                                    <InputNumber @bind-Value="option.Price" @bind-Value:after="OptionsChanged" step="0.01" min="0"
+                                                 aria-label="@($"Price of {noun} {position}")"
+                                                 class="w-full pl-7 pr-2 py-2 text-sm text-right tabular-nums border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                                </div>
+                                <ValidationMessage For="() => option.Price" class="text-red-600 text-xs mt-1" />
+                            </div>
+                            <div class="ml-auto flex flex-shrink-0 items-center gap-0.5">
+                                <button type="button" title="Move up" aria-label="@($"Move {title} up")" disabled="@(index == 0)"
+                                        class="p-2 rounded-md text-gray-500 hover:bg-gray-200 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                                        @onclick="() => MoveOption(option, -1)">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" title="Move down" aria-label="@($"Move {title} down")" disabled="@(index == options.Count - 1)"
+                                        class="p-2 rounded-md text-gray-500 hover:bg-gray-200 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                                        @onclick="() => MoveOption(option, 1)">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <button type="button" title="Remove" aria-label="@($"Remove {title}")"
+                                        class="p-2 rounded-md text-gray-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                                        @onclick="() => RemoveOption(option)">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+            <button type="button" @onclick="() => AddOption(kind)"
+                    class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800 rounded-md py-1">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                @(isVariant ? "Add variant" : "Add extra")
+            </button>
+        </section>
+    };
+
+    private void AddOption(PriceOptionKind kind)
+    {
+        var existing = Input.OfKind(kind);
+        var option = new MenuItemPriceOption
+        {
+            // Id stays empty: EF generates it and tracks the option as new
+            MenuItemId = Input.Id,
+            Kind = kind,
+            SortOrder = existing.Count == 0 ? 0 : existing.Max(o => o.SortOrder) + 1,
+            // A first variant starts at the current price, the next ones at the last variant's price
+            Price = kind == PriceOptionKind.Variant ? (existing.Count == 0 ? Input.Price : existing[^1].Price) : 0m
+        };
+        Input.PriceOptions.Add(option);
+        focusOption = option;
+        OptionsChanged();
+    }
+
+    private void RemoveOption(MenuItemPriceOption option)
+    {
+        Input.PriceOptions.Remove(option);
+        optionNameInputs.Remove(option);
+        Input.Renumber(option.Kind);
+        OptionsChanged();
+    }
+
+    private void MoveOption(MenuItemPriceOption option, int offset)
+    {
+        var siblings = Input.OfKind(option.Kind).ToList();
+        DisplayOrder.Move(siblings, siblings.IndexOf(option), offset, (o, i) => o.SortOrder = i);
+    }
+
+    /// <summary>Keeps the (read-only) base price equal to the lowest variant while the variants are edited.</summary>
+    private void OptionsChanged() => Input.ApplyLowestVariantPrice();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusOption is { } option && optionNameInputs.TryGetValue(option, out var input) && input.Element is { } element)
+        {
+            focusOption = null;
+            await element.FocusAsync();
+        }
+    }
+
+    /// <summary>
+    /// The price options are not validated by the DataAnnotationsValidator (it only looks at the item itself):
+    /// check each one with its own attributes and show the messages next to the row.
+    /// </summary>
+    private bool ValidatePriceOptions()
+    {
+        optionMessages ??= new ValidationMessageStore(editContext);
+        optionMessages.Clear();
+        var valid = true;
+        foreach (var option in Input.PriceOptions)
+        {
+            option.Name = option.Name?.Trim() ?? string.Empty;
+            var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+            if (System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+                    option, new System.ComponentModel.DataAnnotations.ValidationContext(option), results, validateAllProperties: true))
+                continue;
+            valid = false;
+            foreach (var result in results)
+                foreach (var member in result.MemberNames)
+                    optionMessages.Add(new FieldIdentifier(option, member), result.ErrorMessage ?? "Invalid value.");
+        }
+        editContext.NotifyValidationStateChanged();
+        return valid;
+    }
+
+    private ValidationMessageStore? optionMessages;
+
     private async Task OnSubmit()
     {
         if (isUploading) return;
 
         editContext = new EditContext(Input);
         editForm.EditContext = editContext;
+        optionMessages = null;
 
-        if (!editContext.Validate())
+        var itemValid = editContext.Validate();
+        if (!ValidatePriceOptions() || !itemValid)
             return;
+
+        Input.Renumber(PriceOptionKind.Variant);
+        Input.Renumber(PriceOptionKind.Extra);
+        Input.ApplyLowestVariantPrice();
 
         isUploading = true;
         StateHasChanged();
@@ -228,6 +419,9 @@
     public async Task ShowModal()
     {
         editContext = new EditContext(Input);
+        optionMessages = null;
+        optionNameInputs.Clear();
+        focusOption = null;
         oldImagePath = Input.ImagePath; // Store original image path
         imageUploadError = null;
         isVisible = true;

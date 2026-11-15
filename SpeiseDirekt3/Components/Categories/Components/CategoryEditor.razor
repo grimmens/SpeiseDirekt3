@@ -21,6 +21,14 @@
                         <ValidationMessage For="() => Input.Name" class="text-danger" />
                     </div>
 
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Input.Description" id="Category.Description" class="form-control" placeholder="Subtitle"
+                                   maxlength="@Category.DescriptionMaxLength" aria-describedby="Category.DescriptionHint" />
+                        <label for="Category.Description">Subtitle (optional)</label>
+                        <div id="Category.DescriptionHint" class="form-text">Shown under the name, e.g. “Mezze” or “served until 22:00”.</div>
+                        <ValidationMessage For="() => Input.Description" class="text-danger" />
+                    </div>
+
                     <div class="d-flex justify-content-between">
                         <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
                         <button type="submit" class="btn btn-primary">Save</button>
@@ -48,6 +56,7 @@
         if (!editContext.Validate())
             return;
 
+        Input.Description = string.IsNullOrWhiteSpace(Input.Description) ? null : Input.Description.Trim();
         var nameExists = await Context.Categories.Where(c => c.Id != Input.Id).AnyAsync(c => c.MenuId == Input.MenuId && c.Name == Input.Name);
         if (nameExists)
         {

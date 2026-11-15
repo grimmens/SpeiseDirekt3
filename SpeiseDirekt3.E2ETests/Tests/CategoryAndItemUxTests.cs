@@ -129,7 +129,7 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         async Task OpenRenameAsync()
         {
             await CategoryRows.First.Locator("button", new() { HasTextString = "⋮" }).ClickAsync();
-            await Page.GetByRole(AriaRole.Menuitem, new() { Name = "Rename" }).ClickAsync();
+            await Page.GetByRole(AriaRole.Menuitem, new() { Name = "Edit" }).ClickAsync();
             await Assertions.Expect(modal).ToBeVisibleAsync();
         }
 
