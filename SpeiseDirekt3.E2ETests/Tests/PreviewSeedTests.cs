@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Playwright;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt3.E2ETests.Infrastructure;
 using SpeiseDirekt3.Preview;
@@ -66,6 +67,26 @@ public class PreviewSeedTests : E2ETestBase
             gasthaus.Categories!.OrderBy(c => c.SortOrder).Select(c => c.Name));
         Assert.Equal(13, gasthaus.Categories!.Sum(c => c.MenuItems!.Count));
         Assert.Equal(6, await db.Allergens.CountAsync(a => a.MenuId == gasthaus.Id));
+
+        // Guest-menu data model: subtitles, labels, variants on drinks (price = lowest variant), extras on dishes
+        Assert.Equal(new[] { "Suppen und kleine Speisen", "Warme Küche bis 21:30 Uhr", "Aus der eigenen Patisserie", null },
+            gasthaus.Categories!.OrderBy(c => c.SortOrder).Select(c => c.Description));
+        var items = await db.MenuItems.Include(i => i.PriceOptions)
+            .Where(i => i.Category!.MenuId == gasthaus.Id).ToDictionaryAsync(i => i.Name);
+        Assert.Equal(new[] { ("0,25 l", 4.10m), ("0,5 l", 7.40m) }, items["Sommerspritzer"].Variants().Select(o => (o.Name, o.Price)));
+        Assert.Equal(4.10m, items["Sommerspritzer"].Price);
+        Assert.Equal(3.40m, items["Melange"].Price); // follows its cheaper variant "Klein"
+        Assert.Equal(new[] { "+ Speck", "+ Blattsalat" }, items["Käsespätzle"].Extras().Select(o => o.Name));
+        Assert.True(items["Wiener Schnitzel vom Kalb"].IsPopular);
+        Assert.True(items["Kürbiscremesuppe"].IsNew);
+        Assert.True(items["Chili sin Carne"].IsHalal);
+        Assert.True(items["Almdudler"].IsAlcoholFree);
+        Assert.All(items.Values.SelectMany(i => i.PriceOptions), o => Assert.Equal(E2ESeedData.OwnerId, o.ApplicationUserId));
+
+        // The owner already has a restaurant profile (E2E seed): it is kept as it is
+        Assert.False(first.RestaurantProfileAdded);
+        Assert.False(second.RestaurantProfileAdded);
+        Assert.Equal(E2ESeedData.RestaurantName, (await db.RestaurantProfiles.SingleAsync()).Name);
         Assert.Equal(1, await db.MenuCombos.CountAsync(c => c.MenuId == gasthaus.Id));
         Assert.True(await db.MenuItems.AnyAsync(i => i.Category!.MenuId == gasthaus.Id && i.Allergens.Count > 0), "items carry allergens");
 
@@ -82,6 +103,35 @@ public class PreviewSeedTests : E2ETestBase
         Assert.All(qrCodes.Where(q => q.MenuId != null), q => Assert.Contains(q.MenuId!.Value, menuIds));
         Assert.All(qrCodes.SelectMany(q => q.TimeTableEntries!), e => Assert.Contains(e.MenuId, menuIds));
         Assert.All(qrCodes.SelectMany(q => q.CalendarEntries!), e => Assert.Contains(e.MenuId, menuIds));
+    }
+
+    [Fact]
+    public async Task TenantWithoutProfile_GetsTheDemoProfile_Once()
+    {
+        var ownerId = Guid.NewGuid();
+        var email = UniqueEmail("preview");
+        await using (var db = App.CreateDbContext(Guid.Empty))
+        {
+            db.Users.Add(new SpeiseDirekt.Data.ApplicationUser
+            {
+                Id = ownerId.ToString(), UserName = email, NormalizedUserName = email.ToUpperInvariant(),
+                Email = email, NormalizedEmail = email.ToUpperInvariant(), SecurityStamp = Guid.NewGuid().ToString()
+            });
+            await db.SaveChangesAsync();
+        }
+
+        var first = await PreviewSeeder.SeedAsync(App.CreateDbContext, email, App.Clock);
+        var second = await PreviewSeeder.SeedAsync(App.CreateDbContext, email, App.Clock);
+
+        Assert.True(first.RestaurantProfileAdded);
+        Assert.False(second.RestaurantProfileAdded);
+        await using var tenant = App.CreateDbContext(ownerId);
+        var profile = await tenant.RestaurantProfiles.SingleAsync();
+        Assert.Equal(PreviewSeeder.RestaurantName, profile.Name);
+        Assert.Equal(ownerId, profile.ApplicationUserId);
+        Assert.Equal("https://example.com", profile.Website);
+        Assert.Contains('\n', profile.OpeningHours);
+        Assert.False(string.IsNullOrWhiteSpace(profile.Description));
     }
 
     [Fact]

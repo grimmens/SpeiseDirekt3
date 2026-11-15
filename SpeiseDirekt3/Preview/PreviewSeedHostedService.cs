@@ -42,8 +42,9 @@ public sealed class PreviewSeedHostedService(
                 logger.LogWarning("Preview seed: user {Email} not found, nothing seeded", settings.Email);
             else
                 logger.LogInformation(
-                    "Preview seed: tenant {OwnerId} ({Email}): {MenusAdded} menus and {QrCodesAdded} QR codes added, the tenant now has {MenusTotal} menus and {QrCodesTotal} QR codes",
-                    result.OwnerId, settings.Email, result.MenusAdded, result.QrCodesAdded, result.MenusTotal, result.QrCodesTotal);
+                    "Preview seed: tenant {OwnerId} ({Email}): {MenusAdded} menus and {QrCodesAdded} QR codes added, restaurant profile {Profile}, the tenant now has {MenusTotal} menus and {QrCodesTotal} QR codes",
+                    result.OwnerId, settings.Email, result.MenusAdded, result.QrCodesAdded,
+                    result.RestaurantProfileAdded ? "added" : "kept", result.MenusTotal, result.QrCodesTotal);
         }
         catch (Exception ex)
         {

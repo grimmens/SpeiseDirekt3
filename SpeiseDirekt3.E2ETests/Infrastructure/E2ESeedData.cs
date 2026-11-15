@@ -20,6 +20,29 @@ public static class E2ESeedData
     public const string ComboName = "Burger Menü";
     public const string ComboDescription = "Burger mit Pommes und Getränk";
 
+    // --- Mezze menu: restaurant profile, category subtitles, labels, price variants and extras ---
+
+    public static readonly Guid MezzeMenuId = Guid.Parse("e2e00000-0000-0000-0000-0000000000a4");
+    public const string MezzeMenuName = "E2E Mezze";
+
+    public static readonly Guid HummusId = Guid.Parse("e2e00000-0000-0000-0000-0000000000d1");
+    public static readonly Guid FattoushId = Guid.Parse("e2e00000-0000-0000-0000-0000000000d2");
+    public static readonly Guid FalafelId = Guid.Parse("e2e00000-0000-0000-0000-0000000000d3");
+    public static readonly Guid LemonadeId = Guid.Parse("e2e00000-0000-0000-0000-0000000000d4");
+    public static readonly Guid BeerId = Guid.Parse("e2e00000-0000-0000-0000-0000000000d5");
+
+    /// <summary>Restaurant profile of <see cref="OwnerId"/> (shown on all of the owner's menus).</summary>
+    public const string RestaurantName = "E2E Restaurant am Markt";
+    public const string RestaurantOpeningHours = "Mo–Fr 11:00–22:00\nSa 10:00–23:00\nSo Ruhetag";
+
+    /// <summary>Category names and subtitles of the mezze menu, in display order.</summary>
+    public static readonly IReadOnlyList<(string Name, string? Description)> MezzeCategories = new (string, string?)[]
+    {
+        ("Mezze", "Kalt und warm, zum Teilen"),
+        ("Salate", "Bis 22:00 Uhr"),
+        ("Getränke", null)
+    };
+
     // --- Ramen menu: transcribed from a real menu card (page "RAMEN") ---
 
     public static readonly Guid RamenMenuId = Guid.Parse("e2e00000-0000-0000-0000-0000000000a3");
@@ -143,8 +166,95 @@ public static class E2ESeedData
         });
 
         SeedRamenMenu(db);
+        SeedMezzeMenuAndRestaurantProfile(db);
 
         await db.SaveChangesAsync();
+    }
+
+    /// <summary>
+    /// Additive: the owner's restaurant profile and a menu that uses everything of the guest-menu data model
+    /// (category subtitles, all labels, a drink and a beer with variants, a salad with extras).
+    /// </summary>
+    private static void SeedMezzeMenuAndRestaurantProfile(ApplicationDbContext db)
+    {
+        db.RestaurantProfiles.Add(new RestaurantProfile
+        {
+            Id = Guid.NewGuid(),
+            Name = RestaurantName,
+            Description = "Levantinische Küche und Wiener Klassiker, alles frisch zubereitet.",
+            Phone = "+43 1 234 56 78",
+            Email = "hallo@example.com",
+            Website = "https://example.com",
+            InstagramUrl = "https://example.com/instagram",
+            FacebookUrl = "https://example.com/facebook",
+            GoogleReviewUrl = "https://example.com/review",
+            Address = "Marktplatz 1\n1010 Wien",
+            OpeningHours = RestaurantOpeningHours
+        });
+
+        var categories = MezzeCategories
+            .Select((c, i) => new Category { Id = Guid.NewGuid(), Name = c.Name, Description = c.Description, MenuId = MezzeMenuId, SortOrder = i })
+            .ToList();
+        db.Menus.Add(new Menu
+        {
+            Id = MezzeMenuId,
+            Name = MezzeMenuName,
+            Description = "Mezze, Salate und Getränke",
+            Theme = DesignTheme.Classic,
+            Language = MenuLanguage.German,
+            Categories = categories
+        });
+        var (mezze, salads, drinks) = (categories[0], categories[1], categories[2]);
+
+        static MenuItemPriceOption Option(PriceOptionKind kind, string name, decimal price, int sortOrder) =>
+            new() { Id = Guid.NewGuid(), Kind = kind, Name = name, Price = price, SortOrder = sortOrder };
+
+        db.MenuItems.AddRange(
+            new MenuItem
+            {
+                Id = HummusId, Name = "Hummus", Description = "Kichererbsen, Tahini, Olivenöl", Price = 7.50m, CategoryId = mezze.Id,
+                SortOrder = 0, IsVegan = true, IsVegetarian = true, IsHalal = true, IsPopular = true
+            },
+            new MenuItem
+            {
+                Id = FalafelId, Name = "Falafel-Teller", Description = "Mit Tahini-Sauce", Price = 12.50m, CategoryId = mezze.Id,
+                SortOrder = 1, IsVegan = true, IsHalal = true, IsSpicy = true, IsNew = true,
+                PriceOptions =
+                {
+                    Option(PriceOptionKind.Variant, "Standard", 12.50m, 0),
+                    Option(PriceOptionKind.Variant, "Groß", 15.50m, 1)
+                }
+            },
+            new MenuItem
+            {
+                Id = FattoushId, Name = "Fattoush", Description = "Brotsalat mit Sumach", Price = 11.90m, CategoryId = salads.Id,
+                SortOrder = 0, IsVegan = true, IsHalal = true,
+                PriceOptions =
+                {
+                    Option(PriceOptionKind.Extra, "+ Halloumi", 6.00m, 0),
+                    Option(PriceOptionKind.Extra, "+ Hähnchen", 5.00m, 1)
+                }
+            },
+            new MenuItem
+            {
+                Id = LemonadeId, Name = "Hausgemachte Limonade", Description = "Minze und Limette", Price = 3.90m, CategoryId = drinks.Id,
+                SortOrder = 0, IsVegan = true, IsAlcoholFree = true, IsNew = true,
+                PriceOptions =
+                {
+                    Option(PriceOptionKind.Variant, "0,3 l", 3.90m, 0),
+                    Option(PriceOptionKind.Variant, "0,5 l", 5.40m, 1)
+                }
+            },
+            new MenuItem
+            {
+                Id = BeerId, Name = "Hausbier", Description = "", Price = 3.40m, CategoryId = drinks.Id,
+                SortOrder = 1, IsPopular = true,
+                PriceOptions =
+                {
+                    Option(PriceOptionKind.Variant, "0,25 l", 3.40m, 0),
+                    Option(PriceOptionKind.Variant, "0,5 l", 5.90m, 1)
+                }
+            });
     }
 
     private static void SeedRamenMenu(ApplicationDbContext db)
