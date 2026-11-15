@@ -1,0 +1,16 @@
+@* Heart button of an item ("merken"): in the corner slot of cards and list rows. JS only (js/guest-favorites.js
+   toggles the item in the favourites list, sets aria-pressed and swaps the aria-label between the two server-rendered
+   texts in data-label-add / data-label-remove). No request to the server. *@
+<button type="button" class="gm-fav @Class" data-js-only data-fav-toggle data-fav-item="@Item.Id" aria-pressed="false"
+        aria-label="@AddLabel(Item.Name)" data-label-add="@AddLabel(Item.Name)" data-label-remove="@RemoveLabel(Item.Name)"
+        data-testid="favorite-button">
+    <GuestIcon Name="heart" />
+</button>
+
+@code {
+    [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
+    [Parameter] public string? Class { get; set; }
+
+    public static string AddLabel(string name) => $"{name} merken";
+    public static string RemoveLabel(string name) => $"{name} von der Merkliste entfernen";
+}

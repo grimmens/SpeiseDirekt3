@@ -3,7 +3,7 @@
    the sheet; no markup is built in JS.
    ?item=<id> (deep link, or a card click without JS): the server renders the sheet open (non-modal <dialog open>
    plus a scrim link); the close links lead back to the plain page at the item's card. With JS the sheet becomes
-   modal right away. *@
+   modal right away. The heart next to the close button toggles the shown item in the favourites list (JS only). *@
 @{
     var selected = Model.SelectedItem;
 }
@@ -15,6 +15,16 @@
         <a class="gm-iconbtn gm-sheet-close gm-sheet-close--float" href="@CloseHref(selected)" data-sheet-close aria-label="Schließen">
             <GuestIcon Name="close" />
         </a>
+        @* Heart for the item shown (js/guest-favorites.js sets data-fav-item and the labels on every item open). After
+           the close link in the DOM, so opening the sheet focuses "Schließen", not the heart. *@
+        <button type="button" class="gm-iconbtn gm-fav gm-sheet-fav" data-js-only data-fav-toggle data-fav-sheet
+                data-fav-item="@selected?.Id" aria-pressed="false"
+                aria-label="@(selected is null ? "Merken" : GuestFavoriteButton.AddLabel(selected.Name))"
+                data-label-add="@(selected is null ? null : GuestFavoriteButton.AddLabel(selected.Name))"
+                data-label-remove="@(selected is null ? null : GuestFavoriteButton.RemoveLabel(selected.Name))"
+                data-testid="item-favorite-button">
+            <GuestIcon Name="heart" />
+        </button>
         <div class="gm-sheet-body" data-sheet-body>
             @if (selected is not null)
             {

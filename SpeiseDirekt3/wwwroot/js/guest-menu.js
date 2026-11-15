@@ -10,13 +10,15 @@
  *   - item sheet: clones <template data-item-template="<id>"> (server markup) into the item sheet,
  *     updates the URL (?item=<id>) and records the click
  *   - category bar: scroll-spy (IntersectionObserver), active chip scrolls into view, smooth jumps
- *   - search sheet: filters the server-rendered result rows
+ *   - search, filter sheet and favourites ("Merkliste") live in their own modules (guest-search-filter.js,
+ *     guest-favorites.js), imported and registered as behaviors below
  * When it is done it sets data-guest-ready on <html> (CSS shows [data-js-only] controls, tests wait for it).
  *
  * EXTENSION POINTS (import from this module, or add code to it):
  *   registerBehavior(name, init)      init(ctx) runs once the page is ready (immediately if it already is).
  *                                     ctx = { root, menuId, isPreview, trackClicks, basePath,
- *                                             openSheet, closeSheet, openItem, trackItemClick, onItemOpen }
+ *                                             openSheet, closeSheet, openItem, trackItemClick, onItemOpen,
+ *                                             registerSheet, refreshCategoryNav }
  *   registerSheet(name, hooks)        hooks.onOpen(dialog, detail) / hooks.onClose(dialog) for
  *                                     <dialog data-sheet="name">. Any dialog[data-sheet] is a sheet anyway.
  *   openSheet(name, options)          options: { opener, history = true, detail }
@@ -25,12 +27,19 @@
  *   onItemOpen(fn)                    fn(dialog, itemId) after the item sheet got its content (e.g. share button)
  *   trackItemClick(itemId)            POST /guest/api/item-click (skipped in the owner preview)
  *   scrollToCategory(anchorId)        smooth jump to a section (id "cat-…")
+ *   refreshCategoryNav()              after sections were hidden/shown (filter): the scroll-spy re-measures and picks
+ *                                     the active chip among the visible sections
+ * Child modules (behaviors) must NOT import this file: it is loaded by a fingerprinted URL, a plain import would
+ * create a second instance. They get everything through ctx; this file imports and registers them.
  * Declarative hooks in the markup:
  *   [data-sheet-open="name"]  opens that sheet      [data-sheet-close]   closes the sheet it is in
  *   a[data-item-link]         opens the item sheet  [data-category-link="cat-…"] jumps to the section
- *   cards/rows: [data-item-id] with data-category-id, data-labels, data-allergens, data-price, data-has-image;
- *   [data-slot="favorite"] is an empty slot in each card/row for a heart button.
+ *   cards/rows: [data-item-id] with data-category-id, data-labels, data-allergens, data-price, data-has-image,
+ *   data-filter-labels; [data-slot="favorite"] holds the heart button of each card/row.
  */
+
+import { initSearchAndFilter } from './guest-search-filter.js';
+import { initFavorites } from './guest-favorites.js';
 
 const ITEM_CLICK_URL = '/guest/api/item-click';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -49,6 +58,7 @@ const state = {
     behaviors: [],
     itemOpenHandlers: [],
     setActiveCategory: () => {},
+    refreshCategoryNav: () => {},
     heldCategory: null          // a jump target stays active until the guest scrolls by hand
 };
 
@@ -165,6 +175,11 @@ export function scrollToCategory(anchorId) {
     state.heldCategory = anchorId;
     section.scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
     section.querySelector('h2[tabindex]')?.focus({ preventScroll: true });
+}
+
+/** Sections or chips were hidden/shown (e.g. by the filter): re-measure the scroll-spy and pick the active chip. */
+export function refreshCategoryNav() {
+    state.refreshCategoryNav();
 }
 
 // --- Sheets ------------------------------------------------------------------------------------------
@@ -364,12 +379,16 @@ function setUpCategoryNav(root) {
     // the first of them (document order) is the active one.
     const visible = new Set();
     let observer = null;
+    // Sections hidden by the filter (hidden attribute) never count
+    const shown = () => sections.filter(s => !s.hidden);
     const pick = () => {
         if (state.heldCategory) { state.setActiveCategory(state.heldCategory); return; }
+        const candidates = shown();
+        if (candidates.length === 0) return;
         const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-        if (atBottom && window.scrollY > 0) { state.setActiveCategory(sections[sections.length - 1].id); return; }
-        const first = sections.find(s => visible.has(s.id));
-        if (first) state.setActiveCategory(first.id);
+        if (atBottom && window.scrollY > 0) { state.setActiveCategory(candidates[candidates.length - 1].id); return; }
+        const first = candidates.find(s => visible.has(s.id));
+        state.setActiveCategory((first ?? candidates[0]).id);
     };
     const observe = () => {
         observer?.disconnect();
@@ -385,6 +404,11 @@ function setUpCategoryNav(root) {
         sections.forEach(s => observer.observe(s));
     };
     observe();
+    state.refreshCategoryNav = () => {
+        if (state.heldCategory && document.getElementById(state.heldCategory)?.hidden) state.heldCategory = null;
+        observe();
+        requestAnimationFrame(pick);
+    };
 
     let resizeTimer = 0;
     window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(observe, 150); });
@@ -422,43 +446,6 @@ function setUpHero(root) {
     observer.observe(title);
 }
 
-// --- Search ---------------------------------------------------------------------------------------------
-
-function normalize(text) {
-    return (text ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/ß/g, 'ss');
-}
-
-function setUpSearch(root) {
-    const container = root.querySelector('[data-search]');
-    if (!container) return;
-    const input = container.querySelector('[data-search-input]');
-    const clear = container.querySelector('[data-search-clear]');
-    const status = container.querySelector('[data-search-status]');
-    const rows = [...container.querySelectorAll('[data-search-row]')].map(row => ({ row, text: normalize(row.dataset.searchText) }));
-
-    const update = () => {
-        const raw = input.value.trim();
-        const terms = normalize(raw).split(/\s+/).filter(Boolean);
-        let count = 0;
-        for (const { row, text } of rows) {
-            const match = terms.length > 0 && terms.every(t => text.includes(t));
-            row.hidden = !match;
-            if (match) count++;
-        }
-        status.textContent = terms.length === 0 ? ''
-            : count === 0 ? `Keine Treffer für „${raw}“`
-            : count === 1 ? '1 Ergebnis' : `${count} Ergebnisse`;
-        if (clear) clear.hidden = raw.length === 0;
-    };
-    input.addEventListener('input', update);
-    clear?.addEventListener('click', () => { input.value = ''; update(); input.focus(); });
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); input.blur(); } });
-
-    registerSheet('search', {
-        onOpen() { update(); requestAnimationFrame(() => input.focus()); }
-    });
-}
-
 // --- Helpers ---------------------------------------------------------------------------------------------
 
 function itemUrl(itemId) {
@@ -480,7 +467,8 @@ function runBehavior(behavior) {
     try {
         behavior.init({
             root: state.root, menuId: state.menuId, isPreview: state.isPreview, trackClicks: state.trackClicks,
-            basePath: state.basePath, openSheet, closeSheet, openItem, trackItemClick, onItemOpen
+            basePath: state.basePath, openSheet, closeSheet, openItem, trackItemClick, onItemOpen,
+            registerSheet, refreshCategoryNav
         });
     } catch (e) {
         console.error(`guest-menu behavior "${behavior.name}" failed`, e);
@@ -500,6 +488,11 @@ function setThemeColor() {
     meta.content = color;
 }
 
+// --- Behaviors in their own modules ------------------------------------------------------------------------
+
+registerBehavior('search-filter', initSearchAndFilter);
+registerBehavior('favorites', initFavorites);
+
 // --- Start ------------------------------------------------------------------------------------------------
 
 function init() {
@@ -511,7 +504,6 @@ function init() {
         state.trackClicks = root.dataset.trackClicks === 'true';
         state.isPreview = root.dataset.preview === 'true';
 
-        setUpSearch(root);
         setUpCategoryNav(root);
         setUpHero(root);
         setUpSheets(root);

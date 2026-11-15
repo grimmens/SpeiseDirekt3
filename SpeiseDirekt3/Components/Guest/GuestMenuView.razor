@@ -13,6 +13,10 @@
 
     <GuestTopBar Title="@Model.Menu.Name">
         <End>
+            @if (hasFilters)
+            {
+                <GuestFilterButton />
+            }
             <button type="button" class="gm-iconbtn" data-js-only data-sheet-open="search" aria-haspopup="dialog"
                     aria-label="Speisekarte durchsuchen" data-testid="search-button">
                 <GuestIcon Name="search" />
@@ -28,6 +32,10 @@
     }
 
     <main class="gm-main gm-container" id="gm-main">
+        @if (hasFilters)
+        {
+            <GuestFilterNotice />
+        }
         @foreach (var category in Model.Categories)
         {
             <GuestCategorySection @key="category.Category.Id" Category="category" ItemHref="Model.ItemUrl" />
@@ -40,9 +48,19 @@
 
     <GuestCategorySheet Categories="Model.Categories" />
     <GuestSearchSheet Model="Model" />
+    @if (hasFilters)
+    {
+        <GuestFilterSheet Model="Model" />
+    }
+    <GuestFavoritesSheet Model="Model" />
     <GuestItemSheet Model="Model" />
 </div>
 
 @code {
     [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+
+    /// <summary>The menu has labels or allergens: filter button, notice and sheet are rendered (AP4).</summary>
+    private bool hasFilters;
+
+    protected override void OnParametersSet() => hasFilters = GuestFilters.HasFilters(Model);
 }

@@ -1,0 +1,14 @@
+@* Top of the menu while a filter is active (js/guest-search-filter.js shows it): "Filter aktiv · n Gerichte" with a
+   reset button, and the empty state when no item matches. Rendered hidden; without JS nothing is ever filtered. *@
+<div class="gm-filter-notice" data-filter-notice data-testid="filter-notice" hidden>
+    <span class="gm-filter-notice-text">
+        <GuestIcon Name="sliders" />
+        <span>Filter aktiv · <span data-filter-count>0 Gerichte</span></span>
+    </span>
+    <button type="button" class="gm-textbtn" data-filter-reset-all>Zurücksetzen</button>
+</div>
+<div class="gm-filter-empty" data-filter-empty data-testid="filter-empty" hidden>
+    <p class="gm-filter-empty-title">Keine Gerichte passen zu Ihren Filtern.</p>
+    <p class="gm-filter-empty-hint">Entfernen Sie einzelne Filter oder setzen Sie alle zurück.</p>
+    <button type="button" class="gm-button" data-filter-reset-all>Filter zurücksetzen</button>
+</div>

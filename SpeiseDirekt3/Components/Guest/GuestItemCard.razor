@@ -2,8 +2,9 @@
    the server renders it open). Items without a photo render as a text card in the same grid.
    The data-* attributes describe the item for scripts (search/filter/favourites):
    data-item-id, data-category-id, data-labels ("vegan spicy"), data-allergens ("A C G"), data-price ("9.90"),
-   data-has-image. The corner slot (data-slot="favorite") is reserved for the heart button and empty for now;
-   it is a sibling of the link because interactive content must not be nested inside <a>. *@
+   data-has-image, data-filter-labels (every label the item matches for the filter: a vegan item is vegetarian too).
+   The corner slot (data-slot="favorite") holds the heart button (GuestFavoriteButton); it is a sibling of the link
+   because interactive content must not be nested inside <a>. *@
 @{
     var image = GuestFormat.ImageUrl(Item.ImagePath);
     var codes = GuestFormat.AllergenCodes(Item);
@@ -11,7 +12,7 @@
 <li class="gm-card @(image is null ? "gm-card--text" : "gm-card--photo")" id="@GuestFormat.ItemAnchor(Item.Id)" data-testid="item-card"
     data-item-id="@Item.Id" data-category-id="@Item.CategoryId" data-labels="@GuestLabels.Data(Item)"
     data-allergens="@GuestFormat.AllergenData(Item)" data-price="@GuestFormat.PriceData(Item.Price)"
-    data-has-image="@(image is null ? "false" : "true")">
+    data-has-image="@(image is null ? "false" : "true")" data-filter-labels="@GuestFilters.LabelData(Item)">
     <a class="gm-card-link" href="@Href" data-item-link>
         @if (image is not null)
         {
@@ -35,7 +36,7 @@
             </div>
         </div>
     </a>
-    <div class="gm-card-corner" data-slot="favorite">@Corner</div>
+    <div class="gm-card-corner" data-slot="favorite"><GuestFavoriteButton Item="Item" />@Corner</div>
 </li>
 
 @code {
