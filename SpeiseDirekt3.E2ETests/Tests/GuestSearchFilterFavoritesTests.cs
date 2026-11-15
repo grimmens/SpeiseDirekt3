@@ -729,9 +729,11 @@ public class GuestSearchFilterFavoritesTests : E2ETestBase
         await Assertions.Expect(Page.GetByTestId("favorites-count")).ToHaveTextAsync("1");
 
         // The editor's 380 px phone frame shows the same page (same origin and menu: same list); tall enough window
-        // so the whole frame is on screen
+        // so the whole frame fits, scrolled into view (fixed elements inside the iframe, like the floating button,
+        // are only clickable while the frame's bottom edge is on screen)
         await Page.SetViewportSizeAsync(1280, 1400);
         await GotoInteractiveAsync($"/menu/edit/{menu.MenuId}");
+        await Page.GetByTestId("menu-preview-iframe").ScrollIntoViewIfNeededAsync();
         var frame = Page.FrameLocator("[data-testid='menu-preview-iframe']");
         await frame.Locator("html[data-guest-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
         await Assertions.Expect(frame.GetByTestId("favorites-count")).ToHaveTextAsync("1");
