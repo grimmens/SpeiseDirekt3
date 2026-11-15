@@ -218,6 +218,13 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         return email;
     }
 
+    /// <summary>The tenant (owner) id of the account <paramref name="email"/>.</summary>
+    protected async Task<Guid> OwnerIdAsync(string email)
+    {
+        await using var db = App.CreateDbContext(Guid.Empty);
+        return Guid.Parse((await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.SingleAsync(db.Users, u => u.Email == email)).Id);
+    }
+
     /// <summary>Logs out via the sidebar's logout form.</summary>
     protected static Task LogoutAsync(IPage page) =>
         WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Logout" }).First.ClickAsync());

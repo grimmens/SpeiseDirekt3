@@ -117,10 +117,11 @@ public class MenuThemeTests : BackOfficeTestBase
         var frame = Page.FrameLocator("[data-testid='menu-preview-iframe']");
         await Assertions.Expect(frame.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "modern");
 
-        // The live preview next to the form follows the selection before saving (owner preview with ?theme=)
+        // The live preview next to the form follows the selection before saving: switched in place by postMessage
+        // (js/menu-preview-draft.js → js/guest-preview.js), the frame is not reloaded
         await Page.Locator("#themeSelect").SelectOptionAsync("Dark");
-        await Assertions.Expect(Page.GetByTestId("menu-preview-iframe")).ToHaveAttributeAsync("src", new Regex("theme=dark$"));
         await Assertions.Expect(frame.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "dark");
+        await Assertions.Expect(Page.GetByTestId("menu-preview-iframe")).ToHaveAttributeAsync("src", new Regex("theme=modern&lang=de$"));
         (await ComputedAsync(frame.GetByTestId("menu-display"), "backgroundColor")).Should().Be("rgb(18, 18, 18)");
 
         // Not saved yet: guests still see the old theme

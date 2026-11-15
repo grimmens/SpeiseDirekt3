@@ -220,6 +220,130 @@ public class GuestScreenshotTour : BackOfficeTestBase
     }
 
     /// <summary>
+    /// AP5 (its own run: <c>--filter FullyQualifiedName~Capture_language_versions</c>): the demo menu with its English
+    /// version in modern, classic and dark — language sheet, the English menu (top, item sheet, filter sheet, favourites
+    /// sheet), the language list at the end of the page, the top bar at 360 px with info, language, filter and search
+    /// buttons — plus the back office: the "Language versions" card and the editor's phone frame with unsaved changes
+    /// (modern, dark). The back office needs <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> for Tailwind.
+    /// </summary>
+    [Fact]
+    public async Task Capture_language_versions()
+    {
+        var dir = Directory;
+        if (dir is null) return; // opt-in only
+        System.IO.Directory.CreateDirectory(dir);
+
+        var email = await RegisterNewOwnerAsync();
+        var ownerId = await OwnerIdAsync(email);
+
+        var state = await Context.StorageStateAsync();
+        await using var phoneContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            BaseURL = App.ServerAddress, StorageState = state,
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true
+        });
+        phoneContext.SetDefaultTimeout(15_000);
+        var phone = await phoneContext.NewPageAsync();
+
+        async Task Shot(IPage page, string name, bool fullPage = false)
+        {
+            await page.EvaluateAsync("() => document.fonts.ready");
+            await page.WaitForTimeoutAsync(450);
+            await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{name}.png"), FullPage = fullPage });
+        }
+
+        GuestDemoData.Seeded? modernGerman = null;
+        foreach (var theme in new[] { DesignTheme.Modern, DesignTheme.Classic, DesignTheme.Dark })
+        {
+            var key = theme.ToString().ToLowerInvariant();
+            var german = await GuestDemoData.SeedAsync(App, ownerId, theme);
+            modernGerman ??= german;
+            var english = await GuestDemoData.SeedEnglishVersionAsync(App, ownerId, german, theme);
+            await GuestDemoData.SeedSmallMenuAsync(App, ownerId, MenuLanguage.French, $"Trattoria Lago FR {key}", "Tiramisu maison", 7.50m, german.MenuId, theme);
+
+            foreach (var (page, device) in new[] { (phone, "phone"), (Page, "desktop") })
+            {
+                var name = $"lang-{device}-{key}";
+                await OpenGuestPageAsync(page, $"/menu/{german.MenuId}");
+                await Shot(page, $"{name}-de-top");
+                await page.GetByTestId("language-button").ClickAsync();
+                await Assertions.Expect(page.GetByTestId("language-sheet")).ToBeVisibleAsync();
+                await Shot(page, $"{name}-sheet");
+                await page.GetByTestId("language-sheet").GetByRole(AriaRole.Link, new() { Name = "English" }).ClickAsync();
+                await WaitForGuestReadyAsync(page);
+                await Shot(page, $"{name}-en-top");
+                await ClickMenuItemAsync(page, GuestDemoData.EnglishLemonadeName);
+                await Shot(page, $"{name}-en-item");
+                await CloseItemSheetAsync(page);
+                await ClickMenuItemAsync(page, "Burrata");
+                await page.GetByTestId("item-sheet").Locator("[data-sheet-body]").EvaluateAsync("e => e.scrollTop = e.scrollHeight");
+                await Shot(page, $"{name}-en-item-allergens");
+                await CloseItemSheetAsync(page);
+                await page.GetByTestId("filter-button").ClickAsync();
+                await page.GetByTestId("filter-sheet").GetByTestId("filter-label-vegan").ClickAsync();
+                await Shot(page, $"{name}-en-filter");
+                await page.Keyboard.PressAsync("Escape");
+                await Assertions.Expect(page.GetByTestId("filter-sheet")).ToBeHiddenAsync();
+                foreach (var item in new[] { "Burrata", "Espresso", GuestDemoData.EnglishLemonadeName })
+                    await ItemEntry(page, item).GetByTestId("favorite-button").ClickAsync();
+                await page.GetByTestId("favorites-button").ClickAsync();
+                var favorites = page.GetByTestId("favorites-sheet");
+                await favorites.GetByTestId("favorite-row").Filter(new() { HasText = "Espresso" })
+                    .GetByRole(AriaRole.Button, new() { Name = "One portion more" }).ClickAsync();
+                await Shot(page, $"{name}-en-favorites");
+                await page.Keyboard.PressAsync("Escape");
+                await Assertions.Expect(favorites).ToBeHiddenAsync();
+                await page.EvaluateAsync("() => window.scrollTo(0, document.documentElement.scrollHeight)");
+                await Shot(page, $"{name}-en-footer");
+            }
+
+            // Top bar at 360 px with info, language, filter and search (title scrolled in)
+            await phone.SetViewportSizeAsync(360, 780);
+            await OpenGuestPageAsync(phone, $"/menu/{german.MenuId}");
+            await Shot(phone, $"lang-phone360-{key}-top");
+            await phone.Mouse.WheelAsync(0, 900);
+            await phone.WaitForTimeoutAsync(600);
+            await Shot(phone, $"lang-phone360-{key}-topbar");
+            await phone.SetViewportSizeAsync(390, 844);
+        }
+
+        // Without JS: the button jumps to the list at the end of the page
+        await using (var noJs = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            BaseURL = App.ServerAddress, JavaScriptEnabled = false,
+            ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true
+        }))
+        {
+            var page = await noJs.NewPageAsync();
+            await page.GotoAsync($"/menu/{modernGerman!.MenuId}");
+            await page.GetByTestId("language-button").ClickAsync();
+            await Shot(page, "lang-phone-nojs-list");
+        }
+
+        // Back office: the "Language versions" card and the phone frame with unsaved changes (modern, dark)
+        await GotoInteractiveAsync($"/menu/edit/{modernGerman!.MenuId}");
+        var frame = Page.FrameLocator("[data-testid='menu-preview-iframe']");
+        await frame.Locator("html[data-guest-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
+        await Shot(Page, "lang-editor-versions", fullPage: true);
+        await Page.GetByTestId("language-versions").GetByRole(AriaRole.Button, new() { Name = "Add translation" }).ClickAsync();
+        await Shot(Page, "lang-editor-add-translation", fullPage: true);
+        await Page.GetByTestId("language-versions").GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await Page.Locator("#menuName").FillAsync("Trattoria Lago – Herbstkarte");
+        await Page.Locator("#menuDesc").FillAsync("Kürbis, Steinpilze und Wild aus dem Salzkammergut");
+        await Assertions.Expect(frame.Locator("h1")).ToHaveTextAsync("Trattoria Lago – Herbstkarte");
+        await Shot(Page, "lang-editor-draft-modern");
+        await Page.Locator("#themeSelect").SelectOptionAsync("Dark");
+        await Assertions.Expect(frame.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "dark");
+        await Shot(Page, "lang-editor-draft-dark");
+        await Page.Locator("#languageSelect").SelectOptionAsync("Italian");
+        await Assertions.Expect(frame.Locator("html")).ToHaveAttributeAsync("lang", "it");
+        await Assertions.Expect(frame.Locator("h1")).ToHaveTextAsync("Trattoria Lago – Herbstkarte");
+        await Shot(Page, "lang-editor-draft-dark-italian");
+        await GotoInteractiveAsync(phone, $"/menu/edit/{modernGerman.MenuId}");
+        await Shot(phone, "lang-phone-editor", fullPage: true);
+    }
+
+    /// <summary>
     /// AP4: search with highlighted results, the filter sheet, the filtered menu with its notice, hearts on cards and
     /// rows, the floating button and the favourites list with a variant select and the sum — modern, classic and dark,
     /// phone and desktop. Leaves favourites in the desktop context of the modern menu, so the editor shots show the

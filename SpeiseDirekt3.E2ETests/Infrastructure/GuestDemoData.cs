@@ -174,6 +174,134 @@ public static class GuestDemoData
         return new Seeded(menuId, items, categoryIds);
     }
 
+    // --- AP5: an English language version of "Trattoria Lago" -------------------------------------------------------
+
+    /// <summary>Name of the English version (= the restaurant's name, like the German one: the hero shows it once).</summary>
+    public const string EnglishMenuName = "Trattoria Lago";
+    public const string EnglishMenuDescription = "Italian cooking by the lake · daily 11:30–22:00";
+    public const string EnglishLemonadeName = "Homemade lemonade";
+
+    private sealed record EnglishDish(string Category, string Name, string Description, decimal Price, string[] Codes,
+        string? PhotoOf = null, bool Vegan = false, bool Vegetarian = false, bool Spicy = false, bool Popular = false,
+        bool New = false, bool Halal = false, bool AlcoholFree = false, (string Name, decimal Price)[]? Variants = null);
+
+    /// <summary>English categories (photos come from the German dishes named in <see cref="EnglishDish.PhotoOf"/>).</summary>
+    public static readonly string[] EnglishCategories = { "Antipasti", "Pasta & Risotto", "Soft drinks", "Coffee" };
+
+    private static readonly IReadOnlyDictionary<string, string> EnglishSubtitles = new Dictionary<string, string>
+    {
+        ["Antipasti"] = "To share with the whole table",
+        ["Pasta & Risotto"] = "Fresh homemade pasta every day"
+    };
+
+    private static readonly EnglishDish[] EnglishDishes =
+    {
+        new("Antipasti", "Bruschetta Classica", "Toasted country bread with tomatoes, basil and garlic", 7.90m, new[] { "A" }, "Bruschetta Classica", Vegan: true),
+        new("Antipasti", "Vitello Tonnato", "Tender veal with tuna cream and capers", 13.50m, new[] { "C", "D" }, "Vitello Tonnato"),
+        new("Antipasti", "Burrata", "Creamy burrata on cherry tomatoes with basil oil", 12.90m, new[] { "G" }, "Burrata", Vegetarian: true),
+        new("Pasta & Risotto", "Spaghetti Carbonara", "Guanciale, egg yolk, pecorino, black pepper", 14.90m, new[] { "A", "C", "G" }, "Spaghetti Carbonara", Popular: true),
+        new("Pasta & Risotto", DishWithManyLabels, "Spicy tomato sauce with chilli and parsley", 12.50m, new[] { "A" }, DishWithManyLabels, Vegan: true, Spicy: true, Popular: true, Halal: true),
+        new("Pasta & Risotto", DishWithoutPhoto, "Creamy risotto with porcini and parmesan", 16.90m, new[] { "G", "L" }, Vegetarian: true),
+        new("Soft drinks", "Mineral water 0.5 l", "Sparkling or still", 4.20m, Array.Empty<string>(), Vegan: true, AlcoholFree: true),
+        new("Soft drinks", EnglishLemonadeName, "Lemon and mint or elderflower", 4.20m, Array.Empty<string>(), Vegan: true, New: true, AlcoholFree: true,
+            Variants: new[] { ("0.3 l", 4.20m), ("0.5 l", 5.90m) }),
+        new("Coffee", "Espresso", "", 2.90m, Array.Empty<string>(), Vegan: true),
+        new("Coffee", "Cappuccino", "With frothed milk", 4.20m, new[] { "G" }, Vegetarian: true)
+    };
+
+    private static readonly (string Code, string Name)[] EnglishAllergens =
+    {
+        ("A", "Cereals containing gluten"), ("C", "Eggs"), ("D", "Fish"), ("G", "Milk"), ("L", "Celery")
+    };
+
+    /// <summary>
+    /// Seeds an English version of the German demo menu <paramref name="german"/> (four categories, ten dishes translated by
+    /// hand, the German dishes' photos, English allergen names, labels and variants on the lemonade) and links both as
+    /// language versions (<see cref="Menu.TranslationGroupId"/>). The German menu keeps its ids.
+    /// </summary>
+    public static async Task<Seeded> SeedEnglishVersionAsync(E2EAppFactory app, Guid ownerId, Seeded german, DesignTheme theme)
+    {
+        var menuId = Guid.NewGuid();
+        var items = new Dictionary<string, Guid>();
+        var categoryIds = new Dictionary<string, Guid>();
+
+        await app.SeedAsync(ownerId, async db =>
+        {
+            var germanMenu = await db.Menus.SingleAsync(m => m.Id == german.MenuId);
+            germanMenu.TranslationGroupId ??= Guid.NewGuid();
+            var photos = await db.MenuItems
+                .Where(i => i.Category!.MenuId == german.MenuId && i.ImagePath != null)
+                .ToDictionaryAsync(i => i.Name, i => i.ImagePath);
+
+            var allergens = EnglishAllergens.ToDictionary(a => a.Code, a => new Allergen { Id = Guid.NewGuid(), Code = a.Code, Name = a.Name, MenuId = menuId });
+            db.Allergens.AddRange(allergens.Values);
+
+            var categories = EnglishCategories.Select((c, i) => new Category
+            {
+                Id = Guid.NewGuid(), Name = c, Description = EnglishSubtitles.GetValueOrDefault(c), SortOrder = i, MenuId = menuId
+            }).ToList();
+            foreach (var c in categories)
+                categoryIds[c.Name] = c.Id;
+
+            db.Menus.Add(new Menu
+            {
+                Id = menuId, Name = EnglishMenuName, Description = EnglishMenuDescription, Theme = theme,
+                Language = MenuLanguage.English, TranslationGroupId = germanMenu.TranslationGroupId, Categories = categories
+            });
+
+            foreach (var (dish, index) in EnglishDishes.Select((d, i) => (d, i)))
+            {
+                var item = new MenuItem
+                {
+                    Id = Guid.NewGuid(), Name = dish.Name, Description = dish.Description, Price = dish.Price, SortOrder = index,
+                    CategoryId = categoryIds[dish.Category], IsVegan = dish.Vegan, IsVegetarian = dish.Vegetarian, IsSpicy = dish.Spicy,
+                    IsPopular = dish.Popular, IsNew = dish.New, IsHalal = dish.Halal, IsAlcoholFree = dish.AlcoholFree,
+                    ImagePath = dish.PhotoOf is { } source ? photos.GetValueOrDefault(source) : null
+                };
+                foreach (var (option, i) in (dish.Variants ?? []).Select((o, i) => (o, i)))
+                    item.PriceOptions.Add(new MenuItemPriceOption { Id = Guid.NewGuid(), Kind = PriceOptionKind.Variant, Name = option.Name, Price = option.Price, SortOrder = i });
+                item.ApplyLowestVariantPrice();
+                foreach (var code in dish.Codes)
+                    item.Allergens.Add(allergens[code]);
+                db.MenuItems.Add(item);
+                items[dish.Name] = item.Id;
+            }
+        });
+
+        return new Seeded(menuId, items, categoryIds);
+    }
+
+    /// <summary>
+    /// A small menu in <paramref name="language"/> (one category "Menu", one dish) linked into the translation group of
+    /// <paramref name="groupMenuId"/> — e.g. a French version for the language sheet, or (without a group) an Italian menu.
+    /// </summary>
+    public static async Task<Guid> SeedSmallMenuAsync(E2EAppFactory app, Guid ownerId, MenuLanguage language, string name,
+        string dishName, decimal price, Guid? groupMenuId = null, DesignTheme theme = DesignTheme.Modern)
+    {
+        var menuId = Guid.NewGuid();
+        await app.SeedAsync(ownerId, async db =>
+        {
+            Guid? groupId = null;
+            if (groupMenuId is { } other)
+            {
+                var otherMenu = await db.Menus.SingleAsync(m => m.Id == other);
+                otherMenu.TranslationGroupId ??= Guid.NewGuid();
+                groupId = otherMenu.TranslationGroupId;
+            }
+            var category = new Category { Id = Guid.NewGuid(), Name = "Menu", SortOrder = 0, MenuId = menuId };
+            db.Menus.Add(new Menu
+            {
+                Id = menuId, Name = name, Description = "", Theme = theme, Language = language, TranslationGroupId = groupId,
+                Categories = new List<Category> { category }
+            });
+            db.MenuItems.Add(new MenuItem
+            {
+                Id = Guid.NewGuid(), Name = dishName, Description = "", Price = price, CategoryId = category.Id, IsVegetarian = true, IsPopular = true
+            });
+        });
+        return menuId;
+    }
+
     /// <summary>The restaurant profile "Trattoria Lago" with a generated cover (lake view) and logo, both stored as <see cref="Image"/> rows.</summary>
     private static RestaurantProfile Profile(SpeiseDirekt.Data.ApplicationDbContext db)
     {
