@@ -7,7 +7,9 @@
 @attribute [GuestPage]
 @layout GuestLayout
 @using Microsoft.AspNetCore.Authorization
+@using SpeiseDirekt.ServiceInterface
 @inject ApplicationDbContext Db
+@inject IRestaurantProfileService Profiles
 
 @if (model is null)
 {
@@ -37,7 +39,7 @@ else
             return;
 
         DesignTheme? theme = Enum.TryParse<DesignTheme>(Theme, ignoreCase: true, out var t) && Enum.IsDefined(t) ? t : null;
-        model = await GuestMenuLoader.BuildAsync(Db, menu, $"/menu/preview/{menuId}", Item,
+        model = await GuestMenuLoader.BuildAsync(Db, Profiles, menu, $"/menu/preview/{menuId}", Item,
             trackClicks: false, isPreview: true, themeOverride: theme);
     }
 }

@@ -1,14 +1,19 @@
-@* Label chips of a menu item (vegan, vegetarisch, scharf, …) from GuestLabels.For — the one place that decides
-   which labels an item has and in which order. *@
+@* Label chips of a menu item (beliebt, neu, vegan, vegetarisch, …) from GuestLabels.For — the one place that decides
+   which labels an item has and in which order (highlights first). Highlights get the accent color.
+   Cards and list rows (not Large) stay compact: with more than GuestLabels.CompactLimit labels the first ones are
+   shown plus a "+n" chip; the others stay in the markup for screen readers (visually hidden) and all of them are
+   shown in the item sheet (Large). *@
 @{
     var labels = GuestLabels.For(Item);
+    var visible = !Large && labels.Count > GuestLabels.CompactLimit ? GuestLabels.CompactLimit - 1 : labels.Count;
 }
 @if (labels.Count > 0)
 {
     <ul class="gm-labels @(Large ? "gm-labels--lg" : null) @Class" data-testid="item-labels" aria-label="Merkmale">
-        @foreach (var label in labels)
+        @foreach (var (label, index) in labels.Select((l, i) => (l, i)))
         {
-            <li class="gm-label gm-label--@label.Key" data-label="@label.Key" data-testid="label-@label.Key">
+            <li class="gm-label gm-label--@label.Key @(label.Highlight ? "gm-label--highlight" : null) @(index >= visible ? "gm-visually-hidden" : null)"
+                data-label="@label.Key" data-testid="label-@label.Key">
                 @if (label.Icon is not null)
                 {
                     <GuestIcon Name="@label.Icon" Class="gm-label-icon" />
@@ -16,11 +21,16 @@
                 <span>@label.Text</span>
             </li>
         }
+        @if (visible < labels.Count)
+        {
+            <li class="gm-label gm-label--more" aria-hidden="true" data-testid="label-more">+@(labels.Count - visible)</li>
+        }
     </ul>
 }
 
 @code {
     [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
+    /// <summary>Item sheet: bigger chips, always all labels.</summary>
     [Parameter] public bool Large { get; set; }
     [Parameter] public string? Class { get; set; }
 }

@@ -1,9 +1,18 @@
-@* Content of the item sheet for one item: photo, category, name, description, labels, price, allergen legend,
-   combo offers. Rendered by the server twice per page at most: inside a <template> per item (guest-menu.js clones
-   it into the item sheet) and directly in the open sheet for ?item=. Extend it here (variants, extras, share). *@
+@* Content of the item sheet for one item: photo, category, name, description, labels, price (or the list of price
+   variants), share button, extras, allergen legend, combo offers. Rendered by the server twice per page at most:
+   inside a <template> per item (guest-menu.js clones it into the item sheet) and directly in the open sheet for
+   ?item=.
+   Price: without variants one price (item-price); with variants the list of variants with their prices replaces it
+   (the cards say "ab € x"), so no price is shown twice.
+   Share (js/guest-restaurant.js): navigator.share with the public link /menu/{menuId}?item={id}, else the clipboard
+   ("Link kopiert" in [data-share-status]), else the link in the read-only field [data-share-fallback]. *@
+@using SpeiseDirekt.Infrastructure
 @{
     var image = GuestFormat.ImageUrl(Item.ImagePath);
     var allergens = Item.Allergens.OrderBy(a => a.Code, StringComparer.Ordinal).ToList();
+    var variants = Item.Variants();
+    var extras = Item.Extras();
+    var shareFieldId = $"gm-share-url-{Item.Id:N}";
 }
 <article class="gm-detail @(image is null ? "gm-detail--noimage" : null)" data-testid="item-detail" data-item-id="@Item.Id">
     @if (image is not null)
@@ -23,14 +32,56 @@
             <p class="gm-detail-desc">@Item.Description</p>
         }
         <GuestLabelChips Item="Item" Large="true" />
+        @if (variants.Count > 0)
+        {
+            <ul class="gm-variants" role="list" aria-label="Preise" data-testid="item-variants">
+                @foreach (var variant in variants)
+                {
+                    <li class="gm-variant" data-testid="item-variant" @key="variant.Id">
+                        <span class="gm-variant-name">@variant.Name</span>
+                        <span class="gm-price">@GuestFormat.Price(variant.Price)</span>
+                    </li>
+                }
+            </ul>
+        }
         <div class="gm-detail-price-row">
-            <span class="gm-price gm-price--lg" data-testid="item-price">@GuestFormat.ItemPrice(Item)</span>
-            @if (allergens.Count > 0)
-            {
-                <span class="gm-allergen-codes gm-allergen-codes--pill" data-testid="item-allergens" title="Allergene">@GuestFormat.AllergenCodes(Item)</span>
-            }
+            <div class="gm-detail-price-start">
+                @if (variants.Count == 0)
+                {
+                    <span class="gm-price gm-price--lg" data-testid="item-price">@GuestFormat.ItemPrice(Item)</span>
+                }
+                @if (allergens.Count > 0)
+                {
+                    <span class="gm-allergen-codes gm-allergen-codes--pill" data-testid="item-allergens" title="Allergene">@GuestFormat.AllergenCodes(Item)</span>
+                }
+            </div>
+            <button type="button" class="gm-share-button" data-js-only data-share data-share-title="@Item.Name" data-testid="share-button">
+                <GuestIcon Name="share" />
+                <span>Teilen</span>
+            </button>
+        </div>
+        <p class="gm-share-status" role="status" aria-live="polite" data-share-status data-testid="share-status"></p>
+        <div class="gm-share-fallback" data-share-fallback data-testid="share-fallback" hidden>
+            <label class="gm-share-fallback-label" for="@shareFieldId">Link zum Kopieren</label>
+            <textarea class="gm-share-fallback-input" id="@shareFieldId" rows="3" readonly data-share-url data-testid="share-url"></textarea>
         </div>
         @ChildContent
+
+        @if (extras.Count > 0)
+        {
+            <section class="gm-detail-section" data-testid="item-extras" aria-label="Extras">
+                <h3 class="gm-detail-section-title">Extras</h3>
+                <ul class="gm-extras" role="list">
+                    @foreach (var extra in extras)
+                    {
+                        <li class="gm-extra" data-testid="item-extra" @key="extra.Id">
+                            <span class="gm-extra-name">@GuestFormat.ExtraName(extra.Name)</span>
+                            <span class="gm-price gm-extra-price">@GuestFormat.ExtraPrice(extra.Price)</span>
+                        </li>
+                    }
+                </ul>
+            </section>
+        }
 
         @if (allergens.Count > 0)
         {
@@ -93,6 +144,6 @@
     [Parameter] public string? CategoryName { get; set; }
     /// <summary>Combos this item triggers (<see cref="GuestMenuModel.CombosFor"/>).</summary>
     [Parameter] public IReadOnlyList<MenuCombo> Combos { get; set; } = Array.Empty<MenuCombo>();
-    /// <summary>Extra content after the price row (e.g. variants, extras, share button).</summary>
+    /// <summary>Extra content after the price row and the share controls, before the extras.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 }

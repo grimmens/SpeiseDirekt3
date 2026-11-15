@@ -1,0 +1,23 @@
+@* The restaurant profile at the end of the page and in the info sheet. Nothing at all without a profile.
+   - Footer #gm-info: always rendered, so the information is reachable without JS — the info button in the top bar
+     is a link to this anchor (GuestMenuView, Start slot).
+   - Info sheet (<dialog data-sheet="info">): with JS the same button opens it (data-sheet-open="info"; Escape,
+     backdrop and back button close it, focus returns to the button — the generic sheet behaviour). *@
+@if (Model.Profile is { } profile)
+{
+    <footer class="gm-info-footer" id="@GuestRestaurantSection.FooterId" aria-labelledby="gm-info-title" data-testid="restaurant-footer">
+        <div class="gm-container">
+            <GuestRestaurantInfo Profile="profile" HeadingLevel="2" NameId="gm-info-title" />
+        </div>
+    </footer>
+    <GuestSheet Name="info" Title="Informationen" TestId="info-sheet" Class="gm-sheet--info">
+        <GuestRestaurantInfo Profile="profile" HeadingLevel="3" />
+    </GuestSheet>
+}
+
+@code {
+    /// <summary>Id of the footer, target of the info button without JS (<c>#gm-info</c>).</summary>
+    public const string FooterId = "gm-info";
+
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+}

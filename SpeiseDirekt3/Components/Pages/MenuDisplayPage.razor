@@ -6,6 +6,7 @@
 @using SpeiseDirekt.ServiceInterface
 @inject ApplicationDbContext Db
 @inject ITrackingService Tracking
+@inject IRestaurantProfileService Profiles
 
 @if (model is null)
 {
@@ -30,7 +31,7 @@ else
         if (menu is null)
             return;
 
-        model = await GuestMenuLoader.BuildAsync(Db, menu, $"/menu/{MenuId}", Item);
+        model = await GuestMenuLoader.BuildAsync(Db, Profiles, menu, $"/menu/{MenuId}", Item);
 
         // An item opened by a page request (no JS, or a shared link) counts like a click in the page
         if (model.SelectedItem is { } item)
