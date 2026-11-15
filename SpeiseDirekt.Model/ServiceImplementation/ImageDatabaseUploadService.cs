@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Forms;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceInterface;
 
@@ -25,8 +26,7 @@ namespace SpeiseDirekt.ServiceImplementation
         public async Task<bool> DeleteImageAsync(string imagePath)
         {
             // Stored paths are "image/{id}"; a bare id is accepted as well
-            var id = imagePath?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true ? imagePath["image/".Length..] : imagePath;
-            if (Guid.TryParse(id, out var guid))
+            if (ImagePaths.TryGetImageId(imagePath, out var guid) || Guid.TryParse(imagePath, out guid))
             {
                 var image = context.Images.Find(guid);
                 if (image != null)

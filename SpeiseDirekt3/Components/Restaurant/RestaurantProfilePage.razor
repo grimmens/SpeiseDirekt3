@@ -170,7 +170,7 @@
                         <h2 id="restaurant-hours" class="text-lg font-semibold text-gray-900 mb-0">Opening hours</h2>
                     </div>
                     <div class="p-[1rem] sm:p-6 space-y-1.5">
-                        <label for="Restaurant.OpeningHours" class="block text-sm font-medium text-gray-700">Opening hours</label>
+                        <label for="Restaurant.OpeningHours" class="sr-only">Opening hours</label>
                         <InputTextArea @bind-Value="Input.OpeningHours" id="Restaurant.OpeningHours" rows="4" maxlength="1000"
                                        placeholder="@("Mo–Fr 11:00–22:00\nSa 10:00–23:00\nSun closed")" class="@($"{InputClass} resize-y")" />
                         <p class="text-xs text-gray-500 mb-0">Free text, one line per day or group of days. Guests see it exactly like this.</p>

@@ -107,7 +107,7 @@
 
                 <!-- Labels (one list for back office and guests: ItemLabels) -->
                 <fieldset class="space-y-2" data-testid="item-label-options">
-                    <legend class="block text-sm font-medium text-gray-700 mb-2">Labels</legend>
+                    <legend class="block float-none w-full text-sm font-medium text-gray-700 mb-2">Labels</legend>
                     <div class="border border-gray-300 rounded-lg p-3 space-y-3">
                         @foreach (var group in LabelGroups)
                         {
@@ -138,7 +138,7 @@
                     @if (HasVariants)
                     {
                         <p id="MenuItem.PriceHint" class="text-xs text-gray-500 mb-0" data-testid="price-follows-variants">
-                            Set by the lowest variant price. Guests see “from @PriceFormat.Euro(Input.Price)”.
+                            Set by the lowest variant price. Guests see “from <span class="whitespace-nowrap">@PriceFormat.Euro(Input.Price)</span>”.
                         </p>
                     }
                     <ValidationMessage For="() => Input.Price" class="text-red-600 text-sm" />

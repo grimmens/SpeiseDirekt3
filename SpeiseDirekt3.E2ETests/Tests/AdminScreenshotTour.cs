@@ -23,7 +23,8 @@ public class AdminScreenshotTour : BackOfficeTestBase
 
     private static string? Directory => Environment.GetEnvironmentVariable(DirectoryEnvVar) is { Length: > 0 } d ? d : null;
 
-    private sealed record Seeded(Guid MenuId, Guid CategoryId, Guid EmptyMenuId, Guid TimeTableQrId, Guid CalendarQrId, Guid TenantUserId);
+    private sealed record Seeded(Guid MenuId, Guid CategoryId, Guid EmptyMenuId, Guid TimeTableQrId, Guid CalendarQrId, Guid TenantUserId,
+        Guid DrinksCategoryId);
 
     [Fact]
     public async Task Capture_every_back_office_page()
@@ -104,6 +105,21 @@ public class AdminScreenshotTour : BackOfficeTestBase
         await Shot("combos", $"/combos/{s.MenuId}");
         await Shot("users", "/users");
 
+        // Guest-menu data model: restaurant profile, an item list with variants/extras, the editor with both
+        await Shot("restaurant", "/restaurant");
+        await Shot("menuitems-drinks", $"/MenuItems/Category/{s.DrinksCategoryId}");
+        await Shot("menuitems-editor-options", $"/MenuItems/Category/{s.DrinksCategoryId}", async p =>
+        {
+            await p.GetByRole(AriaRole.Button, new() { Name = "Edit Melange", Exact = true }).ClickAsync();
+            await Assertions.Expect(p.Locator("#menuItemEditModal")).ToBeVisibleAsync();
+        });
+        // The editor scrolls inside the modal: one more shot with the options in view
+        await Shot("menuitems-editor-options-scrolled", $"/MenuItems/Category/{s.DrinksCategoryId}", async p =>
+        {
+            await p.GetByRole(AriaRole.Button, new() { Name = "Edit Melange", Exact = true }).ClickAsync();
+            await p.GetByTestId("price-variants").ScrollIntoViewIfNeededAsync();
+        });
+
         if (phoneSubset)
         {
             // Open the hamburger sidebar once
@@ -151,6 +167,7 @@ public class AdminScreenshotTour : BackOfficeTestBase
         var calendarQrId = Guid.NewGuid();
         var tenantUserId = Guid.NewGuid();
         Guid firstCategoryId = Guid.Empty;
+        Guid drinksCategoryId = Guid.Empty;
 
         await App.SeedAsync(ownerId, async db =>
         {
@@ -196,6 +213,39 @@ public class AdminScreenshotTour : BackOfficeTestBase
             var spritzer = Item(getraenke, "Sommerspritzer 0,25 l", "Grüner Veltliner mit Soda", 4.10m, vegan: true, codes: new[] { "O" });
             Item(getraenke, "Almdudler 0,35 l", "", 3.60m, vegan: true);
             Item(getraenke, "Melange", "Wiener Kaffeehaus-Klassiker", 4.20m, veg: true, codes: new[] { "G" });
+
+            // --- Guest-menu data model: subtitles, labels, variants, extras and the restaurant profile
+            vorspeisen.Description = "Suppen und kleine Speisen";
+            haupt.Description = "Warme Küche bis 21:30 Uhr";
+            drinksCategoryId = getraenke.Id;
+            schnitzel.IsPopular = true;
+            MenuItemPriceOption Option(PriceOptionKind kind, string name, decimal price, int sortOrder) =>
+                new() { Id = Guid.NewGuid(), Kind = kind, Name = name, Price = price, SortOrder = sortOrder };
+            spritzer.Name = "Sommerspritzer";
+            spritzer.PriceOptions.Add(Option(PriceOptionKind.Variant, "0,25 l", 4.10m, 0));
+            spritzer.PriceOptions.Add(Option(PriceOptionKind.Variant, "0,5 l", 7.40m, 1));
+            var melange = db.ChangeTracker.Entries<MenuItem>().Single(e => e.Entity.Name == "Melange").Entity;
+            melange.Price = 3.40m;
+            melange.IsAlcoholFree = true;
+            melange.IsNew = true;
+            melange.PriceOptions.Add(Option(PriceOptionKind.Variant, "Klein", 3.40m, 0));
+            melange.PriceOptions.Add(Option(PriceOptionKind.Variant, "Groß", 4.20m, 1));
+            melange.PriceOptions.Add(Option(PriceOptionKind.Extra, "+ Hafermilch", 0.50m, 0));
+            melange.PriceOptions.Add(Option(PriceOptionKind.Extra, "+ Schlagobers", 0.60m, 1));
+            var spaetzle = db.ChangeTracker.Entries<MenuItem>().Single(e => e.Entity.Name == "Käsespätzle").Entity;
+            spaetzle.PriceOptions.Add(Option(PriceOptionKind.Extra, "+ Speck", 2.50m, 0));
+            var cover = new Image { Id = Guid.NewGuid(), MimeType = "image/png", Content = GradientPng(1200, 400, (120, 72, 40), (214, 168, 96)) };
+            var logo = new Image { Id = Guid.NewGuid(), MimeType = "image/png", Content = GradientPng(320, 320, (30, 58, 110), (90, 140, 200)) };
+            db.Images.AddRange(cover, logo);
+            db.RestaurantProfiles.Add(new RestaurantProfile
+            {
+                Id = Guid.NewGuid(), Name = "Gasthaus Zur Post",
+                Description = "Wiener Wirtshausküche seit 1890: Schnitzel, Rostbraten und Mehlspeisen aus der eigenen Küche.",
+                LogoImagePath = $"image/{logo.Id}", CoverImagePath = $"image/{cover.Id}",
+                Phone = "+43 1 234 56 78", Email = "info@example.com", Website = "https://example.com",
+                InstagramUrl = "https://example.com/instagram", GoogleReviewUrl = "https://example.com/review",
+                Address = "Hauptplatz 1\n1010 Wien", OpeningHours = "Mo–Fr 11:00–23:00\nSa 10:00–23:00\nSo und Feiertag 10:00–21:00"
+            });
 
             db.MenuCombos.Add(new MenuCombo
             {
@@ -272,6 +322,22 @@ public class AdminScreenshotTour : BackOfficeTestBase
             await Task.CompletedTask;
         });
 
-        return new Seeded(menuId, firstCategoryId, emptyMenuId, timeTableQrId, calendarQrId, tenantUserId);
+        return new Seeded(menuId, firstCategoryId, emptyMenuId, timeTableQrId, calendarQrId, tenantUserId, drinksCategoryId);
+    }
+
+    /// <summary>A diagonal two-colour gradient as PNG (stand-in for a photo in the screenshots).</summary>
+    private static byte[] GradientPng(int width, int height, (byte R, byte G, byte B) from, (byte R, byte G, byte B) to)
+    {
+        using var image = new SixLabors.ImageSharp.Image<SixLabors.ImageSharp.PixelFormats.Rgba32>(width, height);
+        for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
+            {
+                var t = (x / (double)width + y / (double)height) / 2;
+                byte Mix(byte a, byte b) => (byte)(a + (b - a) * t);
+                image[x, y] = new SixLabors.ImageSharp.PixelFormats.Rgba32(Mix(from.R, to.R), Mix(from.G, to.G), Mix(from.B, to.B));
+            }
+        using var stream = new MemoryStream();
+        SixLabors.ImageSharp.ImageExtensions.SaveAsPng(image, stream);
+        return stream.ToArray();
     }
 }
