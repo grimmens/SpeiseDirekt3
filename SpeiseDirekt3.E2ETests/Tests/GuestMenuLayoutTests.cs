@@ -59,7 +59,9 @@ public class GuestMenuLayoutTests : BackOfficeTestBase
 
         sockets.Should().BeEmpty("guest pages render statically, there is no SignalR circuit");
         (await Page.EvaluateAsync<bool>("() => typeof window.Blazor === 'undefined'")).Should().BeTrue();
-        scripts.Should().ContainSingle().Which.Should().MatchRegex(@"^/js/guest-menu(\.[a-z0-9]+)?\.js$");
+        // Only the guest module and the behaviour modules it imports (js/guest-*.js)
+        scripts.Should().Contain(s => Regex.IsMatch(s, @"^/js/guest-menu(\.[a-z0-9]+)?\.js$"))
+            .And.OnlyContain(s => Regex.IsMatch(s, @"^/js/guest-[a-z-]+(\.[a-z0-9]+)?\.js$"));
         await Assertions.Expect(Page.Locator("html")).ToHaveAttributeAsync("lang", "de");
     }
 

@@ -7,9 +7,13 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
 /// Not a test in the usual sense: screenshots of the guest menu for design reviews, with the demo menu of
-/// <see cref="GuestDemoData"/> (photos, text-only drinks) in every design theme: phone (390 px) and desktop
-/// (1280 px), open item sheet, category and search sheet, the drinks list, the page without JavaScript, a notice
-/// page and the menu editor's phone frame. Runs only when <c>E2E_SCREENSHOT_DIR</c> is set; guest pages need no
+/// <see cref="GuestDemoData"/> (photos, text-only drinks, restaurant profile with cover and logo) in every design
+/// theme: phone (390 px) and desktop (1280 px), open item sheet, category and search sheet, the drinks list, the
+/// page without JavaScript, a notice page and the menu editor's phone frame; for modern, classic and dark also the
+/// info sheet, the footer, an item with price variants, the card grid with label chips and the top bar with the
+/// logo; plus the share fallbacks, a menu without a restaurant profile, one whose name differs from the
+/// restaurant's and the seeded mezze menu (profile without pictures).
+/// Runs only when <c>E2E_SCREENSHOT_DIR</c> is set; guest pages need no
 /// external requests, <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> only matters for the editor shots (Tailwind CDN).
 /// <code>
 /// E2E_SCREENSHOT_DIR=/tmp/shots E2E_ALLOW_EXTERNAL_REQUESTS=1 dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~GuestScreenshotTour
@@ -79,6 +83,33 @@ public class GuestScreenshotTour : BackOfficeTestBase
                 await phone.GetByTestId("category-nav").GetByRole(AriaRole.Link, new() { Name = "Weine" }).ClickAsync();
                 await phone.WaitForTimeoutAsync(900);
                 await Shot(phone, $"phone-{key}-drinks");
+
+                // --- AP3: restaurant profile, labels, variants ---
+                await ClickMenuItemAsync(phone, GuestDemoData.WineWithVariantsName);
+                await Shot(phone, $"phone-{key}-item-variants");
+                await CloseItemSheetAsync(phone);
+                await phone.GetByTestId("category-nav").GetByRole(AriaRole.Link, new() { Name = "Pasta & Risotto" }).ClickAsync();
+                await phone.WaitForTimeoutAsync(900);
+                await Shot(phone, $"phone-{key}-labels");
+                await phone.GetByTestId("info-button").ClickAsync();
+                await Assertions.Expect(phone.GetByTestId("info-sheet")).ToBeVisibleAsync();
+                await Shot(phone, $"phone-{key}-info");
+                await phone.Keyboard.PressAsync("Escape");
+                await Assertions.Expect(phone.GetByTestId("info-sheet")).ToBeHiddenAsync();
+                await phone.EvaluateAsync("() => window.scrollTo(0, document.documentElement.scrollHeight)");
+                await phone.WaitForTimeoutAsync(400);
+                await Shot(phone, $"phone-{key}-footer");
+
+                await Page.GetByTestId("info-button").ClickAsync();
+                await Assertions.Expect(Page.GetByTestId("info-sheet")).ToBeVisibleAsync();
+                await Shot(Page, $"desktop-{key}-info");
+                await Page.Keyboard.PressAsync("Escape");
+                await ClickMenuItemAsync(Page, GuestDemoData.WineWithVariantsName);
+                await Shot(Page, $"desktop-{key}-item-variants");
+                await CloseItemSheetAsync(Page);
+                await Page.EvaluateAsync("() => window.scrollTo(0, document.documentElement.scrollHeight)");
+                await Page.WaitForTimeoutAsync(400);
+                await Shot(Page, $"desktop-{key}-footer");
             }
         }
 
@@ -109,6 +140,46 @@ public class GuestScreenshotTour : BackOfficeTestBase
         await phone.GetByTestId("search-sheet").Locator("input").FillAsync("wein");
         await Shot(phone, "phone-dark-search");
 
+        // Top bar with logo once the hero scrolled away; share: copied, and the field when nothing else works
+        await OpenGuestPageAsync(phone, $"/menu/{modern.MenuId}");
+        await phone.Mouse.WheelAsync(0, 500);
+        await phone.WaitForTimeoutAsync(600);
+        await Shot(phone, "phone-modern-topbar-logo");
+        await phone.SetViewportSizeAsync(360, 780);
+        await OpenGuestPageAsync(phone, $"/menu/{modern.MenuId}");
+        await Shot(phone, "phone360-modern-top");
+        await phone.Mouse.WheelAsync(0, 900);
+        await phone.WaitForTimeoutAsync(600);
+        await Shot(phone, "phone360-modern-topbar-logo");
+        await phone.SetViewportSizeAsync(390, 844);
+        await OpenGuestPageAsync(phone, $"/menu/{modern.MenuId}");
+        await phone.EvaluateAsync("() => { Object.defineProperty(navigator, 'share', { value: undefined, configurable: true }); Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.resolve() }, configurable: true }); }");
+        await ClickMenuItemAsync(phone, GuestDemoData.LemonadeName);
+        await phone.GetByTestId("item-sheet").GetByTestId("share-button").ClickAsync();
+        await Shot(phone, "phone-modern-share-copied");
+        await CloseItemSheetAsync(phone);
+        await phone.EvaluateAsync("() => Object.defineProperty(navigator, 'clipboard', { value: { writeText: () => Promise.reject(new Error('denied')) }, configurable: true })");
+        await ClickMenuItemAsync(phone, GuestDemoData.LemonadeName);
+        await phone.GetByTestId("item-sheet").GetByTestId("share-button").ClickAsync();
+        await Assertions.Expect(phone.GetByTestId("item-sheet").GetByTestId("share-url")).ToBeVisibleAsync();
+        await Shot(phone, "phone-modern-share-fallback");
+
+        // Menu named differently from the restaurant (name above the h1), the mezze menu (profile without pictures),
+        // and a menu whose tenant has no profile at all
+        var lunch = await GuestDemoData.SeedAsync(App, ownerId, DesignTheme.Modern, name: "Mittagskarte");
+        await OpenGuestPageAsync(phone, $"/menu/{lunch.MenuId}");
+        await Shot(phone, "phone-modern-other-name-top");
+        await OpenGuestPageAsync(Page, $"/menu/{lunch.MenuId}");
+        await Shot(Page, "desktop-modern-other-name-top");
+        await OpenGuestPageAsync(phone, $"/menu/{E2ESeedData.MezzeMenuId}");
+        await Shot(phone, "phone-mezze-top");
+        await Shot(phone, "phone-mezze-full", fullPage: true);
+        var noProfile = await GuestDemoData.SeedAsync(App, Guid.NewGuid(), DesignTheme.Classic, withProfile: false);
+        await OpenGuestPageAsync(phone, $"/menu/{noProfile.MenuId}");
+        await Shot(phone, "phone-noprofile-top");
+        await OpenGuestPageAsync(Page, $"/menu/{noProfile.MenuId}");
+        await Shot(Page, "desktop-noprofile-top");
+
         // Without JavaScript
         await using (var noJs = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
         {
@@ -121,6 +192,11 @@ public class GuestScreenshotTour : BackOfficeTestBase
             await Shot(page, "phone-nojs-top");
             await page.GotoAsync($"/menu/{modern.MenuId}?item={modern.Items["Tiramisu"]}");
             await Shot(page, "phone-nojs-item");
+            await page.GotoAsync($"/menu/{modern.MenuId}?item={modern.Items[GuestDemoData.WineWithVariantsName]}");
+            await Shot(page, "phone-nojs-item-variants");
+            await page.GotoAsync($"/menu/{modern.MenuId}");
+            await page.GetByTestId("info-button").ClickAsync();
+            await Shot(page, "phone-nojs-info");
         }
 
         // Notice page
