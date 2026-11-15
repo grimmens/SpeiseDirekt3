@@ -1,5 +1,240 @@
 ﻿@page "/"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Infrastructure
+@using SpeiseDirekt.ServiceInterface
+@inject ApplicationDbContext DbContext
+@inject IPermissionService PermissionService
+@inject IUserIdProvider UserIdProvider
+@inject IAuthorizationService AuthorizationService
+@inject TimeProvider TimeProvider
 
+<AuthorizeView>
+    <Authorized>
+        <PageTitle>Dashboard - Speise-Direkt</PageTitle>
+
+        @if (dashboard is { } d)
+        {
+            <!-- Header -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
+                <div class="p-[1rem] sm:p-6">
+                    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div class="min-w-0 flex-1">
+                            <h1 class="text-3xl font-bold text-gray-900 font-display">Welcome back</h1>
+                            <p class="mt-2 text-gray-600 break-all" data-testid="dashboard-user">@d.UserName</p>
+                        </div>
+                        @if (d.CanCreateMenu || d.CanCreateQrCode || d.CanViewAnalytics)
+                        {
+                            <div class="flex flex-wrap gap-2 lg:flex-shrink-0" data-testid="quick-actions">
+                                @if (d.CanCreateMenu)
+                                {
+                                    <a href="menu/edit" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                        </svg>
+                                        Create menu
+                                    </a>
+                                }
+                                @if (d.CanCreateQrCode)
+                                {
+                                    <a href="qrcode/edit" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                        </svg>
+                                        Create QR code
+                                    </a>
+                                }
+                                @if (d.CanViewAnalytics)
+                                {
+                                    <a href="analytics" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                        </svg>
+                                        Analytics
+                                    </a>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stat tiles -->
+            <div class="grid grid-cols-2 @(d.CanViewAnalytics ? "lg:grid-cols-4" : "lg:grid-cols-3") gap-4 mb-8">
+                <a href="menus" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200" data-testid="stat-menus">
+                    <div class="flex items-center gap-3">
+                        <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                            </svg>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.MenuCount</div>
+                            <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">Menus</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-400">@Count(d.ItemCount, "item", "items") in total</div>
+                </a>
+                <a href="qrcodes" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200" data-testid="stat-qrcodes">
+                    <div class="flex items-center gap-3">
+                        <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                            </svg>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.QrCodeCount</div>
+                            <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">QR codes</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-400">For your tables and windows</div>
+                </a>
+                @if (d.CanViewAnalytics)
+                {
+                    <a href="analytics" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200" data-testid="stat-views">
+                        <div class="flex items-center gap-3">
+                            <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.ViewsLast7Days</div>
+                                <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">Menu views</div>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-400">Last 7 days</div>
+                    </a>
+                }
+                <a href="users" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200" data-testid="stat-team">
+                    <div class="flex items-center gap-3">
+                        <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                        </span>
+                        <div class="min-w-0">
+                            <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.TeamCount</div>
+                            <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">Team members</div>
+                        </div>
+                    </div>
+                    <div class="mt-2 text-xs text-gray-400">Active sub-accounts</div>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                @if (d.ShowChecklist)
+                {
+                    <!-- Getting started -->
+                    <section class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm" data-testid="getting-started">
+                        <div class="p-[1rem] sm:p-6 border-b border-gray-100">
+                            <div class="flex items-start justify-between gap-4">
+                                <div class="min-w-0">
+                                    <h2 class="text-lg font-semibold text-gray-900">Getting started</h2>
+                                    <p class="mt-1 text-sm text-gray-500">Four steps until your guests can scan your menu at the table.</p>
+                                </div>
+                                <span class="flex-shrink-0 text-sm font-medium text-gray-600" data-testid="getting-started-progress">@d.Steps.Count(s => s.Done) of @d.Steps.Count done</span>
+                            </div>
+                            <div class="mt-4 h-2 rounded-full bg-gray-100 overflow-hidden" aria-hidden="true">
+                                <div class="h-full rounded-full bg-green-500 transition-all duration-500" style="width: @(d.Steps.Count(s => s.Done) * 100 / d.Steps.Count)%"></div>
+                            </div>
+                        </div>
+                        <ol class="list-none pl-0 mb-0 divide-y divide-gray-100">
+                            @foreach (var step in d.Steps)
+                            {
+                                var isCurrent = step == d.CurrentStep;
+                                <li class="flex items-start gap-4 px-[1rem] sm:px-6 py-4" data-testid="checklist-step" data-step="@step.Number" data-state="@(step.Done ? "done" : "open")">
+                                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold @(step.Done ? "bg-green-100 text-green-700" : isCurrent ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600")">
+                                        @if (step.Done)
+                                        {
+                                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            <span class="sr-only">Done:</span>
+                                        }
+                                        else
+                                        {
+                                            @step.Number
+                                        }
+                                    </span>
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                            <h3 class="text-base font-medium @(step.Done ? "text-gray-500" : "text-gray-900")">@step.Title</h3>
+                                            @if (step.Done)
+                                            {
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">Done</span>
+                                            }
+                                        </div>
+                                        @if (!step.Done)
+                                        {
+                                            <p class="mt-1 text-sm text-gray-500">@step.Description</p>
+                                            @if (step.Href is not null)
+                                            {
+                                                <a href="@step.Href" data-testid="checklist-action"
+                                                   class="mt-3 inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors @(isCurrent ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white border border-gray-300 hover:bg-gray-50 text-gray-700")">
+                                                    @step.ActionLabel
+                                                    <span class="ml-1" aria-hidden="true">&rarr;</span>
+                                                </a>
+                                            }
+                                            else if (step.Blocker is not null)
+                                            {
+                                                <p class="mt-2 text-xs text-gray-400">@step.Blocker</p>
+                                            }
+                                        }
+                                    </div>
+                                </li>
+                            }
+                        </ol>
+                    </section>
+                }
+
+                <!-- Menus -->
+                <section class="@(d.ShowChecklist ? "" : "lg:col-span-3") bg-white rounded-xl border border-gray-200 shadow-sm self-start" data-testid="dashboard-menus">
+                    <div class="flex items-center justify-between gap-4 px-[1rem] sm:px-6 py-4 border-b border-gray-100">
+                        <h2 class="text-lg font-semibold text-gray-900">Your menus</h2>
+                        <a href="menus" class="flex-shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700">All menus <span aria-hidden="true">&rarr;</span></a>
+                    </div>
+                    @if (d.Menus.Count == 0)
+                    {
+                        <div class="px-[1rem] sm:px-6 py-8 text-center text-sm text-gray-500">
+                            No menus yet.
+                            @if (d.CanCreateMenu)
+                            {
+                                <a href="menu/edit" class="font-medium text-blue-600 hover:text-blue-700">Create your first menu</a>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <ul class="list-none mb-0 grid grid-cols-1 gap-3 p-[1rem] sm:p-6 @(d.ShowChecklist ? "sm:grid-cols-2 lg:grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3")">
+                            @foreach (var menu in d.Menus)
+                            {
+                                <li>
+                                    <a href="@($"menudetail/{menu.Id}")" data-testid="dashboard-menu"
+                                       class="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50/40 transition-colors">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="font-medium text-gray-900 group-hover:text-blue-600 break-words">@menu.Name</div>
+                                            <div class="text-sm text-gray-500">@Count(menu.Categories, "category", "categories") &middot; @Count(menu.Items, "item", "items")</div>
+                                        </div>
+                                        <svg class="h-4 w-4 flex-shrink-0 text-gray-400 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </a>
+                                </li>
+                            }
+                        </ul>
+                        @if (d.MenuCount > d.Menus.Count)
+                        {
+                            <div class="px-[1rem] sm:px-6 pb-[1rem] sm:pb-6 -mt-2 text-sm text-gray-500">and @(d.MenuCount - d.Menus.Count) more</div>
+                        }
+                    }
+                </section>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
 <PageTitle>Home - Speise-Direkt</PageTitle>
 
 <!-- Hero Section -->
@@ -97,8 +332,134 @@
     </div>
 </div>
 
-
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
-    // No additional code needed for this page
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    /// <summary>Loaded for signed-in users only; anonymous visitors see the landing page.</summary>
+    private Dashboard? dashboard;
+
+    private sealed record MenuSummary(Guid Id, string Name, int Categories, int Items);
+
+    private sealed record ChecklistStep(int Number, string Title, string Description, bool Done, string? Href, string ActionLabel, string? Blocker = null);
+
+    private sealed class Dashboard
+    {
+        public required string UserName { get; init; }
+        public int MenuCount { get; init; }
+        public int ItemCount { get; init; }
+        public int QrCodeCount { get; init; }
+        public int ViewsLast7Days { get; init; }
+        public int TeamCount { get; init; }
+        public bool CanCreateMenu { get; init; }
+        public bool CanCreateQrCode { get; init; }
+        public bool CanViewAnalytics { get; init; }
+        public required List<MenuSummary> Menus { get; init; }
+        public required List<ChecklistStep> Steps { get; init; }
+        /// <summary>Shown to users who can build the menu, until every step is done.</summary>
+        public bool ShowChecklist => (CanCreateMenu || CanCreateQrCode) && Steps.Any(s => !s.Done);
+        public ChecklistStep? CurrentStep => Steps.FirstOrDefault(s => !s.Done && s.Href is not null);
+    }
+
+    private const int MenuListSize = 6;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is null) return;
+        var user = (await AuthState).User;
+        if (user.Identity?.IsAuthenticated != true) return;
+
+        var canCreateMenu = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
+        // Same rule as the "Create New QR Code" button on /qrcodes (free tier limit) plus the edit page's permission
+        var canCreateQrCode = await PermissionService.HasPermissionAsync(Permission.QrCodesCreate)
+            && (await AuthorizationService.AuthorizeAsync(user, PolicyNames.PaidTenant)).Succeeded;
+        var canViewAnalytics = await PermissionService.HasPermissionAsync(Permission.AnalyticsView);
+
+        // A handful of counts; the tenant query filters scope menus, categories, items and QR codes
+        var menus = await DbContext.Menus
+            .OrderBy(m => m.Name)
+            .Take(MenuListSize)
+            .Select(m => new MenuSummary(m.Id, m.Name, m.Categories!.Count(), m.Categories!.SelectMany(c => c.MenuItems!).Count()))
+            .ToListAsync();
+        var menuCount = menus.Count < MenuListSize ? menus.Count : await DbContext.Menus.CountAsync();
+        var itemCount = await DbContext.MenuItems.CountAsync();
+        var qrCodeCount = await DbContext.QRCodes.CountAsync();
+
+        var tenantId = UserIdProvider.GetUserId();
+        var teamCount = await DbContext.TenantUsers.CountAsync(tu => tu.TenantOwnerId == tenantId && tu.IsActive);
+
+        // Analytics rows are not tenant-scoped themselves; they count through the tenant's menus
+        var viewsLast7Days = 0;
+        if (canViewAnalytics)
+        {
+            var since = TimeProvider.GetUtcNow().UtcDateTime.AddDays(-7);
+            viewsLast7Days = await DbContext.MenuViews
+                .CountAsync(v => v.ViewedAt >= since && DbContext.Menus.Any(m => m.Id == v.MenuId));
+        }
+        var scanned = qrCodeCount > 0 && await DbContext.MenuViews
+            .AnyAsync(v => v.QRCodeId != null && DbContext.Menus.Any(m => m.Id == v.MenuId));
+
+        dashboard = new Dashboard
+        {
+            UserName = await GetUserNameAsync(user),
+            MenuCount = menuCount,
+            ItemCount = itemCount,
+            QrCodeCount = qrCodeCount,
+            ViewsLast7Days = viewsLast7Days,
+            TeamCount = teamCount,
+            CanCreateMenu = canCreateMenu,
+            CanCreateQrCode = canCreateQrCode,
+            CanViewAnalytics = canViewAnalytics,
+            Menus = menus,
+            Steps = BuildChecklist(menus, menuCount, itemCount, qrCodeCount, scanned, canCreateMenu, canCreateQrCode)
+        };
+    }
+
+    private static List<ChecklistStep> BuildChecklist(
+        List<MenuSummary> menus, int menuCount, int itemCount, int qrCodeCount, bool scanned, bool canCreateMenu, bool canCreateQrCode)
+    {
+        // Step 2 goes to the menu that is furthest along: one with categories (add items), else the first one
+        var setupMenu = menus.FirstOrDefault(m => m.Categories > 0) ?? menus.FirstOrDefault();
+
+        return new List<ChecklistStep>
+        {
+            new(1, "Create a menu",
+                "Give it a name, pick a design theme and the language of your dishes.",
+                menuCount > 0, canCreateMenu ? "menu/edit" : null, "Create menu"),
+            new(2, "Add categories and items",
+                "Group the menu into categories such as starters and mains, then add dishes with prices and allergens.",
+                itemCount > 0,
+                setupMenu is null ? null : setupMenu.Categories == 0 ? $"categories/{setupMenu.Id}" : $"menuitems/{setupMenu.Id}",
+                setupMenu is { Categories: > 0 } ? "Add items" : "Add categories",
+                Blocker: "Create a menu first."),
+            new(3, "Create a QR code",
+                "A QR code opens your menu on the guest's phone. It can also switch menus by time of day.",
+                qrCodeCount > 0, menuCount == 0 ? null : canCreateQrCode ? "qrcode/edit" : "qrcodes", "Create QR code",
+                Blocker: "Create a menu first."),
+            new(4, "Print it and put it on the tables",
+                "Download the QR code on the QR codes page and print it. This step ticks itself off when the first guest scans a code.",
+                scanned, qrCodeCount == 0 ? null : "qrcodes", "Go to QR codes",
+                Blocker: "Create a QR code first.")
+        };
+    }
+
+    /// <summary>The sub-account's display name, otherwise the e-mail address.</summary>
+    private async Task<string> GetUserNameAsync(ClaimsPrincipal user)
+    {
+        var email = user.Identity?.Name ?? string.Empty;
+        var tenantOwnerId = user.FindFirstValue("TenantOwnerId");
+        if (string.IsNullOrEmpty(tenantOwnerId)) return email;
+
+        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var displayName = await DbContext.TenantUsers.AsNoTracking()
+            .Where(tu => tu.ApplicationUserId == userId && tu.TenantOwnerId == tenantOwnerId)
+            .Select(tu => tu.DisplayName)
+            .FirstOrDefaultAsync();
+        return string.IsNullOrWhiteSpace(displayName) ? email : displayName;
+    }
+
+    private static string Count(int count, string singular, string plural) =>
+        $"{count} {(count == 1 ? singular : plural)}";
 }

@@ -62,14 +62,6 @@
         Team
     </NavLink>
 
-    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-             href="auth">
-        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-        Auth Required
-    </NavLink>
-
     <!-- Divider -->
     <div class="border-t border-blue-800 my-4"></div>
 
@@ -77,11 +69,17 @@
     <AuthorizeView>
         <Authorized>
             <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-                     href="Account/Manage">
-                <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                     href="Account/Manage" title="@UserTitle(context.User.Identity?.Name)" data-testid="sidebar-user">
+                <svg class="mr-3 h-5 w-5 flex-shrink-0 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
-                <span class="truncate">@context.User.Identity?.Name</span>
+                <span class="min-w-0 flex-1">
+                    <span class="block truncate">@(DisplayName ?? context.User.Identity?.Name)</span>
+                    @if (!string.IsNullOrEmpty(RoleLabel))
+                    {
+                        <span class="block truncate text-xs font-normal text-blue-300 group-hover:text-blue-100">@RoleLabel</span>
+                    }
+                </span>
             </NavLink>
 
             <form action="Account/Logout" method="post" class="mt-2">
@@ -116,7 +114,17 @@
 </nav>
 
 @code {
+    /// <summary>Display name of a sub-account (<c>TenantUser.DisplayName</c>); the e-mail is shown when null.</summary>
+    [Parameter] public string? DisplayName { get; set; }
+
+    /// <summary>"Owner" or the sub-account's role, shown under the name.</summary>
+    [Parameter] public string? RoleLabel { get; set; }
+
     private string? currentUrl;
+
+    /// <summary>The full name and e-mail on hover (the sidebar truncates long addresses).</summary>
+    private string? UserTitle(string? email) =>
+        DisplayName is null ? email : $"{DisplayName} ({email})";
 
     protected override void OnInitialized()
     {

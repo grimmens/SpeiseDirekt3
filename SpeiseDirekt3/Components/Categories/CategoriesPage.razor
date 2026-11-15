@@ -11,11 +11,11 @@
 
 <PageTitle>Categories</PageTitle>
 
-<div class="max-w-6xl mx-auto p-6 space-y-8">
+<div class="max-w-6xl mx-auto space-y-6">
 
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-600" aria-label="breadcrumb">
-        <ol class="flex space-x-2">
+        <ol class="flex flex-wrap gap-y-1 space-x-2">
             <li>
                 <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
                 <span class="mx-2">/</span>
@@ -28,115 +28,125 @@
         </ol>
     </nav>
 
-    <h1 class="text-3xl font-bold text-blue-700">Categories</h1>
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
+        <h1 class="text-3xl font-bold text-gray-900 font-display">Categories</h1>
+        <p class="mt-2 text-gray-600">The sections of <strong>@menu?.Name</strong>. Guests see them in the order of this list.</p>
+        <nav class="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" aria-label="Related pages" data-testid="category-links">
+            <a href="@($"/MenuItems/{MenuId}")" class="font-medium text-blue-600 hover:underline">Menu items</a>
+            <span class="text-gray-300" aria-hidden="true">·</span>
+            <a href="@($"/allergens/{MenuId}")" class="font-medium text-blue-600 hover:underline">Allergens</a>
+            <span class="text-gray-300" aria-hidden="true">·</span>
+            <a href="@($"/combos/{MenuId}")" class="font-medium text-blue-600 hover:underline">Combos</a>
+        </nav>
+    </div>
 
-    <!-- Navigation Cards -->
-    @if (Categories.Any())
-    {
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-gray-100 rounded-lg shadow p-6 flex justify-between items-center">
-                <div>
-                    <h2 class="text-lg font-semibold mb-1">Manage Menu Items</h2>
-                    <p class="text-sm text-gray-600">Go to the menu items for <strong>@menu?.Name</strong>.</p>
-                </div>
-                <a class="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200" href="@($"/menuitems/{MenuId}")">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                    View Menu Items
-                </a>
-            </div>
-            <div class="bg-gray-100 rounded-lg shadow p-6 flex justify-between items-center">
-                <div>
-                    <h2 class="text-lg font-semibold mb-1">Manage Allergens</h2>
-                    <p class="text-sm text-gray-600">Go to the allergens for <strong>@menu?.Name</strong>.</p>
-                </div>
-                <a class="inline-flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:from-blue-700 hover:to-blue-800 transform hover:scale-105 transition-all duration-200" href="@($"/allergens/{MenuId}")">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                    </svg>
-                    View Allergens
-                </a>
-            </div>
-        </div>
-    }
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
         <!-- Categories List -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="bg-blue-600 text-white rounded-t-lg px-4 py-3">
-                <h3 class="text-lg font-semibold">Available Categories</h3>
-            </div>
-            <div class="p-4">
-                @if (Categories.Any())
+        <div class="@(canCreate ? "lg:col-span-2" : "lg:col-span-3") bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200 flex flex-wrap items-baseline justify-between gap-2">
+                <h2 class="text-lg font-semibold text-gray-900">
+                    Categories <span class="font-normal text-gray-400">(@Categories.Count)</span>
+                </h2>
+                @if (canEdit && Categories.Count > 1)
                 {
-                    <table class="w-full text-left border-separate border-spacing-y-2">
-                        <thead class="text-sm text-gray-500 uppercase">
-                            <tr>
-                                <th>Category Name</th>
-                                <th class="text-right">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Categories)
+                    <p class="text-xs text-gray-500">Use the arrows to change the order.</p>
+                }
+            </div>
+            @if (Categories.Any())
+            {
+                <table class="w-full text-left" data-testid="category-list">
+                    <thead class="sr-only">
+                        <tr>
+                            @if (canEdit)
                             {
-                                <tr class="bg-gray-50 hover:bg-gray-100 rounded">
-                                    <td class="py-2 px-3">
-                                        <a href="/Menuitems/category/@(item.Id)" class="text-blue-600 font-semibold hover:underline hover:text-blue-800 transition">
-                                            @item.Name
-                                        </a>
-                                        <CategoryMenuItemCount CategoryId="@item.Id" />
-                                    </td>
-                                    <td class="py-2 px-3 text-right space-x-2">
-                                        @if (canEdit || canDelete)
-                                        {
-                                            <SpeiseDirekt3.Components.HelperComp.ActionSubMenu Edit="canEdit ? () => EditCategory(item) : null"
-                                                                                               Delete="canDelete ? () => DeleteCategory(item.Id) : null" />
-                                        }
-                                    </td>
-                                </tr>
+                                <th>Order</th>
                             }
-                        </tbody>
-                    </table>
-                }
-                else
-                {
-                    <p class="text-gray-500">No categories found.</p>
-                }
-            </div>
+                            <th>Category</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        @for (var i = 0; i < Categories.Count; i++)
+                        {
+                            var index = i;
+                            var item = Categories[index];
+                            <tr @key="item.Id" class="hover:bg-gray-50" data-testid="category-row">
+                                @if (canEdit)
+                                {
+                                    <td class="pl-2 sm:pl-4 py-2 w-px whitespace-nowrap">
+                                        <div class="flex items-center gap-0.5">
+                                            <button type="button" title="Move up" aria-label="@($"Move {item.Name} up")"
+                                                    class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                                                    disabled="@(index == 0 || isMoving)" @onclick="() => MoveCategory(item, -1)">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+                                                </svg>
+                                            </button>
+                                            <button type="button" title="Move down" aria-label="@($"Move {item.Name} down")"
+                                                    class="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-transparent transition-colors"
+                                                    disabled="@(index == Categories.Count - 1 || isMoving)" @onclick="() => MoveCategory(item, 1)">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                    </td>
+                                }
+                                <td class="px-[0.75rem] sm:px-4 py-[0.75rem] min-w-0">
+                                    <a href="@($"/MenuItems/Category/{item.Id}")" class="font-semibold text-blue-600 hover:underline hover:text-blue-800 break-words transition">@item.Name</a>
+                                    <span class="block sm:inline sm:ml-2 text-sm text-gray-500" data-testid="category-item-count">@ItemCountText(item)</span>
+                                </td>
+                                <td class="pr-2 sm:pr-4 py-[0.75rem] w-px whitespace-nowrap text-right">
+                                    @if (canEdit || canDelete)
+                                    {
+                                        <SpeiseDirekt3.Components.HelperComp.ActionSubMenu Edit="canEdit ? () => EditCategory(item) : null"
+                                                                                           Delete="canDelete ? () => DeleteCategory(item.Id) : null" />
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+                <div class="px-6 py-10 text-center" data-testid="categories-empty">
+                    <h3 class="text-base font-semibold text-gray-900">No categories yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Categories are the sections of the menu card, e.g. Starters, Mains, Desserts and Drinks.
+                        @(canCreate ? "Add the first one with the form." : "")
+                    </p>
+                </div>
+            }
         </div>
 
         @if (canCreate)
         {
             <!-- Add New Category Form -->
-            <div class="bg-white rounded-lg shadow">
-                <div class="bg-blue-600 text-white rounded-t-lg px-4 py-3">
-                    <h3 class="text-lg font-semibold">Add New Category</h3>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200">
+                    <h2 class="text-lg font-semibold text-gray-900">Add New Category</h2>
                 </div>
-                <div class="p-4">
+                <div class="p-[1rem] sm:p-6">
                     <EditForm @ref="editForm" EditContext="editContext" OnValidSubmit="SaveAsync">
                         <DataAnnotationsValidator />
 
                         <div class="mb-4">
                             <label for="Input.Name" class="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-                            <InputText @bind-Value="Input.Name" id="Input.Name" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <InputText @bind-Value="Input.Name" id="Input.Name" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                             <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm mt-1" />
+                            <p class="mt-1 text-xs text-gray-500">New categories are added at the end of the list.</p>
                         </div>
 
-                        <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition">
-                            ➕ Add Category
+                        <button type="submit" class="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition">
+                            Add Category
                         </button>
                     </EditForm>
                 </div>
             </div>
         }
-    </div>
-
-    <!-- Optional Right Section -->
-    <div class="bg-gray-100 rounded-lg p-6 shadow mt-6">
-        <h3 class="text-lg font-semibold mb-2">📌 Notes</h3>
-        <p class="text-gray-700">Show something useful here – maybe tips on categories, FAQs, or statistics.</p>
     </div>
 </div>
 
@@ -157,14 +167,19 @@
     [Inject]
     public IPermissionService PermissionService { get; set; }
 
-    ICollection<Category> Categories { get; set; } = [];
+    List<Category> Categories { get; set; } = [];
+    Dictionary<Guid, int> itemCounts = new();
     bool canCreate, canEdit, canDelete;
+    bool isMoving;
 
     Category Input { get; set; } = new();
     CategoryEditor categoryEditor;
+    Category? editingCategory;
     EditContext editContext = new EditContext(new Category());
     EditForm editForm;
     Menu? menu;
+
+    Guid MenuGuid => Guid.Parse(MenuId);
 
     protected override Task OnParametersSetAsync()
     {
@@ -182,6 +197,12 @@
             {
                 MenuId = new Guid(MenuId)
             };
+    }
+
+    string ItemCountText(Category category)
+    {
+        var count = itemCounts.GetValueOrDefault(category.Id);
+        return $"{count} item{(count == 1 ? "" : "s")}";
     }
 
     async Task SaveAsync()
@@ -215,8 +236,9 @@
                 return;
             }
 
-            // Ensure the Input has the correct MenuId
+            // Ensure the Input has the correct MenuId; new categories go to the end
             Input.MenuId = new Guid(MenuId);
+            Input.SortOrder = await Context.NextCategorySortOrderAsync(Input.MenuId);
 
             Context.Categories.Add(Input);
             await Context.SaveChangesAsync();
@@ -241,8 +263,34 @@
         }
     }
 
+    async Task MoveCategory(Category category, int offset)
+    {
+        if (!canEdit || isMoving) return;
+        isMoving = true;
+        try
+        {
+            // Renumber all categories of the menu in their current order, then save the changed rows
+            var siblings = await Context.Categories
+                .Where(c => c.MenuId == MenuGuid)
+                .InDisplayOrder()
+                .ToListAsync();
+            if (DisplayOrder.Move(siblings, siblings.FindIndex(c => c.Id == category.Id), offset, (c, i) => c.SortOrder = i))
+                await Context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error moving category: {ex}");
+        }
+        finally
+        {
+            isMoving = false;
+        }
+        await LoadCategoriesAsync();
+    }
+
     async void EditCategory(Category category)
     {
+        editingCategory = category;
         categoryEditor.Input = category;
         await categoryEditor.ShowModal();
     }
@@ -254,6 +302,7 @@
             // Update logic here
             Context.Categories.Update(category);
             await Context.SaveChangesAsync();
+            editingCategory = null;
             await LoadCategoriesAsync();
         }
         catch (Exception ex)
@@ -264,10 +313,15 @@
 
     async Task HandleCancel()
     {
+        // The editor binds to the tracked entity: undo a name typed but not saved
+        if (editingCategory is not null && Context.Entry(editingCategory).State != EntityState.Detached)
+            await Context.Entry(editingCategory).ReloadAsync();
+        editingCategory = null;
         categoryEditor.Input = new()
             {
                 MenuId = new Guid(MenuId)
             };
+        StateHasChanged();
     }
 
     async Task DeleteCategory(Guid id)
@@ -295,8 +349,15 @@
 
     async Task LoadCategoriesAsync()
     {
-        menu = await Context.Menus.FindAsync(Guid.Parse(MenuId));
-        Categories = await Context.Categories.Where(e => e.MenuId == new Guid(MenuId)).ToListAsync();
-        InvokeAsync(StateHasChanged);
+        menu = await Context.Menus.FindAsync(MenuGuid);
+        Categories = await Context.Categories
+            .Where(e => e.MenuId == MenuGuid)
+            .InDisplayOrder()
+            .ToListAsync();
+        itemCounts = await Context.Categories
+            .Where(e => e.MenuId == MenuGuid)
+            .Select(e => new { e.Id, Count = e.MenuItems!.Count() })
+            .ToDictionaryAsync(e => e.Id, e => e.Count);
+        await InvokeAsync(StateHasChanged);
     }
 }

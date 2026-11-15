@@ -10,4 +10,6 @@ public interface ICategoryRepository
     Task<Category?> UpdateAsync(Guid id, Action<Category> updateAction);
     Task<bool> DeleteAsync(Guid id);
     Task<bool> MenuExistsAsync(Guid menuId);
+    /// <summary>SortOrder for a new category of the menu (after the last one).</summary>
+    Task<int> NextSortOrderAsync(Guid menuId);
 }

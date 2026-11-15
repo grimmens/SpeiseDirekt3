@@ -1,4 +1,5 @@
 @using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.Model
 @using SpeiseDirekt3.Components.Shared
 
@@ -59,7 +60,7 @@
                         <option value="@Guid.Empty">-- Select trigger item --</option>
                         @foreach (var item in AvailableMenuItems)
                         {
-                            <option value="@item.Id">@item.Name (@item.Price.ToString("C"))</option>
+                            <option value="@item.Id">@item.Name (@PriceFormat.Euro(item.Price))</option>
                         }
                     </InputSelect>
                     <ValidationMessage For="() => Input.TriggerMenuItemId" class="text-red-600 text-sm" />
@@ -81,7 +82,7 @@
                         <SuggestionTemplate Context="mi">
                             <div class="flex justify-between items-center w-full">
                                 <span>@mi.Name</span>
-                                <span class="text-xs text-gray-500 ml-2">@mi.Price.ToString("C")</span>
+                                <span class="text-xs text-gray-500 ml-2">@PriceFormat.Euro(mi.Price)</span>
                             </div>
                         </SuggestionTemplate>
                     </MultiSelectComboBox>

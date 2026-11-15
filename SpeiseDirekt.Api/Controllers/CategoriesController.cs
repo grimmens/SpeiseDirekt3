@@ -51,7 +51,8 @@ public class CategoriesController : ControllerBase
         {
             Id = Guid.NewGuid(),
             Name = dto.Name,
-            MenuId = dto.MenuId
+            MenuId = dto.MenuId,
+            SortOrder = dto.SortOrder ?? await _categoryRepository.NextSortOrderAsync(dto.MenuId)
         };
 
         await _categoryRepository.CreateAsync(category);
@@ -71,6 +72,8 @@ public class CategoriesController : ControllerBase
         {
             c.Name = dto.Name;
             c.MenuId = dto.MenuId;
+            if (dto.SortOrder is { } sortOrder)
+                c.SortOrder = sortOrder;
         });
 
         if (category is null)

@@ -202,6 +202,13 @@ jobs:
           ssh -o BatchMode=yes "root@${TARGET_HOST}" "journalctl -u $SERVICE -n 40 --no-pager"
           exit 1
 
+      # Beim Start legt die Preview-App Demo-Menüs und QR-Codes für den Tenant aus appsettings.Preview.json an
+      # (Preview/PreviewSeeder.cs, nur in ASPNETCORE_ENVIRONMENT=Preview, idempotent). Die Journal-Zeile zeigt das Ergebnis.
+      - name: Preview-Seed prüfen
+        run: |
+          ssh -o BatchMode=yes "root@${TARGET_HOST}" "journalctl -u $SERVICE --since=-10min --no-pager -o cat | grep -m1 'Preview seed'" \
+            || echo "::warning::Keine Preview-Seed-Meldung im Journal gefunden"
+
       - name: Kommentar im PR
         env:
           GH_TOKEN: ${{ github.token }}

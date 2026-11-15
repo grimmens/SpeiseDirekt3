@@ -10,4 +10,6 @@ public interface IMenuItemRepository
     Task<MenuItem?> UpdateAsync(Guid id, Action<MenuItem> updateAction);
     Task<bool> DeleteAsync(Guid id);
     Task<bool> CategoryExistsAsync(Guid categoryId);
+    /// <summary>SortOrder for a new item of the category (after the last one).</summary>
+    Task<int> NextSortOrderAsync(Guid categoryId);
 }

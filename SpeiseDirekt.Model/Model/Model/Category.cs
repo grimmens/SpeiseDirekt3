@@ -9,6 +9,9 @@ namespace SpeiseDirekt.Model
         [Required(AllowEmptyStrings = false, ErrorMessage = "Name is required.")]
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>Position within the menu (ascending, ties by name). New categories get max + 1.</summary>
+        public int SortOrder { get; set; }
+
         public ICollection<MenuItem>? MenuItems { get; set; }
         [ForeignKey(nameof(Menu))]
         public Guid MenuId { get; set; }

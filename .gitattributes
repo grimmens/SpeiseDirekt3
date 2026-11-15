@@ -3,6 +3,17 @@
 ###############################################################################
 * text eol=crlf
 
+# Binary files: never convert line endings (would corrupt them)
+*.woff2  binary
+*.woff   binary
+*.ttf    binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.gif    binary
+*.ico    binary
+*.webp   binary
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #

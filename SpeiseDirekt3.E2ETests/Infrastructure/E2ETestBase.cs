@@ -5,7 +5,7 @@ namespace SpeiseDirekt3.E2ETests.Infrastructure;
 
 /// <summary>
 /// Gives every test a fresh browser context (own cookies/storage) on the class fixture's server and
-/// resets the app clock. Requests to other hosts (Tailwind/Bootstrap CDNs, fonts, …) are blocked unless
+/// resets the app clock. Requests to other hosts (Tailwind CDN, fonts, Chart.js, …) are blocked unless
 /// <see cref="E2ESettings.AllowExternalRequestsEnvVar"/> is set; while blocked, a minimal stylesheet
 /// emulates the Tailwind display utilities so hidden modals stay hidden.
 /// </summary>
@@ -66,7 +66,6 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
                     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
                 })();
                 """);
-            await context.AddInitScriptAsync(E2ESettings.BootstrapStubJs);
         }
 
         return (context, await context.NewPageAsync());
