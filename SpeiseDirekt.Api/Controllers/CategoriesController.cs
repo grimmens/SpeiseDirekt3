@@ -52,6 +52,7 @@ public class CategoriesController : ControllerBase
             Id = Guid.NewGuid(),
             Name = dto.Name,
             MenuId = dto.MenuId,
+            Description = NormalizeDescription(dto.Description),
             SortOrder = dto.SortOrder ?? await _categoryRepository.NextSortOrderAsync(dto.MenuId)
         };
 
@@ -72,6 +73,9 @@ public class CategoriesController : ControllerBase
         {
             c.Name = dto.Name;
             c.MenuId = dto.MenuId;
+            // Omitted keeps the subtitle, an empty string removes it
+            if (dto.Description is not null)
+                c.Description = NormalizeDescription(dto.Description);
             if (dto.SortOrder is { } sortOrder)
                 c.SortOrder = sortOrder;
         });
@@ -81,6 +85,9 @@ public class CategoriesController : ControllerBase
 
         return Ok(category);
     }
+
+    private static string? NormalizeDescription(string? description) =>
+        string.IsNullOrWhiteSpace(description) ? null : description.Trim();
 
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = PolicyNames.CanDeleteCategories)]

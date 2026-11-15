@@ -169,6 +169,43 @@ public class CategoriesControllerTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task Description_IsStored_OmittedKeepsIt_EmptyRemovesIt()
+    {
+        var create = await Client.PostAsync("/api/categories", new StringContent(
+            JsonSerializer.Serialize(new CategoryDto { Name = "Mezze", MenuId = TestSeedData.Menu1Id, Description = "  kalt und warm " }, JsonOptions),
+            Encoding.UTF8, "application/json"));
+        create.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = (await create.Content.ReadFromJsonAsync<Category>(JsonOptions))!;
+        created.Description.Should().Be("kalt und warm");
+
+        async Task<Category> PutAsync(string json)
+        {
+            var response = await Client.PutAsync($"/api/categories/{created.Id}", new StringContent(json, Encoding.UTF8, "application/json"));
+            response.StatusCode.Should().Be(HttpStatusCode.OK);
+            return (await response.Content.ReadFromJsonAsync<Category>(JsonOptions))!;
+        }
+
+        // Old clients that do not know the field keep the subtitle
+        (await PutAsync($$"""{"name":"Mezze","menuId":"{{TestSeedData.Menu1Id}}"}""")).Description.Should().Be("kalt und warm");
+        (await PutAsync($$"""{"name":"Mezze","menuId":"{{TestSeedData.Menu1Id}}","description":"bis 22 Uhr"}""")).Description.Should().Be("bis 22 Uhr");
+        (await PutAsync($$"""{"name":"Mezze","menuId":"{{TestSeedData.Menu1Id}}","description":""}""")).Description.Should().BeNull();
+
+        var fetched = await Client.GetFromJsonAsync<Category>($"/api/categories/{created.Id}", JsonOptions);
+        fetched!.Description.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Description_LongerThan200_Returns400()
+    {
+        var response = await Client.PostAsync("/api/categories", new StringContent(
+            JsonSerializer.Serialize(new CategoryDto { Name = "Lang", MenuId = TestSeedData.Menu1Id, Description = new string('x', 201) }, JsonOptions),
+            Encoding.UTF8, "application/json"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("at most 200");
+    }
+
+    [Fact]
     public async Task Create_WithoutSortOrder_GoesLast_AndGetAllIsInSortOrder()
     {
         // The seeded "Starters" has SortOrder 0
