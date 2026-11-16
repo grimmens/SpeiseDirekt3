@@ -14,6 +14,9 @@
 *.ico    binary
 *.webp   binary
 
+# Vendored FullCalendar bundle: byte-identical to the npm tarball (see wwwroot/lib/fullcalendar/README.md)
+SpeiseDirekt3/wwwroot/lib/fullcalendar/*.js -text
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #
