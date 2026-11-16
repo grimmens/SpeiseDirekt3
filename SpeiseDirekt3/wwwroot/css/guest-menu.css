@@ -36,7 +36,9 @@ body.gm-body {
 :where(.gm) :where(button, input) { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
 :where(.gm) :where(img) { display: block; max-width: 100%; }
 :where(.gm) :focus-visible { outline: 2px solid var(--gm-focus); outline-offset: 2px; }
-:where(.gm) [tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+/* Focus targets for scripts only (the section heading after a jump): never a ring — WebKit counts a script focus
+   after a tap as :focus-visible. Rings after a tap on interactive elements: see data-gm-quiet at the end. */
+:where(.gm) [tabindex="-1"]:focus { outline: none; }
 
 .gm-visually-hidden {
     position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
@@ -324,7 +326,11 @@ html:not([data-guest-ready]) .gm-catnav-scroll { padding-right: var(--gm-gutter)
     overflow: visible;
 }
 .gm-sheet:not([open]) { display: none; }
-.gm-sheet::backdrop { background: rgba(0, 0, 0, 0.45); background: var(--gm-backdrop, rgba(0, 0, 0, 0.45)); }
+/* --gm-drag-fade (0…1): guest-menu.js while the sheet is dragged down (::backdrop inherits it from the dialog) */
+.gm-sheet::backdrop {
+    background: rgba(0, 0, 0, 0.45); background: var(--gm-backdrop, rgba(0, 0, 0, 0.45));
+    opacity: calc(1 - var(--gm-drag-fade, 0));
+}
 .gm-sheet-panel {
     position: relative;
     display: flex; flex-direction: column;
@@ -334,7 +340,9 @@ html:not([data-guest-ready]) .gm-catnav-scroll { padding-right: var(--gm-gutter)
     box-shadow: var(--gm-shadow-sheet);
     overflow: hidden;
 }
-.gm-sheet-handle { flex: none; width: 40px; height: 5px; margin: 8px auto 0; border-radius: 3px; background: var(--gm-border); }
+.gm-sheet-handle {
+    position: relative; flex: none; width: 40px; height: 5px; margin: 8px auto 0; border-radius: 3px; background: var(--gm-border);
+}
 .gm-sheet-head {
     flex: none;
     display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; align-items: center; gap: 8px;
@@ -380,11 +388,13 @@ html:not([data-guest-ready]) .gm-catnav-scroll { padding-right: var(--gm-gutter)
 }
 
 @keyframes gm-sheet-up { from { transform: translateY(100%); } to { transform: none; } }
-@keyframes gm-sheet-down { from { transform: none; } to { transform: translateY(100%); } }
+/* No "from": a sheet dragged down (translate, see below) slides on from where the finger left it, the backdrop
+   fades on from its current opacity */
+@keyframes gm-sheet-down { to { transform: translateY(100%); } }
 @keyframes gm-pop-in { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes gm-pop-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(14px) scale(.98); } }
 @keyframes gm-fade-in { from { opacity: 0; } to { opacity: 1; } }
-@keyframes gm-fade-out { from { opacity: 1; } to { opacity: 0; } }
+@keyframes gm-fade-out { to { opacity: 0; } }
 
 .gm-sheet[open] { animation: gm-sheet-up .3s cubic-bezier(.22, .9, .25, 1); }
 .gm-sheet[open]::backdrop { animation: gm-fade-in .25s ease-out; }
@@ -397,6 +407,30 @@ html:not([data-guest-ready]) .gm-catnav-scroll { padding-right: var(--gm-gutter)
 @media (prefers-reduced-motion: reduce) {
     .gm-sheet[open], .gm-sheet.is-closing, .gm-sheet[open]::backdrop, .gm-sheet.is-closing::backdrop { animation: none; }
     .gm-card-media img, .gm-chip, .gm-topbar-title { transition: none; }
+}
+
+/* Drag down to close (bottom sheets < 768 px, guest-menu.js): the handle and the header band (.gm-sheet-head, its
+   buttons stay taps) follow the finger. The script sets the dialog's translate and --gm-drag-fade; touch-action: none
+   keeps iOS from scrolling the page or pulling to refresh. The handle's invisible hit area is 44 px tall (the pill
+   stays 40 × 5) and centered, clear of the header's buttons. */
+@media (max-width: 767.98px) {
+    .gm-sheet-handle, .gm-sheet-head { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+    .gm-sheet-handle { cursor: grab; }
+    .gm-sheet-handle::before {
+        content: ""; position: absolute; left: 50%; top: -8px;
+        width: 160px; height: 44px; transform: translateX(-50%);
+    }
+    .gm-sheet.is-dragging, .gm-sheet.is-dragging .gm-sheet-handle { cursor: grabbing; }
+    /* Fills the gap below the panel when it is pulled up a little (rubber band) */
+    .gm-sheet::after {
+        content: ""; position: absolute; left: 0; right: 0; top: calc(100% - 1px); height: 24px;
+        background: var(--gm-surface);
+    }
+}
+.gm-sheet.is-settling { transition: translate .26s cubic-bezier(.2, .9, .3, 1); }
+.gm-sheet.is-settling::backdrop { transition: opacity .26s ease; }
+@media (prefers-reduced-motion: reduce) {
+    .gm-sheet.is-settling, .gm-sheet.is-settling::backdrop { transition: none; }
 }
 
 /* --- Item detail (content of the item sheet) ------------------------------------------------- */
@@ -982,3 +1016,9 @@ button.gm-button { border: 0; cursor: pointer; }
     .gm-lang-footer .gm-langlist { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); column-gap: 32px; }
     .gm-lang-footer .gm-langlist li { border-top: 1px solid var(--gm-border); }
 }
+
+/* --- AP6: focus rings only for keyboard use ------------------------------------------------------------------------ */
+/* guest-menu.js marks an element that got the focus after a tap or click — or by script before any key press (a
+   sheet's first control, the active chip in the categories sheet, the opener after a close) — with data-gm-quiet; the
+   first key press removes the mark, so keyboard users see the ring again. */
+.gm [data-gm-quiet]:focus-visible { outline: none; }

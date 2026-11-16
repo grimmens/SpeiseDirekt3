@@ -6,10 +6,13 @@
  * (chips are #anchors, items are ?item=<id> links that the server answers with the item sheet open).
  * This module only enhances the page:
  *   - sheets: native <dialog data-sheet="name">, bottom sheet on phones, centered dialog from 768 px;
- *     Escape, backdrop tap and the back button close them; focus moves in and back to the opener
+ *     Escape, backdrop tap and the back button close them; focus moves in and back to the opener; on phones the
+ *     grab handle and the header band drag the sheet down (closes beyond 25 % of its height or on a flick)
  *   - item sheet: clones <template data-item-template="<id>"> (server markup) into the item sheet,
  *     updates the URL (?item=<id>) and records the click
- *   - category bar: scroll-spy (IntersectionObserver), active chip scrolls into view, smooth jumps
+ *   - category bar: scroll-spy (IntersectionObserver), active chip scrolls into view, smooth jumps with an explicit
+ *     target (real bar heights) and a safety net that corrects the position once the scroll has ended
+ *   - focus rings only for keyboard use (data-gm-quiet on elements focused after a tap or by script)
  *   - search, filter sheet and favourites ("Merkliste") live in their own modules (guest-search-filter.js,
  *     guest-favorites.js), imported and registered as behaviors below
  * When it is done it sets data-guest-ready on <html> (CSS shows [data-js-only] controls, tests wait for it).
@@ -26,11 +29,12 @@
  *   registerSheet(name, hooks)        hooks.onOpen(dialog, detail) / hooks.onClose(dialog) for
  *                                     <dialog data-sheet="name">. Any dialog[data-sheet] is a sheet anyway.
  *   openSheet(name, options)          options: { opener, history = true, detail }
- *   closeSheet(name?, then?)          closes (via history.back() if the sheet pushed an entry), then calls then()
+ *   closeSheet(name?, then?, opts)    closes (via history.back() if the sheet pushed an entry), then calls then() once
+ *                                     the close animation has ended; opts.restoreFocus = false leaves the focus to then()
  *   openItem(itemId, options)         options: { opener, history = true, record = true }; returns false if unknown
  *   onItemOpen(fn)                    fn(dialog, itemId) after the item sheet got its content (e.g. share button)
  *   trackItemClick(itemId)            POST /guest/api/item-click (skipped in the owner preview)
- *   scrollToCategory(anchorId)        smooth jump to a section (id "cat-…")
+ *   scrollToCategory(anchorId)        smooth jump to a section (id "cat-…"), focuses its heading; only with no sheet open
  *   refreshCategoryNav()              after sections were hidden/shown (filter): the scroll-spy re-measures and picks
  *                                     the active chip among the visible sections
  * Child modules (behaviors) must NOT import this file: it is loaded by a fingerprinted URL, a plain import would
@@ -59,6 +63,15 @@ import { initPreview } from './guest-preview.js';
 
 const ITEM_CLICK_URL = '/guest/api/item-click';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+// From 768 px sheets are centered dialogs (guest-menu.css); below they are bottom sheets that can be dragged down
+const centeredSheets = window.matchMedia('(min-width: 768px)');
+
+// A jump puts the section's top this many px under the sticky bars (its padding keeps the heading clear of them);
+// the same as scroll-margin-top in guest-menu.css, which only serves the #cat-… links without JS
+const JUMP_OVERLAP = 8;
+// Drag to dismiss: close beyond this share of the panel height, or on a downward flick at least this fast (px/ms)
+const DRAG_CLOSE_SHARE = 0.25;
+const DRAG_FLICK_SPEED = 0.5;
 
 const state = {
     root: null,
@@ -73,12 +86,17 @@ const state = {
     sheets: new Map(),          // name -> { dialog, hooks, opener, pushed }
     openName: null,
     openItemId: null,
+    closing: new Set(),         // sheets whose close animation still runs
     pendingAfterClose: [],
+    skipFocusRestore: false,    // the next close leaves the focus to its then() (category jump)
+    backFallback: 0,
     behaviors: [],
     itemOpenHandlers: [],
     setActiveCategory: () => {},
+    revealActiveChip: () => {},
     refreshCategoryNav: () => {},
-    heldCategory: null          // a jump target stays active until the guest scrolls by hand
+    heldCategory: null,         // a jump target stays active until the guest scrolls by hand
+    jump: null                  // the running category jump: { section, stop() }
 };
 
 // --- Public API --------------------------------------------------------------------------------------
@@ -117,7 +135,9 @@ export function openSheet(name, { opener = document.activeElement, history: useH
 
     if (opener instanceof HTMLElement && opener !== document.body && !sheet.dialog.contains(opener)) sheet.opener = opener;
     sheet.hooks.onOpen?.(sheet.dialog, detail);
-    sheet.dialog.classList.remove('is-closing');
+    sheet.dialog.classList.remove('is-closing', 'is-dragging', 'is-settling');
+    resetDragStyle(sheet.dialog);
+    state.closing.delete(name);
     if (!sheet.dialog.open) sheet.dialog.showModal();
     lockScroll(true);
     state.openName = name;
@@ -136,18 +156,20 @@ export function openSheet(name, { opener = document.activeElement, history: useH
 
 /**
  * Closes the open sheet (or the named one). If it pushed a history entry, goes back in history (the popstate
- * handler closes it); then() runs once the sheet is closed.
+ * handler closes it); then() runs once the sheet is fully closed (after its close animation, when the page is no
+ * longer inert). restoreFocus: false leaves the focus to then() instead of returning it to the opener.
  */
-export function closeSheet(name = state.openName, then) {
+export function closeSheet(name = state.openName, then, { restoreFocus = true } = {}) {
     if (!name || state.openName !== name) { then?.(); return; }
     const sheet = state.sheets.get(name);
     if (then) state.pendingAfterClose.push(then);
+    if (!restoreFocus) state.skipFocusRestore = true;
 
     if (sheet.pushed && window.history.state?.gm?.sheet === name) {
         window.history.back();
         // Safety net if popstate does not arrive (should not happen)
-        const fallback = setTimeout(() => { if (state.openName === name) finishClose(name); }, 600);
-        state.pendingAfterClose.push(() => clearTimeout(fallback));
+        clearTimeout(state.backFallback);
+        state.backFallback = setTimeout(() => { if (state.openName === name) finishClose(name); }, 600);
         return;
     }
 
@@ -202,14 +224,86 @@ export function formatPrice(cents) {
     return `${sign}${prefix}${whole}${decimal}${String(abs % 100).padStart(2, '0')}`;
 }
 
-/** Smoothly scrolls to a category section (id "cat-…"); scroll-margin-top keeps it below the sticky bars. */
+/**
+ * Jumps to a category section (id "cat-…"): its heading ends up right under the sticky bars (smooth, instant with
+ * reduced motion) and takes the focus. Call it only while no sheet is open (closeSheet(name, then) runs then() after
+ * the close). The target is computed from the real bar heights; once the scroll has ended, a safety net corrects
+ * the position if the scroll was dropped or stopped short (scrollend where supported, else scroll idle).
+ */
 export function scrollToCategory(anchorId) {
     const section = document.getElementById(anchorId);
     if (!section) return;
-    state.setActiveCategory(anchorId);
+    state.jump?.stop();
     state.heldCategory = anchorId;
-    section.scrollIntoView({ behavior: reducedMotion.matches ? 'auto' : 'smooth', block: 'start' });
+    // The chip bar follows once the page scroll has ended, and the focus moves before it starts: nothing else
+    // scrolls or takes the focus while the smooth scroll runs
+    state.setActiveCategory(anchorId, { reveal: false });
     section.querySelector('h2[tabindex]')?.focus({ preventScroll: true });
+    const top = categoryTop(section);
+    if (Math.abs(window.scrollY - top) <= 1) { state.revealActiveChip(); return; }
+    window.scrollTo({ top, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+    watchJump(section);
+}
+
+/** Scroll position that puts the section's top JUMP_OVERLAP px under the sticky bars (top bar + chip bar). */
+function categoryTop(section) {
+    const nav = state.root?.querySelector('[data-catnav]');
+    const bars = nav ? (parseFloat(getComputedStyle(nav).top) || 0) + nav.offsetHeight : 0;
+    const top = section.getBoundingClientRect().top + window.scrollY - Math.max(0, bars - JUMP_OVERLAP);
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    return Math.round(Math.max(0, Math.min(max, top)));
+}
+
+/**
+ * Safety net of a jump: once the scroll has ended (scrollend, else 150 ms without scroll events; a scroll that has
+ * not moved the page after 700 ms counts as dropped; at the latest after 2.5 s) the position is checked against the
+ * target, measured again, and corrected instantly when it is off by more than 2 px (at most twice). Then the chip bar
+ * centers the active chip. A touch, wheel, key or a new jump stops it (state.jump.stop()).
+ */
+function watchJump(section) {
+    const hasScrollEnd = 'onscrollend' in window;
+    const startY = window.scrollY;
+    let corrections = 0, startTimer = 0, idleTimer = 0, maxTimer = 0;
+
+    const clearTimers = () => { clearTimeout(startTimer); clearTimeout(idleTimer); clearTimeout(maxTimer); };
+    const stop = () => {
+        clearTimers();
+        window.removeEventListener('scroll', onScroll);
+        window.removeEventListener('scrollend', onScrollEnd);
+        if (state.jump === jump) state.jump = null;
+    };
+    const check = () => {
+        if (state.jump !== jump) return;
+        clearTimers();
+        const top = categoryTop(section);
+        // The page may end before the section can reach the bars (on phones the toolbar changes the viewport)
+        const cannotGoFurther = top > window.scrollY && window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+        if (Math.abs(window.scrollY - top) > 2 && !cannotGoFurther && corrections < 2) {
+            // Instant: the smooth scroll was dropped, stopped short or the page moved under it
+            corrections++;
+            window.scrollTo({ top, behavior: 'auto' });
+            requestAnimationFrame(() => requestAnimationFrame(check));
+            return;
+        }
+        stop();
+        state.revealActiveChip();
+    };
+    const onScroll = () => {
+        clearTimeout(startTimer);
+        if (!hasScrollEnd) {
+            clearTimeout(idleTimer);
+            idleTimer = setTimeout(check, 150);
+        }
+    };
+    const onScrollEnd = () => requestAnimationFrame(check);
+
+    const jump = { section, stop };
+    state.jump = jump;
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('scrollend', onScrollEnd);
+    // No scroll event yet: dropped, unless the page is moving anyway (an engine that reports late)
+    startTimer = setTimeout(() => { if (Math.abs(window.scrollY - startY) <= 1) check(); }, 700);
+    maxTimer = setTimeout(check, 2500);
 }
 
 /** Sections or chips were hidden/shown (e.g. by the filter): re-measure the scroll-spy and pick the active chip. */
@@ -228,11 +322,15 @@ function setUpSheets(root) {
 
         // Escape: our close (history aware) instead of the native one
         dialog.addEventListener('cancel', e => { e.preventDefault(); closeSheet(name); });
-        // Backdrop tap: the click lands on the <dialog> itself (the panel fills the rest)
-        dialog.addEventListener('click', e => { if (e.target === dialog) closeSheet(name); });
+        // Backdrop tap: the click lands on the <dialog> itself (the panel fills the rest). Only when the press began
+        // there too: a press on the panel released over the backdrop (a drag, a text selection) is no backdrop tap
+        let pressedOnBackdrop = false;
+        dialog.addEventListener('pointerdown', e => { pressedOnBackdrop = e.target === dialog; });
+        dialog.addEventListener('click', e => { if (e.target === dialog && pressedOnBackdrop) closeSheet(name); });
         // Closed by the browser itself (e.g. a close watcher ignoring preventDefault): catch up
         // (the event is async: ignore it when the dialog is open again, e.g. the deep link conversion below)
         dialog.addEventListener('close', () => { if (state.openName === name && !dialog.open) closeSheet(name); });
+        setUpSheetDrag(dialog, name);
     }
 
     window.addEventListener('popstate', onPopState);
@@ -257,6 +355,7 @@ function openServerRenderedItem(root) {
 }
 
 function onPopState(e) {
+    clearTimeout(state.backFallback);
     const target = e.state?.gm ?? null;
     const open = state.openName;
 
@@ -274,15 +373,22 @@ function onPopState(e) {
 }
 
 function finishClose(name) {
-    closeNow(name, { restoreFocus: true, animate: true });
-    runPendingAfterClose();
+    const restoreFocus = !state.skipFocusRestore;
+    state.skipFocusRestore = false;
+    closeNow(name, { restoreFocus, animate: true });
 }
 
+/** Runs the then() callbacks of closeSheet once no sheet is open and no close animation runs any more. */
 function runPendingAfterClose() {
-    if (state.openName) return;
+    if (state.openName || state.closing.size > 0 || state.pendingAfterClose.length === 0) return;
     const callbacks = state.pendingAfterClose.splice(0);
-    // After the browser's own popstate work (scroll restoration) so a jump wins
-    requestAnimationFrame(() => callbacks.forEach(fn => fn()));
+    // After the browser's own popstate work (scroll restoration), so a jump wins
+    requestAnimationFrame(() => {
+        if (state.openName) { state.pendingAfterClose.unshift(...callbacks); return; }   // another sheet opened meanwhile
+        callbacks.forEach(fn => {
+            try { fn(); } catch (e) { console.error(e); }
+        });
+    });
 }
 
 function closeNow(name, { restoreFocus, animate }) {
@@ -295,20 +401,32 @@ function closeNow(name, { restoreFocus, animate }) {
     lockScroll(false);
     const opener = sheet.opener;
     sheet.opener = null;
+    dialog.classList.remove('is-dragging', 'is-settling');
 
     const done = () => {
+        state.closing.delete(name);
         dialog.classList.remove('is-closing');
         if (state.openName === name) return;     // reopened while the close animation ran
+        resetDragStyle(dialog);
         if (dialog.open) dialog.close();
         sheet.hooks.onClose?.(dialog);
         // After close(): while the modal dialog is open the rest of the page is inert and cannot take focus
         if (restoreFocus) restoreFocusAfterClose(name, dialog, opener);
+        runPendingAfterClose();
     };
     if (animate && dialog.open && !reducedMotion.matches) {
+        // A dragged sheet slides on from where the finger left it (the keyframes have no "from")
+        state.closing.add(name);
         dialog.classList.add('is-closing');
         let finished = false;
-        const finish = () => { if (!finished) { finished = true; done(); } };
-        dialog.addEventListener('animationend', finish, { once: true });
+        const onEnd = e => { if (e.target === dialog) finish(); };
+        const finish = () => {
+            if (finished) return;
+            finished = true;
+            dialog.removeEventListener('animationend', onEnd);
+            done();
+        };
+        dialog.addEventListener('animationend', onEnd);
         setTimeout(finish, 320);
     } else {
         done();
@@ -323,6 +441,89 @@ function restoreFocusAfterClose(name, dialog, opener) {
         const id = cssEscape(dialog.dataset.itemId);
         state.root.querySelector(`[data-testid][data-item-id="${id}"] [data-item-link]`)?.focus();
     }
+}
+
+// --- Sheets: drag down to close (phones) -------------------------------------------------------------------
+// The grab handle (its hit area is ≥ 44 px tall, guest-menu.css) and the header band (.gm-sheet-head, except its
+// buttons and links) follow the finger: downwards 1:1, upwards a small rubber band; the backdrop fades with the
+// distance. Released beyond DRAG_CLOSE_SHARE of the panel height or flicked down → closeSheet (history aware,
+// focus back to the opener; the close animation continues from where the panel is), else it springs back.
+// Pointer events with capture (touch and mouse); only in bottom-sheet mode (< 768 px).
+
+function setUpSheetDrag(dialog, name) {
+    const panel = dialog.querySelector('.gm-sheet-panel');
+    const zones = [dialog.querySelector('.gm-sheet-handle'), dialog.querySelector('.gm-sheet-head')].filter(Boolean);
+    if (!panel || zones.length === 0) return;
+    let drag = null;
+
+    const onDown = e => {
+        if (drag || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        if (centeredSheets.matches || !dialog.open || state.openName !== name || dialog.classList.contains('is-closing')) return;
+        if (e.target instanceof Element && e.target.closest('button, a, input, select, textarea, label')) return;   // stays a tap
+        drag = { id: e.pointerId, zone: e.currentTarget, startY: e.clientY, y: 0, moved: false,
+                 height: panel.getBoundingClientRect().height || 1, samples: [[e.timeStamp, e.clientY]] };
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* the pointer is already gone */ }
+    };
+
+    const onMove = e => {
+        if (!drag || e.pointerId !== drag.id) return;
+        const dy = e.clientY - drag.startY;
+        if (!drag.moved) {
+            if (Math.abs(dy) < 4) return;       // below the slop a tap stays a tap
+            drag.moved = true;
+            dialog.classList.remove('is-settling');
+            dialog.classList.add('is-dragging');
+        }
+        drag.samples.push([e.timeStamp, e.clientY]);
+        while (drag.samples.length > 2 && e.timeStamp - drag.samples[0][0] > 100) drag.samples.shift();
+        // Downwards 1:1, upwards a rubber band of at most 16 px
+        drag.y = dy >= 0 ? dy : -16 * (1 - Math.exp(dy / 60));
+        dialog.style.translate = `0 ${drag.y}px`;
+        dialog.style.setProperty('--gm-drag-fade', String(Math.min(1, Math.max(0, drag.y / drag.height))));
+    };
+
+    const onEnd = e => {
+        if (!drag || e.pointerId !== drag.id) return;
+        const { moved, y, height, samples, zone } = drag;
+        drag = null;
+        try { zone.releasePointerCapture(e.pointerId); } catch { /* released already */ }
+        dialog.classList.remove('is-dragging');
+        // Not moved, or closed meanwhile (Escape, back button): the close resets the drag styles
+        if (!moved || !dialog.open || state.openName !== name) return;
+        const [t0, y0] = samples[0];
+        const [t1, y1] = samples[samples.length - 1];
+        // px/ms over the last 100 ms of movement, > 0 = downwards; a finger that rested before letting go has none
+        const speed = t1 > t0 && e.timeStamp - t1 < 100 ? (y1 - y0) / (t1 - t0) : 0;
+        const close = e.type === 'pointerup' && (y > height * DRAG_CLOSE_SHARE || (speed > DRAG_FLICK_SPEED && y > 8));
+        if (close) closeSheet(name);       // the panel stays where it is until the close animation takes it down
+        else settleBack(dialog);
+    };
+
+    for (const zone of zones) {
+        zone.addEventListener('pointerdown', onDown);
+        zone.addEventListener('pointermove', onMove);
+        zone.addEventListener('pointerup', onEnd);
+        zone.addEventListener('pointercancel', onEnd);
+        // Capture lost without a pointerup (e.g. Escape closed the sheet mid-drag): end the drag, spring back
+        zone.addEventListener('lostpointercapture', onEnd);
+    }
+    dialog.addEventListener('close', () => { drag = null; });
+}
+
+/** Springs a dragged sheet back to its place (no animation with reduced motion). */
+function settleBack(dialog) {
+    if (!reducedMotion.matches) {
+        dialog.classList.add('is-settling');
+        const end = () => dialog.classList.remove('is-settling');
+        dialog.addEventListener('transitionend', e => { if (e.target === dialog) end(); }, { once: true });
+        setTimeout(end, 400);
+    }
+    resetDragStyle(dialog);
+}
+
+function resetDragStyle(dialog) {
+    dialog.style.removeProperty('translate');
+    dialog.style.removeProperty('--gm-drag-fade');
 }
 
 function fillItemSheet(dialog, itemId, template) {
@@ -361,8 +562,15 @@ function onClick(e) {
     if (categoryLink) {
         e.preventDefault();
         const anchor = categoryLink.dataset.categoryLink;
-        if (state.openName) closeSheet(state.openName, () => scrollToCategory(anchor));
-        else scrollToCategory(anchor);
+        if (state.openName) {
+            // From the categories sheet: the chip turns active right away; the jump starts once the sheet is fully
+            // closed (page no longer inert, no focus restoration to the opener — the section heading takes it)
+            state.heldCategory = anchor;
+            state.setActiveCategory(anchor, { reveal: false });
+            closeSheet(state.openName, () => scrollToCategory(anchor), { restoreFocus: false });
+        } else {
+            scrollToCategory(anchor);
+        }
         return;
     }
 
@@ -404,21 +612,31 @@ function setUpCategoryNav(root) {
 
     const topbar = root.querySelector('[data-topbar]');
     let active = null;
+    let revealPending = false;      // the active chip changed without being scrolled into the bar yet
 
-    state.setActiveCategory = anchorId => {
-        if (anchorId === active) return;
+    // The active chip scrolls to the middle of the bar (not during a jump: see scrollToCategory)
+    state.revealActiveChip = () => {
+        revealPending = false;
+        const chip = active && scroller.querySelector(`[data-category-link="${cssEscape(active)}"]`);
+        if (!chip) return;
+        const left = Math.max(0, Math.round(chip.offsetLeft - (scroller.clientWidth - chip.offsetWidth) / 2));
+        if (Math.abs(scroller.scrollLeft - left) < 1) return;
+        scroller.scrollTo({ left, behavior: reducedMotion.matches ? 'auto' : 'smooth' });
+    };
+    state.setActiveCategory = (anchorId, { reveal = true } = {}) => {
+        if (anchorId === active) {
+            if (reveal && revealPending && !state.jump) state.revealActiveChip();
+            return;
+        }
         active = anchorId;
+        revealPending = true;
         for (const chip of root.querySelectorAll('[data-category-link]')) {
             const on = chip.dataset.categoryLink === anchorId;
             chip.classList.toggle('is-active', on);
             if (on) chip.setAttribute('aria-current', 'true');
             else chip.removeAttribute('aria-current');
         }
-        const chip = scroller.querySelector(`[data-category-link="${cssEscape(anchorId)}"]`);
-        if (chip) {
-            const left = chip.offsetLeft - (scroller.clientWidth - chip.offsetWidth) / 2;
-            scroller.scrollTo({ left: Math.max(0, left), behavior: reducedMotion.matches ? 'auto' : 'smooth' });
-        }
+        if (reveal) state.revealActiveChip();
     };
 
     // Sections touching the band between the sticky bars and 45 % of the viewport are "visible";
@@ -427,14 +645,14 @@ function setUpCategoryNav(root) {
     let observer = null;
     // Sections hidden by the filter (hidden attribute) never count
     const shown = () => sections.filter(s => !s.hidden);
-    const pick = () => {
-        if (state.heldCategory) { state.setActiveCategory(state.heldCategory); return; }
+    const pick = (options) => {
+        if (state.heldCategory) { state.setActiveCategory(state.heldCategory, options); return; }
         const candidates = shown();
         if (candidates.length === 0) return;
         const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4;
-        if (atBottom && window.scrollY > 0) { state.setActiveCategory(candidates[candidates.length - 1].id); return; }
+        if (atBottom && window.scrollY > 0) { state.setActiveCategory(candidates[candidates.length - 1].id, options); return; }
         const first = candidates.find(s => visible.has(s.id));
-        state.setActiveCategory((first ?? candidates[0]).id);
+        state.setActiveCategory((first ?? candidates[0]).id, options);
     };
     const observe = () => {
         observer?.disconnect();
@@ -464,13 +682,16 @@ function setUpCategoryNav(root) {
         ticking = true;
         requestAnimationFrame(() => { ticking = false; pick(); });
     }, { passive: true });
-    // Scrolling by hand ends the hold of a jump target (the smooth jump itself fires only scroll events)
+    // Touching or scrolling by hand ends a running jump and the hold of its target (the jump itself fires only
+    // scroll events); the chip bar follows on the next scroll, not now (a tap on a chip starts a new jump)
     for (const type of ['wheel', 'touchstart', 'pointerdown', 'keydown']) {
-        window.addEventListener(type, () => { if (state.heldCategory) { state.heldCategory = null; pick(); } },
-            { passive: true, capture: true });
+        window.addEventListener(type, () => {
+            state.jump?.stop();
+            if (state.heldCategory) { state.heldCategory = null; pick({ reveal: false }); }
+        }, { passive: true, capture: true });
     }
 
-    // Category sheet: focus the active chip when it opens
+    // Category sheet: the focus goes to the active chip (a ring only for keyboard use, see setUpFocusModality)
     registerSheet('categories', {
         onOpen(dialog) {
             requestAnimationFrame(() => dialog.querySelector('.gm-chip.is-active')?.focus({ preventScroll: false }));
@@ -478,6 +699,29 @@ function setUpCategoryNav(root) {
     });
 
     active = sections[0].id;
+}
+
+// --- Focus rings only for keyboard use ------------------------------------------------------------------------
+// Script focus (a sheet's first control, the active chip, the section heading after a jump, the opener after a
+// close) counts as :focus-visible in WebKit even after a tap, so phones showed rings. An element that gets the focus
+// while the last input was a pointer (or before any input) carries data-gm-quiet, and guest-menu.css hides its
+// ring. The first key press removes the mark from the focused element: keyboard users always see where they are.
+
+function setUpFocusModality() {
+    let pointer = true;
+    const modifierKeys = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Fn']);
+    document.addEventListener('pointerdown', () => { pointer = true; }, true);
+    document.addEventListener('keydown', e => {
+        if (modifierKeys.has(e.key)) return;
+        pointer = false;
+        if (document.activeElement instanceof Element) document.activeElement.removeAttribute('data-gm-quiet');
+    }, true);
+    document.addEventListener('focusin', e => {
+        if (pointer && e.target instanceof Element) e.target.setAttribute('data-gm-quiet', '');
+    }, true);
+    document.addEventListener('focusout', e => {
+        if (e.target instanceof Element) e.target.removeAttribute('data-gm-quiet');
+    }, true);
 }
 
 // --- Hero: the top bar title appears once the big heading is gone ---------------------------------------
@@ -565,6 +809,7 @@ function init() {
         state.isPreview = root.dataset.preview === 'true';
         readStrings(root);
 
+        setUpFocusModality();
         setUpCategoryNav(root);
         setUpHero(root);
         setUpSheets(root);
