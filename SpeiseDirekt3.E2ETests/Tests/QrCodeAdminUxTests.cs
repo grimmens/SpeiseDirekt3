@@ -8,62 +8,16 @@ using SpeiseDirekt3.E2ETests.Infrastructure;
 namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
-/// Back-office QR codes (package P3): the calendar mode of the editor (<c>/qrcode/edit</c>), the list cards on
+/// Back-office QR codes (package P3): the calendar mode of the editor (<c>/qrcode/edit</c>; since AP7 a month calendar
+/// with an entry panel — the calendar itself is covered by <see cref="QrCalendarEditorTests"/>), the list cards on
 /// <c>/qrcodes</c> (mode badge, target text, guest URL, Download PNG, Copy link) and the editor preview.
 /// Every test registers its own owner and seeds its menus directly.
 /// </summary>
-public class QrCodeAdminUxTests : BackOfficeTestBase
+public class QrCodeAdminUxTests : QrCalendarTestBase
 {
     public QrCodeAdminUxTests(E2EFixture fixture) : base(fixture) { }
 
     // --- Helpers ---
-
-    /// <summary>Registers a fresh owner in <see cref="E2ETestBase.Page"/> and returns its tenant id.</summary>
-    private async Task<Guid> RegisterOwnerAsync()
-    {
-        var email = await RegisterNewOwnerAsync();
-        await using var db = App.CreateDbContext(Guid.Empty);
-        return Guid.Parse((await db.Users.SingleAsync(u => u.Email == email)).Id);
-    }
-
-    /// <summary>A menu with one category and one item ("{name} Gericht"), so the guest page renders it.</summary>
-    private async Task<Guid> SeedMenuAsync(Guid ownerId, string name)
-    {
-        var menuId = Guid.NewGuid();
-        await App.SeedAsync(ownerId, db =>
-        {
-            var category = new Category { Id = Guid.NewGuid(), Name = $"{name} Kategorie", MenuId = menuId };
-            db.Menus.Add(new Menu
-            {
-                Id = menuId, Name = name, Description = "", Language = MenuLanguage.German,
-                Categories = new List<Category> { category }
-            });
-            db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = $"{name} Gericht", Description = "Test", Price = 9.90m, CategoryId = category.Id });
-            return Task.CompletedTask;
-        });
-        return menuId;
-    }
-
-    private async Task<Guid> SeedQrAsync(Guid ownerId, QRCode qr)
-    {
-        qr.Id = qr.Id == Guid.Empty ? Guid.NewGuid() : qr.Id;
-        foreach (var e in qr.TimeTableEntries ?? new()) e.QRCodeId = qr.Id;
-        foreach (var e in qr.CalendarEntries ?? new()) e.QRCodeId = qr.Id;
-        await App.SeedAsync(ownerId, db => { db.QRCodes.Add(qr); return Task.CompletedTask; });
-        return qr.Id;
-    }
-
-    private static CalendarEntry Calendar(DateOnly date, Guid menuId, DateOnly? until = null, DayOfWeek? weekly = null) =>
-        new() { Id = Guid.NewGuid(), Date = date, EndDate = until, RecurringDayOfWeek = weekly, MenuId = menuId };
-
-    private async Task<QRCode> LoadQrAsync(Guid ownerId, Guid qrId)
-    {
-        await using var db = App.CreateDbContext(ownerId);
-        return await db.QRCodes.AsNoTracking()
-            .Include(q => q.CalendarEntries)
-            .Include(q => q.TimeTableEntries)
-            .SingleAsync(q => q.Id == qrId);
-    }
 
     private ILocator Card(string title) =>
         Page.GetByTestId("qr-card").Filter(new() { Has = Page.Locator("h3", new() { HasTextString = title }) });
@@ -77,17 +31,7 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
 
     private static string DateValue(DateOnly date) => date.ToString("yyyy-MM-dd");
 
-    /// <summary>
-    /// Picks "Calendar-based Menu". The title field commits on blur, i.e. when the radio is clicked; the
-    /// re-render for the title briefly re-checks the old radio until the mode change arrives, so wait for
-    /// the final state instead of using CheckAsync (which inspects the radio right after the click).
-    /// </summary>
-    private async Task SelectCalendarModeAsync()
-    {
-        await Page.Locator("#calendar").ClickAsync();
-        await Assertions.Expect(Page.Locator("#calendar")).ToBeCheckedAsync();
-        await Assertions.Expect(Button("Add Calendar Entry")).ToBeVisibleAsync();
-    }
+    private ILocator Summaries => Page.GetByTestId("calendar-entry-summary");
 
     // --- Editor: calendar mode ---
 
@@ -107,17 +51,20 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
         await Page.Locator("#qrTitle").FillAsync("Weihnachtsaktion");
         await SelectCalendarModeAsync();
         await Assertions.Expect(Page.GetByText("No calendar entries yet")).ToBeVisibleAsync();
-        await Button("Add Calendar Entry").ClickAsync();
+        await Page.GetByTestId("calendar-add-entry").ClickAsync();
 
-        var entry = Page.GetByTestId("calendar-entry");
-        await Assertions.Expect(entry).ToHaveCountAsync(1);
-        await Assertions.Expect(entry.Locator("#cal-0-date")).ToHaveValueAsync(DateValue(today)); // defaults to today
-        await entry.Locator("#cal-0-menu").SelectOptionAsync(new SelectOptionValue { Label = $"Weihnachten {suffix}" });
-        await entry.Locator("#cal-0-date").FillAsync("2026-12-24");
-        await Assertions.Expect(entry.GetByTestId("calendar-entry-summary")).ToHaveTextAsync("Only on Thu, Dec 24, 2026");
+        await ExpectPanelOpenAsync();
+        await Assertions.Expect(Page.Locator("#cal-panel-date")).ToHaveValueAsync(DateValue(today)); // defaults to today
+        await SelectPanelMenuAsync($"Weihnachten {suffix}");
+        await Page.Locator("#cal-panel-date").FillAsync("2026-12-24");
+        await Assertions.Expect(Page.GetByTestId("calendar-panel-summary")).ToHaveTextAsync("Only on Thu, Dec 24, 2026");
+        await ApplyPanelAsync();
+        await Assertions.Expect(EntryRows).ToHaveCountAsync(1);
+        await Assertions.Expect(Summaries).ToHaveTextAsync("Only on Thu, Dec 24, 2026");
 
         await Page.Locator("#fallbackMenuSelect").SelectOptionAsync(new SelectOptionValue { Label = $"Tageskarte {suffix}" });
         await Assertions.Expect(Page.GetByText("Shown when no calendar entry matches today")).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByTestId("calendar-fallback-hint")).ToHaveTextAsync($"Other days: Tageskarte {suffix} (fallback menu)");
         await Button("Create QR Code").ClickAsync();
 
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
@@ -165,20 +112,25 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
         await Assertions.Expect(Page.Locator("#calendar")).ToBeCheckedAsync();
         await Assertions.Expect(Page.Locator("#simple")).Not.ToBeCheckedAsync();
         await Assertions.Expect(Page.Locator("#fallbackMenuSelect")).ToHaveValueAsync(regular.ToString());
-        var entries = Page.GetByTestId("calendar-entry");
-        await Assertions.Expect(entries).ToHaveCountAsync(2);
+        await WaitForCalendarAsync(Page);
 
         // Sorted by date: the single date first
-        await Assertions.Expect(Page.Locator("#cal-0-menu")).ToHaveValueAsync(christmas.ToString());
-        await Assertions.Expect(Page.Locator("#cal-0-date")).ToHaveValueAsync("2026-12-24");
-        await Assertions.Expect(Page.Locator("#cal-0-weekly")).ToHaveValueAsync("");
-        await Assertions.Expect(Page.Locator("#cal-0-until")).ToHaveValueAsync("");
-        await Assertions.Expect(Page.Locator("#cal-1-menu")).ToHaveValueAsync(friday.ToString());
-        await Assertions.Expect(Page.Locator("#cal-1-date")).ToHaveValueAsync("2027-01-01");
-        await Assertions.Expect(Page.Locator("#cal-1-weekly")).ToHaveValueAsync("Friday");
-        await Assertions.Expect(Page.Locator("#cal-1-until")).ToHaveValueAsync("2027-03-26");
-        await Assertions.Expect(entries.Nth(1).GetByTestId("calendar-entry-summary"))
-            .ToHaveTextAsync("Every Friday from Fri, Jan 1, 2027 until Fri, Mar 26, 2027");
+        await Assertions.Expect(EntryRows).ToHaveCountAsync(2);
+        await Assertions.Expect(Summaries).ToHaveTextAsync(new[]
+        {
+            "Only on Thu, Dec 24, 2026", "Every Friday from Fri, Jan 1, 2027 until Fri, Mar 26, 2027"
+        });
+        await Assertions.Expect(Page.GetByTestId("calendar-entry-menu")).ToHaveTextAsync(new[] { "Weihnachten", "Fischfreitag" });
+
+        // The panel shows the stored values; Cancel keeps them
+        await EntryRow("Every Friday from Fri, Jan 1, 2027 until Fri, Mar 26, 2027").GetByRole(AriaRole.Button, new() { Name = "Edit" }).ClickAsync();
+        await ExpectPanelOpenAsync();
+        await Assertions.Expect(Page.Locator("#cal-panel-menu")).ToHaveValueAsync(friday.ToString());
+        await Assertions.Expect(Page.Locator("#cal-panel-weekly")).ToHaveValueAsync("Friday");
+        await Assertions.Expect(Page.Locator("#cal-panel-date")).ToHaveValueAsync("2027-01-01");
+        await Assertions.Expect(Page.Locator("#cal-panel-until")).ToHaveValueAsync("2027-03-26");
+        await Panel.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await ExpectPanelClosedAsync();
 
         await Button("Save Changes").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
@@ -210,16 +162,18 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
         });
 
         await GotoInteractiveAsync($"/qrcode/edit/{qrId}");
-        var entries = Page.GetByTestId("calendar-entry");
-        await Assertions.Expect(entries).ToHaveCountAsync(2);
+        await WaitForCalendarAsync(Page);
+        await Assertions.Expect(EntryRows).ToHaveCountAsync(2);
 
-        await entries.Nth(0).GetByRole(AriaRole.Button, new() { Name = "Remove" }).ClickAsync();
-        await Assertions.Expect(entries).ToHaveCountAsync(1);
-        await Page.Locator("#cal-0-menu").SelectOptionAsync(new SelectOptionValue { Label = "Montagsmenü" });
-        await Page.Locator("#cal-0-weekly").SelectOptionAsync("Monday");
-        await Page.Locator("#cal-0-until").FillAsync("2027-02-22");
-        await Assertions.Expect(entries.First.GetByTestId("calendar-entry-summary"))
-            .ToHaveTextAsync("Every Monday from Mon, Jan 4, 2027 until Mon, Feb 22, 2027");
+        await EntryRow("Only on Thu, Dec 24, 2026").GetByRole(AriaRole.Button, new() { Name = "Remove" }).ClickAsync();
+        await Assertions.Expect(EntryRows).ToHaveCountAsync(1);
+        await EntryRow("Only on Mon, Jan 4, 2027").GetByRole(AriaRole.Button, new() { Name = "Edit" }).ClickAsync();
+        await ExpectPanelOpenAsync();
+        await SelectPanelMenuAsync("Montagsmenü");
+        await Page.Locator("#cal-panel-weekly").SelectOptionAsync("Monday");
+        await Page.Locator("#cal-panel-until").FillAsync("2027-02-22");
+        await ApplyPanelAsync();
+        await Assertions.Expect(Summaries).ToHaveTextAsync("Every Monday from Mon, Jan 4, 2027 until Mon, Feb 22, 2027");
 
         await Button("Save Changes").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
@@ -245,10 +199,17 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
         await Button("Create QR Code").ClickAsync();
         await Assertions.Expect(Page.GetByText("Es muss zumindest einen Kalender-Eintrag geben.").First).ToBeVisibleAsync();
 
-        // An entry without a menu
-        await Button("Add Calendar Entry").ClickAsync();
+        // An entry without a menu cannot be added any more: the panel asks for one and Escape discards it
+        await Page.GetByTestId("calendar-add-entry").ClickAsync();
+        await ExpectPanelOpenAsync();
+        await Page.GetByTestId("calendar-panel-apply").ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("calendar-panel-error")).ToHaveTextAsync("Choose the menu guests get.");
+        await Page.Keyboard.PressAsync("Escape");
+        await ExpectPanelClosedAsync();
+        await Assertions.Expect(EntryRows).ToHaveCountAsync(0);
+
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Ein Kalender-Eintrag muss ein Menü auswählen.").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("Es muss zumindest einen Kalender-Eintrag geben.").First).ToBeVisibleAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcode/edit$"));
     }
 
@@ -271,6 +232,8 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
         });
 
         await GotoInteractiveAsync($"/qrcode/edit/{qrId}");
+        await WaitForCalendarAsync(Page);
+        await Assertions.Expect(Page.GetByTestId("calendar-conflicts")).ToHaveCountAsync(0);
         await Button("Save Changes").ClickAsync();
 
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
@@ -281,26 +244,25 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
     public async Task CalendarEditor_RejectsOverlappingEntriesOfTheSameKind()
     {
         var ownerId = await RegisterOwnerAsync();
-        var menu = await SeedMenuAsync(ownerId, "Überschneidung");
+        await SeedMenuAsync(ownerId, "Überschneidung");
 
         await GotoInteractiveAsync("/qrcode/edit");
         await Page.Locator("#qrTitle").FillAsync("Doppelt");
         await SelectCalendarModeAsync();
-        await Button("Add Calendar Entry").ClickAsync();
-        await Button("Add Calendar Entry").ClickAsync();
-        foreach (var i in new[] { 0, 1 })
-            await Page.Locator($"#cal-{i}-menu").SelectOptionAsync(menu.ToString());
 
-        // Two weekly entries on Monday without an end date overlap forever
-        await Page.Locator("#cal-0-date").FillAsync("2026-11-09");
-        await Page.Locator("#cal-0-weekly").SelectOptionAsync("Monday");
-        await Page.Locator("#cal-1-weekly").SelectOptionAsync("Monday");
-        await Page.Locator("#cal-1-date").FillAsync("2026-12-07");
+        // Two weekly entries on Monday without an end date overlap forever — marked before saving
+        await AddEntryViaPanelAsync("Überschneidung", "2026-11-09", weekly: "Monday");
+        await AddEntryViaPanelAsync("Überschneidung", "2026-12-07", weekly: "Monday");
+        await Assertions.Expect(Page.GetByTestId("calendar-conflicts")).ToBeVisibleAsync();
         await Button("Create QR Code").ClickAsync();
         await Assertions.Expect(Page.GetByText("Die wöchentlichen Einträge am Montag überschneiden sich").First).ToBeVisibleAsync();
 
         // On different weekdays they do not
-        await Page.Locator("#cal-1-weekly").SelectOptionAsync("Tuesday");
+        await EntryRow("Every Monday from Mon, Dec 7, 2026").GetByRole(AriaRole.Button, new() { Name = "Edit" }).ClickAsync();
+        await ExpectPanelOpenAsync();
+        await Page.Locator("#cal-panel-weekly").SelectOptionAsync("Tuesday");
+        await ApplyPanelAsync();
+        await Assertions.Expect(Page.GetByTestId("calendar-conflicts")).ToHaveCountAsync(0);
         await Button("Create QR Code").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
 
@@ -308,13 +270,9 @@ public class QrCodeAdminUxTests : BackOfficeTestBase
         await GotoInteractiveAsync("/qrcode/edit");
         await Page.Locator("#qrTitle").FillAsync("Doppelte Woche");
         await SelectCalendarModeAsync();
-        await Button("Add Calendar Entry").ClickAsync();
-        await Button("Add Calendar Entry").ClickAsync();
-        foreach (var i in new[] { 0, 1 })
-            await Page.Locator($"#cal-{i}-menu").SelectOptionAsync(menu.ToString());
-        await Page.Locator("#cal-0-date").FillAsync("2026-11-09");
-        await Page.Locator("#cal-0-until").FillAsync("2026-11-12");
-        await Page.Locator("#cal-1-date").FillAsync("2026-11-12");
+        await AddEntryViaPanelAsync("Überschneidung", "2026-11-09", until: "2026-11-12");
+        await AddEntryViaPanelAsync("Überschneidung", "2026-11-12");
+        await Assertions.Expect(Page.GetByTestId("calendar-conflicts")).ToBeVisibleAsync();
         await Button("Create QR Code").ClickAsync();
         await Assertions.Expect(Page.GetByText("Die Datumsperioden überschneiden sich").First).ToBeVisibleAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcode/edit$"));

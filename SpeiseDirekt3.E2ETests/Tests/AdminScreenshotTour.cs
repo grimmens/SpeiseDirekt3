@@ -8,14 +8,15 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
 /// Not a test in the usual sense: walks a seeded tenant through every back-office page and stores
-/// full-page screenshots (desktop 1280 px and phone 390 px) for design reviews. Runs only when
+/// full-page screenshots (desktop 1280 px and phone 390 px) for design reviews, plus the QR code calendar editor
+/// (<see cref="ShootCalendarEditorAsync"/>) at both widths. Runs only when
 /// <c>E2E_SCREENSHOT_DIR</c> points at a directory; set <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> as well so
 /// Tailwind and the icon font come from their CDNs and the pages look like production.
 /// <code>
 /// E2E_SCREENSHOT_DIR=/tmp/shots E2E_ALLOW_EXTERNAL_REQUESTS=1 dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~AdminScreenshotTour
 /// </code>
 /// </summary>
-public class AdminScreenshotTour : BackOfficeTestBase
+public class AdminScreenshotTour : QrCalendarTestBase
 {
     public const string DirectoryEnvVar = "E2E_SCREENSHOT_DIR";
 
@@ -24,7 +25,7 @@ public class AdminScreenshotTour : BackOfficeTestBase
     private static string? Directory => Environment.GetEnvironmentVariable(DirectoryEnvVar) is { Length: > 0 } d ? d : null;
 
     private sealed record Seeded(Guid MenuId, Guid CategoryId, Guid EmptyMenuId, Guid TimeTableQrId, Guid CalendarQrId, Guid TenantUserId,
-        Guid DrinksCategoryId);
+        Guid DrinksCategoryId, Guid HolidayQrId, int HolidayYear);
 
     [Fact]
     public async Task Capture_every_back_office_page()
@@ -41,6 +42,7 @@ public class AdminScreenshotTour : BackOfficeTestBase
 
         // Desktop
         await ShootAsync(Page, dir, "desktop", seeded);
+        await ShootCalendarEditorAsync(Page, dir, "desktop", seeded);
 
         // Phone: same cookies, narrow viewport
         var state = await Context.StorageStateAsync();
@@ -56,6 +58,7 @@ public class AdminScreenshotTour : BackOfficeTestBase
         phoneContext.SetDefaultTimeout(15_000);
         var phone = await phoneContext.NewPageAsync();
         await ShootAsync(phone, dir, "phone", seeded, phoneSubset: true);
+        await ShootCalendarEditorAsync(phone, dir, "phone", seeded);
 
         // Guest view of the same menu in every design theme (phone)
         foreach (var theme in Enum.GetValues<DesignTheme>())
@@ -151,6 +154,54 @@ public class AdminScreenshotTour : BackOfficeTestBase
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-account-manage.png"), FullPage = true });
     }
 
+    /// <summary>
+    /// The calendar of the QR code "Festtage (Kalender)" in December: the month grid with the Christmas period, the weekly
+    /// fish Friday (struck through on the 25th) and New Year's Eve, the entry panel (side panel / bottom sheet), a conflicting
+    /// period with its warning and marks, and the list view. Nothing is saved.
+    /// </summary>
+    private static async Task ShootCalendarEditorAsync(IPage page, string dir, string prefix, Seeded s)
+    {
+        string File(string name) => Path.Combine(dir, $"{prefix}-{name}.png");
+        var editor = page.GetByTestId("calendar-editor");
+        var openPanel = page.Locator("dialog[data-testid='calendar-panel'][open]");
+
+        await GotoInteractiveAsync(page, $"/qrcode/edit/{s.HolidayQrId}");
+        await WaitForCalendarAsync(page);
+        await GotoMonthAsync(page, s.HolidayYear, 12);
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = File("qrcode-calendar"), FullPage = true });
+        await editor.ScreenshotAsync(new() { Path = File("qrcode-calendar-editor") });
+
+        // Click on the Christmas period: the panel with its fields and sentence
+        await CalendarOf(page).Locator($"td[data-date='{s.HolidayYear}-12-24'] .fc-event").ClickAsync();
+        await Assertions.Expect(openPanel).ToHaveCountAsync(1);
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = File("qrcode-calendar-panel") });
+        await page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(openPanel).ToHaveCountAsync(0);
+
+        // A period that overlaps Christmas: warning in the panel, then the marks and the alert
+        await page.GetByTestId("calendar-add-entry").ClickAsync();
+        await Assertions.Expect(openPanel).ToHaveCountAsync(1);
+        await page.Locator("#cal-panel-menu").SelectOptionAsync(new SelectOptionValue { Label = "Silvester" });
+        await page.Locator("#cal-panel-date").FillAsync($"{s.HolidayYear}-12-26");
+        await page.Locator("#cal-panel-until").FillAsync($"{s.HolidayYear}-12-27");
+        await Assertions.Expect(page.GetByTestId("calendar-panel-conflict")).ToBeVisibleAsync();
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = File("qrcode-calendar-panel-conflict") });
+        await page.GetByTestId("calendar-panel-apply").ClickAsync();
+        await Assertions.Expect(openPanel).ToHaveCountAsync(0);
+        await Assertions.Expect(page.GetByTestId("calendar-conflicts")).ToBeVisibleAsync();
+        await SettleAsync(page);
+        await editor.ScreenshotAsync(new() { Path = File("qrcode-calendar-conflict") });
+
+        // List view of the month
+        await CalendarOf(page).Locator(".fc-listMonth-button").ClickAsync();
+        await Assertions.Expect(CalendarOf(page).Locator(".fc-list").First).ToBeVisibleAsync();
+        await SettleAsync(page);
+        await editor.ScreenshotAsync(new() { Path = File("qrcode-calendar-list") });
+    }
+
     /// <summary>Tailwind's CDN build compiles classes after load; give it a moment and wait for fonts.</summary>
     private static async Task SettleAsync(IPage page)
     {
@@ -165,6 +216,14 @@ public class AdminScreenshotTour : BackOfficeTestBase
         var lunchMenuId = Guid.NewGuid();
         var timeTableQrId = Guid.NewGuid();
         var calendarQrId = Guid.NewGuid();
+        var holidayQrId = Guid.NewGuid();
+        // The next Christmas (this year's until Dec 26), the fish Fridays from November into January
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var holidayYear = today.Month == 12 && today.Day > 26 ? today.Year + 1 : today.Year;
+        var firstFriday = new DateOnly(holidayYear, 11, 1);
+        while (firstFriday.DayOfWeek != DayOfWeek.Friday) firstFriday = firstFriday.AddDays(1);
+        var lastFriday = new DateOnly(holidayYear + 1, 1, 31);
+        while (lastFriday.DayOfWeek != DayOfWeek.Friday) lastFriday = lastFriday.AddDays(-1);
         var tenantUserId = Guid.NewGuid();
         Guid firstCategoryId = Guid.Empty;
         Guid drinksCategoryId = Guid.Empty;
@@ -290,6 +349,29 @@ public class AdminScreenshotTour : BackOfficeTestBase
                 }
             });
 
+            // --- Holiday calendar: Christmas period, weekly fish Friday with an until date, New Year's Eve
+            Guid SmallMenu(string name, string dish, decimal price)
+            {
+                var id = Guid.NewGuid();
+                var category = new Category { Id = Guid.NewGuid(), Name = "Gerichte", MenuId = id };
+                db.Menus.Add(new Menu { Id = id, Name = name, Description = "", Theme = DesignTheme.Classic, Language = MenuLanguage.German, Categories = new List<Category> { category } });
+                db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = dish, Description = "", Price = price, CategoryId = category.Id });
+                return id;
+            }
+            var christmasMenu = SmallMenu("Weihnachtsmenü", "Gansl mit Rotkraut und Knödel", 29.50m);
+            var fishMenu = SmallMenu("Fischfreitag", "Gebratene Forelle mit Petersilerdäpfeln", 21.90m);
+            var newYearMenu = SmallMenu("Silvester", "Silvestermenü in fünf Gängen", 79.00m);
+            db.QRCodes.Add(new QRCode
+            {
+                Id = holidayQrId, Title = "Festtage (Kalender)", IsCalendarBased = true, MenuId = menuId,
+                CalendarEntries = new List<CalendarEntry>
+                {
+                    new() { Id = Guid.NewGuid(), Date = firstFriday, EndDate = lastFriday, RecurringDayOfWeek = DayOfWeek.Friday, MenuId = fishMenu },
+                    new() { Id = Guid.NewGuid(), Date = new DateOnly(holidayYear, 12, 24), EndDate = new DateOnly(holidayYear, 12, 26), MenuId = christmasMenu },
+                    new() { Id = Guid.NewGuid(), Date = new DateOnly(holidayYear, 12, 31), MenuId = newYearMenu }
+                }
+            });
+
             // --- A sub-account
             var subId = Guid.NewGuid().ToString();
             db.Users.Add(new ApplicationUser
@@ -322,7 +404,8 @@ public class AdminScreenshotTour : BackOfficeTestBase
             await Task.CompletedTask;
         });
 
-        return new Seeded(menuId, firstCategoryId, emptyMenuId, timeTableQrId, calendarQrId, tenantUserId, drinksCategoryId);
+        return new Seeded(menuId, firstCategoryId, emptyMenuId, timeTableQrId, calendarQrId, tenantUserId, drinksCategoryId,
+            holidayQrId, holidayYear);
     }
 
     /// <summary>A diagonal two-colour gradient as PNG (stand-in for a photo in the screenshots).</summary>
