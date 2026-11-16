@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using SpeiseDirekt.Infrastructure;
 
 namespace SpeiseDirekt.Model
 {
@@ -130,7 +131,9 @@ namespace SpeiseDirekt.Model
 
                     // Check for overlapping date ranges. A single date (or date range) beats a weekly entry on
                     // the same day (MenuService), so only entries of the same kind collide: two date ranges, or
-                    // two weekly entries on the same weekday whose periods overlap.
+                    // two weekly entries on the same weekday whose periods overlap (CalendarSchedule.Collide; the
+                    // back-office calendar marks the same pairs live). Sorted by date, comparing neighbours finds
+                    // the first collision.
                     var sortedCalendar = CalendarEntries
                         .Where(e => e.RecurringDayOfWeek == null)
                         .OrderBy(e => e.Date)
@@ -143,7 +146,7 @@ namespace SpeiseDirekt.Model
 
                         var prevEnd = prev.EndDate ?? prev.Date;
 
-                        if (prevEnd >= curr.Date)
+                        if (CalendarSchedule.Collide(prev, curr))
                         {
                             yield return new ValidationResult(
                                 $"Die Datumsperioden überschneiden sich: {prev.Date:dd.MM.yyyy}–{prevEnd:dd.MM.yyyy} und {curr.Date:dd.MM.yyyy}–{(curr.EndDate ?? curr.Date):dd.MM.yyyy}.",
@@ -162,7 +165,7 @@ namespace SpeiseDirekt.Model
                             var curr = sortedWeekly[i];
 
                             // Without an end date a weekly entry repeats forever
-                            if ((prev.EndDate ?? DateOnly.MaxValue) >= curr.Date)
+                            if (CalendarSchedule.Collide(prev, curr))
                             {
                                 var dayName = System.Globalization.CultureInfo.GetCultureInfo("de-DE").DateTimeFormat.GetDayName(weekday.Key);
                                 yield return new ValidationResult(
