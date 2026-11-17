@@ -433,6 +433,36 @@ html:not([data-guest-ready]) .gm-catnav-scroll { padding-right: var(--gm-gutter)
     .gm-sheet.is-settling, .gm-sheet.is-settling::backdrop { transition: none; }
 }
 
+/* Full-screen sheet on phones (.gm-sheet--full, used by the search sheet; < 768 px only, from 768 px it is the centered
+   dialog like every other sheet). The search field takes the focus inside the tap, and iOS opens the keyboard and
+   scrolls to reveal whatever has the focus: as a sliding bottom sheet (transform) the panel was still below the screen
+   at that moment, and on an iPhone the page's end showed above the keyboard while the panel was off-screen.
+   So this panel is anchored to the top, its field is at its final place when it is focused (it fades in, no transform),
+   and guest-menu.js sizes it to the visual viewport (--gm-vv-top/--gm-vv-height: the area above the keyboard), keeps
+   the page from scrolling behind it and puts the page back where it was on close. No grab handle, no drag to close: a
+   panel that fills the screen has no edge to pull; close button, Escape and the back button close it. */
+@media (max-width: 767.98px) {
+    .gm-sheet--full {
+        top: var(--gm-vv-top, 0px); bottom: auto;
+        height: var(--gm-vv-height, 100%); max-height: none;
+    }
+    .gm-sheet--full::after { content: none; }
+    /* Wherever the panel does not reach (while the keyboard moves), the panel color instead of the dimmed page */
+    .gm-sheet--full::backdrop { background: var(--gm-surface); }
+    .gm-sheet--full .gm-sheet-panel {
+        height: 100%; max-height: none; min-height: 0;
+        padding-top: env(safe-area-inset-top, 0px);
+        border-radius: 0; box-shadow: none;
+    }
+    .gm-sheet--full .gm-sheet-handle { display: none; }
+    .gm-sheet--full .gm-sheet-head { padding-top: 12px; }
+    .gm-sheet--full .gm-sheet-body { padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px)); }
+}
+@media (max-width: 767.98px) and (prefers-reduced-motion: no-preference) {
+    .gm-sheet--full[open] { animation-name: gm-fade-in; animation-duration: .2s; animation-timing-function: ease-out; }
+    .gm-sheet--full.is-closing { animation-name: gm-fade-out; animation-duration: .16s; animation-timing-function: ease-in; }
+}
+
 /* --- Item detail (content of the item sheet) ------------------------------------------------- */
 /* Wide screens: photo left (sticky), text right */
 @media (min-width: 900px) {
@@ -503,6 +533,15 @@ html:not([data-guest-ready]) .gm-catnav-scroll { padding-right: var(--gm-gutter)
     background: var(--gm-surface-2); color: var(--gm-muted);
 }
 .gm-search-field:focus-within { border-color: var(--gm-focus); }
+/* Full-screen search on phones: the field stays at the top while the results scroll under it */
+@media (max-width: 767.98px) {
+    .gm-sheet--full .gm-search-bar {
+        position: sticky; top: 0; z-index: 1;
+        padding-bottom: 4px;
+        background: var(--gm-surface);
+    }
+    .gm-sheet--full .gm-search-status { margin-top: 8px; }
+}
 .gm-search-input {
     flex: 1; min-width: 0; height: 100%;
     border: 0; outline: 0; background: transparent; color: var(--gm-text);
