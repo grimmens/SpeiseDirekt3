@@ -1,0 +1,95 @@
+/*
+ * brand.css — the Speise-Direkt brand, defined once (tokens only, no selectors besides :root).
+ *
+ * Read by:
+ * - the back office: the Tailwind Play CDN config in Components/App.razor maps the `brand` (alias `primary`) and
+ *   `accent` palettes to these variables (`rgb(var(--sd-brand-600) / <alpha-value>)`, so opacity modifiers work),
+ *   app.css points Bootstrap's primary/link/focus colours at them, css/shell.css (top bar, drawer, menu context bar)
+ *   and the FullCalendar wrapper use them directly;
+ * - the landing page.
+ * The guest menu (css/guest-*.css) has its own six themes and does not read this file.
+ *
+ * Colours are RGB channels separated by spaces: use them as rgb(var(--sd-brand-600)) or
+ * rgb(var(--sd-brand-600) / .5). Bootstrap needs comma-separated channels for its *-rgb variables; those few are
+ * spelled out at the end and must follow the values above.
+ *
+ * Contrast (WCAG 2.x): white text on brand-600 6.1:1, on brand-700 8.1:1, on brand-900 11.7:1; brand-600 text on
+ * white 6.1:1; brand-950 text on accent-400 7.7:1, on accent-300 9.4:1; accent-400 on brand-900 5.7:1.
+ * White on accent-* below 700 fails AA: the accent always carries dark text.
+ */
+:root {
+    /* Primary: deep petrol / teal ink — the top bar, primary actions, links, focus */
+    --sd-brand-50: 240 248 249;   /* #f0f8f9 */
+    --sd-brand-100: 217 238 241;  /* #d9eef1 */
+    --sd-brand-200: 181 221 227;  /* #b5dde3 */
+    --sd-brand-300: 130 195 205;  /* #82c3cd */
+    --sd-brand-400: 75 162 177;   /* #4ba2b1 */
+    --sd-brand-500: 46 133 149;   /* #2e8595 */
+    --sd-brand-600: 34 107 122;   /* #226b7a — primary buttons (white text) */
+    --sd-brand-700: 31 87 99;     /* #1f5763 — hover */
+    --sd-brand-800: 29 72 82;     /* #1d4852 */
+    --sd-brand-900: 27 61 70;     /* #1b3d46 — top bar */
+    --sd-brand-950: 13 38 45;     /* #0d262d — ink */
+
+    /* Accent: warm saffron / apricot — sparingly: active indicator, highlights, the one CTA that must pop */
+    --sd-accent-50: 255 248 236;  /* #fff8ec */
+    --sd-accent-100: 254 237 207; /* #feedcf */
+    --sd-accent-200: 253 216 156; /* #fdd89c */
+    --sd-accent-300: 251 189 98;  /* #fbbd62 */
+    --sd-accent-400: 248 162 58;  /* #f8a23a — the accent (dark text) */
+    --sd-accent-500: 240 138 28;  /* #f08a1c */
+    --sd-accent-600: 217 108 14;  /* #d96c0e */
+    --sd-accent-700: 180 81 15;   /* #b4510f */
+    --sd-accent-800: 145 65 20;   /* #914114 */
+    --sd-accent-900: 118 55 20;   /* #763714 */
+    --sd-accent-950: 68 26 7;     /* #441a07 */
+
+    /* Neutral surfaces and text (cool grays, slightly towards the brand) */
+    --sd-canvas: 245 247 248;      /* #f5f7f8 — page background */
+    --sd-surface: 255 255 255;     /* cards, bars */
+    --sd-surface-muted: 240 244 245; /* #f0f4f5 — hover rows, inactive tracks */
+    --sd-border: 222 228 231;      /* #dee4e7 */
+    --sd-border-strong: 200 209 213; /* #c8d1d5 */
+    --sd-text: 17 24 39;           /* #111827 */
+    --sd-text-muted: 75 85 99;     /* #4b5563 — 7.6:1 on white */
+    --sd-text-subtle: 107 114 128; /* #6b7280 — 4.8:1 on white */
+
+    /* Typography (self-hosted, css/fonts.css) */
+    --sd-font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --sd-font-display: Manrope, Inter, system-ui, sans-serif;
+    --sd-text-xs: .75rem;      /* 12px */
+    --sd-text-sm: .875rem;     /* 14px */
+    --sd-text-base: 1rem;      /* 16px */
+    --sd-text-lg: 1.125rem;    /* 18px */
+    --sd-text-xl: 1.25rem;     /* 20px */
+    --sd-text-2xl: 1.5rem;     /* 24px */
+    --sd-text-3xl: 1.875rem;   /* 30px */
+    --sd-text-4xl: 2.25rem;    /* 36px */
+    --sd-text-5xl: 3rem;       /* 48px */
+    --sd-text-6xl: 3.75rem;    /* 60px */
+    --sd-leading-tight: 1.15;
+    --sd-leading-snug: 1.35;
+    --sd-leading-normal: 1.55;
+
+    /* Radii */
+    --sd-radius-sm: .375rem;  /* 6px */
+    --sd-radius-md: .5rem;    /* 8px — buttons, inputs */
+    --sd-radius-lg: .75rem;   /* 12px — cards */
+    --sd-radius-xl: 1rem;     /* 16px */
+    --sd-radius-2xl: 1.5rem;  /* 24px */
+    --sd-radius-full: 9999px;
+
+    /* Shadows (tinted with the ink colour) */
+    --sd-shadow-xs: 0 1px 2px rgb(13 38 45 / .06);
+    --sd-shadow-sm: 0 1px 3px rgb(13 38 45 / .08), 0 1px 2px rgb(13 38 45 / .05);
+    --sd-shadow-md: 0 6px 16px -4px rgb(13 38 45 / .12), 0 2px 6px -2px rgb(13 38 45 / .07);
+    --sd-shadow-lg: 0 18px 40px -12px rgb(13 38 45 / .22), 0 6px 14px -6px rgb(13 38 45 / .10);
+
+    /* Focus ring: a light gap plus brand-500, visible on white and on the dark bar */
+    --sd-focus-color: 46 133 149;  /* = brand-500 */
+    --sd-focus-ring: 0 0 0 2px rgb(255 255 255), 0 0 0 4px rgb(var(--sd-focus-color));
+
+    /* Bootstrap needs comma-separated channels (keep in step with brand-600 / brand-700 above) */
+    --sd-brand-600-rgb: 34, 107, 122;
+    --sd-brand-700-rgb: 31, 87, 99;
+}

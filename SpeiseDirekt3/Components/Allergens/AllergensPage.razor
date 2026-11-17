@@ -14,35 +14,17 @@
 <!-- Header -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
     <div class="p-[1rem] sm:p-6">
-        <nav class="flex flex-wrap items-center text-sm text-gray-500 mb-3" aria-label="breadcrumb">
-            <a href="/menus" class="hover:text-blue-600 transition-colors">Menus</a>
-            <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-            <a href="@($"/menudetail/{MenuId}")" class="hover:text-blue-600 transition-colors">@menu?.Name</a>
-            <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-            <span class="text-gray-900 font-medium">Allergens</span>
-        </nav>
-
+        @* "Menus › menu" and the links to categories, items and combos are in the menu context bar *@
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div class="min-w-0">
                 <h1 class="text-3xl font-bold text-gray-900 font-display">Allergens</h1>
                 <p class="mt-2 text-gray-600">The allergen codes guests see on the dishes of <strong>@menu?.Name</strong>.</p>
-                <nav class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm" aria-label="Related pages" data-testid="allergen-related-links">
-                    <a href="@($"/Categories/{MenuId}")" class="font-medium text-blue-600 hover:text-blue-800 hover:underline">Categories</a>
-                    <span class="text-gray-300" aria-hidden="true">·</span>
-                    <a href="@($"/MenuItems/{MenuId}")" class="font-medium text-blue-600 hover:text-blue-800 hover:underline">Menu items</a>
-                    <span class="text-gray-300" aria-hidden="true">·</span>
-                    <a href="@($"/combos/{MenuId}")" class="font-medium text-blue-600 hover:text-blue-800 hover:underline">Combos</a>
-                </nav>
             </div>
             @if (canCreate)
             {
                 <div class="sm:text-right sm:max-w-xs">
                     <button type="button" data-testid="eu-quick-fill"
-                            class="block w-full sm:inline-block sm:w-auto text-center px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:cursor-not-allowed"
+                            class="block w-full sm:inline-block sm:w-auto text-center px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-sm transition-colors disabled:bg-gray-300 disabled:text-gray-600 disabled:shadow-none disabled:cursor-not-allowed"
                             disabled="@(AllEuAllergensPresent || quickFillBusy)"
                             @onclick="AddEuAllergensAsync">
                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="mr-2 shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0"/></svg>Add the 14 EU allergens
@@ -105,7 +87,7 @@
                                 <td class="py-2 px-2 whitespace-nowrap" data-testid="allergen-usage">
                                     @if (row.UsageCount > 0)
                                     {
-                                        <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-medium text-blue-700">@ItemCount(row.UsageCount)</span>
+                                        <span class="inline-flex items-center rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700">@ItemCount(row.UsageCount)</span>
                                     }
                                     else
                                     {
@@ -150,17 +132,17 @@
 
                     <div class="mb-4">
                         <label for="Input.Code" class="block text-sm font-medium text-gray-700 mb-1">Code</label>
-                        <InputText @bind-Value="Input.Code" id="Input.Code" placeholder="e.g. A" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <InputText @bind-Value="Input.Code" id="Input.Code" placeholder="e.g. A" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" />
                         <ValidationMessage For="() => Input.Code" class="text-red-600 text-sm mt-1" />
                     </div>
 
                     <div class="mb-4">
                         <label for="Input.Name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <InputText @bind-Value="Input.Name" id="Input.Name" placeholder="e.g. Glutenhaltiges Getreide" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <InputText @bind-Value="Input.Name" id="Input.Name" placeholder="e.g. Glutenhaltiges Getreide" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-500" />
                         <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm mt-1" />
                     </div>
 
-                    <button type="submit" class="w-full bg-blue-600 text-white font-medium py-2.5 rounded-lg hover:bg-blue-700 transition-colors">
+                    <button type="submit" class="w-full bg-brand-600 text-white font-medium py-2.5 rounded-lg hover:bg-brand-700 transition-colors">
                         Add Allergen
                     </button>
                 </EditForm>

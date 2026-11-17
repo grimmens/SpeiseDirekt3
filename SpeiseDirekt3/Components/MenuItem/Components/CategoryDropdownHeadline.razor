@@ -31,13 +31,13 @@
                     {
                         @foreach (var cat in Categories)
                         {
-                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-150 flex items-center @(cat.Id == Category?.Id ? "bg-blue-50 text-blue-600 font-medium" : "")"
+                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-600 transition-colors duration-150 flex items-center @(cat.Id == Category?.Id ? "bg-brand-50 text-brand-600 font-medium" : "")"
                                     @onclick="() => OnCategorySelected(cat)"
                                     @onclick:stopPropagation="true">
                                 
                                 @if (cat.Id == Category?.Id)
                                 {
-                                    <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                                    <div class="w-2 h-2 bg-brand-500 rounded-full mr-3"></div>
                                 }
                                 else
                                 {
@@ -59,7 +59,7 @@
         </div>
         <p class="mt-2 mb-0 text-sm text-gray-600">
             Guests see the items in the order of this list.
-            <a href="@($"/Categories/{Category?.MenuId}")" class="text-blue-600 hover:underline whitespace-nowrap">Edit categories</a>
+            <a href="@($"/Categories/{Category?.MenuId}")" class="text-brand-600 hover:underline whitespace-nowrap">Edit categories</a>
         </p>
     </div>
 

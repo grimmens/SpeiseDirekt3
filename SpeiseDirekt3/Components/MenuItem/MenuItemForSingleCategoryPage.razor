@@ -11,21 +11,7 @@
 <PageTitle>Menu Items</PageTitle>
 
 <div class="max-w-6xl mx-auto space-y-6">
-    <!-- Tailwind Breadcrumb -->
-    <nav class="text-sm text-gray-600" aria-label="breadcrumb">
-        <ol class="flex flex-wrap gap-y-1 space-x-2">
-            <li>
-                <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
-                <span class="mx-2">/</span>
-            </li>
-            <li>
-                <a href="@($"/menudetail/{Menu?.Id}")" class="text-blue-600 hover:underline">@Menu?.Name</a>
-                <span class="mx-2">/</span>
-            </li>
-            <li class="text-gray-800">@Category?.Name</li>
-        </ol>
-    </nav>
-
+    @* "Menus › menu" is in the menu context bar (Layout/MenuContextBar) *@
     @if (Category != null)
     {
         <CategoryDropdownHeadline Category="@Category"
@@ -36,7 +22,7 @@
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-[1rem] sm:px-6 py-10 text-center">
             <h1 class="text-lg font-semibold text-gray-900">Category not found</h1>
-            <p class="mt-1 text-sm text-gray-500">It may have been deleted. <a href="/menus" class="text-blue-600 hover:underline">Back to the menus</a></p>
+            <p class="mt-1 text-sm text-gray-500">It may have been deleted. <a href="/menus" class="text-brand-600 hover:underline">Back to the menus</a></p>
         </div>
     }
 </div>

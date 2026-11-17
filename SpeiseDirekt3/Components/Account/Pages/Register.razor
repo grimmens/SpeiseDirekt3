@@ -18,12 +18,12 @@
 <PageTitle>Register - Speise-Direkt</PageTitle>
 
 <!-- Register Page -->
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-brand-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
         <!-- Header -->
         <div class="text-center">
             <div class="flex justify-center mb-6">
-                <img src="/image/speise-direkt.jpg" alt="Speise-Direkt Logo" class="h-16 w-16 rounded-full shadow-lg" />
+                <BrandLogo MarkOnly="true" Height="64" Class="h-16 w-16" />
             </div>
             <h2 class="text-3xl font-bold text-gray-900 font-display">Create your account</h2>
             <p class="mt-2 text-gray-600">Join Speise-Direkt and start creating digital menus</p>
@@ -46,7 +46,7 @@
                             </svg>
                         </div>
                         <InputText @bind-Value="Input.Email" id="Input.Email"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
                                    autocomplete="username" aria-required="true" placeholder="Enter your email" />
                     </div>
                     <ValidationMessage For="() => Input.Email" class="mt-1 text-sm text-red-600" />
@@ -62,7 +62,7 @@
                             </svg>
                         </div>
                         <InputText type="password" @bind-Value="Input.Password" id="Input.Password"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
                                    autocomplete="new-password" aria-required="true" placeholder="Create a password" />
                     </div>
                     <ValidationMessage For="() => Input.Password" class="mt-1 text-sm text-red-600" />
@@ -79,7 +79,7 @@
                             </svg>
                         </div>
                         <InputText type="password" @bind-Value="Input.ConfirmPassword" id="Input.ConfirmPassword"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
                                    autocomplete="new-password" aria-required="true" placeholder="Confirm your password" />
                     </div>
                     <ValidationMessage For="() => Input.ConfirmPassword" class="mt-1 text-sm text-red-600" />
@@ -88,7 +88,7 @@
                 <!-- Submit Button -->
                 <div>
                     <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors duration-200">
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                         </svg>
@@ -101,7 +101,7 @@
                     <p class="text-sm text-gray-600">
                         Already have an account?
                         <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Login", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))"
-                           class="font-medium text-blue-600 hover:text-blue-500 hover:underline">
+                           class="font-medium text-brand-600 hover:text-brand-500 hover:underline">
                             Sign in here
                         </a>
                     </p>

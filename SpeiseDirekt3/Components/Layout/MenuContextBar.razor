@@ -1,0 +1,172 @@
+@using Microsoft.EntityFrameworkCore
+@implements IDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+@* The sub-header of every page that belongs to one menu (ShellNavigation.MenuPageOf): "Menus ›" plus the menu's
+   name as a switcher to the other menus (same tab), the tabs Overview · Categories · Items · Allergens · Combos ·
+   Settings and the preview in a new tab. It replaces the pages' own breadcrumbs. Below 1024 px the tabs are a
+   horizontally scrollable strip; the active tab is scrolled into view. Rendered by MainLayout at the top of <main>;
+   nothing for any other page, an unknown menu or a menu of another tenant (query filters). *@
+@if (current is { } menu && page is { } p)
+{
+    <div class="sd-ctx" data-testid="menu-context">
+        <div class="sd-container">
+            <div class="sd-ctx-head">
+                <nav class="sd-ctx-crumbs" aria-label="Breadcrumb">
+                    <a href="/menus" class="sd-ctx-crumb">Menus</a>
+                    <svg class="sd-ctx-sep" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                    <div class="sd-dropdown sd-ctx-switch" data-sd-dropdown>
+                        <button type="button" class="sd-ctx-switch-button" aria-expanded="false" aria-controls="sd-menu-switcher"
+                                data-sd-dropdown-toggle data-testid="menu-switcher-button">
+                            <span class="sd-ctx-menu-name" data-testid="menu-context-name">@menu.Name</span>
+                            <span class="sd-sr-only">, switch menu</span>
+                            <svg class="sd-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                            </svg>
+                        </button>
+                        <div class="sd-menu sd-menu--start sd-menu--scroll" id="sd-menu-switcher" hidden data-sd-dropdown-panel data-testid="menu-switcher">
+                            <div class="sd-menu-label">Switch menu</div>
+                            @foreach (var other in menus)
+                            {
+                                var isCurrent = other.Id == menu.Id;
+                                <a href="@ShellNavigation.HrefOf(p.Tab, other.Id)" class="sd-menu-item"
+                                   aria-current="@(isCurrent ? "page" : null)" data-testid="menu-switcher-item">
+                                    <svg class="sd-icon sd-check" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span class="sd-truncate">@other.Name</span>
+                                </a>
+                            }
+                            <div class="sd-menu-sep" role="separator"></div>
+                            <a href="/menus" class="sd-menu-item sd-menu-item--muted">All menus</a>
+                        </div>
+                    </div>
+                </nav>
+                <a href="@ShellNavigation.PreviewHrefOf(menu.Id)" target="_blank" rel="noopener noreferrer"
+                   class="sd-ctx-preview" title="See the menu as your guests do (new tab)" data-testid="menu-preview-link">
+                    <svg class="sd-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    <span>Preview</span>
+                </a>
+            </div>
+            <nav class="sd-ctx-tabs" data-sd-tab-strip aria-label="@($"Menu: {menu.Name}")" @ref="tabStrip" data-testid="menu-tabs">
+                <ul role="list">
+                    @foreach (var (tab, label) in Tabs)
+                    {
+                        <li>
+                            <a href="@ShellNavigation.HrefOf(tab, menu.Id)" class="sd-ctx-tab"
+                               aria-current="@(tab == p.Tab ? "page" : null)" data-tab="@tab.ToString().ToLowerInvariant()"
+                               data-testid="menu-tab">@label</a>
+                        </li>
+                    }
+                </ul>
+            </nav>
+        </div>
+    </div>
+}
+
+@code {
+    private static readonly (MenuTab Tab, string Label)[] Tabs =
+    [
+        (MenuTab.Overview, "Overview"),
+        (MenuTab.Categories, "Categories"),
+        (MenuTab.Items, "Items"),
+        (MenuTab.Allergens, "Allergens"),
+        (MenuTab.Combos, "Combos"),
+        (MenuTab.Settings, "Settings"),
+    ];
+
+    private sealed record MenuRef(Guid Id, string Name);
+
+    private List<MenuRef> menus = [];
+    private MenuRef? current;
+    private (MenuTab Tab, Guid Id, bool IsCategoryId)? page;
+    private ElementReference tabStrip;
+    private bool revealTab;
+    private int version;
+
+    protected override async Task OnInitializedAsync()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        await ResolveAsync(NavigationManager.Uri, ++version);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var mine = ++version;
+        _ = InvokeAsync(async () =>
+        {
+            try
+            {
+                // Another tab of the same menu: mark it at once, the reload below only refreshes the names
+                if (ShellNavigation.MenuPageOf(NavigationManager.ToBaseRelativePath(e.Location)) is { IsCategoryId: false } same
+                    && same.Id == current?.Id)
+                {
+                    page = same;
+                    StateHasChanged();
+                }
+
+                await ResolveAsync(e.Location, mine);
+                StateHasChanged();
+            }
+            catch (ObjectDisposedException)
+            {
+                // Circuit went away while loading
+            }
+        });
+    }
+
+    /// <summary>
+    /// Finds the menu of the page at <paramref name="uri"/> and loads the tenant's menus for the switcher (again on
+    /// every navigation, so menus created, renamed or deleted meanwhile show up). A newer navigation wins.
+    /// </summary>
+    private async Task ResolveAsync(string uri, int mine)
+    {
+        var next = ShellNavigation.MenuPageOf(NavigationManager.ToBaseRelativePath(uri));
+        if (next is null)
+        {
+            page = null;
+            current = null;
+            return;
+        }
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var menuId = next.Value.IsCategoryId
+            ? await db.Categories.AsNoTracking().Where(c => c.Id == next.Value.Id).Select(c => (Guid?)c.MenuId).FirstOrDefaultAsync()
+            : next.Value.Id;
+        var list = await db.Menus.AsNoTracking()
+            .OrderBy(m => m.Name)
+            .Select(m => new MenuRef(m.Id, m.Name))
+            .ToListAsync();
+        if (mine != version) return;
+
+        menus = list;
+        page = next;
+        current = menuId is { } id ? list.FirstOrDefault(m => m.Id == id) : null;
+        revealTab = current is not null;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!revealTab || !RendererInfo.IsInteractive) return;
+        revealTab = false;
+        try
+        {
+            await JS.InvokeVoidAsync("sdShell.revealActiveTab", tabStrip);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+            // shell.js not loaded (yet): the strip simply starts at the left
+        }
+    }
+
+    public void Dispose() => NavigationManager.LocationChanged -= OnLocationChanged;
+}

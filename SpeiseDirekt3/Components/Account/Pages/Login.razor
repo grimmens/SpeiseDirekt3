@@ -13,12 +13,12 @@
 <PageTitle>Log in - Speise-Direkt</PageTitle>
 
 <!-- Login Page -->
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
         <!-- Header -->
         <div class="text-center">
             <div class="flex justify-center mb-6">
-                <img src="/image/speise-direkt.jpg" alt="Speise-Direkt Logo" class="h-16 w-16 rounded-full shadow-lg" />
+                <BrandLogo MarkOnly="true" Height="64" Class="h-16 w-16" />
             </div>
             <h2 class="text-3xl font-bold text-gray-900 font-display">Welcome back</h2>
             <p class="mt-2 text-gray-600">Sign in to your account</p>
@@ -41,7 +41,7 @@
                             </svg>
                         </div>
                         <InputText @bind-Value="Input.Email" id="Input.Email"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
                                    autocomplete="username" aria-required="true" placeholder="Enter your email" />
                     </div>
                     <ValidationMessage For="() => Input.Email" class="mt-1 text-sm text-red-600" />
@@ -57,7 +57,7 @@
                             </svg>
                         </div>
                         <InputText type="password" @bind-Value="Input.Password" id="Input.Password"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
                                    autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
                     </div>
                     <ValidationMessage For="() => Input.Password" class="mt-1 text-sm text-red-600" />
@@ -66,7 +66,7 @@
                 <!-- Remember Me -->
                 <div class="flex items-center">
                     <InputCheckbox @bind-Value="Input.RememberMe" id="Input.RememberMe"
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                                   class="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded" />
                     <label for="Input.RememberMe" class="ml-2 block text-sm text-gray-700">
                         Remember me
                     </label>
@@ -75,7 +75,7 @@
                 <!-- Submit Button -->
                 <div>
                     <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors duration-200">
                         Sign in
                     </button>
                 </div>
@@ -83,13 +83,13 @@
                 <!-- Links -->
                 <div class="space-y-3 text-center">
                     <div>
-                        <a href="Account/ForgotPassword" class="text-sm text-blue-600 hover:text-blue-500 hover:underline">
+                        <a href="Account/ForgotPassword" class="text-sm text-brand-600 hover:text-brand-500 hover:underline">
                             Forgot your password?
                         </a>
                     </div>
                     <div>
                         <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))"
-                           class="text-sm text-blue-600 hover:text-blue-500 hover:underline">
+                           class="text-sm text-brand-600 hover:text-brand-500 hover:underline">
                             Don't have an account? Register here
                         </a>
                     </div>

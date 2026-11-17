@@ -18,7 +18,7 @@
     <nav class="text-sm text-gray-600 mb-6" aria-label="breadcrumb">
         <ol class="flex space-x-2">
             <li>
-                <a href="/users" class="text-blue-600 hover:underline">Team</a>
+                <a href="/users" class="text-brand-600 hover:underline">Team</a>
                 <span class="mx-2">/</span>
             </li>
             <li class="text-gray-800">Edit @(tenantUser?.DisplayName ?? "User")</li>
@@ -28,7 +28,7 @@
     @if (tenantUser == null)
     {
         <div class="flex items-center justify-center py-12">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
         </div>
     }
     else
@@ -73,7 +73,7 @@
                     @foreach (var role in Enum.GetValues<TenantRole>())
                     {
                         <button type="button"
-                                class="p-4 rounded-lg border-2 text-left transition-all @(tenantUser.Role == role ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-gray-300")"
+                                class="p-4 rounded-lg border-2 text-left transition-all @(tenantUser.Role == role ? "border-brand-500 bg-brand-50" : "border-gray-200 hover:border-gray-300")"
                                 @onclick="() => SetRole(role)">
                             <div class="font-medium text-gray-900">@role</div>
                             <div class="text-xs text-gray-500 mt-1">@GetRoleDescription(role)</div>
@@ -86,7 +86,7 @@
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-bold text-gray-900">Permission Overrides</h2>
-                    <button type="button" class="text-sm text-blue-600 hover:underline" @onclick="ResetToDefaults">
+                    <button type="button" class="text-sm text-brand-600 hover:underline" @onclick="ResetToDefaults">
                         Reset to role defaults
                     </button>
                 </div>
@@ -103,7 +103,7 @@
                                     <label class="flex items-center gap-2 text-sm cursor-pointer">
                                         <input type="checkbox" checked="@HasPerm(perm.Value)"
                                                @onchange="e => TogglePerm(perm.Value, (bool)(e.Value ?? false))"
-                                               class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                                               class="rounded border-gray-300 text-brand-600 focus:ring-brand-500" />
                                         @perm.Label
                                     </label>
                                 }
@@ -122,7 +122,7 @@
                 <div class="flex gap-3">
                     <button type="button" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
                             @onclick="Cancel">Cancel</button>
-                    <button type="button" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors"
+                    <button type="button" class="px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors"
                             @onclick="Save">Save Changes</button>
                 </div>
             </div>

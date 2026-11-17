@@ -12,12 +12,12 @@
 <PageTitle>Two-factor authentication - Speise-Direkt</PageTitle>
 
 <!-- 2FA Login Page -->
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
         <!-- Header -->
         <div class="text-center">
             <div class="flex justify-center mb-6">
-                <img src="/image/speise-direkt.jpg" alt="Speise-Direkt Logo" class="h-16 w-16 rounded-full shadow-lg" />
+                <BrandLogo MarkOnly="true" Height="64" Class="h-16 w-16" />
             </div>
             <h2 class="text-3xl font-bold text-gray-900 font-display">Two-factor authentication</h2>
             <p class="mt-2 text-gray-600">Your login is protected with an authenticator app. Enter your authenticator code below.</p>
@@ -42,7 +42,7 @@
                             </svg>
                         </div>
                         <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
                                    autocomplete="off" aria-required="true" placeholder="Enter your 6-digit code" />
                     </div>
                     <ValidationMessage For="() => Input.TwoFactorCode" class="mt-1 text-sm text-red-600" />
@@ -51,7 +51,7 @@
                 <!-- Remember Machine -->
                 <div class="flex items-center">
                     <InputCheckbox @bind-Value="Input.RememberMachine" id="Input.RememberMachine"
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                                   class="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded" />
                     <label for="Input.RememberMachine" class="ml-2 block text-sm text-gray-700">
                         Remember this machine
                     </label>
@@ -60,14 +60,14 @@
                 <!-- Submit Button -->
                 <div>
                     <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors duration-200">
                         Log in
                     </button>
                 </div>
 
                 <!-- Recovery Code Link -->
                 <div class="text-center">
-                    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl" class="text-sm text-blue-600 hover:text-blue-500 hover:underline">
+                    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl" class="text-sm text-brand-600 hover:text-brand-500 hover:underline">
                         Don't have access to your authenticator device? Use a recovery code
                     </a>
                 </div>

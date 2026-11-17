@@ -1,28 +1,28 @@
 // Analytics Charts JavaScript
 let userChart, menuChart, menuItemChart;
 
-// Color palette for charts
-const colors = [
-    'rgba(59, 130, 246, 0.8)',   // Blue
-    'rgba(34, 197, 94, 0.8)',    // Green
-    'rgba(168, 85, 247, 0.8)',   // Purple
-    'rgba(245, 158, 11, 0.8)',   // Amber
-    'rgba(239, 68, 68, 0.8)',    // Red
-    'rgba(20, 184, 166, 0.8)',   // Teal
-    'rgba(251, 146, 60, 0.8)',   // Orange
-    'rgba(139, 92, 246, 0.8)',   // Violet
-];
+// Colour palette for charts: the brand first (css/brand.css, read at run time so the tokens stay the one source), then
+// hues far from it and from each other. Series are coloured in this order; a single series is the brand.
+function token(name, fallback) {
+    const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+    return (value || fallback).split(/\s+/).join(', ');
+}
 
-const borderColors = [
-    'rgba(59, 130, 246, 1)',
-    'rgba(34, 197, 94, 1)',
-    'rgba(168, 85, 247, 1)',
-    'rgba(245, 158, 11, 1)',
-    'rgba(239, 68, 68, 1)',
-    'rgba(20, 184, 166, 1)',
-    'rgba(251, 146, 60, 1)',
-    'rgba(139, 92, 246, 1)',
-];
+function palette(alpha) {
+    return [
+        `rgba(${token('--sd-brand-600', '34 107 122')}, ${alpha})`,   // Brand (petrol)
+        `rgba(${token('--sd-accent-500', '240 138 28')}, ${alpha})`,  // Accent (saffron)
+        `rgba(34, 197, 94, ${alpha})`,    // Green
+        `rgba(168, 85, 247, ${alpha})`,   // Purple
+        `rgba(239, 68, 68, ${alpha})`,    // Red
+        `rgba(59, 130, 246, ${alpha})`,   // Blue
+        `rgba(236, 72, 153, ${alpha})`,   // Pink
+        `rgba(100, 116, 139, ${alpha})`,  // Slate
+    ];
+}
+
+const colors = palette(0.8);
+const borderColors = palette(1);
 
 // Common chart options
 const commonOptions = {
@@ -85,8 +85,8 @@ function renderSessionsChart(sessionsPerBucket, timeRange) {
             datasets: points.length === 0 ? [] : [{
                 label: 'Sessions',
                 data: points,
-                borderColor: borderColors[2],
-                backgroundColor: colors[2],
+                borderColor: borderColors[0],
+                backgroundColor: colors[0],
                 borderWidth: 1
             }]
         },

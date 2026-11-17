@@ -15,20 +15,17 @@
 <!-- Header -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
     <div class="p-[1rem] sm:p-6">
-        <div class="flex items-center text-sm text-gray-500 mb-3">
-            <a href="menus" class="hover:text-blue-600 transition-colors">Menus</a>
-            @if (!IsNew)
-            {
-                <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        @if (IsNew)
+        {
+            @* An existing menu has "Menus › menu" in the menu context bar; a new one has no bar yet *@
+            <nav class="flex items-center text-sm text-gray-500 mb-3" aria-label="Breadcrumb">
+                <a href="menus" class="hover:text-brand-600 transition-colors">Menus</a>
+                <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                 </svg>
-                <a href="@($"menudetail/{Id}")" class="hover:text-blue-600 transition-colors">@Menu.Name</a>
-            }
-            <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-            <span class="text-gray-900 font-medium">@(IsNew ? "New Menu" : "Settings")</span>
-        </div>
+                <span class="text-gray-900 font-medium">New Menu</span>
+            </nav>
+        }
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
                 <h1 class="text-3xl font-bold text-gray-900 font-display">@(IsNew ? "Create New Menu" : "Menu Settings")</h1>
@@ -51,7 +48,7 @@
                 <div class="mb-5">
                     <label for="menuName" class="block text-sm font-medium text-gray-700 mb-1">Menu Name</label>
                     <InputText @bind-Value="Menu.Name"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
                                id="menuName" placeholder="Enter menu name" />
                     <ValidationMessage For="@(() => Menu.Name)" class="text-sm text-red-600 mt-1" />
                 </div>
@@ -60,7 +57,7 @@
                 <div class="mb-5">
                     <label for="menuDesc" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
                     <InputText @bind-Value="Menu.Description"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
                                id="menuDesc" placeholder="Enter description" />
                 </div>
 
@@ -75,7 +72,7 @@
                         </SpeiseDirekt3.Components.HelperComp.InfoPopoverComp>
                     </label>
                     <InputSelect @bind-Value="Menu.Language" @bind-Value:after="OnLanguageChanged"
-                                 class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                                 class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
                                  id="languageSelect">
                         @foreach (var language in Enum.GetValues<MenuLanguage>())
                         {
@@ -101,7 +98,7 @@
                         </button>
 
                         <InputSelect @bind-Value="Menu.Theme"
-                                     class="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                                     class="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
                                      id="themeSelect">
                             @foreach (var theme in Enum.GetValues<DesignTheme>())
                             {
@@ -127,7 +124,7 @@
                         Cancel
                     </button>
                     <button type="submit"
-                            class="inline-flex items-center justify-center whitespace-nowrap px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                            class="inline-flex items-center justify-center whitespace-nowrap px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
@@ -153,7 +150,7 @@
                 @if (!IsNew)
                 {
                     <a href="@($"menu/preview/{Id}")" target="_blank" rel="noopener"
-                       class="inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800">
+                       class="inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-brand-600 hover:text-brand-800">
                         Full screen
                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/> <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/></svg>
                     </a>

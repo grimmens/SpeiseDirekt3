@@ -1,154 +1,54 @@
 ﻿@implements IDisposable
-
 @inject NavigationManager NavigationManager
 
-<!-- Brand Header -->
-<div class="flex items-center px-6 py-4 border-b border-blue-800">
-    <a href="" class="flex items-center space-x-3 text-white hover:text-blue-200 transition-colors duration-200">
-        <img src="image/speise-direkt.jpg" alt="Speise-Direkt Logo" class="h-8 w-8 rounded-lg" />
-        <span class="text-xl font-bold font-display">Speise-Direkt</span>
-    </a>
-</div>
-
-
-
-<!-- Navigation Menu -->
-<nav class="flex-1 px-4 py-6 space-y-2">
-    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-             href="" Match="NavLinkMatch.All">
-        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-        Home
-    </NavLink>
-
-    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-             href="menus">
-        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-        </svg>
-        Menus
-    </NavLink>
-
-    <AuthorizeView>
-        <Authorized>
-            <div class="ml-2">
-                <MenuTreeNav />
-            </div>
-        </Authorized>
-    </AuthorizeView>
-
-    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-             href="restaurant">
-        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .414.336.75.75.75z" />
-        </svg>
-        Restaurant
-    </NavLink>
-
-    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-             href="qrcodes">
-        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-        </svg>
-        QR Codes
-    </NavLink>
-
-    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-             href="analytics">
-        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-        </svg>
-        Analytics
-    </NavLink>
-
-    <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-             href="users">
-        <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-        </svg>
-        Team
-    </NavLink>
-
-    <!-- Divider -->
-    <div class="border-t border-blue-800 my-4"></div>
-
-    <!-- User Section -->
-    <AuthorizeView>
-        <Authorized>
-            <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-                     href="Account/Manage" title="@UserTitle(context.User.Identity?.Name)" data-testid="sidebar-user">
-                <svg class="mr-3 h-5 w-5 flex-shrink-0 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span class="min-w-0 flex-1">
-                    <span class="block truncate">@(DisplayName ?? context.User.Identity?.Name)</span>
-                    @if (!string.IsNullOrEmpty(RoleLabel))
+@* The primary navigation (ShellNavigation.Items): the top bar's links from 1024 px (Variant "bar") and the list in
+   the phone drawer (Variant "drawer", with icons). The entry of the current page carries aria-current="page". *@
+<nav class="@(Drawer ? "sd-drawer-nav" : "sd-topnav")" aria-label="@AriaLabel" data-testid="@(Drawer ? "drawer-nav" : "top-nav")">
+    <ul role="list">
+        @foreach (var item in ShellNavigation.Items)
+        {
+            var active = item.Key == section;
+            <li>
+                <a href="@(item.Href.Length == 0 ? "/" : item.Href)"
+                   class="@(Drawer ? "sd-drawer-link" : "sd-topnav-link")"
+                   aria-current="@(active ? "page" : null)"
+                   data-nav="@item.Key">
+                    @if (Drawer)
                     {
-                        <span class="block truncate text-xs font-normal text-blue-300 group-hover:text-blue-100">@RoleLabel</span>
+                        <svg class="sd-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="@item.IconPath" />
+                        </svg>
                     }
-                </span>
-            </NavLink>
-
-            <form action="Account/Logout" method="post" class="mt-2">
-                <AntiforgeryToken />
-                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
-                <button type="submit" class="w-full flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-red-600 hover:text-white transition-all duration-200 group">
-                    <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                </button>
-            </form>
-        </Authorized>
-        <NotAuthorized>
-            <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-                     href="Account/Register">
-                <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                </svg>
-                Register
-            </NavLink>
-
-            <NavLink class="flex items-center px-4 py-3 text-sm font-medium text-blue-100 rounded-lg hover:bg-blue-800 hover:text-white transition-all duration-200 group"
-                     href="Account/Login">
-                <svg class="mr-3 h-5 w-5 text-blue-300 group-hover:text-white transition-colors duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-                Login
-            </NavLink>
-        </NotAuthorized>
-    </AuthorizeView>
+                    <span>@item.Label</span>
+                </a>
+            </li>
+        }
+    </ul>
 </nav>
 
 @code {
-    /// <summary>Display name of a sub-account (<c>TenantUser.DisplayName</c>); the e-mail is shown when null.</summary>
-    [Parameter] public string? DisplayName { get; set; }
+    /// <summary>"bar" (top bar) or "drawer" (phone drawer).</summary>
+    [Parameter] public string Variant { get; set; } = "bar";
 
-    /// <summary>"Owner" or the sub-account's role, shown under the name.</summary>
-    [Parameter] public string? RoleLabel { get; set; }
+    [Parameter] public string AriaLabel { get; set; } = "Main";
 
-    private string? currentUrl;
+    private bool Drawer => Variant == "drawer";
 
-    /// <summary>The full name and e-mail on hover (the sidebar truncates long addresses).</summary>
-    private string? UserTitle(string? email) =>
-        DisplayName is null ? email : $"{DisplayName} ({email})";
+    private string? section;
 
     protected override void OnInitialized()
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        section = ShellNavigation.SectionOf(NavigationManager.ToBaseRelativePath(NavigationManager.Uri));
         NavigationManager.LocationChanged += OnLocationChanged;
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
+        var next = ShellNavigation.SectionOf(NavigationManager.ToBaseRelativePath(e.Location));
+        if (next == section) return;
+        section = next;
+        _ = InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
+    public void Dispose() => NavigationManager.LocationChanged -= OnLocationChanged;
 }
-

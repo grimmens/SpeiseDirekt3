@@ -29,7 +29,7 @@
                             <div class="flex flex-wrap gap-2 lg:flex-shrink-0" data-testid="quick-actions">
                                 @if (d.CanCreateMenu)
                                 {
-                                    <a href="menu/edit" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                                    <a href="menu/edit" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm transition-colors">
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                         </svg>
@@ -62,37 +62,37 @@
 
             <!-- Stat tiles -->
             <div class="grid grid-cols-2 @(d.CanViewAnalytics ? "lg:grid-cols-4" : "lg:grid-cols-3") gap-4 mb-8">
-                <a href="menus" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200" data-testid="stat-menus">
+                <a href="menus" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-menus">
                     <div class="flex items-center gap-3">
-                        <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                             </svg>
                         </span>
                         <div class="min-w-0">
                             <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.MenuCount</div>
-                            <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">Menus</div>
+                            <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Menus</div>
                         </div>
                     </div>
                     <div class="mt-2 text-xs text-gray-400">@Count(d.ItemCount, "item", "items") in total</div>
                 </a>
-                <a href="qrcodes" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200" data-testid="stat-qrcodes">
+                <a href="qrcodes" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-qrcodes">
                     <div class="flex items-center gap-3">
-                        <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                        <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                             </svg>
                         </span>
                         <div class="min-w-0">
                             <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.QrCodeCount</div>
-                            <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">QR codes</div>
+                            <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">QR codes</div>
                         </div>
                     </div>
                     <div class="mt-2 text-xs text-gray-400">For your tables and windows</div>
                 </a>
                 @if (d.CanViewAnalytics)
                 {
-                    <a href="analytics" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200" data-testid="stat-views">
+                    <a href="analytics" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-views">
                         <div class="flex items-center gap-3">
                             <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -102,13 +102,13 @@
                             </span>
                             <div class="min-w-0">
                                 <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.ViewsLast7Days</div>
-                                <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">Menu views</div>
+                                <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Menu views</div>
                             </div>
                         </div>
                         <div class="mt-2 text-xs text-gray-400">Last 7 days</div>
                     </a>
                 }
-                <a href="users" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-blue-300 transition-all duration-200" data-testid="stat-team">
+                <a href="users" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-team">
                     <div class="flex items-center gap-3">
                         <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
                             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -117,7 +117,7 @@
                         </span>
                         <div class="min-w-0">
                             <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.TeamCount</div>
-                            <div class="text-sm text-gray-500 group-hover:text-blue-600 transition-colors">Team members</div>
+                            <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Team members</div>
                         </div>
                     </div>
                     <div class="mt-2 text-xs text-gray-400">Active sub-accounts</div>
@@ -146,7 +146,7 @@
                             {
                                 var isCurrent = step == d.CurrentStep;
                                 <li class="flex items-start gap-4 px-[1rem] sm:px-6 py-4" data-testid="checklist-step" data-step="@step.Number" data-state="@(step.Done ? "done" : "open")">
-                                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold @(step.Done ? "bg-green-100 text-green-700" : isCurrent ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-600")">
+                                    <span class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold @(step.Done ? "bg-green-100 text-green-700" : isCurrent ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-600")">
                                         @if (step.Done)
                                         {
                                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -173,7 +173,7 @@
                                             @if (step.Href is not null)
                                             {
                                                 <a href="@step.Href" data-testid="checklist-action"
-                                                   class="mt-3 inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors @(isCurrent ? "bg-blue-600 hover:bg-blue-700 text-white" : "bg-white border border-gray-300 hover:bg-gray-50 text-gray-700")">
+                                                   class="mt-3 inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors @(isCurrent ? "bg-brand-600 hover:bg-brand-700 text-white" : "bg-white border border-gray-300 hover:bg-gray-50 text-gray-700")">
                                                     @step.ActionLabel
                                                     <span class="ml-1" aria-hidden="true">&rarr;</span>
                                                 </a>
@@ -217,7 +217,7 @@
                 <section class="@(d.ShowChecklist ? "" : "lg:col-span-3") bg-white rounded-xl border border-gray-200 shadow-sm self-start" data-testid="dashboard-menus">
                     <div class="flex items-center justify-between gap-4 px-[1rem] sm:px-6 py-4 border-b border-gray-100">
                         <h2 class="text-lg font-semibold text-gray-900">Your menus</h2>
-                        <a href="menus" class="flex-shrink-0 text-sm font-medium text-blue-600 hover:text-blue-700">All menus <span aria-hidden="true">&rarr;</span></a>
+                        <a href="menus" class="flex-shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700">All menus <span aria-hidden="true">&rarr;</span></a>
                     </div>
                     @if (d.Menus.Count == 0)
                     {
@@ -225,7 +225,7 @@
                             No menus yet.
                             @if (d.CanCreateMenu)
                             {
-                                <a href="menu/edit" class="font-medium text-blue-600 hover:text-blue-700">Create your first menu</a>
+                                <a href="menu/edit" class="font-medium text-brand-600 hover:text-brand-700">Create your first menu</a>
                             }
                         </div>
                     }
@@ -236,12 +236,12 @@
                             {
                                 <li>
                                     <a href="@($"menudetail/{menu.Id}")" data-testid="dashboard-menu"
-                                       class="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-blue-300 hover:bg-blue-50/40 transition-colors">
+                                       class="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-brand-300 hover:bg-brand-50/40 transition-colors">
                                         <div class="min-w-0 flex-1">
-                                            <div class="font-medium text-gray-900 group-hover:text-blue-600 break-words">@menu.Name</div>
+                                            <div class="font-medium text-gray-900 group-hover:text-brand-600 break-words">@menu.Name</div>
                                             <div class="text-sm text-gray-500">@Count(menu.Categories, "category", "categories") &middot; @Count(menu.Items, "item", "items")</div>
                                         </div>
-                                        <svg class="h-4 w-4 flex-shrink-0 text-gray-400 group-hover:text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <svg class="h-4 w-4 flex-shrink-0 text-gray-400 group-hover:text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                                         </svg>
                                     </a>
@@ -261,31 +261,31 @@
 <PageTitle>Home - Speise-Direkt</PageTitle>
 
 <!-- Hero Section -->
-<div class="relative bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 overflow-hidden">
+<div class="relative bg-gradient-to-br from-brand-900 via-brand-800 to-brand-900 overflow-hidden">
     <div class="absolute inset-0 bg-black opacity-20"></div>
     <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
         <div class="text-center">
             <div class="flex justify-center mb-8">
                 <div class="relative">
                     <div class="absolute inset-0 bg-white rounded-full blur-xl opacity-20"></div>
-                    <img src="image/speise-direkt.jpg" alt="Speise-Direkt Logo" class="relative h-24 w-24 rounded-full shadow-2xl" />
+                    <BrandLogo MarkOnly="true" Height="96" Class="relative h-24 w-24" />
                 </div>
             </div>
             <h1 class="text-5xl md:text-6xl font-bold text-white mb-6 font-display">
-                Speise-<span class="text-blue-300">Direkt</span>
+                Speise-<span class="text-brand-300">Direkt</span>
             </h1>
-            <p class="text-xl md:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <p class="text-xl md:text-2xl text-brand-100 mb-8 max-w-3xl mx-auto leading-relaxed">
                 Effortlessly create digital menus and generate QR codes for your restaurant.
                 Give your guests a modern, contactless dining experience.
             </p>
             <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/menus" class="inline-flex items-center px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+                <a href="/menus" class="inline-flex items-center px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
                     Create Menu
                 </a>
-                <a href="/qrcodes" class="inline-flex items-center px-8 py-4 bg-transparent border-2 border-blue-300 text-blue-100 hover:bg-blue-300 hover:text-blue-900 font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
+                <a href="/qrcodes" class="inline-flex items-center px-8 py-4 bg-transparent border-2 border-brand-300 text-brand-100 hover:bg-brand-300 hover:text-brand-900 font-semibold rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-200">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                     </svg>
@@ -296,8 +296,8 @@
     </div>
     <!-- Decorative elements -->
     <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-brand-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-brand-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
     </div>
 </div>
 
@@ -313,7 +313,7 @@
             <!-- Menu Editor Card -->
             <div class="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
                 <div class="p-8">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <div class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                         </svg>
@@ -321,13 +321,13 @@
                     <h3 class="text-2xl font-bold text-gray-900 mb-4">Menu Editor</h3>
                     <p class="text-gray-600 leading-relaxed">An intuitive drag-and-drop editor for creating and customizing your menus with ease. Add items, categories, and descriptions effortlessly.</p>
                 </div>
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                <div class="absolute inset-0 bg-gradient-to-br from-brand-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
             </div>
 
             <!-- QR Code Generator Card -->
             <div class="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100">
                 <div class="p-8">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+                    <div class="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
                         <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                         </svg>
@@ -335,7 +335,7 @@
                     <h3 class="text-2xl font-bold text-gray-900 mb-4">QR Code Generator</h3>
                     <p class="text-gray-600 leading-relaxed">Automated generation and management of QR codes for each menu. Customize designs and track scanning analytics in real-time.</p>
                 </div>
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
+                <div class="absolute inset-0 bg-gradient-to-br from-brand-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"></div>
             </div>
 
             <!-- Contactless Access Card -->

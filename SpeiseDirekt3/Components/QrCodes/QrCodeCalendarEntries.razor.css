@@ -225,7 +225,7 @@
 .sd-cal-button:focus-visible,
 .sd-cal-icon-button:focus-visible,
 .sd-cal-input:focus-visible {
-    outline: 3px solid rgba(59, 130, 246, .55);
+    outline: 3px solid rgb(var(--sd-brand-500) / .55);
     outline-offset: 1px;
 }
 
@@ -251,12 +251,12 @@
 
 .sd-cal-button--primary {
     color: #fff;
-    background: #2563eb;
-    border-color: #2563eb;
+    background: rgb(var(--sd-brand-600));
+    border-color: rgb(var(--sd-brand-600));
 }
 
 .sd-cal-button--primary:hover {
-    background: #1d4ed8;
+    background: rgb(var(--sd-brand-700));
 }
 
 /* Panel: bottom sheet on phones and tablets, side panel from 1024 px */

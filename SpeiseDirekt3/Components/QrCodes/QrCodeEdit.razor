@@ -23,7 +23,7 @@
             <nav class="flex mb-4" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
                     <li class="inline-flex items-center">
-                        <a href="/qrcodes" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                        <a href="/qrcodes" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-brand-600">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                             </svg>
@@ -44,8 +44,8 @@
             <!-- Page Header -->
             <div class="flex items-center">
                 <div class="flex-shrink-0">
-                    <div class="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="h-12 w-12 bg-brand-100 rounded-lg flex items-center justify-center">
+                        <svg class="h-6 w-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                         </svg>
                     </div>
@@ -66,7 +66,7 @@
             @* Interactive render before the QR code is loaded: no form yet, so nothing typed or clicked in a
                throw-away form is lost when the real one replaces it *@
             <div class="flex items-center justify-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
                 <span class="ml-3 text-gray-600">Loading QR code...</span>
             </div>
         }
@@ -78,7 +78,7 @@
 
             @if (readOnly)
             {
-                <div class="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg px-3.5 py-2.5 text-sm" role="status" data-testid="qr-readonly-notice">
+                <div class="bg-brand-50 border border-brand-200 text-brand-800 rounded-lg px-3.5 py-2.5 text-sm" role="status" data-testid="qr-readonly-notice">
                     You can view this QR code but not change it: your account has no permission to edit QR codes.
                 </div>
             }
@@ -97,7 +97,7 @@
                     </div>
                     <InputText @bind-Value="Item.Title"
                                id="qrTitle"
-                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
                                placeholder="Enter a descriptive title for your QR code" />
                 </div>
                 <ValidationMessage For="@(() => Item.Title)" class="mt-1 text-sm text-red-600" />
@@ -111,7 +111,7 @@
                     <InputRadioGroup Name="displayMode" TValue="DisplayMode" Value="mode" ValueChanged="OnModeChanged" ValueExpression="() => mode" class="space-y-4">
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
-                                <InputRadio id="simple" name="displayMode" Value="DisplayMode.Direct" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
+                                <InputRadio id="simple" name="displayMode" Value="DisplayMode.Direct" class="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300" />
                             </div>
                             <div class="ml-3">
                                 <label for="simple" class="font-medium text-gray-900 cursor-pointer">Simple Menu</label>
@@ -120,7 +120,7 @@
                         </div>
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
-                                <InputRadio id="timetable" name="displayMode" Value="DisplayMode.Schedule" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
+                                <InputRadio id="timetable" name="displayMode" Value="DisplayMode.Schedule" class="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300" />
                             </div>
                             <div class="ml-3">
                                 <label for="timetable" class="font-medium text-gray-900 cursor-pointer">Schedule-based Menu</label>
@@ -129,7 +129,7 @@
                         </div>
                         <div class="flex items-start">
                             <div class="flex items-center h-5">
-                                <InputRadio id="calendar" name="displayMode" Value="DisplayMode.Calendar" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300" />
+                                <InputRadio id="calendar" name="displayMode" Value="DisplayMode.Calendar" class="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300" />
                             </div>
                             <div class="ml-3">
                                 <label for="calendar" class="font-medium text-gray-900 cursor-pointer">Calendar-based Menu</label>
@@ -153,7 +153,7 @@
                             </svg>
                         </div>
                         <InputSelect @bind-Value="Item.MenuId" id="menuSelect" disabled="@readOnly"
-                                     class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                                     class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200">
                             <option value="">-- Select a Menu --</option>
                             @foreach (var m in menus)
                             {
@@ -202,7 +202,7 @@
                     <div>
                         <label for="fallbackMenuSelect" class="block text-sm font-medium text-gray-700 mb-2">Fallback Menu</label>
                         <InputSelect @bind-Value="Item.MenuId" id="fallbackMenuSelect" disabled="@readOnly"
-                                     class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200">
+                                     class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200">
                             <option value="">-- No menu --</option>
                             @foreach (var m in menus)
                             {
@@ -238,7 +238,7 @@
             <!-- Action Buttons -->
             <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-x-4 gap-y-3 pt-6 border-t border-gray-200">
                 <button type="button"
-                        class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                        class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 rounded-lg shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors duration-200"
                         @onclick="Cancel">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -248,7 +248,7 @@
                 @if (!readOnly)
                 {
                 <button type="submit"
-                        class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        class="inline-flex items-center justify-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
