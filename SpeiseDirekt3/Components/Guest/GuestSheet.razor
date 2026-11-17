@@ -1,7 +1,9 @@
 @* Generic sheet: a native <dialog data-sheet="name">. guest-menu.js opens it with showModal() (focus moves in,
    background inert, Escape/backdrop/back button close it, focus returns to the opener). On narrow viewports it
    slides up from the bottom (rounded top corners, grab handle; the handle and the header band drag it down, the
-   header's buttons stay taps), from 768 px it is a centered dialog.
+   header's buttons stay taps), from 768 px it is a centered dialog. Class="gm-sheet--full" makes it a full-screen panel
+   on phones instead (anchored to the top, sized to the area above the keyboard, fades in, no drag): for a sheet whose
+   text field takes the focus when it opens (the search sheet).
    Open it from markup with <button data-sheet-open="name">, or from JS with openSheet("name").
    [data-sheet-close] inside closes it. Rendered closed; the server cannot open it (needs JS) — except the item
    sheet, see GuestItemSheet. *@

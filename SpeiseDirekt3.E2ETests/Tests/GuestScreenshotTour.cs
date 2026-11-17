@@ -344,7 +344,7 @@ public class GuestScreenshotTour : BackOfficeTestBase
     }
 
     /// <summary>
-    /// AP4: search with highlighted results, the filter sheet, the filtered menu with its notice, hearts on cards and
+    /// AP4: search (AP8: also the empty field and no results) with highlighted results, the filter sheet, the filtered menu with its notice, hearts on cards and
     /// rows, the floating button and the favourites list with a variant select and the sum — modern, classic and dark,
     /// phone and desktop. Leaves favourites in the desktop context of the modern menu, so the editor shots show the
     /// hearts and the floating button inside the phone frame.
@@ -363,8 +363,11 @@ public class GuestScreenshotTour : BackOfficeTestBase
                 await OpenGuestPageAsync(page, $"/menu/{seeded.MenuId}");
 
                 await page.GetByTestId("search-button").ClickAsync();
+                await shot(page, $"{name}-search-empty", false);         // AP8: full-screen on the phone, the field on top
                 await page.GetByTestId("search-sheet").Locator("input").FillAsync("tomate");
                 await shot(page, $"{name}-search-highlight", false);
+                await page.GetByTestId("search-sheet").Locator("input").FillAsync("xyz");
+                await shot(page, $"{name}-search-none", false);
                 await page.GetByTestId("search-sheet").GetByRole(AriaRole.Button, new() { Name = "Schließen" }).ClickAsync();
                 await Assertions.Expect(page.GetByTestId("search-sheet")).ToBeHiddenAsync();
 

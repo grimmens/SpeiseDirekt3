@@ -3,17 +3,22 @@
    description and the price. data-search-text holds what is searched (name, description, category, the texts of every
    label the item matches — GuestFilters.SearchText); the script shows the rows containing every word of the query
    (case and accents ignored), wraps the matched words of the [data-hl] parts in <mark> (built with DOM nodes, never
-   innerHTML) and hides rows the active filter excludes (the note below says so). A result is a normal item link. *@
-<GuestSheet Name="search" Title="@T.Search" TestId="search-sheet" Class="gm-sheet--search">
+   innerHTML) and hides rows the active filter excludes (the note below says so). A result is a normal item link.
+   Unlike the other sheets it is a full-screen panel on phones (gm-sheet--full, see guest-menu.css/guest-menu.js): the
+   field takes the focus inside the tap and the keyboard opens, which a sliding bottom sheet did not survive on iPhones.
+   The field (in .gm-search-bar) stays at the top while the results scroll. *@
+<GuestSheet Name="search" Title="@T.Search" TestId="search-sheet" Class="gm-sheet--search gm-sheet--full">
     <div class="gm-search" data-search>
         <label class="gm-visually-hidden" for="gm-search-input">@T.SearchLabel</label>
-        <div class="gm-search-field">
-            <GuestIcon Name="search" />
-            <input id="gm-search-input" class="gm-search-input" type="search" autocomplete="off" autocapitalize="off"
-                   spellcheck="false" enterkeyhint="search" placeholder="@T.SearchPlaceholder" data-search-input autofocus />
-            <button type="button" class="gm-search-clear" data-search-clear aria-label="@T.ClearSearch" hidden>
-                <GuestIcon Name="close" />
-            </button>
+        <div class="gm-search-bar">
+            <div class="gm-search-field">
+                <GuestIcon Name="search" />
+                <input id="gm-search-input" class="gm-search-input" type="search" autocomplete="off" autocapitalize="off"
+                       spellcheck="false" enterkeyhint="search" placeholder="@T.SearchPlaceholder" data-search-input autofocus />
+                <button type="button" class="gm-search-clear" data-search-clear aria-label="@T.ClearSearch" hidden>
+                    <GuestIcon Name="close" />
+                </button>
+            </div>
         </div>
         <p class="gm-search-status" data-search-status role="status" aria-live="polite"></p>
         <p class="gm-search-filter-note" data-search-filter-note data-testid="search-filter-note" hidden>

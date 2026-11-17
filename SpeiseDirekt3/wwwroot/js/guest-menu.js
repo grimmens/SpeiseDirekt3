@@ -7,7 +7,10 @@
  * This module only enhances the page:
  *   - sheets: native <dialog data-sheet="name">, bottom sheet on phones, centered dialog from 768 px;
  *     Escape, backdrop tap and the back button close them; focus moves in and back to the opener; on phones the
- *     grab handle and the header band drag the sheet down (closes beyond 25 % of its height or on a flick)
+ *     grab handle and the header band drag the sheet down (closes beyond 25 % of its height or on a flick); the page
+ *     keeps its scroll position (a sheet's close puts it back if something moved it)
+ *   - full-screen sheets on phones (.gm-sheet--full, the search sheet): anchored to the top, sized to the visual
+ *     viewport (the area above the keyboard), no drag, the page behind cannot be scrolled
  *   - item sheet: clones <template data-item-template="<id>"> (server markup) into the item sheet,
  *     updates the URL (?item=<id>) and records the click
  *   - category bar: scroll-spy (IntersectionObserver), active chip scrolls into view, smooth jumps with an explicit
@@ -26,8 +29,10 @@
  *                                     root's data-guest-strings): German menus German, all others English; {name}
  *                                     placeholders are replaced from values. Modules never hard-code UI text.
  *   ctx.formatPrice(cents)            "€ 9,90" / "€9.90" — the server's notation (prefix, separators from the JSON)
- *   registerSheet(name, hooks)        hooks.onOpen(dialog, detail) / hooks.onClose(dialog) for
- *                                     <dialog data-sheet="name">. Any dialog[data-sheet] is a sheet anyway.
+ *   registerSheet(name, hooks)        hooks.onOpen(dialog, detail) before it is shown, hooks.onShown(dialog, detail)
+ *                                     right after showModal() — still inside the tap, so a focus there opens the iOS
+ *                                     keyboard —, hooks.onClose(dialog) once it is closed, for <dialog data-sheet="name">.
+ *                                     Any dialog[data-sheet] is a sheet anyway.
  *   openSheet(name, options)          options: { opener, history = true, detail }
  *   closeSheet(name?, then?, opts)    closes (via history.back() if the sheet pushed an entry), then calls then() once
  *                                     the close animation has ended; opts.restoreFocus = false leaves the focus to then()
@@ -96,7 +101,9 @@ const state = {
     revealActiveChip: () => {},
     refreshCategoryNav: () => {},
     heldCategory: null,         // a jump target stays active until the guest scrolls by hand
-    jump: null                  // the running category jump: { section, stop() }
+    jump: null,                 // the running category jump: { section, stop() }
+    lockedScroll: null,         // the page's scroll position while a sheet is open: { x, y }
+    viewport: null              // the full-screen sheet that follows the visual viewport: { dialog, stop() }
 };
 
 // --- Public API --------------------------------------------------------------------------------------
@@ -108,7 +115,7 @@ export function registerBehavior(name, init) {
     if (state.ready) runBehavior(behavior);
 }
 
-/** Adds hooks to a sheet: { onOpen(dialog, detail), onClose(dialog) }. */
+/** Adds hooks to a sheet: { onOpen(dialog, detail), onShown(dialog, detail), onClose(dialog) }. */
 export function registerSheet(name, hooks = {}) {
     const sheet = state.sheets.get(name);
     if (sheet) Object.assign(sheet.hooks, hooks);
@@ -138,9 +145,13 @@ export function openSheet(name, { opener = document.activeElement, history: useH
     sheet.dialog.classList.remove('is-closing', 'is-dragging', 'is-settling');
     resetDragStyle(sheet.dialog);
     state.closing.delete(name);
-    if (!sheet.dialog.open) sheet.dialog.showModal();
+    // Before showModal(): its focus (autofocus) may already make iOS scroll the page, and a full-screen sheet must be at
+    // its final place and size when its field takes the focus
     lockScroll(true);
+    if (isFullSheet(sheet.dialog)) followViewport(sheet.dialog);
+    if (!sheet.dialog.open) sheet.dialog.showModal();
     state.openName = name;
+    sheet.hooks.onShown?.(sheet.dialog, detail);
 
     if (useHistory) {
         const entry = { gm: { sheet: name, item: detail?.itemId ?? null } };
@@ -331,6 +342,7 @@ function setUpSheets(root) {
         // (the event is async: ignore it when the dialog is open again, e.g. the deep link conversion below)
         dialog.addEventListener('close', () => { if (state.openName === name && !dialog.open) closeSheet(name); });
         setUpSheetDrag(dialog, name);
+        if (isFullSheet(dialog)) guardFullSheetTouch(dialog);
     }
 
     window.addEventListener('popstate', onPopState);
@@ -398,6 +410,7 @@ function closeNow(name, { restoreFocus, animate }) {
     if (state.openName === name) state.openName = null;
     if (name === 'item') state.openItemId = null;
     sheet.pushed = false;
+    const scroll = state.lockedScroll;
     lockScroll(false);
     const opener = sheet.opener;
     sheet.opener = null;
@@ -408,8 +421,12 @@ function closeNow(name, { restoreFocus, animate }) {
         dialog.classList.remove('is-closing');
         if (state.openName === name) return;     // reopened while the close animation ran
         resetDragStyle(dialog);
+        if (state.viewport?.dialog === dialog) stopFollowingViewport();
         if (dialog.open) dialog.close();
         sheet.hooks.onClose?.(dialog);
+        // Once more now that the dialog is gone (e.g. the keyboard went down meanwhile); before the focus moves back
+        // (a deep-linked item continues at its card) and before then() (a category jump wins)
+        if (!state.openName && scroll) restoreScroll(scroll);
         // After close(): while the modal dialog is open the rest of the page is inert and cannot take focus
         if (restoreFocus) restoreFocusAfterClose(name, dialog, opener);
         runPendingAfterClose();
@@ -451,6 +468,7 @@ function restoreFocusAfterClose(name, dialog, opener) {
 // Pointer events with capture (touch and mouse); only in bottom-sheet mode (< 768 px).
 
 function setUpSheetDrag(dialog, name) {
+    if (isFullSheet(dialog)) return;     // fills the screen on phones: no edge to pull (see the section below)
     const panel = dialog.querySelector('.gm-sheet-panel');
     const zones = [dialog.querySelector('.gm-sheet-handle'), dialog.querySelector('.gm-sheet-head')].filter(Boolean);
     if (!panel || zones.length === 0) return;
@@ -538,10 +556,81 @@ function fillItemSheet(dialog, itemId, template) {
     if (close) close.setAttribute('href', urlWithoutItem());
 }
 
-let lockCount = 0;
+// --- Sheets: full-screen on phones (.gm-sheet--full) ---------------------------------------------------------------
+// Why the search sheet differs from the others: its field takes the focus when it opens (inside the tap, so iOS opens
+// the keyboard), and iOS then scrolls whatever it must to reveal the focused field. The keyboard shrinks only the
+// visual viewport; position: fixed and dvh keep referring to the full layout viewport. As a sliding bottom sheet the
+// search panel was still below the screen (transform) when its field got the focus; on the operator's iPhone the page
+// behind then showed its end above the keyboard and the panel was off-screen (Nov 2026). A full sheet is anchored to
+// the top and fades in (guest-menu.css), so its field is at its final place when it gets the focus, and it follows the
+// visual viewport while it is open: --gm-vv-top/--gm-vv-height = the visible area above the keyboard, so the results
+// end at the keyboard and nothing of the page shows. A touch that could only scroll the page behind it is cancelled.
+// No drag to close (a panel that fills the screen has no edge to pull). From 768 px it is a centered dialog like the
+// others (the CSS ignores the variables there). window.visualViewport is read when the sheet opens, so a test can
+// replace it with a stand-in to simulate a keyboard.
+
+function isFullSheet(dialog) {
+    return dialog.classList.contains('gm-sheet--full');
+}
+
+function followViewport(dialog) {
+    stopFollowingViewport();
+    const vv = window.visualViewport;
+    if (!vv) return;        // the CSS fallback: the full layout viewport
+    const fit = () => {
+        // Pinch-zoomed: the visual viewport is a magnified part of the page, not the free area — keep the CSS size
+        if (Math.abs((vv.scale || 1) - 1) > 0.01) { clearViewportStyle(dialog); return; }
+        dialog.style.setProperty('--gm-vv-top', `${Math.max(0, vv.offsetTop)}px`);
+        dialog.style.setProperty('--gm-vv-height', `${vv.height}px`);
+    };
+    vv.addEventListener('resize', fit);
+    vv.addEventListener('scroll', fit);
+    state.viewport = {
+        dialog,
+        stop() {
+            vv.removeEventListener('resize', fit);
+            vv.removeEventListener('scroll', fit);
+            clearViewportStyle(dialog);
+        }
+    };
+    fit();
+}
+
+function stopFollowingViewport() {
+    state.viewport?.stop();
+    state.viewport = null;
+}
+
+function clearViewportStyle(dialog) {
+    dialog.style.removeProperty('--gm-vv-top');
+    dialog.style.removeProperty('--gm-vv-height');
+}
+
+/** Full sheets on phones: a one-finger move that cannot scroll the sheet body would scroll or pan the page behind. */
+function guardFullSheetTouch(dialog) {
+    dialog.addEventListener('touchmove', e => {
+        if (centeredSheets.matches || !e.cancelable || e.touches.length > 1) return;     // pinch zoom stays possible
+        const target = e.target instanceof Element ? e.target : null;
+        if (target?.closest('input, textarea, select')) return;                          // caret and selection
+        const body = target?.closest('[data-sheet-body]');
+        if (body && body.scrollHeight > body.clientHeight + 1) return;   // the results scroll (overscroll-behavior: contain)
+        e.preventDefault();
+    }, { passive: false });
+}
+
+// One sheet at a time. While it is open <html> does not scroll (gm-locked) and the page's position is remembered:
+// something may still move the page behind a sheet (iOS scrolls it to reveal a focused field), the close puts it back.
 function lockScroll(lock) {
-    lockCount = lock ? 1 : 0;   // one sheet at a time
-    document.documentElement.classList.toggle('gm-locked', lockCount > 0);
+    if (lock && !state.lockedScroll) state.lockedScroll = { x: window.scrollX, y: window.scrollY };
+    if (!lock && state.lockedScroll) {
+        restoreScroll(state.lockedScroll);
+        state.lockedScroll = null;
+    }
+    document.documentElement.classList.toggle('gm-locked', lock);
+}
+
+function restoreScroll({ x, y }) {
+    if (Math.abs(window.scrollX - x) > 1 || Math.abs(window.scrollY - y) > 1) window.scrollTo({ left: x, top: y, behavior: 'auto' });
 }
 
 // --- Clicks (delegated) ------------------------------------------------------------------------------
