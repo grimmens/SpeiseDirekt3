@@ -47,7 +47,7 @@ public class LocalAssetsTests : QrCalendarTestBase
         // None of the back-office assets
         local.Should().NotContain(p => p.Contains("bootstrap") || p.Contains("chartjs") || p.Contains("speise.js")
             || p.Contains("analytics") || p.Contains("blazor.web") || p.Contains("tailwind") || p.Contains("app.css")
-            || p.Contains("fullcalendar"));
+            || p.Contains("fullcalendar") || p.Contains("shell.") || p.Contains("brand.css"));
         local.Should().Contain(p => p.StartsWith("/css/guest-menu")).And.Contain(p => p.StartsWith("/css/guest-themes"))
             .And.Contain(p => p.StartsWith("/js/guest-menu"));
         await Assertions.Expect(Page.Locator("script[src*='tailwindcss'], link[href*='bootstrap']")).ToHaveCountAsync(0);

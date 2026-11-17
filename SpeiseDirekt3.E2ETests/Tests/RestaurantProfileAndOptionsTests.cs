@@ -52,9 +52,9 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         var email = await RegisterNewOwnerAsync();
         var ownerId = await OwnerIdAsync(email);
 
-        // Sidebar entry next to Menus / QR codes
+        // Top navigation entry next to Menus / QR codes
         await GotoInteractiveAsync("/");
-        await Page.GetByRole(AriaRole.Link, new() { Name = "Restaurant", Exact = true }).First.ClickAsync();
+        await Page.GetByTestId("top-nav").GetByRole(AriaRole.Link, new() { Name = "Restaurant", Exact = true }).ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/restaurant$"));
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Restaurant profile" })).ToBeVisibleAsync();
         await Assertions.Expect(Page.GetByTestId("profile-not-saved")).ToBeVisibleAsync();

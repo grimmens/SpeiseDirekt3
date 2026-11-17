@@ -33,7 +33,7 @@ public abstract class BackOfficeTestBase : E2ETestBase
         return ExtractGuid((await link.GetAttributeAsync("href"))!);
     }
 
-    /// <summary>The menu card on <c>/menus</c> (the sidebar tree links to the same URL, but without an <c>h3</c>).</summary>
+    /// <summary>The menu card on <c>/menus</c> (other links to the menu, e.g. the menu switcher's, have no <c>h3</c>).</summary>
     protected static ILocator MenuCardLink(IPage page, string menuName) =>
         page.Locator("a[href^='menudetail/']", new() { Has = page.Locator("h3", new() { HasTextString = menuName }) });
 

@@ -97,14 +97,16 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
     }
 
     [Fact]
-    public async Task CategoriesPage_HasCompactLinks_AndNoPlaceholderCard()
+    public async Task CategoriesPage_LinksToItemsAllergensAndCombos_AndHasNoPlaceholderCard()
     {
         await RegisterNewOwnerAsync();
         var menuId = await CreateMenuViaUiAsync("Links Menü");
         await CreateCategoryViaUiAsync(menuId, "Suppen");
 
-        var links = Page.GetByTestId("category-links");
-        await Assertions.Expect(links.GetByRole(AriaRole.Link, new() { Name = "Menu items" })).ToHaveAttributeAsync("href", $"/MenuItems/{menuId}");
+        // The links are the tabs of the menu context bar (the page's own link row is gone)
+        await Assertions.Expect(Page.GetByTestId("category-links")).ToHaveCountAsync(0);
+        var links = Page.GetByTestId("menu-tabs");
+        await Assertions.Expect(links.GetByRole(AriaRole.Link, new() { Name = "Items" })).ToHaveAttributeAsync("href", $"/MenuItems/{menuId}");
         await Assertions.Expect(links.GetByRole(AriaRole.Link, new() { Name = "Allergens" })).ToHaveAttributeAsync("href", $"/allergens/{menuId}");
         await Assertions.Expect(links.GetByRole(AriaRole.Link, new() { Name = "Combos" })).ToHaveAttributeAsync("href", $"/combos/{menuId}");
         await Assertions.Expect(Page.GetByText("Show something useful here")).ToHaveCountAsync(0);

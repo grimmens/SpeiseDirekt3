@@ -225,7 +225,16 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         return Guid.Parse((await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.SingleAsync(db.Users, u => u.Email == email)).Id);
     }
 
-    /// <summary>Logs out via the sidebar's logout form.</summary>
-    protected static Task LogoutAsync(IPage page) =>
-        WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Logout" }).First.ClickAsync());
+    /// <summary>
+    /// Logs out with the logout form of the top bar's user menu (from 1024 px) or of the navigation drawer (narrower).
+    /// </summary>
+    protected static async Task LogoutAsync(IPage page)
+    {
+        var userMenu = page.GetByTestId("user-menu-button");
+        if (await userMenu.IsVisibleAsync())
+            await userMenu.ClickAsync();
+        else
+            await page.GetByTestId("nav-drawer-button").ClickAsync();
+        await WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Log out", Exact = true }).ClickAsync());
+    }
 }

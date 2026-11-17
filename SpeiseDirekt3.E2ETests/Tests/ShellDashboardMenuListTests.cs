@@ -11,7 +11,8 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
 /// Back-office shell (package P1): the dashboard on <c>/</c> with its getting-started checklist, the menu
-/// cards on <c>/menus</c>, the menu delete confirmation, the QR code tile on <c>/menudetail</c> and the sidebar.
+/// cards on <c>/menus</c>, the menu delete confirmation, the QR code tile on <c>/menudetail</c> and the user shown in the
+/// chrome (the navigation itself: <see cref="BackOfficeNavigationTests"/>).
 /// </summary>
 public class ShellDashboardMenuListTests : BackOfficeTestBase
 {
@@ -320,9 +321,11 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
         await Assertions.Expect(tile).ToContainTextAsync("2");
         await Assertions.Expect(tile).ToContainTextAsync("1 direct, 1 via schedule");
 
+        // Once, in the menu context bar (the header card no longer repeats it)
         var main = Page.Locator("main");
         await Assertions.Expect(main.GetByRole(AriaRole.Link, new() { Name = "Preview" })).ToHaveCountAsync(1);
-        await Assertions.Expect(main.GetByRole(AriaRole.Link, new() { Name = "Preview" })).ToHaveAttributeAsync("href", $"menu/preview/{menu.Id}");
+        await Assertions.Expect(main.GetByRole(AriaRole.Link, new() { Name = "Preview" })).ToHaveAttributeAsync("href", $"/menu/preview/{menu.Id}");
+        await Assertions.Expect(Page.GetByTestId("menu-context").GetByRole(AriaRole.Link, new() { Name = "Preview" })).ToHaveCountAsync(1);
 
         await tile.ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
@@ -338,15 +341,15 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
         await Assertions.Expect(Page.GetByText("Loading...")).ToHaveCountAsync(0);
     }
 
-    // --- Sidebar ---
+    // --- The user in the chrome ---
 
     [Fact]
-    public async Task Sidebar_HasNoDebugLink_AndShowsTheOwnerWithTitle()
+    public async Task UserMenu_HasNoDebugLink_AndShowsTheOwnerWithTitle()
     {
         var (email, _) = await RegisterOwnerAsync();
         await GotoInteractiveAsync("/menus");
 
-        var user = Page.GetByTestId("sidebar-user").First;
+        var user = Page.GetByTestId("user-menu-button");
         await Assertions.Expect(user).ToHaveAttributeAsync("title", email);
         await Assertions.Expect(user).ToContainTextAsync(email);
         await Assertions.Expect(user).ToContainTextAsync("Owner");
@@ -358,7 +361,7 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
     }
 
     [Fact]
-    public async Task Sidebar_AndDashboard_ShowTheDisplayNameOfASubAccount()
+    public async Task UserMenu_AndDashboard_ShowTheDisplayNameOfASubAccount()
     {
         var (_, ownerId) = await RegisterOwnerAsync();
         var subEmail = UniqueEmail("kellner");
@@ -383,36 +386,38 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
         await LogoutAsync(Page);
         await LoginAsync(Page, subEmail);
 
-        var user = Page.GetByTestId("sidebar-user").First;
+        var user = Page.GetByTestId("user-menu-button");
         await Assertions.Expect(user).ToContainTextAsync("Max Kellner");
         await Assertions.Expect(user).ToContainTextAsync("Manager");
         await Assertions.Expect(user).ToHaveAttributeAsync("title", $"Max Kellner ({subEmail})");
+        await Assertions.Expect(user.Locator(".sd-avatar")).ToHaveTextAsync("MK");
+        // The opened menu adds the e-mail
+        await user.ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("user-menu")).ToContainTextAsync(subEmail);
+        await Assertions.Expect(Page.GetByTestId("user-menu")).ToContainTextAsync("Manager");
         await Assertions.Expect(Page.GetByTestId("dashboard-user")).ToHaveTextAsync("Max Kellner");
     }
 
     [Fact]
-    public async Task PhoneSidebar_StaysOpenWhileBrowsingTheTree_AndClosesWhenALinkIsFollowed()
+    public async Task PhoneDrawer_ShowsTheUser_AndClosesWhenALinkIsFollowed()
     {
-        var (_, ownerId) = await RegisterOwnerAsync();
+        var (email, ownerId) = await RegisterOwnerAsync();
         var menu = NewMenu("Handykarte");
         await App.SeedAsync(ownerId, db => { db.Menus.Add(menu); return Task.CompletedTask; });
 
         await Page.SetViewportSizeAsync(390, 844);
-        await GotoInteractiveAsync("/menus");
+        await GotoInteractiveAsync($"/menudetail/{menu.Id}");
 
-        var overlay = Page.Locator("#mobile-sidebar");
-        await Assertions.Expect(overlay).ToBeHiddenAsync();
-        await Page.GetByRole(AriaRole.Button, new() { Name = "Open sidebar" }).ClickAsync();
-        await Assertions.Expect(overlay).ToBeVisibleAsync();
+        var drawer = Page.Locator("dialog[data-testid='nav-drawer']");
+        await Assertions.Expect(drawer).ToBeHiddenAsync();
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Open navigation" }).ClickAsync();
+        await Assertions.Expect(drawer).ToBeVisibleAsync();
+        await Assertions.Expect(drawer.GetByTestId("drawer-user")).ToContainTextAsync(email);
+        await Assertions.Expect(drawer.GetByTestId("drawer-user")).ToContainTextAsync("Owner");
 
-        // Expanding a menu in the tree is not a navigation: the overlay stays
-        var node = overlay.Locator("div.flex.items-center", new() { Has = Page.Locator($"a[href='menudetail/{menu.Id}']") });
-        await node.Locator("button").ClickAsync();
-        await Assertions.Expect(overlay.Locator($"a[href='categories/{menu.Id}']")).ToBeVisibleAsync();
-        await Assertions.Expect(overlay).ToBeVisibleAsync();
-
-        await overlay.GetByRole(AriaRole.Link, new() { Name = "QR Codes", Exact = true }).ClickAsync();
+        // The menu's own pages are the context bar's tabs now (they replace the sidebar's menu tree)
+        await drawer.GetByRole(AriaRole.Link, new() { Name = "QR Codes", Exact = true }).ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
-        await Assertions.Expect(overlay).ToBeHiddenAsync();
+        await Assertions.Expect(drawer).ToBeHiddenAsync();
     }
 }

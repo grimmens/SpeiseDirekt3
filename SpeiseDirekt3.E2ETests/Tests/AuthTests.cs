@@ -9,7 +9,16 @@ public class AuthTests : E2ETestBase
 {
     public AuthTests(E2EFixture fixture) : base(fixture) { }
 
-    private ILocator LogoutButton => Page.GetByRole(AriaRole.Button, new() { Name = "Logout" });
+    private ILocator LogoutButton => Page.GetByRole(AriaRole.Button, new() { Name = "Log out", Exact = true });
+
+    /// <summary>The top bar's user menu shows the account; opened, it offers "Log out".</summary>
+    private async Task ExpectSignedInAsync(string email)
+    {
+        var userMenu = Page.GetByTestId("user-menu-button");
+        await Assertions.Expect(userMenu).ToContainTextAsync(email);
+        await userMenu.ClickAsync();
+        await Assertions.Expect(LogoutButton).ToBeVisibleAsync();
+    }
 
     [Fact]
     public async Task Register_SignsInNewAccount()
@@ -18,7 +27,7 @@ public class AuthTests : E2ETestBase
 
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"^{Regex.Escape(App.ServerAddress)}/?$"));
         await Assertions.Expect(Page.GetByText(email).First).ToBeVisibleAsync();
-        await Assertions.Expect(LogoutButton.First).ToBeVisibleAsync();
+        await ExpectSignedInAsync(email);
     }
 
     [Fact]
@@ -40,12 +49,13 @@ public class AuthTests : E2ETestBase
         var email = await RegisterNewOwnerAsync();
 
         await LogoutAsync(Page);
-        await Assertions.Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Login" }).First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Link, new() { Name = "Log in", Exact = true })).ToBeVisibleAsync();
         await Assertions.Expect(LogoutButton).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByTestId("user-menu-button")).ToHaveCountAsync(0);
 
         await LoginAsync(Page, email);
         await Assertions.Expect(Page.GetByText(email).First).ToBeVisibleAsync();
-        await Assertions.Expect(LogoutButton.First).ToBeVisibleAsync();
+        await ExpectSignedInAsync(email);
     }
 
     [Fact]

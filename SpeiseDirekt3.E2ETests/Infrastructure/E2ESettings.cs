@@ -15,7 +15,8 @@ public static class E2ESettings
 
     /// <summary>
     /// Minimal stand-in for the Tailwind display utilities the app uses to show/hide elements
-    /// (modals use <c>hidden</c>, the sidebar <c>hidden lg:flex</c>, tables <c>xl:block</c> …).
+    /// (modals use <c>hidden</c>, tables <c>xl:block</c> …). The chrome (top bar, drawer, menu context bar) does not
+    /// need it: css/shell.css is local.
     /// Only applied when the CDN is blocked, so visibility in the tests matches the real app.
     /// Icons are capped in size (Tailwind's <c>w-*</c>/<c>h-*</c> are missing, unsized SVGs would fill the page).
     /// </summary>

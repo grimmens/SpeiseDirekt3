@@ -230,16 +230,18 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
     // --- Allergen list: links, usage, delete ---
 
     [Fact]
-    public async Task AllergensPage_HasCompactLinksInsteadOfNavigationCards()
+    public async Task AllergensPage_LinksToTheOtherMenuPages_InsteadOfNavigationCards()
     {
         var ownerId = await RegisterOwnerAsync();
         var menuId = await SeedMenuAsync(ownerId, "Links P4");
 
         await GotoInteractiveAsync($"/allergens/{menuId}");
 
-        var links = Page.GetByTestId("allergen-related-links");
+        // The links are the tabs of the menu context bar (the page's own link row is gone)
+        await Assertions.Expect(Page.GetByTestId("allergen-related-links")).ToHaveCountAsync(0);
+        var links = Page.GetByTestId("menu-tabs");
         await Assertions.Expect(links.GetByRole(AriaRole.Link, new() { Name = "Categories" })).ToHaveAttributeAsync("href", $"/Categories/{menuId}");
-        await Assertions.Expect(links.GetByRole(AriaRole.Link, new() { Name = "Menu items" })).ToHaveAttributeAsync("href", $"/MenuItems/{menuId}");
+        await Assertions.Expect(links.GetByRole(AriaRole.Link, new() { Name = "Items" })).ToHaveAttributeAsync("href", $"/MenuItems/{menuId}");
         await Assertions.Expect(links.GetByRole(AriaRole.Link, new() { Name = "Combos" })).ToHaveAttributeAsync("href", $"/combos/{menuId}");
         await Assertions.Expect(Page.GetByText("Manage Categories")).ToHaveCountAsync(0);
         await Assertions.Expect(Page.GetByText("Manage Menu Items")).ToHaveCountAsync(0);

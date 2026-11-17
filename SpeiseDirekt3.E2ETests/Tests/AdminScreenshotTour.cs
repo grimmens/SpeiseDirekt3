@@ -70,6 +70,27 @@ public class AdminScreenshotTour : QrCalendarTestBase
             await phone.ScreenshotAsync(new() { Path = Path.Combine(dir, $"guest-{theme.ToString().ToLowerInvariant()}.png"), FullPage = true });
         }
 
+        // No page may scroll sideways on a phone: every back-office page at 360 and 390 px, written to phone-overflow.txt
+        await CheckPhoneOverflowAsync(state, dir, seeded);
+
+        // Anonymous visitors: the Identity pages with the anonymous header, desktop and phone
+        foreach (var (prefix, width, height) in new[] { ("desktop", 1280, 900), ("phone", 390, 844) })
+        {
+            await using var anonymous = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                BaseURL = App.ServerAddress,
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                DeviceScaleFactor = prefix == "phone" ? 2 : 1
+            });
+            var anon = await anonymous.NewPageAsync();
+            foreach (var (name, url) in new[] { ("account-login", "/Account/Login"), ("account-register", "/Account/Register") })
+            {
+                await anon.GotoAsync(url);
+                await SettleAsync(anon);
+                await anon.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-{name}.png"), FullPage = true });
+            }
+        }
+
         // Empty tenant (first-run experience)
         var (emptyContext, emptyPage) = await NewContextAsync();
         await using (emptyContext)
@@ -82,6 +103,45 @@ public class AdminScreenshotTour : QrCalendarTestBase
                 await emptyPage.ScreenshotAsync(new() { Path = Path.Combine(dir, $"desktop-empty-{name}.png"), FullPage = true });
             }
         }
+    }
+
+    /// <summary>
+    /// Loads every back-office page at 360 and 390 px (Tailwind from the CDN, as in production) and writes the pages whose
+    /// document is wider than the viewport to <c>phone-overflow.txt</c> ("none" when all fit).
+    /// </summary>
+    private async Task CheckPhoneOverflowAsync(string storageState, string dir, Seeded s)
+    {
+        var urls = new[]
+        {
+            "/", "/menus", $"/menudetail/{s.MenuId}", $"/Categories/{s.MenuId}", $"/MenuItems/Category/{s.CategoryId}",
+            $"/MenuItems/Category/{s.DrinksCategoryId}", $"/allergens/{s.MenuId}", $"/combos/{s.MenuId}", $"/menu/edit/{s.MenuId}",
+            "/menu/edit", $"/menudetail/{s.EmptyMenuId}", $"/MenuItems/{s.EmptyMenuId}", "/qrcodes", $"/qrcode/edit/{s.TimeTableQrId}",
+            $"/qrcode/edit/{s.HolidayQrId}", "/qrcode/edit", "/analytics", "/restaurant", "/users", "/users/invite",
+            $"/users/edit/{s.TenantUserId}", "/Account/Manage", "/Account/Manage/ChangePassword"
+        };
+        var findings = new List<string>();
+        foreach (var width in new[] { 360, 390 })
+        {
+            await using var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                BaseURL = App.ServerAddress,
+                StorageState = storageState,
+                ViewportSize = new ViewportSize { Width = width, Height = 800 },
+                IsMobile = true,
+                HasTouch = true
+            });
+            context.SetDefaultTimeout(15_000);
+            var page = await context.NewPageAsync();
+            foreach (var url in urls)
+            {
+                if (url.StartsWith("/Account")) await page.GotoAsync(url);
+                else await GotoInteractiveAsync(page, url);
+                await SettleAsync(page);
+                var overflow = await page.EvaluateAsync<int>("() => document.documentElement.scrollWidth - window.innerWidth");
+                if (overflow > 0) findings.Add($"{width}px {url}: {overflow}px too wide");
+            }
+        }
+        await File.WriteAllLinesAsync(Path.Combine(dir, "phone-overflow.txt"), findings.Count == 0 ? ["none"] : findings);
     }
 
     private async Task ShootAsync(IPage page, string dir, string prefix, Seeded s, bool phoneSubset = false)
@@ -123,15 +183,30 @@ public class AdminScreenshotTour : QrCalendarTestBase
             await p.GetByTestId("price-variants").ScrollIntoViewIfNeededAsync();
         });
 
+        // The menu switcher of the context bar, open
+        await GotoInteractiveAsync(page, $"/Categories/{s.MenuId}");
+        await page.GetByTestId("menu-switcher-button").ClickAsync();
+        await Assertions.Expect(page.GetByTestId("menu-switcher")).ToBeVisibleAsync();
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-menu-switcher-open.png"), FullPage = false });
+
         if (phoneSubset)
         {
-            // Open the hamburger sidebar once
-            await GotoInteractiveAsync(page, "/menus");
-            await page.Locator("button:has(span.sr-only:text('Open sidebar'))").ClickAsync();
+            // The navigation drawer, opened from the top bar's menu button
+            await GotoInteractiveAsync(page, $"/MenuItems/Category/{s.DrinksCategoryId}");
+            await page.GetByTestId("nav-drawer-button").ClickAsync();
+            await Assertions.Expect(page.Locator("dialog[data-testid='nav-drawer'][open]")).ToHaveCountAsync(1);
             await SettleAsync(page);
-            await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-sidebar-open.png"), FullPage = false });
+            await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-drawer-open.png"), FullPage = false });
             return;
         }
+
+        // The user menu, open
+        await GotoInteractiveAsync(page, "/menus");
+        await page.GetByTestId("user-menu-button").ClickAsync();
+        await Assertions.Expect(page.GetByTestId("user-menu")).ToBeVisibleAsync();
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-user-menu-open.png"), FullPage = false });
 
         await Shot("menuitems-editor", $"/MenuItems/{s.MenuId}", async p =>
         {
