@@ -236,6 +236,16 @@ else
                 ? " It is also removed from the schedule of 1 other QR code."
                 : $" It is also removed from the schedules of {scheduledQrCodes} other QR codes.";
 
+        if (menu.TranslationGroupId is { } groupId)
+        {
+            var versions = await db.Menus
+                .Where(m => m.TranslationGroupId == groupId && m.Id != menu.Id)
+                .Select(m => m.Language)
+                .ToListAsync();
+            if (versions.Count > 0)
+                text += $" Its other language versions ({string.Join(", ", versions.OrderBy(l => (int)l).Select(l => SpeiseDirekt.Infrastructure.MenuLanguages.Of(l).EnglishName))}) stay.";
+        }
+
         return text;
     }
 
@@ -261,6 +271,8 @@ else
         await db.QRCodes.Where(q => q.MenuId == menuId).ExecuteDeleteAsync();
         await db.MenuCombos.Where(c => c.MenuId == menuId).ExecuteDeleteAsync();
         await db.Allergens.Where(a => a.MenuId == menuId).ExecuteDeleteAsync();
+        // Other language versions stay; a single one left is unlinked
+        await SpeiseDirekt.ServiceImplementation.MenuTranslationService.LeaveGroupOnDeleteAsync(db, menuId, menu.TranslationGroupId);
 
         db.Menus.Remove(menu);
         await db.SaveChangesAsync();

@@ -1,0 +1,18 @@
+@* Top of the menu while a filter is active (js/guest-search-filter.js shows it): "Filter aktiv · n Gerichte" with a
+   reset button, and the empty state when no item matches. Rendered hidden; without JS nothing is ever filtered. *@
+<div class="gm-filter-notice" data-filter-notice data-testid="filter-notice" hidden>
+    <span class="gm-filter-notice-text">
+        <GuestIcon Name="sliders" />
+        <span>@T.FilterActive · <span data-filter-count>@T.Dishes(0)</span></span>
+    </span>
+    <button type="button" class="gm-textbtn" data-filter-reset-all>@T.Reset</button>
+</div>
+<div class="gm-filter-empty" data-filter-empty data-testid="filter-empty" hidden>
+    <p class="gm-filter-empty-title">@T.FilterEmptyTitle</p>
+    <p class="gm-filter-empty-hint">@T.FilterEmptyHint</p>
+    <button type="button" class="gm-button" data-filter-reset-all>@T.ResetFilters</button>
+</div>
+
+@code {
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+}

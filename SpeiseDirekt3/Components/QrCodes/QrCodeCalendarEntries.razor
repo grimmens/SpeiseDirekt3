@@ -1,68 +1,180 @@
 ﻿@using System.Globalization
 @using SpeiseDirekt.Model
+@using SpeiseDirekt.Infrastructure
+@using SpeiseDirekt3.Components.Shared.Calendar
 @using Microsoft.AspNetCore.Components.Forms
+@implements IAsyncDisposable
+@inject IJSRuntime JS
 
-@* Calendar entries of a calendar-based QR code: a menu on a single date, over a date range or weekly on
-   one weekday. Rendered inside the editor's EditForm; the parent saves the collection with the QR code. *@
-<div class="space-y-3">
-    @if (CalendarEntries.Count == 0)
+@* Calendar entries of a calendar-based QR code: a menu on a single date, over a date range or weekly on one weekday,
+   shown in a month calendar (Shared/Calendar/FullCalendar) with the menu guests get on each day. Click a day (or drag
+   across days) to add an entry, click an entry to change it in the panel, drag it to move it. A compact list below the
+   calendar does the same by keyboard. Rendered inside the editor's EditForm; everything stays a draft until the
+   parent saves the collection with the QR code. Precedence and conflicts come from CalendarSchedule (shared with
+   MenuService and QRCode.Validate). *@
+@{ var view = BuildView(); }
+<div class="sd-cal-editor" data-testid="calendar-editor">
+    <p class="sd-cal-help">
+        @if (ReadOnly)
+        {
+            @:Which menu guests get on each day.
+        }
+        else
+        {
+            @:Click or tap a day to add an entry, or drag across days for a period. Click an entry to change it, drag it to move it.
+        }
+    </p>
+
+    <div class="sd-cal-card">
+        <FullCalendar TestId="qr-calendar" AriaLabel="Calendar: which menu guests get on each day"
+                      Events="@view.Events" Options="@CalendarOptions"
+                      OnDateClick="@(ReadOnly ? default : EventCallback.Factory.Create<DateOnly>(this, OnDayClicked))"
+                      OnSelect="@(ReadOnly ? default : EventCallback.Factory.Create<CalendarRange>(this, OnRangeSelected))"
+                      OnEventClick="@(ReadOnly ? default : EventCallback.Factory.Create<CalendarEventClick>(this, OnEventClicked))"
+                      OnEventChange="@(ReadOnly ? default : EventCallback.Factory.Create<CalendarEventChange>(this, OnEventChanged))"
+                      OnDatesSet="OnDatesSet" />
+    </div>
+
+    <ul class="sd-cal-legend" aria-label="Legend" data-testid="calendar-legend">
+        @foreach (var menuId in view.LegendMenus)
+        {
+            <li data-testid="legend-menu"><span class="sd-cal-swatch" style="background-color: @view.ColorOf(menuId)" aria-hidden="true"></span>@MenuName(menuId)</li>
+        }
+        <li data-testid="calendar-fallback-hint"><span class="sd-cal-swatch sd-cal-swatch--fallback" aria-hidden="true"></span>@FallbackText</li>
+        @if (view.HasOverridden)
+        {
+            <li data-testid="legend-overridden"><span class="sd-cal-swatch sd-cal-swatch--overridden" aria-hidden="true"></span>Struck through: a single date or period wins that day</li>
+        }
+    </ul>
+
+    @if (view.ProblemTexts.Count > 0)
     {
-        <p class="text-sm text-gray-500">No calendar entries yet. Add one for a holiday, a festival week or a weekly special.</p>
-    }
-    @{ var index = 0; }
-    @foreach (var entry in CalendarEntries)
-    {
-        var i = index++;
-        <div @key="entry" class="bg-white rounded-lg border border-gray-200 p-3.5" data-testid="calendar-entry">
-            <div class="flex items-start justify-between gap-x-3 mb-2.5">
-                <p class="text-sm font-medium text-gray-800 min-w-0" data-testid="calendar-entry-summary">@Describe(entry)</p>
-                <button type="button"
-                        class="flex-shrink-0 inline-flex items-center px-2.5 py-1 text-sm font-medium text-red-700 bg-white border border-red-200 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                        @onclick="() => RemoveEntry(entry)">
-                    Remove
-                </button>
-            </div>
-            <div class="grid grid-cols-2 xl:grid-cols-4 gap-x-3 gap-y-3">
-                <div class="col-span-2 sm:col-span-1">
-                    <label for="@($"cal-{i}-menu")" class="block text-xs font-medium text-gray-600 mb-1">Menu</label>
-                    <InputSelect @bind-Value="entry.MenuId" id="@($"cal-{i}-menu")" class="@FieldClass">
-                        <option value="@Guid.Empty">-- Select Menu --</option>
-                        @foreach (var m in Menus)
-                        {
-                            <option value="@m.Id">@m.Name</option>
-                        }
-                    </InputSelect>
-                </div>
-                <div class="col-span-2 sm:col-span-1">
-                    <label for="@($"cal-{i}-weekly")" class="block text-xs font-medium text-gray-600 mb-1">Repeats weekly on</label>
-                    <InputSelect @bind-Value="entry.RecurringDayOfWeek" id="@($"cal-{i}-weekly")" class="@FieldClass">
-                        <option value="">Does not repeat</option>
-                        @foreach (var day in Weekdays)
-                        {
-                            <option value="@day">@day</option>
-                        }
-                    </InputSelect>
-                </div>
-                <div>
-                    <label for="@($"cal-{i}-date")" class="block text-xs font-medium text-gray-600 mb-1">Date</label>
-                    <InputDate @bind-Value="entry.Date" id="@($"cal-{i}-date")" class="@FieldClass" />
-                </div>
-                <div>
-                    <label for="@($"cal-{i}-until")" class="block text-xs font-medium text-gray-600 mb-1">Until (optional)</label>
-                    <InputDate @bind-Value="entry.EndDate" id="@($"cal-{i}-until")" class="@FieldClass" />
-                </div>
-            </div>
+        <div class="sd-cal-alert" role="alert" data-testid="calendar-conflicts">
+            <p class="sd-cal-alert-title">Guests can get only one menu per day. Change one of these entries before saving:</p>
+            <ul>
+                @foreach (var text in view.ProblemTexts)
+                {
+                    <li>@text</li>
+                }
+            </ul>
         </div>
     }
     @ChildContent
-    <button type="button"
-            class="inline-flex items-center px-3.5 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200"
-            @onclick="AddEntry">
-        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-        </svg>
-        Add Calendar Entry
-    </button>
+
+    <div class="sd-cal-list-head">
+        <h3 id="cal-entries-heading" class="sd-cal-list-title">Entries</h3>
+        @if (!ReadOnly)
+        {
+            <button type="button" @ref="addButton" class="sd-cal-button" data-testid="calendar-add-entry" @onclick="OpenNewFromButton">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" /></svg>
+                Add entry
+            </button>
+        }
+    </div>
+    @if (CalendarEntries.Count == 0)
+    {
+        <p class="sd-cal-empty">No calendar entries yet. Add one for a holiday, a festival week or a weekly special.</p>
+    }
+    else
+    {
+        <ul class="sd-cal-list" aria-labelledby="cal-entries-heading" data-testid="calendar-entries">
+            @foreach (var entry in SortedEntries())
+            {
+                var key = KeyOf(entry);
+                var summaryId = $"cal-entry-{key}";
+                var problem = view.ProblemOf(entry);
+                <li @key="entry" class="sd-cal-row @(problem is null ? null : "sd-cal-row--problem")" data-testid="calendar-entry" data-entry-key="@key">
+                    <span class="sd-cal-swatch sd-cal-row-swatch" style="background-color: @view.ColorOf(entry.MenuId)" aria-hidden="true"></span>
+                    <div class="sd-cal-row-text">
+                        <p class="sd-cal-row-menu" data-testid="calendar-entry-menu">@MenuName(entry.MenuId)</p>
+                        <p class="sd-cal-row-summary" id="@summaryId" data-testid="calendar-entry-summary">@Describe(entry)</p>
+                        @if (problem is not null)
+                        {
+                            <p class="sd-cal-row-problem" data-testid="calendar-entry-conflict">@problem</p>
+                        }
+                    </div>
+                    @if (!ReadOnly)
+                    {
+                        <div class="sd-cal-row-actions">
+                            <button type="button" class="sd-cal-button sd-cal-button--small" aria-describedby="@summaryId" @onclick="() => OpenEdit(entry)">Edit</button>
+                            <button type="button" class="sd-cal-button sd-cal-button--small sd-cal-button--danger" aria-describedby="@summaryId" @onclick="() => RemoveEntry(entry)">Remove</button>
+                        </div>
+                    }
+                </li>
+            }
+        </ul>
+    }
+
+    @* The entry panel: a modal <dialog> (js/modal-dialog.js) — a side panel from 1024 px, a bottom sheet below *@
+    <dialog @ref="panel" class="sd-cal-panel" aria-labelledby="cal-panel-title" data-testid="calendar-panel">
+        @if (draft is not null)
+        {
+            <div class="sd-cal-panel-body">
+                <div class="sd-cal-panel-head">
+                    <h2 id="cal-panel-title" class="sd-cal-panel-title">@(editing is null ? "New calendar entry" : "Edit calendar entry")</h2>
+                    <button type="button" class="sd-cal-icon-button" aria-label="Close" @onclick="CancelPanelAsync">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+
+                <div class="sd-cal-panel-fields">
+                    <div>
+                        <label for="cal-panel-menu" class="sd-cal-label">Menu</label>
+                        <select id="cal-panel-menu" class="sd-cal-input" @bind="DraftMenu" autofocus>
+                            <option value="">-- Select a menu --</option>
+                            @foreach (var m in Menus)
+                            {
+                                <option value="@m.Id">@m.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label for="cal-panel-weekly" class="sd-cal-label">Repeats weekly on</label>
+                        <select id="cal-panel-weekly" class="sd-cal-input" @bind="DraftWeekly">
+                            <option value="">Does not repeat</option>
+                            @foreach (var day in Weekdays)
+                            {
+                                <option value="@day">@day</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="sd-cal-panel-dates">
+                        <div>
+                            <label for="cal-panel-date" class="sd-cal-label">From</label>
+                            <input type="date" id="cal-panel-date" class="sd-cal-input" @bind="draft.Date" @bind:format="yyyy-MM-dd" />
+                        </div>
+                        <div>
+                            <label for="cal-panel-until" class="sd-cal-label">Until (optional)</label>
+                            <input type="date" id="cal-panel-until" class="sd-cal-input" @bind="draft.EndDate" @bind:format="yyyy-MM-dd" />
+                        </div>
+                    </div>
+                    <p class="sd-cal-panel-summary" aria-live="polite" data-testid="calendar-panel-summary">@Describe(draft)</p>
+                    @if (PanelConflicts() is { Count: > 0 } collisions)
+                    {
+                        <p class="sd-cal-panel-warning" data-testid="calendar-panel-conflict">
+                            Overlaps @string.Join(" and ", collisions.Select(Label)). Saving is refused until one of them changes.
+                        </p>
+                    }
+                    @if (draftError is not null)
+                    {
+                        <p class="sd-cal-panel-error" role="alert" data-testid="calendar-panel-error">@draftError</p>
+                    }
+                </div>
+
+                <div class="sd-cal-panel-actions">
+                    @if (editing is not null)
+                    {
+                        <button type="button" class="sd-cal-button sd-cal-button--danger" data-testid="calendar-panel-delete" @onclick="DeleteFromPanelAsync">Delete entry</button>
+                    }
+                    <span class="sd-cal-panel-spacer"></span>
+                    <button type="button" class="sd-cal-button" @onclick="CancelPanelAsync">Cancel</button>
+                    <button type="button" class="sd-cal-button sd-cal-button--primary" data-dialog-default data-testid="calendar-panel-apply" @onclick="ApplyDraftAsync">
+                        @(editing is null ? "Add entry" : "Apply")
+                    </button>
+                </div>
+            </div>
+        }
+    </dialog>
 </div>
 
 @code {
@@ -70,14 +182,22 @@
     [Parameter, EditorRequired] public List<CalendarEntry> CalendarEntries { get; set; } = new();
     [Parameter, EditorRequired] public List<Menu> Menus { get; set; } = new();
 
-    /// <summary>Local date used as the default for new entries (from the app's TimeProvider).</summary>
+    /// <summary>Local date marked as today and used as the default for new entries (from the app's TimeProvider).</summary>
     [Parameter] public DateOnly Today { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-    /// <summary>Validation messages, rendered below the entries.</summary>
+    /// <summary>The QR code's direct menu: guests get it on days without an entry.</summary>
+    [Parameter] public Guid? FallbackMenuId { get; set; }
+
+    /// <summary>Calendar plus time schedule (API only): days without an entry follow the schedule.</summary>
+    [Parameter] public bool FallbackIsSchedule { get; set; }
+
+    /// <summary>View only (no edit permission): no panel, no dragging, no buttons.</summary>
+    [Parameter] public bool ReadOnly { get; set; }
+
+    /// <summary>Validation messages, rendered below the calendar.</summary>
     [Parameter] public RenderFragment? ChildContent { get; set; }
 
-    private const string FieldClass =
-        "block w-full px-2.5 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+    [CascadingParameter] public EditContext? EditContext { get; set; }
 
     private static readonly DayOfWeek[] Weekdays =
     {
@@ -87,10 +207,198 @@
 
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en-US");
 
-    private void AddEntry() =>
-        CalendarEntries.Add(new CalendarEntry { Date = Today, MenuId = Guid.Empty, QRCodeId = QRCodeId });
+    /// <summary>
+    /// Menu colours, hues far apart (blue, green, orange, purple, teal, pink, olive, brown, slate); white text on each
+    /// passes WCAG AA. Red stays reserved for conflicts.
+    /// </summary>
+    private static readonly string[] Palette =
+    {
+        "#2563eb", "#047857", "#c2410c", "#7e22ce", "#0e7490", "#be185d", "#4d7c0f", "#92400e", "#475569"
+    };
 
-    private void RemoveEntry(CalendarEntry entry) => CalendarEntries.Remove(entry);
+    private const string UnknownMenuColor = "#6b7280";
+
+    /// <summary>Stable event ids per entry object (new entries have no database id before saving).</summary>
+    private readonly Dictionary<CalendarEntry, string> keys = new(ReferenceEqualityComparer.Instance);
+    private int nextKey;
+
+    /// <summary>The month the calendar shows (first day, day after the last), from its DatesSet callback.</summary>
+    private DateOnly monthStart, monthEnd;
+    private bool monthKnown;
+
+    // Panel state: `draft` is a working copy; `editing` the entry it came from (null = a new entry)
+    private CalendarEntry? draft;
+    private CalendarEntry? editing;
+    private string? draftError;
+    private bool openPanel;
+    private ElementReference panel;
+    private ElementReference addButton;
+    private IJSObjectReference? dialogModule;
+    private IJSObjectReference? dialogHandle;
+    private DotNetObjectReference<QrCodeCalendarEntries>? selfRef;
+
+    protected override void OnParametersSet()
+    {
+        if (!monthKnown)
+        {
+            monthStart = new DateOnly(Today.Year, Today.Month, 1);
+            monthEnd = monthStart.AddMonths(1);
+        }
+    }
+
+    private CalendarOptions CalendarOptions => new()
+    {
+        Today = Today,
+        InitialDate = Today,
+        FirstDay = DayOfWeek.Monday,
+        Selectable = !ReadOnly,
+        Editable = !ReadOnly,
+        NoEventsText = "No calendar entries this month"
+    };
+
+    // --- What the calendar, legend, list and alert show ---
+
+    private sealed class CalendarView
+    {
+        public List<CalendarEvent> Events { get; } = new();
+        public Dictionary<Guid, string> Colors { get; init; } = new();
+        public Dictionary<CalendarEntry, string> Problems { get; } = new(ReferenceEqualityComparer.Instance);
+        public List<string> ProblemTexts { get; } = new();
+        public List<Guid> LegendMenus { get; init; } = new();
+        public bool HasOverridden { get; set; }
+
+        public string ColorOf(Guid menuId) => Colors.GetValueOrDefault(menuId, UnknownMenuColor);
+        public string? ProblemOf(CalendarEntry entry) => Problems.GetValueOrDefault(entry);
+    }
+
+    private CalendarView BuildView()
+    {
+        var view = new CalendarView
+        {
+            Colors = MenuColors(),
+            LegendMenus = CalendarEntries.Select(e => e.MenuId).Where(id => id != Guid.Empty).Distinct()
+                .OrderBy(MenuName, StringComparer.CurrentCultureIgnoreCase).ToList()
+        };
+
+        foreach (var (first, second) in CalendarSchedule.Conflicts(CalendarEntries))
+        {
+            view.Problems[first] = "Overlaps another entry";
+            view.Problems[second] = "Overlaps another entry";
+            view.ProblemTexts.Add($"{Label(first)} and {Label(second)} overlap.");
+        }
+        foreach (var entry in CalendarEntries.Where(CalendarSchedule.HasEndBeforeStart))
+        {
+            view.Problems[entry] = "“Until” is before the first day";
+            view.ProblemTexts.Add($"{MenuName(entry.MenuId)} from {Format(entry.Date)}: “Until” is before the first day.");
+        }
+
+        // Weekly occurrences that a single date or period overrides are marked per day (a little beyond the month)
+        var from = monthStart.AddDays(-14);
+        var to = monthEnd.AddDays(14);
+        foreach (var entry in CalendarEntries)
+        {
+            var name = MenuName(entry.MenuId);
+            var color = view.ColorOf(entry.MenuId);
+            var problem = view.ProblemOf(entry);
+            var classes = problem is null ? new[] { "sd-cal-entry" } : new[] { "sd-cal-entry", "sd-cal-conflict" };
+            var tooltip = $"{name}: {Describe(entry)}" + (problem is null ? "" : $" ({problem})");
+
+            if (entry.RecurringDayOfWeek is { } day)
+            {
+                Dictionary<DateOnly, CalendarOccurrence>? occurrences = null;
+                for (var date = from; date < to; date = date.AddDays(1))
+                {
+                    if (!CalendarSchedule.IsActiveOn(entry, date))
+                        continue;
+                    var winner = CalendarSchedule.ActiveEntry(CalendarEntries, date);
+                    if (winner is null || ReferenceEquals(winner, entry))
+                        continue;
+                    (occurrences ??= new())[date] = new CalendarOccurrence(
+                        new[] { "sd-cal-overridden" },
+                        $"{name}: not on {Format(date)}, {MenuName(winner.MenuId)} applies that day");
+                    view.HasOverridden = true;
+                }
+
+                view.Events.Add(new CalendarEvent
+                {
+                    Id = KeyOf(entry), Title = name, Tooltip = tooltip,
+                    DaysOfWeek = new[] { day }, StartRecur = entry.Date, EndRecur = entry.EndDate?.AddDays(1),
+                    BackgroundColor = color, BorderColor = color, TextColor = "#fff", ClassNames = classes,
+                    StartEditable = !ReadOnly, DurationEditable = false, Occurrences = occurrences
+                });
+            }
+            else
+            {
+                var last = entry.EndDate is { } end && end > entry.Date ? end : entry.Date;
+                view.Events.Add(new CalendarEvent
+                {
+                    Id = KeyOf(entry), Title = name, Tooltip = tooltip,
+                    Start = entry.Date, End = last.AddDays(1),
+                    BackgroundColor = color, BorderColor = color, TextColor = "#fff", ClassNames = classes,
+                    StartEditable = !ReadOnly, DurationEditable = !ReadOnly
+                });
+            }
+        }
+        return view;
+    }
+
+    /// <summary>
+    /// A colour per menu, the same for the menu wherever it appears: picked from its id (FNV hash), the next free
+    /// palette colour when another menu of this calendar has it already (menus in id order).
+    /// </summary>
+    private Dictionary<Guid, string> MenuColors()
+    {
+        var colors = new Dictionary<Guid, string>();
+        var taken = new HashSet<int>();
+        foreach (var menuId in CalendarEntries.Select(e => e.MenuId).Where(id => id != Guid.Empty).Distinct().OrderBy(id => id))
+        {
+            var preferred = (int)(StableHash(menuId) % (uint)Palette.Length);
+            var index = preferred;
+            for (var step = 0; step < Palette.Length; step++)
+            {
+                var candidate = (preferred + step) % Palette.Length;
+                if (!taken.Contains(candidate))
+                {
+                    index = candidate;
+                    break;
+                }
+            }
+            taken.Add(index);
+            colors[menuId] = Palette[index];
+        }
+        return colors;
+    }
+
+    private static uint StableHash(Guid id)
+    {
+        var hash = 2166136261u;
+        foreach (var b in id.ToByteArray())
+            hash = (hash ^ b) * 16777619u;
+        return hash;
+    }
+
+    private string FallbackText => FallbackIsSchedule
+        ? "Other days: the time schedule applies"
+        : FallbackMenuId is { } id && Menus.Any(m => m.Id == id)
+            ? $"Other days: {MenuName(id)} (fallback menu)"
+            : "Other days: no menu (guests see a notice)";
+
+    private string KeyOf(CalendarEntry entry)
+    {
+        if (!keys.TryGetValue(entry, out var key))
+            keys[entry] = key = $"e{++nextKey}";
+        return key;
+    }
+
+    private CalendarEntry? FindByKey(string key) =>
+        CalendarEntries.FirstOrDefault(e => keys.TryGetValue(e, out var k) && k == key);
+
+    private IEnumerable<CalendarEntry> SortedEntries() =>
+        CalendarEntries.OrderBy(e => e.Date).ThenBy(e => e.RecurringDayOfWeek.HasValue);
+
+    private string MenuName(Guid menuId) => Menus.FirstOrDefault(m => m.Id == menuId)?.Name ?? "(no menu)";
+
+    private string Label(CalendarEntry entry) => $"“{MenuName(entry.MenuId)}: {Describe(entry)}”";
 
     private static string Format(DateOnly date) => date.ToString("ddd, MMM d, yyyy", English);
 
@@ -108,5 +416,238 @@
         return entry.EndDate is { } last && last != entry.Date
             ? $"Every day from {Format(entry.Date)} to {Format(last)}"
             : $"Only on {Format(entry.Date)}";
+    }
+
+    // --- Calendar callbacks ---
+
+    private void OnDatesSet(CalendarDatesSet dates)
+    {
+        (monthStart, monthEnd, monthKnown) = (dates.CurrentStart, dates.CurrentEnd, true);
+    }
+
+    private void OnDayClicked(DateOnly date) => OpenNew(date, null);
+
+    private void OnRangeSelected(CalendarRange range) => OpenNew(range.Start, range.Last);
+
+    private void OnEventClicked(CalendarEventClick click)
+    {
+        if (FindByKey(click.EventId) is { } entry)
+            OpenEdit(entry);
+    }
+
+    /// <summary>
+    /// Dragged: a date or period moves by the same number of days. A weekly entry moves as a whole — its weekday,
+    /// first day and until date shift by the days the occurrence was dragged (Friday → Thursday = one day earlier).
+    /// Stretched: a date or period gets a new last day (weekly entries cannot be stretched).
+    /// </summary>
+    private void OnEventChanged(CalendarEventChange change)
+    {
+        if (ReadOnly || draft is not null || FindByKey(change.EventId) is not { } entry)
+            return;
+
+        if (change.Kind == CalendarEventChangeKind.Moved)
+        {
+            var delta = change.DeltaDays;
+            if (delta == 0)
+                return;
+            entry.Date = entry.Date.AddDays(delta);
+            if (entry.EndDate is { } end)
+                entry.EndDate = end.AddDays(delta);
+            if (entry.RecurringDayOfWeek is { } day)
+                entry.RecurringDayOfWeek = (DayOfWeek)((((int)day + delta) % 7 + 7) % 7);
+        }
+        else if (entry.RecurringDayOfWeek is null && change.End is { } endExclusive)
+        {
+            var last = endExclusive.AddDays(-1);
+            entry.EndDate = last > entry.Date ? last : null;
+        }
+        NotifyChanged();
+    }
+
+    // --- List ---
+
+    private void OpenNewFromButton()
+    {
+        // Today when the calendar shows its month, else the first day of the month on screen
+        var date = Today >= monthStart && Today < monthEnd ? Today : monthStart;
+        OpenNew(date, null);
+    }
+
+    private void RemoveEntry(CalendarEntry entry)
+    {
+        if (ReadOnly)
+            return;
+        CalendarEntries.Remove(entry);
+        NotifyChanged();
+    }
+
+    // --- Panel ---
+
+    private void OpenNew(DateOnly date, DateOnly? until)
+    {
+        if (ReadOnly)
+            return;
+        editing = null;
+        draft = new CalendarEntry { QRCodeId = QRCodeId, MenuId = Guid.Empty, Date = date, EndDate = until };
+        draftError = null;
+        openPanel = true;
+    }
+
+    private void OpenEdit(CalendarEntry entry)
+    {
+        if (ReadOnly)
+            return;
+        editing = entry;
+        draft = new CalendarEntry
+        {
+            QRCodeId = entry.QRCodeId, MenuId = entry.MenuId, Date = entry.Date,
+            EndDate = entry.EndDate, RecurringDayOfWeek = entry.RecurringDayOfWeek
+        };
+        draftError = null;
+        openPanel = true;
+    }
+
+    private string DraftMenu
+    {
+        get => draft is null || draft.MenuId == Guid.Empty ? "" : draft.MenuId.ToString();
+        set
+        {
+            if (draft is null) return;
+            draft.MenuId = Guid.TryParse(value, out var id) ? id : Guid.Empty;
+            draftError = null;
+        }
+    }
+
+    private string DraftWeekly
+    {
+        get => draft?.RecurringDayOfWeek?.ToString() ?? "";
+        set
+        {
+            if (draft is null) return;
+            draft.RecurringDayOfWeek = Enum.TryParse<DayOfWeek>(value, out var day) ? day : null;
+        }
+    }
+
+    /// <summary>Entries the draft would collide with (the edited entry itself excluded).</summary>
+    private List<CalendarEntry> PanelConflicts() => draft is null
+        ? new()
+        : CalendarEntries.Where(e => !ReferenceEquals(e, editing) && CalendarSchedule.Collide(draft, e)).ToList();
+
+    private async Task ApplyDraftAsync()
+    {
+        if (draft is null)
+            return;
+        if (draft.MenuId == Guid.Empty)
+        {
+            draftError = "Choose the menu guests get.";
+            return;
+        }
+        if (CalendarSchedule.HasEndBeforeStart(draft))
+        {
+            draftError = "“Until” must be on or after the first day.";
+            return;
+        }
+        if (draft.RecurringDayOfWeek is null && draft.EndDate == draft.Date)
+            draft.EndDate = null; // one day
+
+        if (editing is null)
+        {
+            CalendarEntries.Add(draft);
+        }
+        else
+        {
+            editing.MenuId = draft.MenuId;
+            editing.Date = draft.Date;
+            editing.EndDate = draft.EndDate;
+            editing.RecurringDayOfWeek = draft.RecurringDayOfWeek;
+        }
+        NotifyChanged();
+        await ClosePanelAsync();
+    }
+
+    private async Task DeleteFromPanelAsync()
+    {
+        if (editing is not null)
+        {
+            CalendarEntries.Remove(editing);
+            NotifyChanged();
+        }
+        await ClosePanelAsync();
+    }
+
+    private Task CancelPanelAsync() => ClosePanelAsync();
+
+    /// <summary>Closes the dialog first (its content stays until it is closed), then drops the draft.</summary>
+    private async Task ClosePanelAsync()
+    {
+        if (dialogHandle is not null)
+        {
+            try
+            {
+                await dialogHandle.InvokeVoidAsync("close");
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+        (draft, editing, draftError) = (null, null, null);
+    }
+
+    /// <summary>Escape, a backdrop click or close(): the browser closed the dialog.</summary>
+    [JSInvokable]
+    public void OnDialogClosedJs()
+    {
+        if (draft is null)
+            return;
+        (draft, editing, draftError) = (null, null, null);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// The entries changed: tell the form, which drops a validation message shown after the last "Save" for the entries
+    /// (the calendar marks conflicts itself now; "Save" validates again).
+    /// </summary>
+    private void NotifyChanged() =>
+        EditContext?.NotifyFieldChanged(EditContext.Field(nameof(QRCode.CalendarEntries)));
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!openPanel || draft is null)
+            return;
+        openPanel = false;
+        try
+        {
+            if (dialogHandle is null)
+            {
+                selfRef ??= DotNetObjectReference.Create(this);
+                dialogModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/modal-dialog.js");
+                dialogHandle = await dialogModule.InvokeAsync<IJSObjectReference>("attach", panel, selfRef, addButton);
+            }
+            await dialogHandle.InvokeVoidAsync("open");
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (dialogHandle is not null)
+            {
+                await dialogHandle.InvokeVoidAsync("dispose");
+                await dialogHandle.DisposeAsync();
+            }
+            if (dialogModule is not null)
+                await dialogModule.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+        }
+        selfRef?.Dispose();
     }
 }

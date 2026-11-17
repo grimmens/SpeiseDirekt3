@@ -1,41 +1,40 @@
 ﻿@page "/menu/{MenuId:guid}"
+@* Public menu page (anonymous). Static SSR guest page, see Components/Guest. *@
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [GuestPage]
+@layout GuestLayout
+@using SpeiseDirekt.ServiceInterface
+@inject ApplicationDbContext Db
+@inject ITrackingService Tracking
+@inject IRestaurantProfileService Profiles
 
-
-@using Microsoft.EntityFrameworkCore
-@using SpeiseDirekt.Model
-@rendermode @(InteractiveServer)
-@layout MenuLayout
-
-@if (MenuLoading)
-{
-    <GuestNotice Kind="GuestNotice.GuestNoticeKind.Loading" Title="Menü wird geladen…" />
-}
-else if (Menu == null)
+@if (model is null)
 {
     <GuestNotice Kind="GuestNotice.GuestNoticeKind.NotFound" Title="Menü nicht gefunden"
                  Message="Dieses Menü existiert nicht oder wurde gelöscht." ShowHomeLink="true" />
 }
 else
 {
-   <SpeiseDirekt3.Components.Menu.MenuDisplayComponent Menu="Menu" />
+    <GuestMenuView Model="model" />
 }
 
 @code {
     [Parameter] public Guid MenuId { get; set; }
-    [Inject] private ApplicationDbContext Context { get; set; }
+    /// <summary>?item=&lt;id&gt;: render that item's sheet open (deep link, card click without JS).</summary>
+    [SupplyParameterFromQuery(Name = "item")] public string? Item { get; set; }
 
-    private Menu? Menu { get; set; }
-    private bool MenuLoading { get; set; } = true;
+    private GuestMenuModel? model;
 
     protected override async Task OnInitializedAsync()
     {
-        Menu = await Context.Menus
-        .IgnoreQueryFilters()
-            .Include(m => m.Categories)!
-                .ThenInclude(c => c.MenuItems)
-                .ThenInclude(i => i.Allergens)
-            .FirstOrDefaultAsync(m => m.Id == MenuId);
+        var menu = await GuestMenuLoader.LoadMenuAsync(Db, MenuId, publicAccess: true);
+        if (menu is null)
+            return;
 
-        MenuLoading = false;
+        model = await GuestMenuLoader.BuildAsync(Db, Profiles, menu, $"/menu/{MenuId}", Item);
+
+        // An item opened by a page request (no JS, or a shared link) counts like a click in the page
+        if (model.SelectedItem is { } item)
+            await Tracking.RecordMenuItemClickAsync(Tracking.GetOrCreateSessionId(), item.Id, menu.Id);
     }
 }

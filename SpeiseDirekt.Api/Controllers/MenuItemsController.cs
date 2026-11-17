@@ -66,10 +66,19 @@ public class MenuItemsController : ControllerBase
             IsVegan = dto.IsVegan,
             IsVegetarian = dto.IsVegetarian,
             IsSpicy = dto.IsSpicy,
+            IsHalal = dto.IsHalal,
+            IsAlcoholFree = dto.IsAlcoholFree,
+            IsNew = dto.IsNew,
+            IsPopular = dto.IsPopular,
             SortOrder = dto.SortOrder ?? await _menuItemRepository.NextSortOrderAsync(dto.CategoryId)
         };
+        if (dto.PriceOptions is { } options)
+            ReplacePriceOptions(menuItem, options);
+        menuItem.ApplyLowestVariantPrice();
 
         await _menuItemRepository.CreateAsync(menuItem);
+        menuItem.PriceOptions = menuItem.PriceOptions
+            .OrderBy(o => o.Kind).ThenBy(o => o.SortOrder).ThenBy(o => o.Name).ToList();
 
         return CreatedAtAction(nameof(Get), new { id = menuItem.Id }, menuItem);
     }
@@ -98,14 +107,47 @@ public class MenuItemsController : ControllerBase
             mi.IsVegan = dto.IsVegan;
             mi.IsVegetarian = dto.IsVegetarian;
             mi.IsSpicy = dto.IsSpicy;
+            mi.IsHalal = dto.IsHalal;
+            mi.IsAlcoholFree = dto.IsAlcoholFree;
+            mi.IsNew = dto.IsNew;
+            mi.IsPopular = dto.IsPopular;
             if (dto.SortOrder is { } sortOrder)
                 mi.SortOrder = sortOrder;
+            // Omitted options are kept; the price rule applies to the kept ones too
+            if (dto.PriceOptions is { } options)
+                ReplacePriceOptions(mi, options);
+            mi.ApplyLowestVariantPrice();
         });
 
         if (menuItem is null)
             return NotFound();
 
         return Ok(menuItem);
+    }
+
+    /// <summary>
+    /// Replaces the item's variants and extras with <paramref name="options"/> (removed ones are deleted as orphans).
+    /// Without a <c>SortOrder</c> an option keeps its position in the list among the options of its kind.
+    /// </summary>
+    private static void ReplacePriceOptions(MenuItem item, IReadOnlyList<MenuItemPriceOptionDto> options)
+    {
+        item.PriceOptions.Clear();
+        foreach (var group in options.GroupBy(o => o.Kind))
+        {
+            var position = 0;
+            foreach (var option in group)
+            {
+                // Id left empty: EF generates it and tracks the option as new
+                item.PriceOptions.Add(new MenuItemPriceOption
+                {
+                    Kind = option.Kind,
+                    Name = option.Name.Trim(),
+                    Price = option.Price,
+                    SortOrder = option.SortOrder ?? position
+                });
+                position++;
+            }
+        }
     }
 
     [HttpDelete("{id:guid}")]

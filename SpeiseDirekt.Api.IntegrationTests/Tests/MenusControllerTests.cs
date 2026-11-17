@@ -1,10 +1,14 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SpeiseDirekt.Api.Dtos;
+using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
+using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.Api.IntegrationTests.Tests;
 
@@ -155,5 +159,115 @@ public class MenusControllerTests : BaseIntegrationTest
         var response = await Client.DeleteAsync($"/api/menus/{nonExistentId}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // --- Language versions (translationGroupId) ---------------------------------------------------------------
+
+    /// <summary>Links the seeded Lunch Menu (German) and Dinner Menu (English) as language versions.</summary>
+    private async Task<Guid> LinkSeedMenusAsync()
+    {
+        using var scope = Factory.Services.CreateScope();
+        var result = await scope.ServiceProvider.GetRequiredService<IMenuTranslationService>()
+            .LinkAsync(TestSeedData.Menu1Id, TestSeedData.Menu2Id);
+        result.Succeeded.Should().BeTrue(result.Error);
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        return (await db.Menus.AsNoTracking().SingleAsync(m => m.Id == TestSeedData.Menu1Id)).TranslationGroupId!.Value;
+    }
+
+    [Fact]
+    public async Task GetById_UnlinkedMenu_HasNoTranslationGroup()
+    {
+        var json = await Client.GetStringAsync($"/api/menus/{TestSeedData.Menu1Id}");
+
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.TryGetProperty("translationGroupId", out var group).Should().BeTrue();
+        group.ValueKind.Should().Be(JsonValueKind.Null);
+    }
+
+    [Fact]
+    public async Task GetById_LinkedMenus_ShareTheTranslationGroupId()
+    {
+        var groupId = await LinkSeedMenusAsync();
+
+        var lunch = await Client.GetFromJsonAsync<Menu>($"/api/menus/{TestSeedData.Menu1Id}", JsonOptions);
+        var dinner = await Client.GetFromJsonAsync<Menu>($"/api/menus/{TestSeedData.Menu2Id}", JsonOptions);
+        var all = await Client.GetFromJsonAsync<List<Menu>>("/api/menus", JsonOptions);
+
+        lunch!.TranslationGroupId.Should().Be(groupId);
+        dinner!.TranslationGroupId.Should().Be(groupId);
+        all!.Where(m => m.TranslationGroupId == groupId).Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task GetLanguageVersions_ListsEveryVersionInLanguageOrder()
+    {
+        await LinkSeedMenusAsync();
+
+        var response = await Client.GetAsync($"/api/menus/{TestSeedData.Menu2Id}/language-versions");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var versions = await response.Content.ReadFromJsonAsync<List<MenuLanguageVersionDto>>(JsonOptions);
+        versions.Should().Equal(
+            new MenuLanguageVersionDto(TestSeedData.Menu1Id, "Lunch Menu", MenuLanguage.German, false),
+            new MenuLanguageVersionDto(TestSeedData.Menu2Id, "Dinner Menu", MenuLanguage.English, true));
+    }
+
+    [Fact]
+    public async Task GetLanguageVersions_UnlinkedMenu_ReturnsJustTheMenu_UnknownMenu404()
+    {
+        var versions = await Client.GetFromJsonAsync<List<MenuLanguageVersionDto>>(
+            $"/api/menus/{TestSeedData.Menu1Id}/language-versions", JsonOptions);
+        versions.Should().Equal(new MenuLanguageVersionDto(TestSeedData.Menu1Id, "Lunch Menu", MenuLanguage.German, true));
+
+        var unknown = await Client.GetAsync($"/api/menus/{Guid.NewGuid()}/language-versions");
+        unknown.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Update_TranslationGroupIdInBody_IsIgnored()
+    {
+        var groupId = await LinkSeedMenusAsync();
+        var body = new
+        {
+            name = "Lunch Menu", description = "Daily lunch specials", theme = DesignTheme.Modern,
+            language = MenuLanguage.German, translationGroupId = Guid.NewGuid()
+        };
+
+        var response = await Client.PutAsJsonAsync($"/api/menus/{TestSeedData.Menu1Id}", body, JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var menu = await Client.GetFromJsonAsync<Menu>($"/api/menus/{TestSeedData.Menu1Id}", JsonOptions);
+        menu!.TranslationGroupId.Should().Be(groupId);
+    }
+
+    [Fact]
+    public async Task Update_LanguageOfAnotherVersion_Returns400_AndKeepsTheMenu()
+    {
+        await LinkSeedMenusAsync();
+        var dto = new MenuDto { Name = "Lunch Menu", Description = "Daily lunch specials", Language = MenuLanguage.English };
+
+        var response = await Client.PutAsJsonAsync($"/api/menus/{TestSeedData.Menu1Id}", dto, JsonOptions);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain("Dinner Menu");
+        var menu = await Client.GetFromJsonAsync<Menu>($"/api/menus/{TestSeedData.Menu1Id}", JsonOptions);
+        menu!.Language.Should().Be(MenuLanguage.German);
+
+        // A language no other version has is fine
+        var french = dto with { Language = MenuLanguage.French };
+        (await Client.PutAsJsonAsync($"/api/menus/{TestSeedData.Menu1Id}", french, JsonOptions)).StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task Delete_OneOfTwoVersions_UnlinksTheOther()
+    {
+        await LinkSeedMenusAsync();
+
+        var response = await Client.DeleteAsync($"/api/menus/{TestSeedData.Menu2Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        var lunch = await Client.GetFromJsonAsync<Menu>($"/api/menus/{TestSeedData.Menu1Id}", JsonOptions);
+        lunch!.TranslationGroupId.Should().BeNull();
+        lunch.Name.Should().Be("Lunch Menu");
     }
 }

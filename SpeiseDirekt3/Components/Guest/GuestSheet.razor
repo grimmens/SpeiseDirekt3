@@ -1,0 +1,44 @@
+@* Generic sheet: a native <dialog data-sheet="name">. guest-menu.js opens it with showModal() (focus moves in,
+   background inert, Escape/backdrop/back button close it, focus returns to the opener). On narrow viewports it
+   slides up from the bottom (rounded top corners, grab handle; the handle and the header band drag it down, the
+   header's buttons stay taps), from 768 px it is a centered dialog.
+   Open it from markup with <button data-sheet-open="name">, or from JS with openSheet("name").
+   [data-sheet-close] inside closes it. Rendered closed; the server cannot open it (needs JS) — except the item
+   sheet, see GuestItemSheet. *@
+<dialog class="gm-sheet @Class" data-sheet="@Name" data-testid="@TestId" aria-modal="true" aria-labelledby="@TitleId">
+    <div class="gm-sheet-panel">
+        <div class="gm-sheet-handle" aria-hidden="true"></div>
+        <header class="gm-sheet-head">
+            <div class="gm-sheet-head-start">@HeaderStart</div>
+            <h2 class="gm-sheet-title" id="@TitleId">@Title</h2>
+            <button type="button" class="gm-iconbtn gm-sheet-close" data-sheet-close aria-label="@T.Close">
+                <GuestIcon Name="close" />
+            </button>
+        </header>
+        <div class="gm-sheet-body" data-sheet-body>
+            @ChildContent
+        </div>
+        @if (Footer is not null)
+        {
+            <div class="gm-sheet-foot">@Footer</div>
+        }
+    </div>
+</dialog>
+
+@code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+    /// <summary>Name for <c>data-sheet</c>/<c>data-sheet-open</c> and <c>openSheet(name)</c>.</summary>
+    [Parameter, EditorRequired] public string Name { get; set; } = "";
+    /// <summary>Title in the UI language (<see cref="GuestText"/>), also the dialog's accessible name.</summary>
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? TestId { get; set; }
+    [Parameter] public string? Class { get; set; }
+    /// <summary>Left of the title (e.g. a back or reset button).</summary>
+    [Parameter] public RenderFragment? HeaderStart { get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    /// <summary>Pinned below the scrolling body (e.g. apply buttons, a sum); optional.</summary>
+    [Parameter] public RenderFragment? Footer { get; set; }
+
+    private string TitleId => $"gm-sheet-{Name}-title";
+}

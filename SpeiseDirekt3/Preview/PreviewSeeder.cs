@@ -1,19 +1,23 @@
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 
 namespace SpeiseDirekt3.Preview;
 
-public sealed record PreviewSeedResult(bool UserFound, Guid OwnerId, int MenusAdded, int QrCodesAdded, int MenusTotal, int QrCodesTotal)
+public sealed record PreviewSeedResult(bool UserFound, Guid OwnerId, int MenusAdded, int QrCodesAdded, int MenusTotal, int QrCodesTotal,
+    bool RestaurantProfileAdded = false)
 {
     public static readonly PreviewSeedResult NotFound = new(false, Guid.Empty, 0, 0, 0, 0);
 }
 
 /// <summary>
 /// Adds three demo menus (Classic, Modern and Dark theme; categories, items, allergens, one combo) and five
-/// QR codes (three direct, one time table, one calendar) to the tenant of one user. Idempotent: a menu or QR
-/// code whose name already exists in the tenant is left alone, so the seed can run on every start of the
-/// preview app and survives edits the operator makes in between.
+/// QR codes (three direct, one time table, one calendar) to the tenant of one user, plus a restaurant profile when
+/// the tenant has none. "Gasthaus Zur Post" also shows category subtitles, item labels, price variants (drinks) and
+/// extras. Idempotent: a menu or QR code whose name already exists in the tenant is left alone (it is not enriched
+/// either), as is an existing profile, so the seed can run on every start of the preview app and survives edits the
+/// operator makes in between.
 /// </summary>
 public static class PreviewSeeder
 {
@@ -58,6 +62,14 @@ public static class PreviewSeeder
         if (!await tenant.Menus.AnyAsync(m => m.Name == MenuNames[0], ct)) { AddGasthaus(tenant); menusAdded++; }
         if (!await tenant.Menus.AnyAsync(m => m.Name == MenuNames[1], ct)) { AddMittagskarte(tenant); menusAdded++; }
         if (!await tenant.Menus.AnyAsync(m => m.Name == MenuNames[2], ct)) { AddBar(tenant); menusAdded++; }
+
+        // One profile per tenant: an existing one (the operator's own) is never touched
+        var profileAdded = false;
+        if (!await tenant.RestaurantProfiles.AnyAsync(ct))
+        {
+            tenant.RestaurantProfiles.Add(DemoRestaurantProfile());
+            profileAdded = true;
+        }
         await tenant.SaveChangesAsync(ct);
 
         // The QR codes point at the menus by name, whether those were created just now or in an earlier run
@@ -105,13 +117,42 @@ public static class PreviewSeeder
         await tenant.SaveChangesAsync(ct);
 
         return new PreviewSeedResult(true, ownerId, menusAdded, qrCodesAdded,
-            await tenant.Menus.CountAsync(ct), await tenant.QRCodes.CountAsync(ct));
+            await tenant.Menus.CountAsync(ct), await tenant.QRCodes.CountAsync(ct), profileAdded);
     }
+
+    /// <summary>Demo profile; the links point to example.com so nothing leads to a real business.</summary>
+    public const string RestaurantName = "Gasthaus Zur Post";
+
+    private static RestaurantProfile DemoRestaurantProfile() => new()
+    {
+        Id = Guid.NewGuid(),
+        Name = RestaurantName,
+        Description = "Wiener Wirtshausküche seit 1890: Schnitzel, Rostbraten und Mehlspeisen aus der eigenen Küche, dazu Weine aus der Region.",
+        Phone = "+43 1 234 56 78",
+        Email = "info@example.com",
+        Website = "https://example.com",
+        InstagramUrl = "https://example.com",
+        Address = "Hauptplatz 1\n1010 Wien",
+        OpeningHours = "Mo–Fr 11:00–23:00\nSa 10:00–23:00\nSo und Feiertag 10:00–21:00"
+    };
 
     // --- Demo content ------------------------------------------------------------------------------------
 
-    private static Category NewCategory(Guid menuId, string name, int sortOrder) =>
-        new() { Id = Guid.NewGuid(), Name = name, MenuId = menuId, SortOrder = sortOrder, MenuItems = new List<MenuItem>() };
+    private static Category NewCategory(Guid menuId, string name, int sortOrder, string? description = null) =>
+        new() { Id = Guid.NewGuid(), Name = name, Description = description, MenuId = menuId, SortOrder = sortOrder, MenuItems = new List<MenuItem>() };
+
+    /// <summary>Adds price options of one kind in the given order; with variants the price follows the lowest one.</summary>
+    private static MenuItem WithOptions(this MenuItem item, PriceOptionKind kind, params (string Name, decimal Price)[] options)
+    {
+        var start = item.PriceOptions.Count(o => o.Kind == kind);
+        for (var i = 0; i < options.Length; i++)
+            item.PriceOptions.Add(new MenuItemPriceOption
+            {
+                Id = Guid.NewGuid(), MenuItemId = item.Id, Kind = kind, Name = options[i].Name, Price = options[i].Price, SortOrder = start + i
+            });
+        item.ApplyLowestVariantPrice();
+        return item;
+    }
 
     /// <param name="codes">Allergen letter codes of the item, e.g. <c>"ACG"</c>; each must exist in <paramref name="allergens"/>.</param>
     private static MenuItem AddItem(Category category, IReadOnlyDictionary<string, Allergen> allergens, string name, string description, decimal price,
@@ -141,24 +182,32 @@ public static class PreviewSeeder
         var allergens = AddAllergens(db, menuId,
             ("A", "Glutenhaltiges Getreide"), ("C", "Eier"), ("G", "Milch / Laktose"), ("L", "Sellerie"), ("H", "Schalenfrüchte"), ("O", "Sulfite"));
 
-        var vorspeisen = NewCategory(menuId, "Vorspeisen", 0);
-        var haupt = NewCategory(menuId, "Hauptspeisen", 1);
-        var desserts = NewCategory(menuId, "Desserts", 2);
+        var vorspeisen = NewCategory(menuId, "Vorspeisen", 0, "Suppen und kleine Speisen");
+        var haupt = NewCategory(menuId, "Hauptspeisen", 1, "Warme Küche bis 21:30 Uhr");
+        var desserts = NewCategory(menuId, "Desserts", 2, "Aus der eigenen Patisserie");
         var getraenke = NewCategory(menuId, "Getränke", 3);
 
         AddItem(vorspeisen, allergens, "Frittatensuppe", "Klare Rindsuppe mit Frittaten", 5.20m, "ACL");
-        AddItem(vorspeisen, allergens, "Kürbiscremesuppe", "Mit Kernöl und Kürbiskernen", 5.90m, "GL", vegetarian: true);
+        AddItem(vorspeisen, allergens, "Kürbiscremesuppe", "Mit Kernöl und Kürbiskernen", 5.90m, "GL", vegetarian: true).IsNew = true;
         AddItem(vorspeisen, allergens, "Bruschetta", "Tomaten, Basilikum, Knoblauch", 7.40m, "A", vegan: true);
-        var schnitzel = AddItem(haupt, allergens, "Wiener Schnitzel vom Kalb", "Mit Petersilerdäpfeln und Preiselbeeren", 24.90m, "ACG");
+        var schnitzel = AddItem(haupt, allergens, "Wiener Schnitzel vom Kalb", "Mit Petersilerdäpfeln und Preiselbeeren", 24.90m, "ACG")
+            .WithOptions(PriceOptionKind.Extra, ("+ Erdäpfelsalat statt Petersilerdäpfel", 1.50m), ("+ Preiselbeeren extra", 1.20m));
+        schnitzel.IsPopular = true;
         AddItem(haupt, allergens, "Zwiebelrostbraten", "Mit Bratkartoffeln und Röstzwiebeln", 26.50m, "AO");
-        AddItem(haupt, allergens, "Käsespätzle", "Mit Bergkäse und Röstzwiebeln", 15.80m, "ACG", vegetarian: true);
-        AddItem(haupt, allergens, "Chili sin Carne", "Bohnen, Mais, Paprika, Reis", 14.20m, vegan: true, spicy: true);
+        AddItem(haupt, allergens, "Käsespätzle", "Mit Bergkäse und Röstzwiebeln", 15.80m, "ACG", vegetarian: true)
+            .WithOptions(PriceOptionKind.Extra, ("+ Speck", 2.50m), ("+ Blattsalat", 3.90m));
+        AddItem(haupt, allergens, "Chili sin Carne", "Bohnen, Mais, Paprika, Reis", 14.20m, vegan: true, spicy: true).IsHalal = true;
         AddItem(haupt, allergens, "Tagesfisch", "Nach Marktangebot, Preis nach Tagespreis", 0m, "G");
         var strudel = AddItem(desserts, allergens, "Apfelstrudel", "Hausgemacht, mit Vanillesauce", 6.80m, "ACG", vegetarian: true);
-        AddItem(desserts, allergens, "Kaiserschmarrn", "Mit Zwetschkenröster, für 2 Personen", 13.90m, "ACG", vegetarian: true);
-        var spritzer = AddItem(getraenke, allergens, "Sommerspritzer 0,25 l", "Grüner Veltliner mit Soda", 4.10m, "O", vegan: true);
-        AddItem(getraenke, allergens, "Almdudler 0,35 l", "", 3.60m, vegan: true);
-        AddItem(getraenke, allergens, "Melange", "Wiener Kaffeehaus-Klassiker", 4.20m, "G", vegetarian: true);
+        AddItem(desserts, allergens, "Kaiserschmarrn", "Mit Zwetschkenröster, für 2 Personen", 13.90m, "ACG", vegetarian: true).IsPopular = true;
+        var spritzer = AddItem(getraenke, allergens, "Sommerspritzer", "Grüner Veltliner mit Soda", 4.10m, "O", vegan: true)
+            .WithOptions(PriceOptionKind.Variant, ("0,25 l", 4.10m), ("0,5 l", 7.40m));
+        var almdudler = AddItem(getraenke, allergens, "Almdudler", "", 3.60m, vegan: true)
+            .WithOptions(PriceOptionKind.Variant, ("0,35 l", 3.60m), ("0,5 l", 4.60m));
+        almdudler.IsAlcoholFree = true;
+        AddItem(getraenke, allergens, "Melange", "Wiener Kaffeehaus-Klassiker", 4.20m, "G", vegetarian: true)
+            .WithOptions(PriceOptionKind.Variant, ("Klein", 3.40m), ("Groß", 4.20m))
+            .WithOptions(PriceOptionKind.Extra, ("+ Hafermilch", 0.50m));
 
         db.Menus.Add(new Menu
         {

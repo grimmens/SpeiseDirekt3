@@ -97,11 +97,15 @@
                                 <td class="px-[0.75rem] sm:px-4 py-[0.75rem] min-w-0">
                                     <a href="@($"/MenuItems/Category/{item.Id}")" class="font-semibold text-blue-600 hover:underline hover:text-blue-800 break-words transition">@item.Name</a>
                                     <span class="block sm:inline sm:ml-2 text-sm text-gray-500" data-testid="category-item-count">@ItemCountText(item)</span>
+                                    @if (!string.IsNullOrWhiteSpace(item.Description))
+                                    {
+                                        <span class="block mt-0.5 text-sm text-gray-600 break-words" data-testid="category-description">@item.Description</span>
+                                    }
                                 </td>
                                 <td class="pr-2 sm:pr-4 py-[0.75rem] w-px whitespace-nowrap text-right">
                                     @if (canEdit || canDelete)
                                     {
-                                        <SpeiseDirekt3.Components.HelperComp.ActionSubMenu Edit="canEdit ? () => EditCategory(item) : null"
+                                        <SpeiseDirekt3.Components.HelperComp.ActionSubMenu EditCaption="Edit" Edit="canEdit ? () => EditCategory(item) : null"
                                                                                            Delete="canDelete ? () => DeleteCategory(item.Id) : null" />
                                     }
                                 </td>
@@ -138,6 +142,15 @@
                             <InputText @bind-Value="Input.Name" id="Input.Name" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
                             <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm mt-1" />
                             <p class="mt-1 text-xs text-gray-500">New categories are added at the end of the list.</p>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="Input.Description" class="block text-sm font-medium text-gray-700 mb-1">Subtitle <span class="font-normal text-gray-400">(optional)</span></label>
+                            <InputText @bind-Value="Input.Description" id="Input.Description" maxlength="@Category.DescriptionMaxLength"
+                                       placeholder="e.g. Mezze"
+                                       class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            <ValidationMessage For="() => Input.Description" class="text-red-600 text-sm mt-1" />
+                            <p class="mt-1 text-xs text-gray-500">Shown to guests under the category name.</p>
                         </div>
 
                         <button type="submit" class="w-full bg-blue-600 text-white font-medium py-2 rounded-lg hover:bg-blue-700 transition">
@@ -238,6 +251,7 @@
 
             // Ensure the Input has the correct MenuId; new categories go to the end
             Input.MenuId = new Guid(MenuId);
+            Input.Description = string.IsNullOrWhiteSpace(Input.Description) ? null : Input.Description.Trim();
             Input.SortOrder = await Context.NextCategorySortOrderAsync(Input.MenuId);
 
             Context.Categories.Add(Input);

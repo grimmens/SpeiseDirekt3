@@ -1,0 +1,12 @@
+@inject NavigationManager Navigation
+@* NotFound content of the router. In an interactive circuit the router only knows the interactive pages: a page
+   with [ExcludeFromInteractiveRouting] (the static guest pages /qr, /menu, /menu/preview) or an unknown URL is
+   loaded from the server instead (full page load), so guest pages get their own document and head. *@
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (RendererInfo.IsInteractive)
+            Navigation.Refresh(forceReload: true);
+    }
+}

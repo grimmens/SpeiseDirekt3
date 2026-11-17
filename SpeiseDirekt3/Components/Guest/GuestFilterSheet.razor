@@ -1,0 +1,84 @@
+@* "Filter" sheet (js/guest-search-filter.js): one toggle chip per label that occurs in the menu ("Ernährung" = dietary
+   labels, "Hinweise" = highlights; several chips = every one must match, vegetarian includes vegan) and one checkbox per
+   allergen that occurs ("Ohne Allergene": checked allergens exclude every item containing them). The choice is a draft
+   until "n Gerichte anzeigen" applies it; "Zurücksetzen" clears the draft. Only rendered when the menu has labels or
+   allergens (GuestFilters.HasFilters). Without JS it cannot be opened: the page simply shows everything. *@
+@using SpeiseDirekt.Infrastructure
+@{
+    var labels = GuestFilters.LabelsIn(Model);
+    var dietary = labels.Where(l => l.Kind == ItemLabelKind.Dietary).ToList();
+    var highlights = labels.Where(l => l.Kind == ItemLabelKind.Highlight).ToList();
+    var allergens = GuestFilters.AllergensIn(Model);
+}
+<GuestSheet Name="filter" Title="@T.Filter" TestId="filter-sheet" Class="gm-sheet--filter">
+    <ChildContent>
+        <div class="gm-filter" data-filter-form>
+            @if (dietary.Count > 0)
+            {
+                <section class="gm-filter-group" aria-labelledby="gm-filter-dietary">
+                    <h3 class="gm-filter-title" id="gm-filter-dietary">@T.Diet</h3>
+                    <div class="gm-filter-chips">
+                        @foreach (var label in dietary)
+                        {
+                            @Chip(GuestLabels.Of(label, T))
+                        }
+                    </div>
+                </section>
+            }
+            @if (highlights.Count > 0)
+            {
+                <section class="gm-filter-group" aria-labelledby="gm-filter-highlights">
+                    <h3 class="gm-filter-title" id="gm-filter-highlights">@T.Highlights</h3>
+                    <div class="gm-filter-chips">
+                        @foreach (var label in highlights)
+                        {
+                            @Chip(GuestLabels.Of(label, T))
+                        }
+                    </div>
+                </section>
+            }
+            @if (allergens.Count > 0)
+            {
+                <fieldset class="gm-filter-group gm-filter-allergens" aria-describedby="gm-filter-allergens-hint">
+                    <legend class="gm-filter-title">@T.WithoutAllergens</legend>
+                    <p class="gm-filter-hint" id="gm-filter-allergens-hint">@T.WithoutAllergensHint</p>
+                    <ul class="gm-filter-allergen-list" role="list">
+                        @foreach (var allergen in allergens)
+                        {
+                            <li>
+                                <label class="gm-check" data-testid="filter-allergen">
+                                    <input type="checkbox" value="@allergen.Code" data-filter-allergen="@allergen.Code" />
+                                    <span class="gm-check-code">@allergen.Code</span>
+                                    <span class="gm-check-name">@allergen.Name</span>
+                                </label>
+                            </li>
+                        }
+                    </ul>
+                </fieldset>
+            }
+        </div>
+    </ChildContent>
+    <Footer>
+        <div class="gm-filter-footer">
+            <button type="button" class="gm-button gm-button--quiet" data-filter-reset data-testid="filter-reset">@T.Reset</button>
+            <button type="button" class="gm-button" data-filter-apply data-testid="filter-apply">@T.ShowDishes</button>
+        </div>
+    </Footer>
+</GuestSheet>
+
+@code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+
+    /// <summary>A toggle chip for one label (aria-pressed), with the label's guest text and icon.</summary>
+    private readonly RenderFragment<GuestLabel> Chip = label =>
+        @<button type="button" class="gm-chip gm-filter-chip" aria-pressed="false" data-filter-label="@label.Key"
+                 data-testid="filter-label-@label.Key">
+            @if (label.Icon is not null)
+            {
+                <GuestIcon Name="@label.Icon" Class="gm-filter-chip-icon" />
+            }
+            <span>@label.Text</span>
+        </button>;
+}

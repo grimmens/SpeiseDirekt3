@@ -1,0 +1,35 @@
+@* The language versions of a menu as links: the language's own name ("Français", lang/hreflang set), below it the name
+   in the UI language when that differs ("Französisch"), a check mark and aria-current on the current version. The links
+   go to the public /menu/{id} (from /qr/… too, without ?item=), in the owner preview to /menu/preview/{id}. Plain links:
+   no tracking request, and /menu/{id} records no MenuView. In the sheet (data-sheet-leave) guest-menu.js closes the sheet
+   before following the link, so the back button returns to the menu, not to an open sheet. *@
+<ul class="gm-langlist" role="list" data-testid="@TestId">
+    @foreach (var version in Model.Versions)
+    {
+        var language = version.Language;
+        var uiName = T.LanguageName(language);
+        <li @key="version.MenuId">
+            <a class="gm-langlist-link @(version.IsCurrent ? "is-current" : null)" href="@version.Href" lang="@language.Code"
+               hreflang="@language.Code" aria-current="@(version.IsCurrent ? "true" : null)" data-language="@language.Code"
+               data-sheet-leave data-testid="language-option">
+                <span class="gm-langlist-text">
+                    <span class="gm-langlist-name">@language.NativeName</span>
+                    @if (!string.Equals(uiName, language.NativeName, StringComparison.Ordinal))
+                    {
+                        <span class="gm-langlist-hint" lang="@T.Code">@uiName</span>
+                    }
+                </span>
+                @if (version.IsCurrent)
+                {
+                    <GuestIcon Name="check" Class="gm-langlist-check" />
+                }
+            </a>
+        </li>
+    }
+</ul>
+
+@code {
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+    [Parameter] public string? TestId { get; set; }
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+}

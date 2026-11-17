@@ -4,6 +4,7 @@ using SpeiseDirekt.Api.Dtos;
 using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.Repository;
+using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.Api.Controllers;
 
@@ -13,10 +14,12 @@ namespace SpeiseDirekt.Api.Controllers;
 public class MenusController : ControllerBase
 {
     private readonly IMenuRepository _menuRepository;
+    private readonly IMenuTranslationService _translations;
 
-    public MenusController(IMenuRepository menuRepository)
+    public MenusController(IMenuRepository menuRepository, IMenuTranslationService translations)
     {
         _menuRepository = menuRepository;
+        _translations = translations;
     }
 
     [HttpGet]
@@ -37,6 +40,21 @@ public class MenusController : ControllerBase
             return NotFound();
 
         return Ok(menu);
+    }
+
+    /// <summary>
+    /// The language versions of a menu (<c>translationGroupId</c>), including the menu itself, in language order; just
+    /// the menu when it is not linked. Read-only: the versions are managed in the back office.
+    /// </summary>
+    [HttpGet("{id:guid}/language-versions")]
+    [Authorize(Policy = PolicyNames.CanViewMenus)]
+    public async Task<ActionResult<List<MenuLanguageVersionDto>>> GetLanguageVersions(Guid id)
+    {
+        var versions = await _translations.GetVersionsAsync(id);
+        if (versions.Count == 0)
+            return NotFound();
+
+        return Ok(versions.Select(v => new MenuLanguageVersionDto(v.Id, v.Name, v.Language, v.Id == id)).ToList());
     }
 
     [HttpPost]
@@ -61,6 +79,10 @@ public class MenusController : ControllerBase
     [Authorize(Policy = PolicyNames.CanEditMenus)]
     public async Task<IActionResult> Update(Guid id, MenuDto dto)
     {
+        // A language version may not take a language another version of its group already has
+        if (await _translations.ValidateLanguageAsync(id, dto.Language) is { } conflict)
+            return BadRequest(conflict);
+
         var menu = await _menuRepository.UpdateAsync(id, m =>
         {
             m.Name = dto.Name;

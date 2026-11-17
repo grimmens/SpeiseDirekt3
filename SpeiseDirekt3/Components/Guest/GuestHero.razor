@@ -1,0 +1,54 @@
+@* Intro at the top of the guest menu. Without a restaurant profile: the menu name as the page's h1 and the menu
+   description (the compact intro of every menu). With a profile (GuestMenuModel.Profile) also:
+   - the cover image (wide, cropped with object-fit: cover; width/height attributes avoid a layout shift),
+   - the logo, overlapping the cover's lower edge (or on its own line without a cover),
+   - the restaurant name above the h1 when it differs from the menu name (GuestMenuModel.ShowsRestaurantName).
+   The h1 stays the menu name (data-hero-title: guest-menu.js fades the top bar title in once it scrolled away).
+   Owner preview: the editor's unsaved name/description replace the texts live (js/guest-preview.js: data-menu-name,
+   data-menu-description, data-hero-restaurant), so the description paragraph and the restaurant line are rendered
+   there even when empty/equal (hidden). *@
+@{
+    var profile = Model.Profile;
+    var cover = GuestFormat.ImageUrl(profile?.CoverImagePath);
+    var logo = GuestFormat.ImageUrl(profile?.LogoImagePath);
+    var preview = Model.IsPreview;
+    var showBrand = logo is not null || Model.ShowsRestaurantName || (preview && profile is not null);
+}
+<div class="gm-hero @(profile is not null ? "gm-hero--profile" : null) @(cover is not null ? "gm-hero--cover" : null) @(logo is not null ? "gm-hero--logo" : null)"
+     data-hero data-testid="guest-hero">
+    @if (cover is not null)
+    {
+        <div class="gm-hero-cover gm-container">
+            <div class="gm-hero-cover-frame">
+                <img src="@cover" alt="" width="1200" height="600" fetchpriority="high" decoding="async" data-testid="hero-cover" />
+            </div>
+        </div>
+    }
+    <div class="gm-hero-text gm-container">
+        @if (showBrand)
+        {
+            <div class="gm-hero-brand" data-hero-brand hidden="@(logo is null && !Model.ShowsRestaurantName)">
+                @if (logo is not null)
+                {
+                    <img class="gm-hero-logo" src="@logo" alt="" width="160" height="160" decoding="async" data-testid="hero-logo" />
+                }
+                @if (Model.ShowsRestaurantName || (preview && profile is not null))
+                {
+                    <p class="gm-hero-restaurant" data-testid="hero-restaurant" data-hero-restaurant hidden="@(!Model.ShowsRestaurantName)">@profile!.Name</p>
+                }
+            </div>
+        }
+        <h1 class="gm-hero-title" data-hero-title data-menu-name>@Model.Menu.Name</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Menu.Description) || preview)
+        {
+            <p class="gm-hero-desc" data-menu-description hidden="@string.IsNullOrWhiteSpace(Model.Menu.Description)">@Model.Menu.Description</p>
+        }
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+    /// <summary>Below the description (e.g. a line with today's information).</summary>
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+}

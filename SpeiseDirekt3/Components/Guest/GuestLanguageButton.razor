@@ -1,0 +1,13 @@
+@* Language button in the top bar (only when the menu has other language versions): globe + the current language code
+   ("DE"). Without JS a link to the language list at the end of the page (#gm-languages); with JS it opens the language
+   sheet (data-sheet-open="language", the generic sheet behaviour of guest-menu.js). *@
+<a class="gm-iconbtn gm-langbtn" href="#@GuestLanguageSection.ListId" data-sheet-open="language" aria-haspopup="dialog"
+   aria-label="@T.ChooseLanguage" data-testid="language-button">
+    <GuestIcon Name="globe" />
+    <span class="gm-langbtn-code" aria-hidden="true">@Model.Language.ShortCode</span>
+</a>
+
+@code {
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+}

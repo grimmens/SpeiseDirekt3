@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Api.Dtos;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.Api.Controllers;
@@ -12,12 +13,15 @@ public class MenuDisplayController : ControllerBase
 {
     private readonly IMenuService _menuService;
     private readonly ITrackingService _trackingService;
+    private readonly IRestaurantProfileService _restaurantProfiles;
     private readonly ApplicationDbContext _db;
 
-    public MenuDisplayController(IMenuService menuService, ITrackingService trackingService, ApplicationDbContext db)
+    public MenuDisplayController(IMenuService menuService, ITrackingService trackingService,
+        IRestaurantProfileService restaurantProfiles, ApplicationDbContext db)
     {
         _menuService = menuService;
         _trackingService = trackingService;
+        _restaurantProfiles = restaurantProfiles;
         _db = db;
     }
 
@@ -77,6 +81,32 @@ public class MenuDisplayController : ControllerBase
             .ToListAsync();
 
         return Ok(combos);
+    }
+
+    /// <summary>
+    /// The restaurant profile of the tenant that owns the menu (name, texts, contact, links, image URLs).
+    /// 404 when the menu does not exist or its tenant has no profile.
+    /// </summary>
+    [HttpGet("menu/{menuId:guid}/restaurant")]
+    public async Task<ActionResult<PublicRestaurantProfileDto>> GetRestaurantForMenu(Guid menuId)
+    {
+        var profile = await _restaurantProfiles.GetForMenuAsync(menuId);
+        if (profile is null)
+            return NotFound();
+
+        return Ok(new PublicRestaurantProfileDto(
+            profile.Name,
+            profile.Description,
+            ImagePaths.ApiUrl(profile.LogoImagePath),
+            ImagePaths.ApiUrl(profile.CoverImagePath),
+            profile.Phone,
+            profile.Email,
+            profile.Website,
+            profile.InstagramUrl,
+            profile.FacebookUrl,
+            profile.GoogleReviewUrl,
+            profile.Address,
+            profile.OpeningHours));
     }
 
     [HttpPost("menu/{menuId:guid}/items/{menuItemId:guid}/click")]

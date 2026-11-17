@@ -1,0 +1,249 @@
+/* FullCalendar in the back-office look (Tailwind grays/blue, Inter). FullCalendar's own CSS is injected by its bundle;
+   its colors are --fc-* variables, set here on the wrapper so they win over the bundle's :root values. Bootstrap's
+   reboot (link color + underline) and Tailwind's preflight would otherwise leak into its tables and buttons. */
+.sd-fc {
+    --fc-border-color: #e5e7eb;
+    --fc-page-bg-color: #fff;
+    --fc-neutral-bg-color: #f9fafb;
+    --fc-neutral-text-color: #6b7280;
+    --fc-today-bg-color: #eff6ff;
+    --fc-highlight-color: rgba(59, 130, 246, .16);
+    --fc-event-bg-color: #2563eb;
+    --fc-event-border-color: #2563eb;
+    --fc-event-text-color: #fff;
+    --fc-more-link-bg-color: transparent;
+    --fc-more-link-text-color: #1d4ed8;
+    --fc-list-event-hover-bg-color: #f3f4f6;
+    --fc-button-text-color: #374151;
+    --fc-button-bg-color: #fff;
+    --fc-button-border-color: #d1d5db;
+    --fc-button-hover-bg-color: #f9fafb;
+    --fc-button-hover-border-color: #d1d5db;
+    --fc-button-active-bg-color: #eff6ff;
+    --fc-button-active-border-color: #93c5fd;
+    position: relative;
+    min-width: 0;
+    max-width: 100%;
+    font-family: Inter, system-ui, sans-serif;
+    color: #111827;
+}
+
+.sd-fc-message {
+    margin: 0;
+    padding: 2rem 1rem;
+    text-align: center;
+    font-size: .875rem;
+    color: #6b7280;
+}
+
+.sd-fc-host {
+    min-width: 0;
+}
+
+.sd-fc ::deep a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* Toolbar */
+.sd-fc ::deep .fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 1rem;
+    gap: .5rem;
+}
+
+.sd-fc ::deep .fc .fc-toolbar-title {
+    font-family: Manrope, system-ui, sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.sd-fc ::deep .fc .fc-button {
+    font-size: .875rem;
+    font-weight: 500;
+    line-height: 1.25rem;
+    padding: .4375rem .75rem;
+    border-radius: .5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .05);
+}
+
+.sd-fc ::deep .fc .fc-button .fc-icon {
+    font-size: 1.25em;
+    vertical-align: -.125em;
+}
+
+.sd-fc ::deep .fc .fc-button-group > .fc-button:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.sd-fc ::deep .fc .fc-button-group > .fc-button:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.sd-fc ::deep .fc .fc-button-primary:not(:disabled).fc-button-active,
+.sd-fc ::deep .fc .fc-button-primary:not(:disabled):active {
+    color: #1d4ed8;
+}
+
+.sd-fc ::deep .fc .fc-button-primary:disabled {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+.sd-fc ::deep .fc .fc-button:focus,
+.sd-fc ::deep .fc .fc-button-primary:not(:disabled):active:focus,
+.sd-fc ::deep .fc .fc-button-primary:not(:disabled).fc-button-active:focus {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, .45);
+}
+
+/* Grid */
+.sd-fc ::deep .fc .fc-scrollgrid {
+    border-radius: .5rem;
+    overflow: hidden;
+}
+
+.sd-fc ::deep .fc .fc-col-header-cell {
+    background: #f9fafb;
+}
+
+.sd-fc ::deep .fc .fc-col-header-cell-cushion {
+    padding: .5rem .25rem;
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .03em;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+.sd-fc ::deep .fc .fc-daygrid-day-frame {
+    min-height: 5.75rem;
+}
+
+.sd-fc ::deep .fc .fc-daygrid-day-number {
+    margin: .25rem;
+    min-width: 1.75rem;
+    height: 1.75rem;
+    padding: 0 .375rem;
+    border-radius: 9999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8125rem;
+    font-weight: 500;
+    color: #374151;
+}
+
+.sd-fc ::deep .fc .fc-day-other .fc-daygrid-day-number {
+    color: #9ca3af;
+}
+
+.sd-fc ::deep .fc .fc-day-today .fc-daygrid-day-number {
+    background: #2563eb;
+    color: #fff;
+    font-weight: 700;
+}
+
+.sd-fc ::deep .fc .fc-daygrid-day-events {
+    margin-bottom: .25rem;
+}
+
+.sd-fc ::deep .fc .fc-daygrid-event {
+    margin-top: 2px;
+    border-radius: .375rem;
+    font-size: .75rem;
+    font-weight: 600;
+    line-height: 1.1rem;
+}
+
+.sd-fc ::deep .fc .fc-daygrid-block-event .fc-event-title {
+    padding: 1px 4px;
+}
+
+.sd-fc ::deep .fc .fc-event:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, .7);
+    outline-offset: 1px;
+}
+
+.sd-fc ::deep .fc .fc-daygrid-more-link {
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+/* List view */
+.sd-fc ::deep .fc .fc-list {
+    border-radius: .5rem;
+    overflow: hidden;
+}
+
+.sd-fc ::deep .fc .fc-list-day-cushion {
+    background: #f9fafb;
+    font-size: .8125rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.sd-fc ::deep .fc .fc-list-event td {
+    font-size: .875rem;
+}
+
+.sd-fc ::deep .fc .fc-list-event-time {
+    display: none;
+}
+
+.sd-fc ::deep .fc .fc-list-empty {
+    background: #fff;
+    color: #6b7280;
+    font-size: .875rem;
+}
+
+/* Phones: title on its own row, compact buttons and cells */
+@media (max-width: 639.98px) {
+    .sd-fc ::deep .fc .fc-toolbar.fc-header-toolbar {
+        flex-wrap: wrap;
+        margin-bottom: .75rem;
+    }
+
+    .sd-fc ::deep .fc .fc-toolbar-chunk:nth-child(2) {
+        order: -1;
+        flex: 1 0 100%;
+        text-align: center;
+    }
+
+    .sd-fc ::deep .fc .fc-toolbar-title {
+        font-size: 1.0625rem;
+    }
+
+    .sd-fc ::deep .fc .fc-button {
+        padding: .375rem .5625rem;
+        font-size: .8125rem;
+    }
+
+    .sd-fc ::deep .fc .fc-col-header-cell-cushion {
+        padding: .375rem 0;
+        font-size: .6875rem;
+        letter-spacing: 0;
+    }
+
+    .sd-fc ::deep .fc .fc-daygrid-day-frame {
+        min-height: 3.75rem;
+    }
+
+    .sd-fc ::deep .fc .fc-daygrid-day-number {
+        margin: .125rem;
+        min-width: 1.5rem;
+        height: 1.5rem;
+        padding: 0 .25rem;
+        font-size: .75rem;
+    }
+
+    .sd-fc ::deep .fc .fc-daygrid-event {
+        font-size: .6875rem;
+        line-height: 1rem;
+    }
+
+    .sd-fc ::deep .fc .fc-daygrid-block-event .fc-event-title {
+        padding: 1px 2px;
+    }
+}

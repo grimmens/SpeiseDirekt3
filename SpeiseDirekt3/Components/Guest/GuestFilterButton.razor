@@ -1,0 +1,11 @@
+@* Top bar button that opens the "Filter" sheet; the badge shows the number of active filters (set by
+   js/guest-search-filter.js, which also extends the aria-label, e.g. "Filter (2 aktiv)"). JS only. *@
+<button type="button" class="gm-iconbtn gm-filter-button" data-js-only data-sheet-open="filter" aria-haspopup="dialog"
+        aria-label="@T.Filter" data-testid="filter-button">
+    <GuestIcon Name="sliders" />
+    <span class="gm-badge" data-filter-badge data-testid="filter-badge" aria-hidden="true" hidden></span>
+</button>
+
+@code {
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+}

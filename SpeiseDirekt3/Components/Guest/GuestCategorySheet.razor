@@ -1,0 +1,16 @@
+@* "Kategorien" sheet: every category as a chip; a tap closes the sheet and jumps to the section. *@
+<GuestSheet Name="categories" Title="@T.Categories" TestId="category-sheet">
+    <div class="gm-chip-cloud">
+        @foreach (var (category, index) in Categories.Select((c, i) => (c, i)))
+        {
+            <a class="gm-chip @(index == 0 ? "is-active" : null)" href="#@category.Anchor" data-category-link="@category.Anchor"
+               aria-current="@(index == 0 ? "true" : null)">@category.Category.Name</a>
+        }
+    </div>
+</GuestSheet>
+
+@code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+    [Parameter, EditorRequired] public IReadOnlyList<GuestCategory> Categories { get; set; } = Array.Empty<GuestCategory>();
+}

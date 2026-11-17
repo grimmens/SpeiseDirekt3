@@ -56,22 +56,49 @@ public class MenuPreviewTests : BackOfficeTestBase
         await RegisterNewOwnerAsync();
         var menuId = await CreateMenuWithItemAsync("Vorschau Bistro", "Flammkuchen");
 
-        await OpenPublicMenuPageAsync(Page, $"/menu/preview/{menuId}");
+        var clickRequests = 0;
+        Page.Request += (_, r) => { if (r.Url.Contains("/guest/api/item-click")) clickRequests++; };
+
+        await OpenGuestPageAsync(Page, $"/menu/preview/{menuId}");
         await Assertions.Expect(Page.Locator("h1").First).ToHaveTextAsync("Vorschau Bistro");
-        await Assertions.Expect(Page.GetByText("Sprache")).ToBeVisibleAsync(); // guest bottom navigation
+        await Assertions.Expect(Page.GetByTestId("guest-topbar")).ToBeVisibleAsync(); // the real guest layout
+        await Assertions.Expect(Page.GetByTestId("menu-display")).ToHaveAttributeAsync("data-track-clicks", "false");
 
         await ClickMenuItemAsync("Flammkuchen");
-        await Assertions.Expect(Overlay).ToContainTextAsync("Beschreibung");
+        await Assertions.Expect(ItemSheet).ToContainTextAsync("Beschreibung");
+        // A deep link (?item=) in the preview does not count either
+        await OpenGuestPageAsync(Page, $"/menu/preview/{menuId}?item={await ItemIdAsync(menuId, "Flammkuchen")}");
+        await Assertions.Expect(ItemSheet).ToBeVisibleAsync();
         await Page.WaitForTimeoutAsync(500); // a click would be recorded right away; give it time to show up
         (await CountClicksAsync(menuId)).Should().Be(0);
+        clickRequests.Should().Be(0, "the preview does not even send clicks");
 
         // Contrast: the public page still records the click
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
-        await OpenPublicMenuPageAsync(guest, $"/menu/{menuId}");
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
         await ClickMenuItemAsync(guest, "Flammkuchen");
-        await Assertions.Expect(OverlayOf(guest)).ToBeVisibleAsync();
         await AssertEventuallyAsync(async () => (await CountClicksAsync(menuId)) == 1);
+    }
+
+    [Fact]
+    public async Task Preview_ThemeParameter_ShowsAnotherThemeForTheOwner()
+    {
+        await RegisterNewOwnerAsync();
+        var menuId = await CreateMenuWithItemAsync("Themen Vorschau", "Suppe");
+
+        await OpenGuestPageAsync(Page, $"/menu/preview/{menuId}?theme=fancy");
+        await Assertions.Expect(Page.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "fancy");
+
+        // Unknown values fall back to the saved theme
+        await OpenGuestPageAsync(Page, $"/menu/preview/{menuId}?theme=nonsense");
+        await Assertions.Expect(Page.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "modern");
+    }
+
+    private async Task<Guid> ItemIdAsync(Guid menuId, string name)
+    {
+        await using var db = App.CreateDbContext(Guid.Empty);
+        return await db.MenuItems.IgnoreQueryFilters().Where(i => i.Name == name && i.Category!.MenuId == menuId).Select(i => i.Id).SingleAsync();
     }
 
     private static async Task AssertEventuallyAsync(Func<Task<bool>> condition)

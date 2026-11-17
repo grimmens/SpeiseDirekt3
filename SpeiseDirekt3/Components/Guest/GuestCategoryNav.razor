@@ -1,0 +1,26 @@
+@* Sticky chip bar right under the top bar, visible from the start. Chips are anchor links (#cat-…), so they work
+   without JS; guest-menu.js adds the scroll-spy (active chip follows the scroll position and scrolls into view)
+   and the button at the end that opens the categories sheet. *@
+<nav class="gm-catnav" aria-label="@T.Categories" data-testid="category-nav" data-catnav>
+    <div class="gm-catnav-inner gm-container">
+        <div class="gm-catnav-scroll" data-catnav-scroll>
+            @foreach (var (category, index) in Categories.Select((c, i) => (c, i)))
+            {
+                <a class="gm-chip @(index == 0 ? "is-active" : null)" href="#@category.Anchor" data-category-link="@category.Anchor"
+                   data-testid="category-chip" aria-current="@(index == 0 ? "true" : null)">@category.Category.Name</a>
+            }
+        </div>
+        <div class="gm-catnav-end" data-js-only>
+            <button type="button" class="gm-iconbtn gm-catnav-all" data-sheet-open="categories" aria-haspopup="dialog"
+                    aria-label="@T.ShowAllCategories" data-testid="category-all">
+                <GuestIcon Name="chevron-down" />
+            </button>
+        </div>
+    </div>
+</nav>
+
+@code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+    [Parameter, EditorRequired] public IReadOnlyList<GuestCategory> Categories { get; set; } = Array.Empty<GuestCategory>();
+}

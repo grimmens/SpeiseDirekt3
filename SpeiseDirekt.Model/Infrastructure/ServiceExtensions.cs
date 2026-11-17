@@ -24,6 +24,8 @@ namespace SpeiseDirekt.Infrastructure
             services.AddTransient<ITrackingService, TrackingService>();
             services.AddTransient<IAnalyticsService, AnalyticsService>();
             services.AddTransient<IPermissionService, PermissionService>();
+            services.AddTransient<IRestaurantProfileService, RestaurantProfileService>();
+            services.AddTransient<IMenuTranslationService, MenuTranslationService>();
 
             // Repositories (all depend on ApplicationDbContext)
             services.AddTransient<IMenuRepository, MenuRepository>();

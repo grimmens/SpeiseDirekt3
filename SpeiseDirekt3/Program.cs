@@ -1,4 +1,4 @@
-using BytexDigital.Blazor.Components.CookieConsent;
+﻿using BytexDigital.Blazor.Components.CookieConsent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -7,6 +7,7 @@ using Microsoft.Extensions.AI;
 using OpenAI;
 using SpeiseDirekt3.Components;
 using SpeiseDirekt3.Components.Account;
+using SpeiseDirekt3.Components.Guest;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.ServiceImplementation;
@@ -42,6 +43,8 @@ namespace SpeiseDirekt3
             builder.Services.AddScoped<IdentityRedirectManager>();
             builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
             builder.Services.AddScoped<IImageResizeService, ImageResizeService>();
+            // <html lang> of the guest pages (App.razor, set by GuestMenuView)
+            builder.Services.AddScoped<SpeiseDirekt3.Components.Guest.GuestDocument>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.ConfigureServices();
 
@@ -210,6 +213,8 @@ namespace SpeiseDirekt3
             app.UseAntiforgery();
 
             app.MapControllers();
+            // Item click tracking of the static guest pages (js/guest-menu.js)
+            app.MapGuestEndpoints();
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();

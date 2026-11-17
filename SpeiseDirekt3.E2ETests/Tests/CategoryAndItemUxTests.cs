@@ -91,8 +91,9 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         });
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
-        await OpenPublicMenuPageAsync(guest, $"/menu/{menuId}");
-        await Assertions.Expect(guest.Locator("div[data-category] h2")).ToHaveTextAsync(new[] { "Desserts", "Vorspeisen", "Hauptspeisen" });
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
+        await Assertions.Expect(guest.Locator("[data-testid='category-section'] h2")).ToHaveTextAsync(new[] { "Desserts", "Vorspeisen", "Hauptspeisen" });
+        await Assertions.Expect(guest.GetByTestId("category-chip")).ToHaveTextAsync(new[] { "Desserts", "Vorspeisen", "Hauptspeisen" });
     }
 
     [Fact]
@@ -129,7 +130,7 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         async Task OpenRenameAsync()
         {
             await CategoryRows.First.Locator("button", new() { HasTextString = "⋮" }).ClickAsync();
-            await Page.GetByRole(AriaRole.Menuitem, new() { Name = "Rename" }).ClickAsync();
+            await Page.GetByRole(AriaRole.Menuitem, new() { Name = "Edit" }).ClickAsync();
             await Assertions.Expect(modal).ToBeVisibleAsync();
         }
 
@@ -174,8 +175,8 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
 
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
-        await OpenPublicMenuPageAsync(guest, $"/menu/{menuId}");
-        await Assertions.Expect(guest.Locator("div[data-category='Suppen'] h3")).ToHaveTextAsync(new[] { "Brotkorb", "Tomatensuppe" });
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
+        await Assertions.Expect(guest.Locator("[data-testid='category-section'][data-category='Suppen'] h3")).ToHaveTextAsync(new[] { "Brotkorb", "Tomatensuppe" });
     }
 
     // --- Item table ---
@@ -361,12 +362,13 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
 
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
-        await OpenPublicMenuPageAsync(guest, $"/menu/{menuId}");
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
+        // Without description the list row has no empty paragraph either
+        await Assertions.Expect(ItemEntry(guest, "Almdudler 0,35 l").Locator(".gm-row-desc")).ToHaveCountAsync(0);
         await ClickMenuItemAsync(guest, "Almdudler 0,35 l");
-        var overlay = OverlayOf(guest);
-        await Assertions.Expect(overlay).ToBeVisibleAsync();
-        await Assertions.Expect(overlay).ToContainTextAsync(new Regex("3[.,]60"));
-        // No empty description paragraph (with its margin) in the overlay
-        await Assertions.Expect(overlay.Locator("p.leading-relaxed")).ToHaveCountAsync(0);
+        var sheet = ItemSheetOf(guest);
+        await Assertions.Expect(sheet.GetByTestId("item-price")).ToHaveTextAsync("€ 3,60");
+        // No empty description paragraph (with its margin) in the item sheet
+        await Assertions.Expect(sheet.Locator(".gm-detail-desc")).ToHaveCountAsync(0);
     }
 }

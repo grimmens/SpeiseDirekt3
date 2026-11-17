@@ -1,0 +1,64 @@
+@* Search sheet: a client-side search over the menu (js/guest-search-filter.js). The server renders one hidden result
+   row per item in menu order: a small lazy thumbnail when the item has a photo, the name, category and labels, the
+   description and the price. data-search-text holds what is searched (name, description, category, the texts of every
+   label the item matches — GuestFilters.SearchText); the script shows the rows containing every word of the query
+   (case and accents ignored), wraps the matched words of the [data-hl] parts in <mark> (built with DOM nodes, never
+   innerHTML) and hides rows the active filter excludes (the note below says so). A result is a normal item link. *@
+<GuestSheet Name="search" Title="@T.Search" TestId="search-sheet" Class="gm-sheet--search">
+    <div class="gm-search" data-search>
+        <label class="gm-visually-hidden" for="gm-search-input">@T.SearchLabel</label>
+        <div class="gm-search-field">
+            <GuestIcon Name="search" />
+            <input id="gm-search-input" class="gm-search-input" type="search" autocomplete="off" autocapitalize="off"
+                   spellcheck="false" enterkeyhint="search" placeholder="@T.SearchPlaceholder" data-search-input autofocus />
+            <button type="button" class="gm-search-clear" data-search-clear aria-label="@T.ClearSearch" hidden>
+                <GuestIcon Name="close" />
+            </button>
+        </div>
+        <p class="gm-search-status" data-search-status role="status" aria-live="polite"></p>
+        <p class="gm-search-filter-note" data-search-filter-note data-testid="search-filter-note" hidden>
+            <GuestIcon Name="sliders" />
+            <span data-search-filter-text>@T.FilterActive</span>
+            <button type="button" class="gm-textbtn" data-filter-reset-all>@T.ResetFilters</button>
+        </p>
+        <div class="gm-search-empty" data-search-empty data-testid="search-empty" hidden>
+            <GuestIcon Name="search" />
+            <p class="gm-search-empty-title" data-search-empty-text></p>
+            <p class="gm-search-empty-hint">@T.SearchEmptyHint</p>
+        </div>
+        <ul class="gm-search-results" data-search-results role="list">
+            @foreach (var category in Model.Categories)
+            {
+                foreach (var item in category.Items)
+                {
+                    var image = GuestFormat.ImageUrl(item.ImagePath);
+                    var labels = GuestFilters.LabelTexts(item, T);
+                    <li hidden data-search-row data-item-id="@item.Id" data-search-text="@GuestFilters.SearchText(item, category.Category.Name, T)" @key="item.Id">
+                        <a class="gm-search-row" href="@Model.ItemUrl(item)" data-item-link>
+                            @if (image is not null)
+                            {
+                                <span class="gm-search-thumb"><img src="@image" alt="" width="48" height="48" loading="lazy" decoding="async" /></span>
+                            }
+                            <span class="gm-search-text">
+                                <span class="gm-search-name" data-hl>@item.Name</span>
+                                <span class="gm-search-category"><span data-hl>@category.Category.Name</span>@if (labels.Length > 0)
+                                    {<span aria-hidden="true"> · </span><span data-hl>@labels</span>}</span>
+                                @if (!string.IsNullOrWhiteSpace(item.Description))
+                                {
+                                    <span class="gm-search-desc" data-hl>@item.Description</span>
+                                }
+                            </span>
+                            <span class="gm-price" data-testid="search-price">@T.ItemPrice(item)</span>
+                        </a>
+                    </li>
+                }
+            }
+        </ul>
+    </div>
+</GuestSheet>
+
+@code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+}

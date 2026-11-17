@@ -1,0 +1,115 @@
+@* The guest menu (static SSR): top bar, intro, sticky category chips, the sections, and the sheets (categories,
+   search, item, language). Rendered by /qr/{id}, /menu/{id} and /menu/preview/{id}; js/guest-menu.js adds the behaviour.
+   The root carries what the script needs: data-menu-id, data-track-clicks, data-base-path, lang, and the texts of the
+   scripts plus the price notation as JSON in data-guest-strings (GuestText.ScriptJson; an attribute value is HTML-encoded
+   by the renderer and decoded by the browser, so the JSON arrives intact).
+   Every component below gets the UI texts (GuestText: German menus German, all others English) as a cascading value.
+   Owner preview only (data-preview): the editor's live draft (js/guest-preview.js) needs the saved name, the theme keys
+   and the title suffix (data-preview-*); the name/description targets carry data-menu-name / data-menu-description. *@
+@inject GuestDocument Document
+<CascadingValue Value="Model.Text" IsFixed="true">
+<GuestMenuHead Model="Model" />
+
+<div class="gm" data-theme="@Model.ThemeKey" data-guest-root data-testid="menu-display" data-menu-id="@Model.Menu.Id" lang="@Model.Language.Code"
+     data-track-clicks="@(Model.TrackClicks ? "true" : "false")" data-base-path="@Model.BasePath" data-preview="@(Model.IsPreview ? "true" : null)"
+     data-preview-saved-name="@(Model.IsPreview ? Model.Menu.Name : null)"
+     data-preview-themes="@(Model.IsPreview ? string.Join(' ', Enum.GetValues<DesignTheme>().Select(GuestMenuModel.ThemeKeyOf)) : null)"
+     data-preview-restaurant="@(Model.IsPreview ? Model.Profile?.Name : null)"
+     data-preview-menu-word="@(Model.IsPreview ? Model.Text.MenuWord : null)"
+     data-preview-item-open="@(Model.IsPreview && Model.SelectedItem is not null ? "true" : null)"
+     data-guest-strings="@Model.Text.ScriptJson()">
+    <a class="gm-skip" href="#gm-main">@Model.Text.SkipToMenu</a>
+
+    <GuestTopBar Title="@Model.Menu.Name">
+        @* Start: restaurant info (a link to the footer #gm-info without JS) and the language button (a link to the
+           language list #gm-languages without JS); Center: once the hero scrolled away, the logo and the menu name *@
+        <Start>
+            @if (Model.Profile is not null)
+            {
+                <a class="gm-iconbtn" href="#@GuestRestaurantSection.FooterId" data-sheet-open="info" aria-haspopup="dialog"
+                   aria-label="@Model.Text.RestaurantInfo" data-testid="info-button">
+                    <GuestIcon Name="info" />
+                </a>
+            }
+            @if (Model.HasLanguageVersions)
+            {
+                <GuestLanguageButton Model="Model" />
+            }
+        </Start>
+        <Center>
+            @if (GuestFormat.ImageUrl(Model.Profile?.LogoImagePath) is { } topbarLogo)
+            {
+                <span class="gm-topbar-brand">
+                    <img class="gm-topbar-logo" src="@topbarLogo" alt="" width="64" height="64" decoding="async" />
+                    <span class="gm-topbar-title" data-menu-name>@Model.Menu.Name</span>
+                </span>
+            }
+            else
+            {
+                <span class="gm-topbar-title" data-menu-name>@Model.Menu.Name</span>
+            }
+        </Center>
+        <End>
+            @if (hasFilters)
+            {
+                <GuestFilterButton />
+            }
+            <button type="button" class="gm-iconbtn" data-js-only data-sheet-open="search" aria-haspopup="dialog"
+                    aria-label="@Model.Text.SearchMenu" data-testid="search-button">
+                <GuestIcon Name="search" />
+            </button>
+        </End>
+    </GuestTopBar>
+
+    <GuestHero Model="Model" />
+
+    @if (Model.Categories.Count > 0)
+    {
+        <GuestCategoryNav Categories="Model.Categories" />
+    }
+
+    <main class="gm-main gm-container" id="gm-main">
+        @if (hasFilters)
+        {
+            <GuestFilterNotice />
+        }
+        @foreach (var category in Model.Categories)
+        {
+            <GuestCategorySection @key="category.Category.Id" Category="category" ItemHref="Model.ItemUrl" Subtitle="@category.Category.Description" />
+        }
+        @if (Model.Categories.Count == 0)
+        {
+            <p class="gm-empty">@Model.Text.NoDishes</p>
+        }
+    </main>
+
+    <GuestRestaurantSection Model="Model" />
+    @if (Model.HasLanguageVersions)
+    {
+        <GuestLanguageSection Model="Model" />
+    }
+
+    <GuestCategorySheet Categories="Model.Categories" />
+    <GuestSearchSheet Model="Model" />
+    @if (hasFilters)
+    {
+        <GuestFilterSheet Model="Model" />
+    }
+    <GuestFavoritesSheet Model="Model" />
+    <GuestItemSheet Model="Model" />
+</div>
+</CascadingValue>
+
+@code {
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+
+    /// <summary>The menu has labels or allergens: filter button, notice and sheet are rendered (AP4).</summary>
+    private bool hasFilters;
+
+    protected override void OnParametersSet()
+    {
+        hasFilters = GuestFilters.HasFilters(Model);
+        // <html lang> of the document (App.razor)
+        Document.SetLanguage(Model.Language.Code);
+    }
+}

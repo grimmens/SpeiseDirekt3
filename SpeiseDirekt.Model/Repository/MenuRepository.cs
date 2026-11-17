@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
+using SpeiseDirekt.ServiceImplementation;
 
 namespace SpeiseDirekt.Repository;
 
@@ -61,8 +62,13 @@ public class MenuRepository : IMenuRepository
         var allergens = await _db.Allergens.Where(a => a.MenuId == id).ToListAsync();
         _db.Allergens.RemoveRange(allergens);
 
+        // The other language versions stay; a single one left is unlinked
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+        await MenuTranslationService.LeaveGroupOnDeleteAsync(_db, menu.Id, menu.TranslationGroupId);
+
         _db.Menus.Remove(menu);
         await _db.SaveChangesAsync();
+        await transaction.CommitAsync();
         return true;
     }
 }

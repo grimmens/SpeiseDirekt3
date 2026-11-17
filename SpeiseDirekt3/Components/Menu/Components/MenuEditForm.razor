@@ -2,7 +2,11 @@
 @using Microsoft.EntityFrameworkCore
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
+@using SpeiseDirekt.Infrastructure
+@implements IAsyncDisposable
 @inject ApplicationDbContext Context
+@inject IMenuTranslationService Translations
+@inject IJSRuntime JS
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
 
@@ -36,8 +40,9 @@
 <!-- Content -->
 <div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        <!-- Form Card -->
-        <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-6">
+        <div class="flex flex-col gap-8 min-w-0">
+        <!-- Form Card (menu-preview-draft.js listens to its inputs and sends the draft to the preview) -->
+        <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-6" @ref="formCard">
             <h2 class="text-lg font-semibold text-gray-900 mb-6">Menu Details</h2>
             <EditForm EditContext="EditContext" OnValidSubmit="HandleValidSubmit">
                 <DataAnnotationsValidator />
@@ -69,14 +74,17 @@
                             </Content>
                         </SpeiseDirekt3.Components.HelperComp.InfoPopoverComp>
                     </label>
-                    <InputSelect @bind-Value="Menu.Language"
+                    <InputSelect @bind-Value="Menu.Language" @bind-Value:after="OnLanguageChanged"
                                  class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
                                  id="languageSelect">
                         @foreach (var language in Enum.GetValues<MenuLanguage>())
                         {
-                            <option value="@language">@language</option>
+                            @* A language another version of this menu has is taken (one menu per language in a group) *@
+                            var takenBy = versions.FirstOrDefault(v => v.Language == language && v.Id != Menu.Id);
+                            <option value="@language" disabled="@(takenBy is not null)">@language@(takenBy is not null ? " (another version)" : "")</option>
                         }
                     </InputSelect>
+                    <ValidationMessage For="@(() => Menu.Language)" class="text-sm text-red-600 mt-1" />
                 </div>
 
                 <!-- Design Theme -->
@@ -129,6 +137,12 @@
             </EditForm>
         </div>
 
+        @if (!IsNew && loaded)
+        {
+            <MenuLanguageVersions MenuId="Menu.Id" Versions="versions" CanCreate="canCreate" OnChanged="OnVersionsChangedAsync" />
+        }
+        </div>
+
         <!-- Preview Card: the guest menu in a phone-sized frame with its own scrollbar -->
         <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-6 lg:sticky lg:top-6">
             <div class="flex items-start justify-between gap-3 mb-4">
@@ -145,21 +159,30 @@
                     </a>
                 }
             </div>
-            @if (Menu != null)
+            @if (IsNew)
+            {
+                <div data-testid="menu-preview-hint" class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-[1rem] py-6 text-sm text-gray-600">
+                    Save the menu to see how guests will see it.
+                </div>
+            }
+            else
             {
                 <div class="flex justify-center">
-                    @* Geometry is inline so the frame keeps its size even without the Tailwind CDN. The transform
-                       makes the frame the containing block of position:fixed children, so the item overlay opens
-                       inside the phone instead of covering the whole page. *@
-                    <div data-testid="menu-preview-frame"
+                    @* The real guest page (static SSR, its own CSS/JS) in an iframe, so its media queries see the
+                       380 px phone width. Unsaved name, description and theme reach it live by postMessage
+                       (js/menu-preview-draft.js → js/guest-preview.js, the theme switches in place). The language needs
+                       server-rendered texts: a language change reloads the frame with ?lang= (and the current ?theme=);
+                       @key replaces the iframe instead of changing its src, so that adds no history entries, and the
+                       reloaded frame asks for the draft again. *@
+                    <div data-testid="menu-preview-frame" @ref="previewFrame"
                          class="relative w-full rounded-[2.25rem] border-[10px] border-gray-900 bg-gray-900 shadow-xl"
-                         style="max-width: 380px; height: 640px; overflow: hidden; transform: translateZ(0);">
-                        <div data-testid="menu-preview-scroll" class="bg-white rounded-[1.6rem] [&>div]:min-h-full"
-                             style="height: 100%; overflow-y: auto; overscroll-behavior: contain;">
-                            <MenuDisplayComponent Preview="true" Menu="Menu" />
-                        </div>
+                         style="max-width: 380px; height: 640px; overflow: hidden;">
+                        <iframe @key="previewUrl" src="@previewUrl" title="Guest preview" data-testid="menu-preview-iframe"
+                                class="bg-white rounded-[1.6rem]"
+                                style="display: block; width: 100%; height: 100%; border: 0;"></iframe>
                     </div>
                 </div>
+                <p class="mt-3 text-xs text-gray-500" data-testid="menu-preview-note">Shows your unsaved changes. Guests see them after you save.</p>
             }
         </div>
     </div>
@@ -170,32 +193,117 @@
 
     private Menu Menu { get; set; } = new();
     private EditContext EditContext { get; set; } = new EditContext(new Menu());
+    private ValidationMessageStore? messages;
     private bool IsNew => !Id.HasValue;
+    private bool loaded;
+    private bool canCreate;
+    private Guid? loadedId;
 
-    protected override async Task OnInitializedAsync()
+    /// <summary>Language versions of the menu (this one included), for the select and the "Language versions" card.</summary>
+    private IReadOnlyList<MenuVersion> versions = Array.Empty<MenuVersion>();
+
+    /// <summary>
+    /// Owner preview in the phone frame: the saved menu with the draft's language (?lang=) and theme (?theme=, the
+    /// starting point after a reload). Set on load and on a language change only — theme and text changes arrive by
+    /// postMessage without a reload. <see cref="previewReload"/> forces a reload (versions linked or unlinked).
+    /// </summary>
+    private string previewUrl = "";
+    private int previewReload;
+
+    private ElementReference formCard;
+    private ElementReference previewFrame;
+    private IJSObjectReference? draftModule;
+    private IJSObjectReference? draftHandle;
+    private bool draftAttached;
+
+    protected override async Task OnParametersSetAsync()
     {
+        // Same component for another menu (e.g. "Edit" of a language version, or the new copy): load it
+        if (loaded && loadedId == Id)
+            return;
+
         var requiredPerm = IsNew ? Permission.MenusCreate : Permission.MenusEdit;
         if (!await PermissionService.HasPermissionAsync(requiredPerm))
         {
             NavManager.NavigateTo("/menus");
             return;
         }
+        canCreate = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
 
+        // Unsaved edits of a previously shown menu must never be written by a later save
+        Context.ChangeTracker.Clear();
         if (IsNew)
         {
             Menu = new Menu();
+            versions = Array.Empty<MenuVersion>();
         }
         else
         {
+            // Only the menu itself: the preview is the guest page in an iframe and loads its own data
             Menu = (await Context.Menus
-                .Include(e => e.Categories)
-                .ThenInclude(e => e.MenuItems)
-                .ThenInclude(e => e.Allergens) // shown in the preview
                 .SingleOrDefaultAsync(e => e.Id == Id))
                ?? throw new InvalidOperationException($"Menu '{Id}' not found.");
+            versions = await Translations.GetVersionsAsync(Menu.Id);
         }
 
         EditContext = new EditContext(Menu);
+        messages = new ValidationMessageStore(EditContext);
+        EditContext.OnFieldChanged += (_, e) =>
+        {
+            // A server-side message (name taken, language taken) goes away once the field changes
+            if (e.FieldIdentifier.FieldName is nameof(Menu.Language) or nameof(Menu.Name))
+            {
+                messages.Clear(e.FieldIdentifier);
+                EditContext.NotifyValidationStateChanged();
+            }
+        };
+        loadedId = Id;
+        loaded = true;
+        UpdatePreviewUrl();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (IsNew || !loaded)
+            return;
+        try
+        {
+            if (!draftAttached)
+            {
+                draftAttached = true;
+                // "./": resolved against the base href; the ImportMap of the back office maps it to the fingerprinted file
+                draftModule ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/menu-preview-draft.js");
+                draftHandle = await draftModule.InvokeAsync<IJSObjectReference>("attach", formCard, previewFrame);
+            }
+            else if (draftHandle is not null)
+            {
+                // Blazor may have changed a field itself (theme arrows, another menu loaded): send the current values
+                await draftHandle.InvokeVoidAsync("refresh");
+            }
+        }
+        catch (JSException e)
+        {
+            // Without the live draft the preview still shows the saved menu; the form must keep working
+            Console.Error.WriteLine($"Menu editor: live preview unavailable: {e.Message}");
+        }
+    }
+
+    private void UpdatePreviewUrl()
+    {
+        var code = MenuLanguages.Of(Menu.Language).Code;
+        previewUrl = $"/menu/preview/{Id}?theme={Menu.Theme.ToString().ToLowerInvariant()}&lang={code}"
+                     + (previewReload > 0 ? $"&v={previewReload}" : "");
+    }
+
+    /// <summary>The draft's language changed: reload the preview with ?lang= (texts and prices come from the server).</summary>
+    private void OnLanguageChanged() => UpdatePreviewUrl();
+
+    /// <summary>A version was linked or unlinked: reload the list, the select's taken languages and the preview's switch.</summary>
+    private async Task OnVersionsChangedAsync()
+    {
+        versions = await Translations.GetVersionsAsync(Menu.Id);
+        previewReload++;
+        UpdatePreviewUrl();
     }
 
     private async Task HandleValidSubmit()
@@ -206,8 +314,14 @@
 
         if (nameExists)
         {
-            var messages = new ValidationMessageStore(EditContext);
-            messages.Add(() => Menu.Name, "This name already exists.");
+            messages!.Add(() => Menu.Name, "This name already exists.");
+            EditContext.NotifyValidationStateChanged();
+            return;
+        }
+
+        if (!IsNew && await Translations.ValidateLanguageAsync(Menu.Id, Menu.Language) is { } conflict)
+        {
+            messages!.Add(() => Menu.Language, conflict);
             EditContext.NotifyValidationStateChanged();
             return;
         }
@@ -219,6 +333,8 @@
         else
         {
             Context.Menus.Update(Menu);
+            // Linked and unlinked in the "Language versions" card (another DbContext): never overwrite it from here
+            Context.Entry(Menu).Property(m => m.TranslationGroupId).IsModified = false;
         }
 
         await Context.SaveChangesAsync();
@@ -233,16 +349,26 @@
         Menu.Theme = themes[nextIndex];
     }
 
-    void ChangeLanguage(int direction)
-    {
-        var themes = Enum.GetValues<MenuLanguage>().Cast<MenuLanguage>().ToList();
-        var currentIndex = themes.IndexOf(Menu.Language);
-        var nextIndex = (currentIndex + direction + themes.Count) % themes.Count;
-        Menu.Language = themes[nextIndex];
-    }
-
     private void Cancel()
     {
         NavManager.NavigateTo(IsNew ? "/menus" : $"/menudetail/{Id}");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (draftHandle is not null)
+            {
+                await draftHandle.InvokeVoidAsync("dispose");
+                await draftHandle.DisposeAsync();
+            }
+            if (draftModule is not null)
+                await draftModule.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit is gone (tab closed): nothing to clean up in the browser
+        }
     }
 }

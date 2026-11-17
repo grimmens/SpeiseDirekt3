@@ -1,0 +1,50 @@
+@* One item in a photo category (grid). The whole card is a link to ?item=<id> (opens the item sheet; without JS
+   the server renders it open). Items without a photo render as a text card in the same grid.
+   The data-* attributes describe the item for scripts (search/filter/favourites):
+   data-item-id, data-category-id, data-labels ("vegan spicy"), data-allergens ("A C G"), data-price ("9.90"),
+   data-has-image, data-filter-labels (every label the item matches for the filter: a vegan item is vegetarian too).
+   The corner slot (data-slot="favorite") holds the heart button (GuestFavoriteButton); it is a sibling of the link
+   because interactive content must not be nested inside <a>. *@
+@{
+    var image = GuestFormat.ImageUrl(Item.ImagePath);
+    var codes = GuestFormat.AllergenCodes(Item);
+}
+<li class="gm-card @(image is null ? "gm-card--text" : "gm-card--photo")" id="@GuestFormat.ItemAnchor(Item.Id)" data-testid="item-card"
+    data-item-id="@Item.Id" data-category-id="@Item.CategoryId" data-labels="@GuestLabels.Data(Item)"
+    data-allergens="@GuestFormat.AllergenData(Item)" data-price="@GuestFormat.PriceData(Item.Price)"
+    data-has-image="@(image is null ? "false" : "true")" data-filter-labels="@GuestFilters.LabelData(Item)">
+    <a class="gm-card-link" href="@Href" data-item-link>
+        @if (image is not null)
+        {
+            <div class="gm-card-media">
+                <img src="@image" alt="" width="600" height="750" loading="lazy" decoding="async" />
+            </div>
+        }
+        <div class="gm-card-body">
+            <h3 class="gm-card-title">@Item.Name</h3>
+            @if (!string.IsNullOrWhiteSpace(Item.Description))
+            {
+                <p class="gm-card-desc">@Item.Description</p>
+            }
+            <GuestLabelChips Item="Item" />
+            <div class="gm-card-foot">
+                <span class="gm-price" data-testid="item-price">@T.ItemPrice(Item)</span>
+                @if (codes.Length > 0)
+                {
+                    <span class="gm-allergen-codes" data-testid="item-allergens" title="@T.Allergens">@codes</span>
+                }
+            </div>
+        </div>
+    </a>
+    <div class="gm-card-corner" data-slot="favorite"><GuestFavoriteButton Item="Item" />@Corner</div>
+</li>
+
+@code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+    [Parameter, EditorRequired] public MenuItem Item { get; set; } = default!;
+    /// <summary>Link that opens the item (<see cref="GuestMenuModel.ItemUrl"/>).</summary>
+    [Parameter, EditorRequired] public string Href { get; set; } = "";
+    /// <summary>Content of the top-right corner over the photo (reserved for the heart button).</summary>
+    [Parameter] public RenderFragment? Corner { get; set; }
+}

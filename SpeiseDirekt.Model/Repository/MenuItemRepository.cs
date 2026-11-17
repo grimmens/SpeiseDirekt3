@@ -18,6 +18,7 @@ public class MenuItemRepository : IMenuItemRepository
     {
         var query = _db.MenuItems
             .Include(mi => mi.Allergens)
+            .Include(mi => mi.PriceOptions.OrderBy(o => o.Kind).ThenBy(o => o.SortOrder).ThenBy(o => o.Name))
             .AsQueryable();
 
         if (categoryId.HasValue)
@@ -31,6 +32,7 @@ public class MenuItemRepository : IMenuItemRepository
         return await _db.MenuItems
             .Include(mi => mi.Category)
             .Include(mi => mi.Allergens)
+            .Include(mi => mi.PriceOptions.OrderBy(o => o.Kind).ThenBy(o => o.SortOrder).ThenBy(o => o.Name))
             .FirstOrDefaultAsync(mi => mi.Id == id);
     }
 
@@ -45,12 +47,16 @@ public class MenuItemRepository : IMenuItemRepository
     {
         var menuItem = await _db.MenuItems
             .Include(mi => mi.Allergens)
+            .Include(mi => mi.PriceOptions)
             .FirstOrDefaultAsync(mi => mi.Id == id);
         if (menuItem is null)
             return null;
 
         updateAction(menuItem);
         await _db.SaveChangesAsync();
+        // Return the options in display order (the collection keeps insertion order)
+        menuItem.PriceOptions = menuItem.PriceOptions
+            .OrderBy(o => o.Kind).ThenBy(o => o.SortOrder).ThenBy(o => o.Name).ToList();
         return menuItem;
     }
 

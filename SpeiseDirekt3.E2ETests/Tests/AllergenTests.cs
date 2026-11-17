@@ -21,19 +21,21 @@ public class AllergenTests : BackOfficeTestBase
 
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
-        await OpenPublicMenuPageAsync(guest, $"/menu/{menuId}");
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
 
-        // Item card shows the codes (sorted), the item without allergens shows none
-        var spaetzleCard = guest.Locator("div.cursor-pointer", new() { Has = guest.Locator("h3", new() { HasTextString = "Käsespätzle" }) });
-        await Assertions.Expect(spaetzleCard).ToContainTextAsync("A, G");
+        // Item entry shows the codes (sorted), the item without allergens shows none
+        var spaetzle = ItemEntry(guest, "Käsespätzle");
+        await Assertions.Expect(spaetzle.GetByTestId("item-allergens")).ToHaveTextAsync("A, G");
+        await Assertions.Expect(spaetzle).ToHaveAttributeAsync("data-allergens", "A G");
+        await Assertions.Expect(ItemEntry(guest, "Salat").GetByTestId("item-allergens")).ToHaveCountAsync(0);
 
         await ClickMenuItemAsync(guest, "Käsespätzle");
-        await Assertions.Expect(OverlayOf(guest)).ToContainTextAsync("A, G");
+        await Assertions.Expect(ItemSheetOf(guest)).ToContainTextAsync("A, G");
 
-        await OverlayOf(guest).Locator("button").First.ClickAsync();
+        await CloseItemSheetAsync(guest);
         await ClickMenuItemAsync(guest, "Salat");
-        await Assertions.Expect(OverlayOf(guest)).ToContainTextAsync("Ohne Allergene");
-        await Assertions.Expect(OverlayOf(guest)).Not.ToContainTextAsync("A, G");
+        await Assertions.Expect(ItemSheetOf(guest)).ToContainTextAsync("Ohne Allergene");
+        await Assertions.Expect(ItemSheetOf(guest)).Not.ToContainTextAsync("A, G");
     }
 
     [Fact]

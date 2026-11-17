@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components.Forms;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceInterface;
 
@@ -8,20 +9,24 @@ namespace SpeiseDirekt.ServiceImplementation
     public class ImageDatabaseUploadService : IImageUploadService
     {
         private readonly IWebHostEnvironment _environment;
-        private readonly ILogger<ImageUploadService> _logger;
+        private readonly ILogger<ImageDatabaseUploadService> _logger;
         private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
         private readonly ApplicationDbContext context;
         private readonly IImageResizeService imageResizeService;
         private const long MaxFileSize = 5 * 1024 * 1024; // 5MB
 
-        public ImageDatabaseUploadService(ApplicationDbContext context, IImageResizeService imageResizeService)
+        public ImageDatabaseUploadService(ApplicationDbContext context, IImageResizeService imageResizeService, ILogger<ImageDatabaseUploadService> logger)
         {
             this.context = context;
             this.imageResizeService = imageResizeService;
+            _logger = logger;
         }
+
+        /// <param name="imagePath">The stored path <c>image/{id}</c> returned by <see cref="UploadImageAsync"/> (or the bare id).</param>
         public async Task<bool> DeleteImageAsync(string imagePath)
         {
-            if (Guid.TryParse(imagePath, out var guid))
+            // Stored paths are "image/{id}"; a bare id is accepted as well
+            if (ImagePaths.TryGetImageId(imagePath, out var guid) || Guid.TryParse(imagePath, out guid))
             {
                 var image = context.Images.Find(guid);
                 if (image != null)

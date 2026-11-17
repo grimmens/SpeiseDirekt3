@@ -1,0 +1,108 @@
+@* Favourites list ("Merkliste", js/guest-favorites.js): the floating button (bottom right, only while the list is not
+   empty) and the sheet. The server renders one hidden row per item in menu order — name (a normal item link),
+   category, a variant <select> with every variant and its price when the item has variants (the first is the
+   default), a quantity stepper (1–20), the line total and a remove button — plus the sum, the note and "Liste leeren"
+   with a confirmation step. The script only shows rows, sets values and writes numbers; it never builds markup from
+   menu text. The list lives in localStorage on this device (sd-merkliste:<menuId>), nothing is sent to the server. *@
+<button type="button" class="gm-fav-fab" data-js-only data-fav-fab data-sheet-open="favorites" aria-haspopup="dialog"
+        data-testid="favorites-button" hidden>
+    <GuestIcon Name="heart" />
+    <span class="gm-fav-fab-text">@T.Favorites</span>
+    <span class="gm-fav-fab-count" data-fav-count data-testid="favorites-count">0</span>
+</button>
+
+<GuestSheet Name="favorites" Title="@T.Favorites" TestId="favorites-sheet" Class="gm-sheet--favorites">
+    <ChildContent>
+        <div class="gm-favlist" data-fav-list>
+            <p class="gm-favlist-empty" data-fav-empty data-testid="favorites-empty" hidden>
+                @T.FavoritesEmpty
+            </p>
+            <ul class="gm-favlist-rows" role="list">
+                @foreach (var category in Model.Categories)
+                {
+                    foreach (var item in category.Items)
+                    {
+                        var image = GuestFormat.ImageUrl(item.ImagePath);
+                        var variants = GuestFilters.Variants(item);
+                        var selectId = $"gm-fav-variant-{item.Id:N}";
+                        <li class="gm-favrow" hidden data-fav-row data-item-id="@item.Id" data-price="@GuestFormat.PriceData(item.Price)"
+                            data-testid="favorite-row" @key="item.Id">
+                            @if (image is not null)
+                            {
+                                <span class="gm-favrow-thumb"><img src="@image" alt="" width="48" height="48" loading="lazy" decoding="async" /></span>
+                            }
+                            <div class="gm-favrow-main">
+                                <div class="gm-favrow-head">
+                                    <span class="gm-favrow-text">
+                                        <a class="gm-favrow-name" href="@Model.ItemUrl(item)" data-item-link>@item.Name</a>
+                                        <span class="gm-favrow-category">@category.Category.Name</span>
+                                    </span>
+                                    <span class="gm-favrow-prices">
+                                        <span class="gm-price gm-favrow-total" data-fav-line data-testid="favorite-line">@T.Price(item.Price)</span>
+                                        <span class="gm-favrow-unit" data-fav-unit data-testid="favorite-unit" hidden></span>
+                                    </span>
+                                </div>
+                                <div class="gm-favrow-controls">
+                                    @if (variants.Count > 0)
+                                    {
+                                        <label class="gm-visually-hidden" for="@selectId">@T.VariantOf(item.Name)</label>
+                                        <span class="gm-select-wrap">
+                                            <select class="gm-select" id="@selectId" data-fav-variant data-testid="favorite-variant">
+                                                @foreach (var variant in variants)
+                                                {
+                                                    <option value="@variant.Id" data-price="@GuestFormat.PriceData(variant.Price)">@variant.Name · @T.Price(variant.Price)</option>
+                                                }
+                                            </select>
+                                            <GuestIcon Name="chevron-down" />
+                                        </span>
+                                    }
+                                    <span class="gm-stepper" role="group" aria-label="@T.QuantityOf(item.Name)">
+                                        <button type="button" class="gm-stepper-btn" data-fav-dec aria-label="@T.OnePortionLess">
+                                            <GuestIcon Name="minus" />
+                                        </button>
+                                        <span class="gm-stepper-value" data-fav-qty data-testid="favorite-qty" aria-live="polite">1</span>
+                                        <button type="button" class="gm-stepper-btn" data-fav-inc aria-label="@T.OnePortionMore">
+                                            <GuestIcon Name="plus" />
+                                        </button>
+                                    </span>
+                                    <button type="button" class="gm-iconbtn gm-iconbtn--plain gm-favrow-remove" data-fav-remove
+                                            aria-label="@T.FavoriteRemove(item.Name)" data-testid="favorite-remove">
+                                        <GuestIcon Name="trash" />
+                                    </button>
+                                </div>
+                            </div>
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
+    </ChildContent>
+    <Footer>
+        <div class="gm-favlist-footer" data-fav-footer>
+            <p class="gm-favlist-sum">
+                <span>@T.Total</span>
+                <span class="gm-price gm-price--lg" data-fav-sum data-testid="favorites-sum">@T.Price(0)</span>
+            </p>
+            <p class="gm-favlist-note">@T.FavoritesNote</p>
+            <div class="gm-favlist-actions" data-fav-actions>
+                <button type="button" class="gm-textbtn gm-textbtn--danger" data-fav-clear data-testid="favorites-clear">
+                    <GuestIcon Name="trash" />
+                    <span>@T.ClearList</span>
+                </button>
+            </div>
+            <div class="gm-favlist-confirm" data-fav-confirm data-testid="favorites-confirm" hidden>
+                <p class="gm-favlist-confirm-text" id="gm-fav-confirm-text">@T.ClearListConfirm</p>
+                <div class="gm-favlist-confirm-actions">
+                    <button type="button" class="gm-button gm-button--quiet" data-fav-confirm-no>@T.Cancel</button>
+                    <button type="button" class="gm-button gm-button--danger" data-fav-confirm-yes aria-describedby="gm-fav-confirm-text">@T.YesClear</button>
+                </div>
+            </div>
+        </div>
+    </Footer>
+</GuestSheet>
+
+@code {
+    /// <summary>UI texts and price notation of the menu (cascading from GuestMenuView; German by default).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+    [Parameter, EditorRequired] public GuestMenuModel Model { get; set; } = default!;
+}

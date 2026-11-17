@@ -7,8 +7,8 @@ using SpeiseDirekt3.E2ETests.Infrastructure;
 namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
-/// Design themes (<c>Menu.Theme</c>) style the public menu display via <c>css/menu-themes.css</c>.
-/// The stylesheet is local, so its colors and fonts are checked even while the Tailwind CDN is blocked.
+/// Design themes (<c>Menu.Theme</c>) style the guest view via <c>css/guest-themes.css</c> (variables per
+/// <c>data-theme</c>) and <c>css/guest-menu.css</c>. Both are local, so colors and fonts are checked for real.
 /// </summary>
 public class MenuThemeTests : BackOfficeTestBase
 {
@@ -45,6 +45,7 @@ public class MenuThemeTests : BackOfficeTestBase
     [InlineData(DesignTheme.Minimal, "rgb(255, 255, 255)", "Inter")]
     [InlineData(DesignTheme.Fancy, "rgb(255, 253, 252)", "Pacifico")]
     [InlineData(DesignTheme.Dark, "rgb(18, 18, 18)", "Playfair Display")]
+    [InlineData(DesignTheme.Modern, "rgb(255, 255, 255)", "Manrope")]
     public async Task Theme_ChangesColorsAndFontsOfTheGuestView(DesignTheme theme, string pageBackground, string headingFont)
     {
         var menuId = await SeedMenuAsync(theme);
@@ -54,44 +55,54 @@ public class MenuThemeTests : BackOfficeTestBase
         var display = MenuDisplay(Page);
         await Assertions.Expect(display).ToHaveAttributeAsync("data-theme", theme.ToString().ToLowerInvariant());
         (await ComputedAsync(display, "backgroundColor")).Should().Be(pageBackground);
-        (await ComputedAsync(display.Locator(".sd-header h1"), "fontFamily")).Should().Contain(headingFont);
+        // The page behind the menu (body, overscroll) follows the theme as well
+        (await ComputedAsync(Page.Locator("body"), "backgroundColor")).Should().Be(pageBackground);
+        (await ComputedAsync(display.Locator("h1"), "fontFamily")).Should().Contain(headingFont);
+        (await ComputedAsync(display.Locator("h2").First, "fontFamily")).Should().Contain(headingFont);
     }
 
     [Fact]
-    public async Task DarkTheme_CardsAreDark_DespiteBootstrapBgWhiteImportant()
+    public async Task DarkTheme_HasLightTextOnDarkSurfaces_EverywhereInTheGuestView()
     {
-        // Bootstrap's .bg-white is !important; the theme must still win, otherwise light text sits on white cards
         var menuId = await SeedMenuAsync(DesignTheme.Dark);
         await OpenMenuAsync(menuId);
 
-        var card = MenuDisplay(Page).Locator("div.cursor-pointer").First;
-        (await ComputedAsync(card, "backgroundColor")).Should().Be("rgb(30, 30, 30)");
-        (await ComputedAsync(card.Locator("h3"), "color")).Should().Be("rgb(232, 232, 232)");
-        // Header title uses the theme's header color (Bootstrap's .text-white is !important too)
-        (await ComputedAsync(MenuDisplay(Page).Locator(".sd-header h1"), "color")).Should().Be("rgb(242, 212, 218)");
-    }
-
-    [Fact]
-    public async Task ModernTheme_IsTheDefaultLook_WithoutThemeOverrides()
-    {
-        var menuId = await SeedMenuAsync(DesignTheme.Modern);
-        await OpenMenuAsync(menuId);
-
         var display = MenuDisplay(Page);
-        await Assertions.Expect(display).ToHaveAttributeAsync("data-theme", "modern");
-        // No theme rule applies: transparent while the CDN is blocked, Tailwind's bg-gray-50 with real Tailwind
-        (await ComputedAsync(display, "backgroundColor")).Should().BeOneOf("rgba(0, 0, 0, 0)", "rgb(249, 250, 251)");
+        (await ComputedAsync(display.Locator("h1"), "color")).Should().Be("rgb(242, 212, 218)");
+        var row = display.GetByTestId("list-row").First;
+        (await ComputedAsync(row.Locator("h3"), "color")).Should().Be("rgb(232, 232, 232)");
+        (await ComputedAsync(display.GetByTestId("guest-topbar"), "backgroundColor")).Should().NotBe("rgb(255, 255, 255)");
+        // Active chip: dark text on the rose accent, the others light text on dark grey
+        var chips = display.GetByTestId("category-chip");
+        (await ComputedAsync(chips.First, "backgroundColor")).Should().Be("rgb(196, 106, 127)");
+        (await ComputedAsync(chips.First, "color")).Should().Be("rgb(26, 16, 19)");
+
+        // Sheet surface is dark too
+        await ClickMenuItemAsync("Testgericht");
+        var panel = ItemSheet.Locator(".gm-sheet-panel");
+        (await ComputedAsync(panel, "backgroundColor")).Should().Be("rgb(30, 30, 30)");
+        (await ComputedAsync(ItemSheet.Locator("h2"), "color")).Should().Be("rgb(232, 232, 232)");
     }
 
     [Fact]
-    public async Task HeaderShade_IsTranslucent_NotSolidBlack()
+    public async Task TextCardInPhotoGrid_UsesTheThemeSurface()
     {
-        // "bg-opacity-20" does not exist in Bootstrap, whose !important .bg-black made the header shade solid black
-        var menuId = await SeedMenuAsync(DesignTheme.Modern);
+        // A category with one photo and one item without: grid, the second is a text card
+        var menuId = Guid.NewGuid();
+        await App.SeedAsync(E2ESeedData.OwnerId, db =>
+        {
+            var category = new Category { Id = Guid.NewGuid(), Name = "Hauptspeisen", MenuId = menuId };
+            db.Menus.Add(new Menu { Id = menuId, Name = "Dunkle Karte", Description = "", Theme = DesignTheme.Dark, Language = MenuLanguage.German, Categories = new List<Category> { category } });
+            db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = "Mit Foto", Description = "", Price = 9m, CategoryId = category.Id, ImagePath = "favicon.png", SortOrder = 0 });
+            db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = "Ohne Foto", Description = "Nur Text", Price = 8m, CategoryId = category.Id, SortOrder = 1 });
+            return Task.CompletedTask;
+        });
         await OpenMenuAsync(menuId);
 
-        var shade = MenuDisplay(Page).Locator(".sd-header-shade");
-        (await ComputedAsync(shade, "backgroundColor")).Should().NotBe("rgb(0, 0, 0)");
+        var textCard = ItemEntry("Ohne Foto");
+        await Assertions.Expect(textCard).ToHaveAttributeAsync("data-has-image", "false");
+        (await ComputedAsync(textCard.Locator("a"), "backgroundColor")).Should().Be("rgb(30, 30, 30)");
+        (await ComputedAsync(textCard.Locator("h3"), "color")).Should().Be("rgb(232, 232, 232)");
     }
 
     [Fact]
@@ -103,19 +114,37 @@ public class MenuThemeTests : BackOfficeTestBase
         await CreateMenuItemViaUiAsync(menuId, "Margherita", "Tomate, Mozzarella", 9.00m);
 
         await GotoInteractiveAsync($"/menu/edit/{menuId}");
-        await Assertions.Expect(MenuDisplay(Page)).ToHaveAttributeAsync("data-theme", "modern");
+        var frame = Page.FrameLocator("[data-testid='menu-preview-iframe']");
+        await Assertions.Expect(frame.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "modern");
 
-        // The live preview next to the form follows the selection
+        // The live preview next to the form follows the selection before saving: switched in place by postMessage
+        // (js/menu-preview-draft.js → js/guest-preview.js), the frame is not reloaded
         await Page.Locator("#themeSelect").SelectOptionAsync("Dark");
-        await Assertions.Expect(MenuDisplay(Page)).ToHaveAttributeAsync("data-theme", "dark");
+        await Assertions.Expect(frame.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "dark");
+        await Assertions.Expect(Page.GetByTestId("menu-preview-iframe")).ToHaveAttributeAsync("src", new Regex("theme=modern&lang=de$"));
+        (await ComputedAsync(frame.GetByTestId("menu-display"), "backgroundColor")).Should().Be("rgb(18, 18, 18)");
+
+        // Not saved yet: guests still see the old theme
+        var (guestContext, guest) = await NewContextAsync();
+        await using var _ = guestContext;
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
+        await Assertions.Expect(MenuDisplay(guest)).ToHaveAttributeAsync("data-theme", "modern");
 
         await Button("Save Changes").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"/menudetail/{menuId}$"));
 
-        var (guestContext, guest) = await NewContextAsync();
-        await using var _ = guestContext;
-        await OpenPublicMenuPageAsync(guest, $"/menu/{menuId}");
+        await OpenGuestPageAsync(guest, $"/menu/{menuId}");
         await Assertions.Expect(MenuDisplay(guest)).ToHaveAttributeAsync("data-theme", "dark");
         (await ComputedAsync(MenuDisplay(guest), "backgroundColor")).Should().Be("rgb(18, 18, 18)");
+    }
+
+    [Fact]
+    public async Task ThemeParameter_IsIgnoredOnThePublicPage()
+    {
+        var menuId = await SeedMenuAsync(DesignTheme.Classic);
+
+        await OpenGuestPageAsync(Page, $"/menu/{menuId}?theme=dark");
+
+        await Assertions.Expect(MenuDisplay(Page)).ToHaveAttributeAsync("data-theme", "classic");
     }
 }

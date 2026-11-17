@@ -32,6 +32,28 @@ namespace SpeiseDirekt.Data
             builder.Entity<Allergen>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<MenuCombo>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
             builder.Entity<MenuComboItem>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<MenuItemPriceOption>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+            builder.Entity<RestaurantProfile>().HasQueryFilter(e => e.ApplicationUserId == Guid.Parse(UserId));
+
+            // Language versions: at most one menu per language in a translation group. Filtered, so SQL Server allows
+            // any number of unlinked menus (NULL); SQLite (E2E, API tests) supports the same partial index.
+            builder.Entity<Menu>()
+                .HasIndex(e => new { e.TranslationGroupId, e.Language })
+                .IsUnique()
+                .HasFilter("[TranslationGroupId] IS NOT NULL");
+
+            // One restaurant profile per tenant
+            builder.Entity<RestaurantProfile>().HasIndex(e => e.ApplicationUserId).IsUnique();
+
+            // Price variants and extras belong to their item: the only path to them is
+            // Menu → Category → MenuItem → option, all cascading, so SQL Server accepts the cascade.
+            builder.Entity<MenuItemPriceOption>(entity =>
+            {
+                entity.HasOne(e => e.MenuItem)
+                      .WithMany(i => i.PriceOptions)
+                      .HasForeignKey(e => e.MenuItemId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
 
             // Allergen: many-to-many with MenuItem via join table
             builder.Entity<MenuItem>()
@@ -169,6 +191,8 @@ namespace SpeiseDirekt.Data
         public DbSet<TenantUser> TenantUsers { get; set; }
         public DbSet<MenuCombo> MenuCombos { get; set; }
         public DbSet<MenuComboItem> MenuComboItems { get; set; }
+        public DbSet<MenuItemPriceOption> MenuItemPriceOptions { get; set; }
+        public DbSet<RestaurantProfile> RestaurantProfiles { get; set; }
         private void UpdateApplicationUserId(object sender, EntityEntryEventArgs e)
         {
             if (e.Entry.Entity is IAppUserEntity entity)

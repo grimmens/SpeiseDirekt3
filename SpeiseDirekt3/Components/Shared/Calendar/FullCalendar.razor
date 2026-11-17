@@ -1,0 +1,251 @@
+@using System.Globalization
+@using System.Text.Json
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@* Blazor wrapper around FullCalendar 6 (wwwroot/lib/fullcalendar, MIT standard bundle), all-day events only.
+   Controlled: the calendar shows exactly `Events`; clicks, selections and drags are reported through the callbacks and
+   the parent answers with new events (a refused drag puts the event back). The bundle is loaded lazily by
+   js/fullcalendar-interop.js on the first render, so pages without a calendar never load it. Interactive render mode
+   only: during prerendering an empty placeholder is rendered and the calendar is created in OnAfterRenderAsync. *@
+<div class="sd-fc @Class" data-testid="@TestId">
+    @if (loadFailed)
+    {
+        <p class="sd-fc-message" role="status" data-testid="calendar-load-error">The calendar could not be loaded. Reload the page to try again.</p>
+    }
+    else if (!ready)
+    {
+        <p class="sd-fc-message" aria-hidden="true">Loading calendar…</p>
+    }
+    @* FullCalendar renders into a child that the script creates; Blazor never touches it *@
+    <div @ref="host" class="sd-fc-host" role="region" aria-label="@AriaLabel"></div>
+</div>
+
+@code {
+    private const string ModulePath = "./js/fullcalendar-interop.js";
+    private const string BundlePath = "lib/fullcalendar/index.global.min.js";
+
+    private static readonly JsonSerializerOptions PayloadJson = new(JsonSerializerDefaults.Web);
+
+    /// <summary>The events to show (all-day).</summary>
+    [Parameter, EditorRequired] public IReadOnlyList<CalendarEvent> Events { get; set; } = Array.Empty<CalendarEvent>();
+
+    [Parameter] public CalendarOptions Options { get; set; } = new();
+
+    /// <summary>Accessible name of the calendar region.</summary>
+    [Parameter] public string? AriaLabel { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    [Parameter] public string? TestId { get; set; }
+
+    /// <summary>A day was clicked or tapped (or one single day selected; never both for one click).</summary>
+    [Parameter] public EventCallback<DateOnly> OnDateClick { get; set; }
+
+    /// <summary>Two or more days were selected by dragging (needs <see cref="CalendarOptions.Selectable"/>).</summary>
+    [Parameter] public EventCallback<CalendarRange> OnSelect { get; set; }
+
+    /// <summary>An event (occurrence) was clicked or activated with Enter.</summary>
+    [Parameter] public EventCallback<CalendarEventClick> OnEventClick { get; set; }
+
+    /// <summary>
+    /// An event was dragged or stretched (needs <see cref="CalendarOptions.Editable"/> or the event's flags). Update
+    /// <see cref="Events"/> to accept it; afterwards the calendar shows <see cref="Events"/> again either way.
+    /// </summary>
+    [Parameter] public EventCallback<CalendarEventChange> OnEventChange { get; set; }
+
+    /// <summary>The visible dates changed (also once after the first render).</summary>
+    [Parameter] public EventCallback<CalendarDatesSet> OnDatesSet { get; set; }
+
+    private ElementReference host;
+    private IJSObjectReference? module;
+    private IJSObjectReference? calendar;
+    private DotNetObjectReference<FullCalendar>? selfRef;
+    private string? sentOptions;
+    private string? sentEvents;
+    private bool creating, ready, loadFailed, disposed, resync;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (disposed || loadFailed)
+            return;
+        if (firstRender)
+            await CreateAsync();
+        else
+            await SyncAsync();
+    }
+
+    private async Task CreateAsync()
+    {
+        creating = true;
+        try
+        {
+            selfRef = DotNetObjectReference.Create(this);
+            module = await JS.InvokeAsync<IJSObjectReference>("import", ModulePath);
+            var (options, optionsJson) = OptionsPayload();
+            var (events, eventsJson) = EventsPayload();
+            var callbacks = new
+            {
+                dateClick = OnDateClick.HasDelegate,
+                select = OnSelect.HasDelegate,
+                eventClick = OnEventClick.HasDelegate,
+                eventChange = OnEventChange.HasDelegate,
+                datesSet = OnDatesSet.HasDelegate
+            };
+            var handle = await module.InvokeAsync<IJSObjectReference>("create", host, selfRef, Assets[BundlePath], options, events, callbacks);
+            if (disposed)
+            {
+                await DisposeHandleAsync(handle);
+                return;
+            }
+            calendar = handle;
+            (sentOptions, sentEvents) = (optionsJson, eventsJson);
+            ready = true;
+        }
+        catch (JSDisconnectedException)
+        {
+            return;
+        }
+        catch (JSException e)
+        {
+            loadFailed = true;
+            Console.Error.WriteLine($"Calendar: FullCalendar could not be created: {e.Message}");
+        }
+        finally
+        {
+            creating = false;
+        }
+        StateHasChanged(); // drops the placeholder and sends what changed while the calendar was created
+    }
+
+    /// <summary>Sends changed options and events; nothing when both are unchanged (no re-render, the month stays).</summary>
+    private async Task SyncAsync()
+    {
+        if (calendar is null || creating)
+            return;
+        var (options, optionsJson) = OptionsPayload();
+        var (events, eventsJson) = EventsPayload();
+        var optionsChanged = optionsJson != sentOptions;
+        var eventsChanged = resync || eventsJson != sentEvents;
+        if (!optionsChanged && !eventsChanged)
+            return;
+        (sentOptions, sentEvents, resync) = (optionsJson, eventsJson, false);
+        try
+        {
+            await calendar.InvokeVoidAsync("update", optionsChanged ? options : null, eventsChanged ? events : null);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    // --- Calls from js/fullcalendar-interop.js ---
+
+    [JSInvokable]
+    public Task OnDateClickJs(string date) => OnDateClick.InvokeAsync(ParseDate(date));
+
+    [JSInvokable]
+    public Task OnSelectJs(string start, string end) => OnSelect.InvokeAsync(new CalendarRange(ParseDate(start), ParseDate(end)));
+
+    [JSInvokable]
+    public Task OnEventClickJs(string id, string date) => OnEventClick.InvokeAsync(new CalendarEventClick(id, ParseDate(date)));
+
+    [JSInvokable]
+    public async Task OnEventChangeJs(string kind, string id, string oldStart, string? oldEnd, string start, string? end)
+    {
+        var change = new CalendarEventChange(
+            kind == "resized" ? CalendarEventChangeKind.Resized : CalendarEventChangeKind.Moved,
+            id, ParseDate(oldStart), ParseOptional(oldEnd), ParseDate(start), ParseOptional(end));
+        try
+        {
+            await OnEventChange.InvokeAsync(change);
+        }
+        finally
+        {
+            // FullCalendar already moved the event in the browser: show `Events` again (accepted or not)
+            resync = true;
+            StateHasChanged();
+        }
+    }
+
+    [JSInvokable]
+    public Task OnDatesSetJs(string start, string end, string currentStart, string currentEnd, string viewType, string title) =>
+        OnDatesSet.InvokeAsync(new CalendarDatesSet(ParseDate(start), ParseDate(end), ParseDate(currentStart), ParseDate(currentEnd), viewType, title));
+
+    // --- Payloads (shapes read by toEvent / toOptions in the script) ---
+
+    private static string Iso(DateOnly date) => date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    private static string? Iso(DateOnly? date) => date is { } d ? Iso(d) : null;
+    private static DateOnly ParseDate(string value) => DateOnly.ParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+    private static DateOnly? ParseOptional(string? value) => string.IsNullOrEmpty(value) ? null : ParseDate(value);
+
+    private sealed record JsOccurrence(IReadOnlyList<string>? ClassNames, string? Tooltip);
+
+    private sealed record JsEvent(
+        string Id, string Title, string? Start, string? End, int[]? DaysOfWeek, string? StartRecur, string? EndRecur,
+        string? BackgroundColor, string? BorderColor, string? TextColor, IReadOnlyList<string>? ClassNames,
+        bool? Editable, bool? StartEditable, bool? DurationEditable, string? Tooltip,
+        Dictionary<string, JsOccurrence>? Occurrences);
+
+    private sealed record JsToolbar(string Start, string Center, string End);
+
+    private sealed record JsOptions(
+        string InitialView, string? InitialDate, string? Today, string Locale, int FirstDay, string Height,
+        JsToolbar? HeaderToolbar, IReadOnlyDictionary<string, string>? ButtonText, bool Selectable, bool Editable,
+        int? DayMaxEventRows, string NoEventsText);
+
+    private (List<JsEvent> Payload, string Json) EventsPayload()
+    {
+        var payload = Events.Select(e => new JsEvent(
+            e.Id, e.Title, Iso(e.Start), Iso(e.End),
+            e.DaysOfWeek is { Count: > 0 } days ? days.Select(d => (int)d).ToArray() : null, // 0 = Sunday, as in FullCalendar
+            Iso(e.StartRecur), Iso(e.EndRecur),
+            e.BackgroundColor, e.BorderColor, e.TextColor, e.ClassNames,
+            e.Editable, e.StartEditable, e.DurationEditable, e.Tooltip,
+            e.Occurrences?.ToDictionary(o => Iso(o.Key), o => new JsOccurrence(o.Value.ClassNames, o.Value.Tooltip)))).ToList();
+        return (payload, JsonSerializer.Serialize(payload, PayloadJson));
+    }
+
+    private (JsOptions Payload, string Json) OptionsPayload()
+    {
+        var o = Options;
+        var payload = new JsOptions(
+            o.InitialView, Iso(o.InitialDate), Iso(o.Today), o.Locale, (int)o.FirstDay, o.Height,
+            o.HeaderToolbar is { } t ? new JsToolbar(t.Start, t.Center, t.End) : null,
+            o.ButtonText, o.Selectable, o.Editable, o.DayMaxEventRows, o.NoEventsText);
+        return (payload, JsonSerializer.Serialize(payload, PayloadJson));
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        if (calendar is not null)
+            await DisposeHandleAsync(calendar);
+        try
+        {
+            if (module is not null)
+                await module.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        selfRef?.Dispose();
+    }
+
+    private static async Task DisposeHandleAsync(IJSObjectReference handle)
+    {
+        try
+        {
+            await handle.InvokeVoidAsync("dispose");
+            await handle.DisposeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit is gone together with the page
+        }
+        catch (JSException)
+        {
+            // The element was already removed; nothing left to clean up in the browser
+        }
+    }
+}

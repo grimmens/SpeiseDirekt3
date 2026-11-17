@@ -315,6 +315,42 @@ public class MenuDisplayControllerTests : BaseIntegrationTest
         return qrCode.Id;
     }
 
+    [Theory]
+    [InlineData(false)] // direct QR code: menu loaded with the QR code
+    [InlineData(true)]  // calendar QR code: menu loaded separately (MenuService.GetMenuAsync)
+    public async Task GetMenuByQrCode_ItemsCarryTheirPriceOptions_InDisplayOrder(bool viaCalendar)
+    {
+        Guid qrCodeId;
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            db.MenuItemPriceOptions.AddRange(
+                new MenuItemPriceOption { MenuItemId = TestSeedData.MenuItem1Id, Kind = PriceOptionKind.Extra, Name = "+ Halloumi", Price = 6m, SortOrder = 0 },
+                new MenuItemPriceOption { MenuItemId = TestSeedData.MenuItem1Id, Kind = PriceOptionKind.Variant, Name = "Groß", Price = 12m, SortOrder = 1 },
+                new MenuItemPriceOption { MenuItemId = TestSeedData.MenuItem1Id, Kind = PriceOptionKind.Variant, Name = "Klein", Price = 8.5m, SortOrder = 0 });
+            await db.SaveChangesAsync();
+        }
+        if (viaCalendar)
+        {
+            Factory.Clock.SetLocalNow(new DateTime(2026, 3, 10, 12, 0, 0));
+            qrCodeId = await SeedQrCodeAsync(isCalendarBased: true, directMenuId: TestSeedData.Menu2Id,
+                calendarEntries: [Calendar(new DateOnly(2026, 3, 10), TestSeedData.Menu1Id)]);
+        }
+        else
+        {
+            qrCodeId = TestSeedData.DirectQrCodeId;
+        }
+
+        var response = await Client.SendAsync(AnonymousGet($"/api/public/menu/{qrCodeId}"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var menu = (await response.Content.ReadFromJsonAsync<Menu>(JsonOptions))!;
+        menu.Id.Should().Be(TestSeedData.Menu1Id);
+        var salad = menu.Categories!.SelectMany(c => c.MenuItems!).Single(i => i.Id == TestSeedData.MenuItem1Id);
+        salad.PriceOptions.Select(o => (o.Kind, o.Name)).Should().Equal(
+            (PriceOptionKind.Variant, "Klein"), (PriceOptionKind.Variant, "Groß"), (PriceOptionKind.Extra, "+ Halloumi"));
+    }
+
     // --- Public endpoint: GET /api/public/menu/{menuId}/combos ---
 
     [Fact]

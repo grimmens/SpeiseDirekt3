@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceInterface;
 
@@ -52,6 +53,10 @@ namespace SpeiseDirekt.ServiceImplementation
                 .ThenInclude(e => e.Categories)
                 .ThenInclude(e => e.MenuItems)
                 .ThenInclude(e => e.Allergens)
+                .Include(q => q.Menu)
+                .ThenInclude(e => e.Categories)
+                .ThenInclude(e => e.MenuItems)
+                .ThenInclude(e => e.PriceOptions.OrderBy(o => o.Kind).ThenBy(o => o.SortOrder).ThenBy(o => o.Name))
                 .Include(q => q.TimeTableEntries)
                 .Include(q => q.CalendarEntries)
                 .FirstOrDefaultAsync(q => q.Id == qrCodeId);
@@ -66,11 +71,8 @@ namespace SpeiseDirekt.ServiceImplementation
             // 1. Kalenderbasiert: Eintrag für das heutige Datum suchen
             if (qr.IsCalendarBased)
             {
-                var calendarEntry = (qr.CalendarEntries ?? Enumerable.Empty<CalendarEntry>())
-                    .Where(e => IsCalendarEntryActive(e, today))
-                    .OrderBy(e => e.RecurringDayOfWeek.HasValue) // einmalige Einträge vor wiederkehrenden
-                    .ThenBy(e => e.Date)
-                    .FirstOrDefault();
+                // Einmalige Einträge vor wiederkehrenden, dann das früheste Datum (dieselbe Regel zeigt der Kalender im Editor)
+                var calendarEntry = CalendarSchedule.ActiveEntry(qr.CalendarEntries, today);
 
                 if (calendarEntry != null)
                     return await GetMenuAsync(calendarEntry.MenuId);
@@ -98,22 +100,8 @@ namespace SpeiseDirekt.ServiceImplementation
             return await _db.Menus
                 .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Include(e => e.Categories)
-                .ThenInclude(e => e.MenuItems)
-                .ThenInclude(e => e.Allergens)
+                .IncludeGuestContent()
                 .SingleOrDefaultAsync(e => e.Id == menuId);
-        }
-
-        // Einmaliger Eintrag: Date <= heute <= (EndDate ?? Date)
-        // Wiederkehrender Eintrag: passender Wochentag, ab Date und (falls gesetzt) bis EndDate
-        private static bool IsCalendarEntryActive(CalendarEntry entry, DateOnly today)
-        {
-            if (entry.RecurringDayOfWeek is null)
-                return entry.Date <= today && today <= (entry.EndDate ?? entry.Date);
-
-            return today.DayOfWeek == entry.RecurringDayOfWeek
-                && today >= entry.Date
-                && (entry.EndDate is null || today <= entry.EndDate);
         }
 
         // Zeitfenster [StartTime, EndTime). Liegt EndTime vor StartTime, geht das Fenster über Mitternacht

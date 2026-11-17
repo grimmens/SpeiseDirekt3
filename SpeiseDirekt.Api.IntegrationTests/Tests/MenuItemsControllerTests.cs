@@ -3,7 +3,10 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SpeiseDirekt.Api.Dtos;
+using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
 
 namespace SpeiseDirekt.Api.IntegrationTests.Tests;
@@ -287,6 +290,200 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         }
     }
 
+    // --- New labels ---
+
+    [Fact]
+    public async Task Create_And_Update_NewLabels_AreStored_AndDefaultToFalse()
+    {
+        var dto = new MenuItemDto
+        {
+            Name = "Falafel", Price = 9.80m, CategoryId = TestSeedData.Category1Id,
+            IsHalal = true, IsAlcoholFree = true, IsNew = true, IsPopular = true
+        };
+
+        var created = await PostAsync(dto);
+        created.IsHalal.Should().BeTrue();
+        created.IsAlcoholFree.Should().BeTrue();
+        created.IsNew.Should().BeTrue();
+        created.IsPopular.Should().BeTrue();
+
+        // Labels are part of the full update: omitted = false
+        var json = $$"""{"name":"Falafel","price":9.8,"categoryId":"{{TestSeedData.Category1Id}}","isNew":true}""";
+        (await Client.PutAsync($"/api/menuitems/{created.Id}", new StringContent(json, Encoding.UTF8, "application/json")))
+            .StatusCode.Should().Be(HttpStatusCode.OK);
+        var fetched = await GetAsync(created.Id);
+        fetched.IsHalal.Should().BeFalse();
+        fetched.IsAlcoholFree.Should().BeFalse();
+        fetched.IsNew.Should().BeTrue();
+        fetched.IsPopular.Should().BeFalse();
+    }
+
+    // --- Price variants and extras ---
+
+    private static MenuItemPriceOptionDto Variant(string name, decimal price, int? sortOrder = null) =>
+        new() { Kind = PriceOptionKind.Variant, Name = name, Price = price, SortOrder = sortOrder };
+
+    private static MenuItemPriceOptionDto Extra(string name, decimal price) =>
+        new() { Kind = PriceOptionKind.Extra, Name = name, Price = price };
+
+    [Fact]
+    public async Task Create_WithVariants_PriceIsTheLowestVariantPrice_AndOptionsComeBackInOrder()
+    {
+        var created = await PostAsync(new MenuItemDto
+        {
+            Name = "Hausbier", Price = 99m, CategoryId = TestSeedData.Category1Id,
+            PriceOptions = new() { Extra("+ Zitrone", 0.30m), Variant("0,5 l", 5.90m), Variant("0,25 l", 3.40m) }
+        });
+
+        created.Price.Should().Be(3.40m);
+        created.PriceOptions.Select(o => (o.Kind, o.Name, o.Price, o.SortOrder)).Should().Equal(
+            (PriceOptionKind.Variant, "0,5 l", 5.90m, 0),
+            (PriceOptionKind.Variant, "0,25 l", 3.40m, 1),
+            (PriceOptionKind.Extra, "+ Zitrone", 0.30m, 0));
+
+        var fetched = await GetAsync(created.Id);
+        fetched.Price.Should().Be(3.40m);
+        fetched.PriceOptions.Select(o => o.Name).Should().Equal("0,5 l", "0,25 l", "+ Zitrone");
+        // The JSON names the kind as text
+        (await Client.GetStringAsync($"/api/menuitems/{created.Id}")).Should().Contain("\"kind\":\"Variant\"");
+    }
+
+    [Fact]
+    public async Task Create_WithExtrasOnly_KeepsThePrice()
+    {
+        var created = await PostAsync(new MenuItemDto
+        {
+            Name = "Salat", Price = 11.50m, CategoryId = TestSeedData.Category1Id,
+            PriceOptions = new() { Extra("+ Halloumi", 6m), Extra("+ Hähnchen", 5m) }
+        });
+
+        created.Price.Should().Be(11.50m);
+        created.PriceOptions.Should().OnlyContain(o => o.Kind == PriceOptionKind.Extra);
+    }
+
+    [Fact]
+    public async Task Update_ReplacesOptions_OmittedKeepsThem_EmptyListRemovesThem()
+    {
+        var created = await PostAsync(new MenuItemDto
+        {
+            Name = "Limonade", Price = 4m, CategoryId = TestSeedData.Category1Id,
+            PriceOptions = new() { Variant("0,3 l", 3.90m), Variant("0,5 l", 5.20m) }
+        });
+
+        // Replace: one cheaper variant and an extra; the given price is ignored
+        var replaced = await PutItemAsync(created.Id, new MenuItemDto
+        {
+            Name = "Limonade", Price = 10m, CategoryId = TestSeedData.Category1Id,
+            PriceOptions = new() { Variant("0,2 l", 2.80m, sortOrder: 5), Extra("+ Minze", 0.50m) }
+        });
+        replaced.Price.Should().Be(2.80m);
+        replaced.PriceOptions.Select(o => (o.Name, o.SortOrder)).Should().Equal(("0,2 l", 5), ("+ Minze", 0));
+
+        // Omitted: options stay, and the price still follows the kept variant
+        var kept = await PutItemAsync(created.Id, new MenuItemDto { Name = "Limonade", Price = 10m, CategoryId = TestSeedData.Category1Id });
+        kept.Price.Should().Be(2.80m);
+        kept.PriceOptions.Select(o => o.Name).Should().Equal("0,2 l", "+ Minze");
+
+        // Empty list: all gone, the given price applies again
+        var cleared = await PutItemAsync(created.Id, new MenuItemDto
+        {
+            Name = "Limonade", Price = 4.50m, CategoryId = TestSeedData.Category1Id, PriceOptions = new()
+        });
+        cleared.Price.Should().Be(4.50m);
+        cleared.PriceOptions.Should().BeEmpty();
+
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        (await db.MenuItemPriceOptions.IgnoreQueryFilters().CountAsync(o => o.MenuItemId == created.Id)).Should().Be(0);
+    }
+
+    [Theory]
+    [InlineData("""{"kind":"Variant","name":"","price":3}""", "Name is required")]
+    [InlineData("""{"kind":"Variant","name":"   ","price":3}""", "Name is required")]
+    [InlineData("""{"kind":"Extra","name":"+ Käse","price":-1}""", "price must be 0 or more")]
+    [InlineData("""{"kind":"Variant","name":"0123456789012345678901234567890123456789012345678901234567890","price":3}""", "at most 60")]
+    [InlineData("""{"kind":7,"name":"Groß","price":3}""", "Kind must be Variant or Extra")]
+    public async Task Create_InvalidPriceOption_Returns400(string option, string expectedError)
+    {
+        var json = $$"""{"name":"Kaputt","price":5,"categoryId":"{{TestSeedData.Category1Id}}","priceOptions":[{{option}}]}""";
+
+        var response = await Client.PostAsync("/api/menuitems", new StringContent(json, Encoding.UTF8, "application/json"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        (await response.Content.ReadAsStringAsync()).Should().Contain(expectedError);
+        var items = await Client.GetFromJsonAsync<List<MenuItemResponse>>($"/api/menuitems?categoryId={TestSeedData.Category1Id}", JsonOptions);
+        items!.Should().NotContain(i => i.Name == "Kaputt");
+    }
+
+    [Fact]
+    public async Task Create_UnknownKindText_Returns400()
+    {
+        var json = $$"""{"name":"Kaputt","price":5,"categoryId":"{{TestSeedData.Category1Id}}","priceOptions":[{"kind":"Size","name":"Groß","price":3}]}""";
+
+        var response = await Client.PostAsync("/api/menuitems", new StringContent(json, Encoding.UTF8, "application/json"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Delete_ItemWithOptions_RemovesThem()
+    {
+        var created = await PostAsync(new MenuItemDto
+        {
+            Name = "Mezze-Teller", Price = 1m, CategoryId = TestSeedData.Category1Id,
+            PriceOptions = new() { Variant("Klein", 8m), Variant("Groß", 14m), Extra("+ Brot", 2m) }
+        });
+
+        (await Client.DeleteAsync($"/api/menuitems/{created.Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        (await db.MenuItemPriceOptions.IgnoreQueryFilters().CountAsync(o => o.MenuItemId == created.Id)).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task DeleteCategoryAndMenu_WithItemOptions_Works()
+    {
+        var inCategory1 = await PostAsync(new MenuItemDto
+        {
+            Name = "Ayran", Price = 1m, CategoryId = TestSeedData.Category1Id,
+            PriceOptions = new() { Variant("0,3 l", 3m) }
+        });
+        var inMenu2 = await PostAsync(new MenuItemDto
+        {
+            Name = "Ayran", Price = 1m, CategoryId = TestSeedData.Category2Id,
+            PriceOptions = new() { Variant("0,3 l", 3m), Extra("+ Minze", 0.5m) }
+        });
+
+        // The category endpoint does not remove guest clicks (NoAction FK); clear the seeded one first
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            await db.MenuItemClicks.Where(c => c.MenuItemId == TestSeedData.MenuItem1Id).ExecuteDeleteAsync();
+        }
+        (await Client.DeleteAsync($"/api/categories/{TestSeedData.Category1Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+        // Menu 2 has a guest click and a view; the menu delete removes them first
+        (await Client.DeleteAsync($"/api/menus/{TestSeedData.Menu2Id}")).StatusCode.Should().Be(HttpStatusCode.NoContent);
+
+        using (var scope = Factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            (await db.MenuItemPriceOptions.IgnoreQueryFilters().CountAsync(o => o.MenuItemId == inCategory1.Id || o.MenuItemId == inMenu2.Id))
+                .Should().Be(0);
+        }
+    }
+
+    private async Task<MenuItemResponse> GetAsync(Guid id) =>
+        (await Client.GetFromJsonAsync<MenuItemResponse>($"/api/menuitems/{id}", JsonOptions))!;
+
+    private async Task<MenuItemResponse> PutItemAsync(Guid id, MenuItemDto dto)
+    {
+        var response = await Client.PutAsync($"/api/menuitems/{id}",
+            new StringContent(JsonSerializer.Serialize(dto, JsonOptions), Encoding.UTF8, "application/json"));
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        return (await response.Content.ReadFromJsonAsync<MenuItemResponse>(JsonOptions))!;
+    }
+
     private async Task<MenuItemResponse> PostAsync(MenuItemDto dto)
     {
         var response = await Client.PostAsync("/api/menuitems",
@@ -307,6 +504,20 @@ public class MenuItemsControllerTests : BaseIntegrationTest
         public bool IsVegan { get; init; }
         public bool IsVegetarian { get; init; }
         public bool IsSpicy { get; init; }
+        public bool IsHalal { get; init; }
+        public bool IsAlcoholFree { get; init; }
+        public bool IsNew { get; init; }
+        public bool IsPopular { get; init; }
+        public int SortOrder { get; init; }
+        public List<PriceOptionResponse> PriceOptions { get; init; } = new();
+    }
+
+    private record PriceOptionResponse
+    {
+        public Guid Id { get; init; }
+        public PriceOptionKind Kind { get; init; }
+        public string Name { get; init; } = string.Empty;
+        public decimal Price { get; init; }
         public int SortOrder { get; init; }
     }
 
