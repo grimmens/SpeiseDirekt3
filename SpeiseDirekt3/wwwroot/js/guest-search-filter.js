@@ -15,7 +15,8 @@
  *
  * Search: shows the server-rendered result rows whose data-search-text contains every word of the query (case,
  * accents and ß ignored) and wraps the matched parts of their [data-hl] elements in <mark>. Results respect the
- * filter; while one is active a note says so (with how many matches it hides) and offers a reset.
+ * filter; while one is active a note says so (with how many matches it hides) and offers a reset. On phones the search
+ * sheet is a full-screen panel (gm-sheet--full, guest-menu.js) whose field is focused inside the opening tap.
  */
 
 const FILTER_STORAGE_PREFIX = 'sd-filter:';
@@ -259,7 +260,11 @@ function setUpSearch(ctx, filter) {
     });
 
     ctx.registerSheet('search', {
-        onOpen() { update(); requestAnimationFrame(() => input.focus()); }
+        onOpen() { update(); },
+        // Right after showModal() and still inside the tap: iOS opens the keyboard only for a focus during the gesture.
+        // The field already has it in most browsers (autofocus); either way it sits at its final place by now (on phones a
+        // full-screen panel that fades in, see guest-menu.js), so iOS has nothing to scroll to reveal it.
+        onShown() { if (document.activeElement !== input) input.focus({ preventScroll: true }); }
     });
 }
 

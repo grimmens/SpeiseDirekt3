@@ -403,8 +403,9 @@ public class GuestJumpFocusDragTests : E2ETestBase
         var demo = await SeedDemoAsync();
         await UsePhoneAsync();
         await OpenMenuAsync(demo.MenuId);
-        await Page.GetByTestId("search-button").ClickAsync();
-        var sheet = Page.GetByTestId("search-sheet");
+        // The filter sheet: the search sheet is a full-screen panel on phones without drag (AP8, GuestSearchPhoneTests)
+        await Page.GetByTestId("filter-button").ClickAsync();
+        var sheet = Page.GetByTestId("filter-sheet");
         await Assertions.Expect(sheet).ToBeVisibleAsync();
         await Task.Delay(400);
         var height = await PanelHeightAsync(sheet);
@@ -426,7 +427,7 @@ public class GuestJumpFocusDragTests : E2ETestBase
 
         await Assertions.Expect(sheet).ToBeHiddenAsync();
         (await Page.EvaluateAsync<bool>("() => !history.state?.gm")).Should().BeTrue();
-        await Assertions.Expect(Page.GetByTestId("search-button")).ToBeFocusedAsync();
+        await Assertions.Expect(Page.GetByTestId("filter-button")).ToBeFocusedAsync();
     }
 
     [Fact]
