@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using FluentAssertions;
 using Microsoft.Playwright;
 using SpeiseDirekt3.E2ETests.Infrastructure;
 
@@ -102,5 +103,33 @@ public class AuthTests : E2ETestBase
         await WaitForInteractiveAsync(Page, () => Page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync());
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/menus$"));
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Your Menus" })).ToBeVisibleAsync();
+    }
+
+    /// <summary>
+    /// Behind the reverse proxy (Apache on server2 → http://localhost) the login redirect of a protected page keeps the
+    /// browser's scheme and host (UseForwardedHeaders, trusted from the loopback proxy — the test client is on loopback
+    /// too). Before AP13 it pointed to http://, one extra hop through Apache's https redirect.
+    /// </summary>
+    [Theory]
+    [InlineData("/dashboard")]
+    [InlineData("/qrcodes")]
+    [InlineData("/Analytics")]
+    public async Task ProtectedPage_BehindProxy_RedirectsToHttpsLogin(string path)
+    {
+        var response = await Page.APIRequest.GetAsync(path, new()
+        {
+            MaxRedirects = 0,
+            Headers = new Dictionary<string, string> { ["X-Forwarded-Proto"] = "https", ["X-Forwarded-Host"] = "app.speisekarte.example" }
+        });
+
+        response.Status.Should().Be(302);
+        var location = response.Headers["location"];
+        location.Should().StartWith("https://app.speisekarte.example/Account/Login?");
+        Uri.UnescapeDataString(location).Should().EndWith("ReturnUrl=" + path);
+
+        // Without the headers the redirect stays on the server's own origin
+        var direct = await Page.APIRequest.GetAsync(path, new() { MaxRedirects = 0 });
+        direct.Status.Should().Be(302);
+        direct.Headers["location"].Should().StartWith(App.ServerAddress + "/Account/Login?");
     }
 }

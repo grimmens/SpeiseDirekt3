@@ -2,7 +2,7 @@
 @* <title> and <head> meta of the landing page in the request's language: description, canonical link and Open Graph /
    Twitter tags, og:locale de_DE / en_US and the language's og-<lang>.png. One URL serves both languages (the language
    comes from Accept-Language), so the canonical is that one URL and there is no hreflang. Absolute URLs use the origin
-   the visitor's browser sees (GuestFormat.PublicOrigin: X-Forwarded-Proto/-Host first). *@
+   the visitor's browser sees (GuestFormat.PublicOrigin: the request after UseForwardedHeaders). *@
 @{
     var origin = GuestFormat.PublicOrigin(HttpContext?.Request);
     var url = GuestFormat.Absolute(origin, "/");

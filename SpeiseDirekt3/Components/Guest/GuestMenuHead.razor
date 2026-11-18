@@ -4,7 +4,7 @@
    Language: og:locale of the menu's language; public pages of a menu with language versions also list every version
    (this one included) as <link rel="alternate" hreflang> and og:locale:alternate — not the preview. Texts of our own
    (the "Speisekarte"/"Menu" suffix) follow the UI language (GuestText).
-   Absolute URLs use the origin the guest's browser sees (GuestFormat.PublicOrigin: forwarded headers first). *@
+   Absolute URLs use the origin the guest's browser sees (GuestFormat.PublicOrigin: the request after UseForwardedHeaders). *@
 @using Microsoft.AspNetCore.Http
 @{
     var menu = Model.Menu;
