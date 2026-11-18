@@ -19,7 +19,7 @@
                 </svg>
             </button>
         }
-        <a href="/" class="sd-brand" aria-label="Speise-Direkt, @(user is null ? "home" : "dashboard")" data-testid="brand-link">
+        <a href="@(user is null ? "/" : "/dashboard")" class="sd-brand" aria-label="Speise-Direkt, @(user is null ? "home" : "dashboard")" data-testid="brand-link">
             <BrandLogo Inverse="true" Height="32" Alt="" />
         </a>
         @if (user is not null)

@@ -156,7 +156,7 @@ else
     {
         if (!await PermissionService.HasPermissionAsync(Permission.AnalyticsView))
         {
-            NavManager.NavigateTo("/");
+            NavManager.NavigateTo("/dashboard");
             return;
         }
         await LoadData();

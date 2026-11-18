@@ -1,0 +1,22 @@
+@* A product screenshot (LandingImages): 1x/2x WebP by fingerprinted URL, width/height reserved (no layout shift),
+   lazy unless Eager (the hero's image, fetchpriority high). *@
+<img src="@Assets.Absolute(Image.PathFor(1))"
+     srcset="@($"{Assets.Absolute(Image.PathFor(1))} 1x, {Assets.Absolute(Image.PathFor(2))} 2x")"
+     width="@Image.Width" height="@Image.Height" alt="@(Alt ?? Image.Alt)"
+     loading="@(Eager ? "eager" : "lazy")" fetchpriority="@(Eager ? "high" : null)" decoding="@(Eager ? "sync" : "async")"
+     class="@Class" data-testid="@TestId" @attributes="Attributes" />
+
+@code {
+    [Parameter, EditorRequired] public LandingImage Image { get; set; } = default!;
+
+    /// <summary>Overrides the catalog's alt text; "" for a decorative copy.</summary>
+    [Parameter] public string? Alt { get; set; }
+
+    [Parameter] public bool Eager { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    [Parameter] public string? TestId { get; set; }
+
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
+}

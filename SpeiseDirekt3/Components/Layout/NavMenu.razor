@@ -9,7 +9,7 @@
         {
             var active = item.Key == section;
             <li>
-                <a href="@(item.Href.Length == 0 ? "/" : item.Href)"
+                <a href="@item.Href"
                    class="@(Drawer ? "sd-drawer-link" : "sd-topnav-link")"
                    aria-current="@(active ? "page" : null)"
                    data-nav="@item.Key">

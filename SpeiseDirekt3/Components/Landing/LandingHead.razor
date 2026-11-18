@@ -1,0 +1,39 @@
+@* <title> and <head> meta of the landing page: description, canonical link and Open Graph / Twitter tags. Absolute
+   URLs use the origin the visitor's browser sees (GuestFormat.PublicOrigin: X-Forwarded-Proto/-Host first). *@
+@{
+    var origin = GuestFormat.PublicOrigin(HttpContext?.Request);
+    var url = GuestFormat.Absolute(origin, "/");
+    var image = GuestFormat.Absolute(origin, Assets.Absolute(LandingImages.OpenGraph));
+}
+<PageTitle>@Title</PageTitle>
+<HeadContent>
+    <meta name="description" content="@Description" />
+    @if (url is not null)
+    {
+        <link rel="canonical" href="@url" />
+        <meta property="og:url" content="@url" />
+    }
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="de_DE" />
+    <meta property="og:site_name" content="Speise-Direkt" />
+    <meta property="og:title" content="@Title" />
+    <meta property="og:description" content="@Description" />
+    @if (image is not null)
+    {
+        <meta property="og:image" content="@image" />
+        <meta property="og:image:type" content="image/png" />
+        <meta property="og:image:width" content="@LandingImages.OpenGraphWidth" />
+        <meta property="og:image:height" content="@LandingImages.OpenGraphHeight" />
+        <meta property="og:image:alt" content="@ImageAlt" />
+    }
+    <meta name="twitter:card" content="summary_large_image" />
+</HeadContent>
+
+@code {
+    public const string Title = "Digitale Speisekarte mit QR-Code | Speise-Direkt";
+    public const string Description = "Die digitale Speisekarte hinter Ihrem QR-Code: ohne App für Gäste, mit Fotos, Allergenen, sechs Designs und Sprachversionen. Die Registrierung ist kostenlos.";
+    private const string ImageAlt = "Speise-Direkt: die Speisekarte der „Trattoria Lago“ auf einem Handy";
+
+    /// <summary>The request (static SSR).</summary>
+    [CascadingParameter] public HttpContext? HttpContext { get; set; }
+}

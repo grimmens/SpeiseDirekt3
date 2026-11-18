@@ -2,25 +2,37 @@
 @implements IDisposable
 @inject GuestDocument GuestDocument
 <!DOCTYPE html>
-@if (IsGuestPage)
+@if (Document is PageDocument.Guest or PageDocument.Landing)
 {
-    @* Guest pages (/qr, /menu, /menu/preview): own assets only, static SSR, no blazor.web.js — see Components/Guest.
-       No <base href>: every URL on these pages is absolute (fragment and ?item= links must stay on the page). *@
-    @* lang: the menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages) *@
-    <html lang="@GuestDocument.Language" data-guest-page>
+    @* Pages with their own document (OwnDocumentAttribute): the guest pages (/qr, /menu, /menu/preview — Components/Guest)
+       and the landing page (/ — Components/Landing). Static SSR, own assets only, no Tailwind CDN, Bootstrap or
+       blazor.web.js. No <base href>: every URL on these pages is absolute (fragment and ?item= links must stay on the page).
+       lang: the guest menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages), the landing page "de". *@
+    var guest = Document == PageDocument.Guest;
+    <html lang="@(guest ? GuestDocument.Language : "de")" data-guest-page="@guest" data-landing-page="@(!guest)">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="@Asset("css/fonts.css")" />
-        <link rel="stylesheet" href="@Asset("css/guest-themes.css")" />
-        <link rel="stylesheet" href="@Asset("css/guest-menu.css")" />
-        <script type="module" src="@Asset("js/guest-menu.js")"></script>
+        <link rel="stylesheet" href="@Assets.Absolute("css/fonts.css")" />
+        @if (guest)
+        {
+            <link rel="stylesheet" href="@Assets.Absolute("css/guest-themes.css")" />
+            <link rel="stylesheet" href="@Assets.Absolute("css/guest-menu.css")" />
+            <script type="module" src="@Assets.Absolute("js/guest-menu.js")"></script>
+        }
+        else
+        {
+            <link rel="stylesheet" href="@Assets.Absolute("css/brand.css")" />
+            <link rel="stylesheet" href="@Assets.Absolute("css/landing.css")" />
+            <script type="module" src="@Assets.Absolute("js/landing.js")"></script>
+            <meta name="theme-color" content="#fff8ec" />
+        }
         <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <HeadOutlet />
     </head>
-    <body class="gm-body">
+    <body class="@(guest ? "gm-body" : "lp-body")">
         <Routes />
     </body>
     </html>
@@ -100,7 +112,7 @@ else
 
     /// <summary>
     /// Back-office pages are Interactive Server. Static SSR: the Identity pages under /Account and every page with
-    /// [ExcludeFromInteractiveRouting] (the guest pages).
+    /// [ExcludeFromInteractiveRouting] (the guest pages and the landing page).
     /// </summary>
     private IComponentRenderMode? RenderModeForPage =>
         HttpContext.Request.Path.StartsWithSegments("/Account") || !HttpContext.AcceptsInteractiveRouting()
@@ -114,13 +126,10 @@ else
 
     public void Dispose() => GuestDocument.Changed -= OnGuestDocumentChanged;
 
-    /// <summary>The page carries <see cref="GuestPageAttribute"/>: render the guest document.</summary>
-    private bool IsGuestPage => HttpContext.GetEndpoint()?.Metadata.GetMetadata<GuestPageAttribute>() is not null;
-
-    /// <summary>Fingerprinted asset URL, absolute (guest pages have no base href).</summary>
-    private string Asset(string path)
-    {
-        var url = Assets[path];
-        return url.StartsWith('/') ? url : "/" + url;
-    }
+    /// <summary>
+    /// The document of the page: its <see cref="OwnDocumentAttribute"/> (<see cref="GuestPageAttribute"/>,
+    /// <see cref="SpeiseDirekt3.Components.Landing.LandingPageAttribute"/>), else the back office's.
+    /// </summary>
+    private PageDocument Document =>
+        HttpContext.GetEndpoint()?.Metadata.GetMetadata<OwnDocumentAttribute>()?.Document ?? PageDocument.BackOffice;
 }

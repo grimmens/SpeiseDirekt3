@@ -1,0 +1,15 @@
+@* A browser window (CSS only: title bar with three dots and an empty address field) around a back-office screenshot. *@
+<div class="lp-browser @Class" data-testid="@TestId">
+    <div class="lp-browser-bar" aria-hidden="true">
+        <span class="lp-browser-dots"><span></span><span></span><span></span></span>
+        <span class="lp-browser-address"></span>
+    </div>
+    <LandingShot Image="Image" Alt="@Alt" />
+</div>
+
+@code {
+    [Parameter, EditorRequired] public LandingImage Image { get; set; } = default!;
+    [Parameter] public string? Alt { get; set; }
+    [Parameter] public string? Class { get; set; }
+    [Parameter] public string? TestId { get; set; }
+}

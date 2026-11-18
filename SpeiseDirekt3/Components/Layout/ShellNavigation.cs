@@ -14,7 +14,7 @@ public static class ShellNavigation
 {
     public static readonly IReadOnlyList<ShellNavItem> Items =
     [
-        new("dashboard", "Dashboard", "",
+        new("dashboard", "Dashboard", "dashboard",
             "M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"),
         new("menus", "Menus", "menus",
             "M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"),
@@ -29,16 +29,17 @@ public static class ShellNavigation
     ];
 
     /// <summary>
-    /// The primary entry a base-relative URL belongs to (<see cref="ShellNavItem.Key"/>), or null (Identity pages, …).
+    /// The primary entry a base-relative URL belongs to (<see cref="ShellNavItem.Key"/>), or null (Identity pages, the
+    /// landing page "/", …).
     /// Every page of a menu counts as "menus", the QR code editor as "qrcodes", the user pages as "team".
     /// </summary>
     public static string? SectionOf(string relativeUrl)
     {
         var path = PathOf(relativeUrl);
-        if (path.Length == 0) return "dashboard";
         var first = path.Split('/')[0];
         return first switch
         {
+            "dashboard" => "dashboard",
             "menus" or "menudetail" or "categories" or "menuitems" or "allergens" or "combos" => "menus",
             "menu" when path.StartsWith("menu/edit", StringComparison.Ordinal) => "menus",
             "qrcodes" or "qrcode" => "qrcodes",

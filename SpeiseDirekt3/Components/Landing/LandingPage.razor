@@ -1,0 +1,395 @@
+@page "/"
+@* The landing page for visitors who are not logged in (German, formal "Sie"). Static SSR with its own document
+   ([LandingPage] → App.razor: css/brand.css, css/landing.css, js/landing.js; no Tailwind, Bootstrap or blazor.web.js,
+   no request to another host). Complete without JS: js/landing.js only condenses the header, opens the phone menu
+   sheet and fades sections in. A logged-in user is redirected to /dashboard (server-side).
+   Product truth only: every claim here is a feature that exists (see the repo's CLAUDE.md); no prices, no customer
+   logos, testimonials or numbers. *@
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [LandingPage]
+@layout LandingLayout
+@inject NavigationManager Navigation
+
+<LandingHead />
+
+<a class="lp-skip" href="#lp-main" data-testid="landing-skip">Zum Inhalt springen</a>
+<LandingHeader />
+
+<main id="lp-main" class="lp-main" tabindex="-1" data-testid="landing">
+    @* --- Hero --- *@
+    <section class="lp-hero" aria-labelledby="lp-hero-title" data-testid="landing-hero">
+        <div class="lp-container lp-hero-grid">
+            <div class="lp-hero-copy">
+                <p class="lp-eyebrow"><span class="lp-eyebrow-dot" aria-hidden="true"></span>Digitale Speisekarte mit QR-Code</p>
+                <h1 id="lp-hero-title" class="lp-hero-title">Ihre Speisekarte, <span class="lp-mark">ein&nbsp;Scan entfernt.</span></h1>
+                <p class="lp-lead">
+                    Gäste scannen den QR-Code am Tisch und öffnen Ihre Karte sofort im Browser – mit Fotos, Preisen und
+                    Allergenen, ganz ohne App. Was Sie ändern, sehen Ihre Gäste beim nächsten Aufruf.
+                </p>
+                <div class="lp-actions">
+                    <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-testid="hero-register">
+                        Kostenlos registrieren <LandingIcon Name="arrow-right" StrokeWidth="2" />
+                    </a>
+                    <a class="lp-button lp-button--secondary lp-button--lg" href="#funktionen" data-testid="hero-features">Funktionen ansehen</a>
+                </div>
+                <p class="lp-hero-note"><LandingIcon Name="check" StrokeWidth="2.25" /> Die Registrierung ist kostenlos.</p>
+            </div>
+
+            <div class="lp-hero-visual">
+                <div class="lp-stage">
+                    <div class="lp-stage-phone">
+                        <span class="lp-corner lp-corner--tl" aria-hidden="true"></span>
+                        <span class="lp-corner lp-corner--tr" aria-hidden="true"></span>
+                        <LandingPhone Image="LandingImages.Hero" Eager="true" Class="lp-phone--hero" TestId="hero-phone" />
+                    </div>
+                    <div class="lp-float lp-float--scan" aria-hidden="true">
+                        <span class="lp-float-icon"><LandingIcon Name="qr" /></span>
+                        <span><strong>Scannen und lesen</strong><span>Im Browser, ohne App</span></span>
+                    </div>
+                    <div class="lp-float lp-float--live" aria-hidden="true">
+                        <span class="lp-float-icon lp-float-icon--accent"><LandingIcon Name="bolt" /></span>
+                        <span><strong>Preis geändert</strong><span>Sofort für alle Gäste</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lp-container">
+            <ul class="lp-proof" role="list" aria-label="Auf einen Blick" data-testid="landing-proof">
+                <li><LandingIcon Name="phone" /> Keine App für Gäste</li>
+                <li><LandingIcon Name="bolt" /> Änderungen sofort live</li>
+                <li><LandingIcon Name="shield" /> 14 EU-Allergene</li>
+                <li><LandingIcon Name="globe" /> Mehrere Sprachen</li>
+                <li><LandingIcon Name="palette" /> Sechs Designs</li>
+            </ul>
+        </div>
+    </section>
+
+    @* --- Features for guests --- *@
+    <section id="funktionen" class="lp-section" aria-labelledby="lp-features-title" data-testid="landing-features">
+        <div class="lp-container">
+            <div class="lp-intro" data-reveal>
+                <p class="lp-eyebrow">Funktionen</p>
+                <h2 id="lp-features-title" class="lp-h2">Für Gäste gemacht. Für&nbsp;Sie leicht gepflegt.</h2>
+                <p class="lp-intro-text">
+                    Speise-Direkt verbindet eine schnelle Speisekarte fürs Handy mit einem Verwaltungsbereich, in dem Sie
+                    Gerichte, Preise, Fotos und QR-Codes selbst pflegen.
+                </p>
+            </div>
+
+            <div class="lp-feature" data-reveal data-testid="feature-guests">
+                <div class="lp-feature-copy">
+                    <p class="lp-kicker"><LandingIcon Name="search" /> Für Ihre Gäste</p>
+                    <h3 class="lp-h3">Finden, was schmeckt</h3>
+                    <p>
+                        Ihre Gäste blättern durch Kategorien mit Fotos, suchen nach Gerichten und blenden aus, was sie
+                        nicht essen möchten. Was gefällt, kommt auf die Merkliste – bestellt wird wie gewohnt beim Service.
+                    </p>
+                    <ul class="lp-checks" role="list">
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Suche über Namen, Beschreibungen und Kennzeichnungen</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Filter nach vegan, vegetarisch, scharf, halal und mehr – oder ohne bestimmte Allergene</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Merkliste mit Mengen und Summe, gespeichert nur auf dem Handy des Gastes</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Gerichte per Link teilen</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Sprachversionen, zwischen denen Gäste mit einem Tipp wechseln</li>
+                    </ul>
+                </div>
+                <div class="lp-feature-visual lp-visual lp-visual--duo">
+                    <LandingPhone Image="LandingImages.GuestFilter" Class="lp-phone--back" />
+                    <LandingPhone Image="LandingImages.GuestItem" Class="lp-phone--front" />
+                </div>
+            </div>
+
+            <div class="lp-feature lp-feature--flip" data-reveal data-testid="feature-profile">
+                <div class="lp-feature-copy">
+                    <p class="lp-kicker"><LandingIcon Name="store" /> Restaurantprofil</p>
+                    <h3 class="lp-h3">Alles über Ihr Haus, direkt in der Karte</h3>
+                    <p>
+                        Titelbild und Logo geben Ihrer Karte ein Gesicht. Öffnungszeiten, Adresse, Telefon und Website
+                        stehen einen Tipp entfernt – dazu Ihre Links zu Instagram, Facebook und zu Ihren Bewertungen.
+                    </p>
+                    <ul class="lp-checks" role="list">
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Titelbild, Logo und eine kurze Beschreibung</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Adresse mit Kartenlink, Anruf und E-Mail mit einem Tipp</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Kategorien mit Untertiteln, Gerichte mit Fotos</li>
+                    </ul>
+                </div>
+                <div class="lp-feature-visual lp-visual">
+                    <LandingPhone Image="LandingImages.GuestInfo" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* --- Six designs (theme switcher: radio buttons, CSS only — works without JS) --- *@
+    <section id="designs" class="lp-section lp-section--cream lp-designs" aria-labelledby="lp-designs-title" data-testid="landing-designs">
+        <div class="lp-container lp-designs-grid">
+            <div class="lp-designs-copy" data-reveal>
+                <p class="lp-eyebrow">Sechs Designs</p>
+                <h2 id="lp-designs-title" class="lp-h2">Ein Design, das zu Ihrem Haus passt</h2>
+                <p class="lp-intro-text">
+                    Modern oder klassisch, hell oder dunkel: Wählen Sie eines von sechs Designs. Farben und Schriften
+                    wechseln mit einem Klick – Ihre Gerichte, Preise und Fotos bleiben, wie sie sind.
+                </p>
+                <fieldset class="lp-theme-picker" data-testid="theme-picker">
+                    <legend class="lp-theme-legend">Design in der Vorschau</legend>
+                    <div class="lp-theme-options">
+                        @foreach (var theme in LandingImages.Themes)
+                        {
+                            var id = $"lp-theme-{theme.Key}";
+                            <input type="radio" class="lp-theme-input" name="lp-theme" id="@id" value="@theme.Key"
+                                   checked="@(theme == LandingImages.Themes[0])" data-testid="theme-option" />
+                            <label class="lp-theme-chip" for="@id">
+                                <span class="lp-swatch" style="--lp-swatch: @theme.Swatch" aria-hidden="true"></span>
+                                @theme.Label
+                            </label>
+                        }
+                    </div>
+                </fieldset>
+            </div>
+            <div class="lp-designs-visual" data-reveal>
+                <LandingPhone Class="lp-phone--themes" TestId="theme-phone">
+                    @foreach (var theme in LandingImages.Themes)
+                    {
+                        <LandingShot Image="theme.Image" Class="lp-theme-shot" data-theme="@theme.Key" TestId="theme-shot" />
+                    }
+                </LandingPhone>
+            </div>
+        </div>
+    </section>
+
+    @* --- Features for the owner --- *@
+    <section id="verwaltung" class="lp-section" aria-labelledby="lp-admin-title" data-testid="landing-admin">
+        <div class="lp-container">
+            <div class="lp-intro" data-reveal>
+                <p class="lp-eyebrow">Verwaltung</p>
+                <h2 id="lp-admin-title" class="lp-h2">Schnell gepflegt, auch mitten im Betrieb</h2>
+                <p class="lp-intro-text">
+                    Neues Tagesgericht, geänderter Preis, die Karte für die Feiertage: Sie ändern es im
+                    Verwaltungsbereich, Ihre Gäste sehen es beim nächsten Aufruf. Der QR-Code auf dem Tisch bleibt derselbe.
+                </p>
+            </div>
+
+            <div class="lp-feature" data-reveal data-testid="feature-schedule">
+                <div class="lp-feature-copy">
+                    <p class="lp-kicker"><LandingIcon Name="calendar" /> QR-Codes mit Zeitplan und Kalender</p>
+                    <h3 class="lp-h3">Ein Code, immer die richtige Karte</h3>
+                    <p>
+                        Ein QR-Code kann je nach Uhrzeit oder Datum eine andere Karte zeigen: mittags automatisch die
+                        Mittagskarte, an den Feiertagen das Weihnachtsmenü, jeden Freitag die Fischkarte. Den Kalender planen
+                        Sie mit wenigen Klicks.
+                    </p>
+                    <ul class="lp-checks" role="list">
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Direkt, nach Zeitplan oder nach Kalender</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Einzelne Tage, Zeiträume und feste Wochentage</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Jeder QR-Code als PNG zum Herunterladen und Drucken</li>
+                    </ul>
+                </div>
+                <div class="lp-feature-visual lp-visual lp-visual--wide">
+                    <LandingBrowser Image="LandingImages.Calendar" />
+                </div>
+            </div>
+
+            <div class="lp-feature lp-feature--flip" data-reveal data-testid="feature-preview">
+                <div class="lp-feature-copy">
+                    <p class="lp-kicker"><LandingIcon Name="eye" /> Live-Vorschau</p>
+                    <h3 class="lp-h3">Sehen, was Ihre Gäste sehen – vor dem Speichern</h3>
+                    <p>
+                        Neben dem Editor zeigt ein Handy-Rahmen Ihre Karte so, wie Gäste sie sehen. Name, Beschreibung und
+                        Design ändern sich darin schon beim Tippen; gespeichert wird erst, wenn Sie es sagen.
+                    </p>
+                    <ul class="lp-checks" role="list">
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Kategorien und Gerichte in Ihrer Reihenfolge</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Preise mit Varianten und Extras</li>
+                        <li><LandingIcon Name="check" StrokeWidth="2.25" /> Die Vorschau Ihrer Karte jederzeit im eigenen Tab</li>
+                    </ul>
+                </div>
+                <div class="lp-feature-visual lp-visual lp-visual--wide">
+                    <LandingBrowser Image="LandingImages.Editor" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* --- More features (bento grid) --- *@
+    <section class="lp-section lp-section--cream" aria-labelledby="lp-more-title" data-testid="landing-more">
+        <div class="lp-container">
+            <div class="lp-intro lp-intro--center" data-reveal>
+                <p class="lp-eyebrow">Im Detail</p>
+                <h2 id="lp-more-title" class="lp-h2">Durchdacht bis zum letzten Gericht</h2>
+            </div>
+            <div class="lp-bento" data-reveal>
+                <article class="lp-card lp-card--wide lp-card--media" data-testid="card-analytics">
+                    <div class="lp-card-text">
+                        <span class="lp-card-icon"><LandingIcon Name="chart" /></span>
+                        <h3 class="lp-h4">Statistik</h3>
+                        <p>Wie oft wird Ihre Karte geöffnet, welche Gerichte werden angetippt, wie viele Besuche gab es? Die Zahlen sehen Sie im Verlauf.</p>
+                    </div>
+                    <div class="lp-card-media">
+                        <LandingShot Image="LandingImages.Analytics" Class="lp-card-shot" />
+                    </div>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="users" /></span>
+                    <h3 class="lp-h4">Team und Rollen</h3>
+                    <p>Laden Sie Mitarbeitende ein. Rollen und Berechtigungen legen fest, wer Karten, QR-Codes oder das Team bearbeiten darf.</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="shield" /></span>
+                    <h3 class="lp-h4">14 EU-Allergene</h3>
+                    <p>Mit einem Klick angelegt, beim Gericht angezeigt – und als Filter für Gäste, die etwas nicht vertragen.</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="tag" /></span>
+                    <h3 class="lp-h4">Kennzeichnungen</h3>
+                    <p>Vegan, vegetarisch, scharf, halal, alkoholfrei, neu und beliebt: auf einen Blick erkennbar.</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="layers" /></span>
+                    <h3 class="lp-h4">Varianten und Extras</h3>
+                    <p>0,25 l oder 0,5 l, dazu Aufpreise wie „+ Rucola“: Größen und Extras stehen übersichtlich beim Gericht.</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="gift" /></span>
+                    <h3 class="lp-h4">Kombi-Angebote</h3>
+                    <p>Stellen Sie Kombinationen zusammen, etwa Hauptgericht mit Dessert und Getränk zum Kombipreis.</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="globe" /></span>
+                    <h3 class="lp-h4">Sprachversionen</h3>
+                    <p>Legen Sie eine Kopie Ihrer Karte in einer anderen Sprache an und übersetzen Sie sie selbst. Gäste wechseln mit einem Tipp.</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="image" /></span>
+                    <h3 class="lp-h4">Fotos zu jedem Gericht</h3>
+                    <p>Laden Sie Fotos hoch; Gäste sehen sie in der Karte und groß im Detail. Gerichte ohne Foto stehen als schlichte Textkarte daneben.</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="bolt" /></span>
+                    <h3 class="lp-h4">Schlank und schnell</h3>
+                    <p>Die Karte für Ihre Gäste ist eine schlanke Webseite und lädt nichts von fremden Servern.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    @* --- Three steps --- *@
+    <section id="so-funktionierts" class="lp-section lp-steps" aria-labelledby="lp-steps-title" data-testid="landing-steps">
+        <div class="lp-container">
+            <div class="lp-intro lp-intro--center lp-intro--on-dark" data-reveal>
+                <p class="lp-eyebrow">So funktioniert’s</p>
+                <h2 id="lp-steps-title" class="lp-h2">In drei Schritten zur digitalen Speisekarte</h2>
+            </div>
+            <ol class="lp-step-list" role="list" data-reveal>
+                <li class="lp-step">
+                    <span class="lp-step-number" aria-hidden="true">01</span>
+                    <span class="lp-step-icon"><LandingIcon Name="user-plus" /></span>
+                    <h3 class="lp-h4">Kostenlos registrieren</h3>
+                    <p>E-Mail-Adresse und Passwort genügen – schon sind Sie im Verwaltungsbereich.</p>
+                </li>
+                <li class="lp-step">
+                    <span class="lp-step-number" aria-hidden="true">02</span>
+                    <span class="lp-step-icon"><LandingIcon Name="edit" /></span>
+                    <h3 class="lp-h4">Speisekarte anlegen</h3>
+                    <p>Kategorien und Gerichte mit Preisen, Fotos und Allergenen eintragen, ein Design wählen. Die Vorschau zeigt das Ergebnis.</p>
+                </li>
+                <li class="lp-step">
+                    <span class="lp-step-number" aria-hidden="true">03</span>
+                    <span class="lp-step-icon"><LandingIcon Name="qr" /></span>
+                    <h3 class="lp-h4">QR-Code auf den Tisch</h3>
+                    <p>QR-Code erstellen, als PNG herunterladen, ausdrucken und aufstellen. Fertig.</p>
+                </li>
+            </ol>
+            <div class="lp-steps-cta">
+                <a class="lp-button lp-button--accent lp-button--lg" href="/Account/Register" data-testid="steps-register">
+                    Jetzt kostenlos registrieren <LandingIcon Name="arrow-right" StrokeWidth="2" />
+                </a>
+            </div>
+        </div>
+    </section>
+
+    @* --- FAQ (native details/summary: works without JS) --- *@
+    <section id="faq" class="lp-section" aria-labelledby="lp-faq-title" data-testid="landing-faq">
+        <div class="lp-container lp-faq-grid">
+            <div class="lp-faq-intro" data-reveal>
+                <p class="lp-eyebrow">FAQ</p>
+                <h2 id="lp-faq-title" class="lp-h2">Häufige Fragen</h2>
+                <p class="lp-intro-text">Kurz und ehrlich beantwortet. Ihre Frage ist nicht dabei? Registrieren Sie sich und probieren Sie es aus.</p>
+            </div>
+            <div class="lp-faq-list" data-reveal>
+                @foreach (var (question, answer) in Faq)
+                {
+                    <details class="lp-faq-item" data-testid="faq-item">
+                        <summary>
+                            <span>@question</span>
+                            <span class="lp-faq-toggle" aria-hidden="true"><LandingIcon Name="plus" StrokeWidth="2" /></span>
+                        </summary>
+                        <div class="lp-faq-answer"><p>@answer</p></div>
+                    </details>
+                }
+            </div>
+        </div>
+    </section>
+
+    @* --- Closing CTA --- *@
+    <section class="lp-section lp-section--tight" aria-labelledby="lp-cta-title" data-testid="landing-cta">
+        <div class="lp-container">
+            <div class="lp-cta-band" data-reveal>
+                <div class="lp-cta-copy">
+                    <h2 id="lp-cta-title" class="lp-h2">Bereit für Ihre digitale Speisekarte?</h2>
+                    <p>Registrieren Sie sich und legen Sie Ihre erste Karte an. Die Registrierung ist kostenlos.</p>
+                </div>
+                <div class="lp-actions">
+                    <a class="lp-button lp-button--accent lp-button--lg" href="/Account/Register" data-testid="cta-register">
+                        Kostenlos registrieren <LandingIcon Name="arrow-right" StrokeWidth="2" />
+                    </a>
+                    <a class="lp-button lp-button--on-dark lp-button--lg" href="/Account/Login" data-testid="cta-login">Anmelden</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<LandingFooter />
+
+@code {
+    /// <summary>The page's sections in the header, the menu sheet and the footer (id, label).</summary>
+    public static readonly IReadOnlyList<(string Id, string Label)> Sections =
+    [
+        ("funktionen", "Funktionen"),
+        ("designs", "Designs"),
+        ("so-funktionierts", "So funktioniert’s"),
+        ("faq", "FAQ")
+    ];
+
+    /// <summary>Questions and answers — honest, product truth only; cost: exactly "Die Registrierung ist kostenlos."</summary>
+    private static readonly (string Question, string Answer)[] Faq =
+    [
+        ("Brauchen meine Gäste eine App?",
+            "Nein. Der QR-Code öffnet Ihre Speisekarte direkt im Browser des Handys. Es gibt nichts zu installieren und kein Konto anzulegen."),
+        ("Was kostet Speise-Direkt?",
+            "Die Registrierung ist kostenlos."),
+        ("Bleibt der QR-Code gleich, wenn ich die Karte ändere?",
+            "Ja. Der QR-Code führt zu Ihrer Karte, nicht zu einem bestimmten Stand. Gerichte, Preise und Fotos ändern Sie im Verwaltungsbereich; Ihre Gäste sehen die Änderung beim nächsten Aufruf."),
+        ("Kann ein QR-Code je nach Uhrzeit eine andere Karte zeigen?",
+            "Ja. Mit einem Zeitplan zeigt derselbe QR-Code zum Beispiel mittags die Mittagskarte und abends die Abendkarte. Im Kalender legen Sie einzelne Tage, Zeiträume oder feste Wochentage fest – etwa das Weihnachtsmenü oder den Fischfreitag."),
+        ("Wie zeige ich Allergene an?",
+            "Die 14 EU-Allergene legen Sie mit einem Klick an und ordnen sie Ihren Gerichten zu. Gäste sehen sie beim Gericht und können Gerichte mit bestimmten Allergenen ausblenden."),
+        ("Gibt es die Karte in mehreren Sprachen?",
+            "Ja, als Sprachversionen: Sie legen eine Kopie Ihrer Karte in einer anderen Sprache an, übersetzen die Texte selbst und verknüpfen beide. Gäste wechseln die Sprache mit einem Tipp. Eine automatische Übersetzung gibt es nicht."),
+        ("Können Gäste über die Karte bestellen oder bezahlen?",
+            "Nein, Speise-Direkt ist eine Speisekarte, kein Bestellsystem. Gäste können Gerichte auf einer Merkliste sammeln, die nur auf ihrem Handy gespeichert wird, und bestellen dann wie gewohnt beim Service."),
+        ("Können mehrere Personen die Karte pflegen?",
+            "Ja. Sie laden Mitarbeitende mit eigenem Zugang ein und legen über Rollen und Berechtigungen fest, wer was sehen und ändern darf."),
+        ("Wie kommt der QR-Code auf den Tisch?",
+            "Sie laden jeden QR-Code als PNG herunter und drucken ihn selbst – für Tischaufsteller, Aufkleber oder das Schaufenster.")
+    ];
+
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    protected override void OnInitialized()
+    {
+        // Logged in: the back office starts at the dashboard (static SSR: NavigateTo answers with a redirect)
+        if (HttpContext.User.Identity?.IsAuthenticated == true)
+            Navigation.NavigateTo("/dashboard");
+    }
+}

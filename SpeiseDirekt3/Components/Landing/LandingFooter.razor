@@ -1,0 +1,57 @@
+@inject IConfiguration Configuration
+@inject TimeProvider Clock
+@* The footer: brand, the section links (also the target of the header's menu link without JS), the account links,
+   and — only when the operator configured them (LandingSettings) — imprint, privacy and a contact e-mail. *@
+@{
+    var settings = LandingSettings.From(Configuration);
+}
+<footer class="lp-footer" data-testid="landing-footer">
+    <div class="lp-container lp-footer-grid">
+        <div class="lp-footer-brand">
+            <BrandLogo Inverse="true" Height="32" Alt="Speise-Direkt" TestId="landing-footer-logo" />
+            <p>Die digitale Speisekarte mit QR-Code – schnell für Ihre Gäste, einfach für Sie.</p>
+            @if (settings.ContactEmail is { } email)
+            {
+                <a class="lp-footer-mail" href="mailto:@email" data-testid="footer-contact">
+                    <LandingIcon Name="mail" />
+                    <span>@email</span>
+                </a>
+            }
+        </div>
+        <nav id="lp-footer-nav" class="lp-footer-col" aria-labelledby="lp-footer-site" tabindex="-1" data-testid="footer-nav">
+            <h2 id="lp-footer-site" class="lp-footer-title">Speise-Direkt</h2>
+            <ul role="list">
+                @foreach (var (id, label) in LandingPage.Sections)
+                {
+                    <li><a href="#@id">@label</a></li>
+                }
+            </ul>
+        </nav>
+        <nav class="lp-footer-col" aria-labelledby="lp-footer-account">
+            <h2 id="lp-footer-account" class="lp-footer-title">Konto</h2>
+            <ul role="list">
+                <li><a href="/Account/Login" data-testid="footer-login">Anmelden</a></li>
+                <li><a href="/Account/Register" data-testid="footer-register">Kostenlos registrieren</a></li>
+            </ul>
+        </nav>
+        @if (settings.HasLegalLinks)
+        {
+            <nav class="lp-footer-col" aria-labelledby="lp-footer-legal" data-testid="footer-legal">
+                <h2 id="lp-footer-legal" class="lp-footer-title">Rechtliches</h2>
+                <ul role="list">
+                    @if (settings.ImprintUrl is { } imprint)
+                    {
+                        <li><a href="@imprint" data-testid="footer-imprint">Impressum</a></li>
+                    }
+                    @if (settings.PrivacyUrl is { } privacy)
+                    {
+                        <li><a href="@privacy" data-testid="footer-privacy">Datenschutz</a></li>
+                    }
+                </ul>
+            </nav>
+        }
+    </div>
+    <div class="lp-container lp-footer-bottom">
+        <p>© @Clock.GetLocalNow().Year Speise-Direkt</p>
+    </div>
+</footer>
