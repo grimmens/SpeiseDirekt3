@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.Extensions.Localization;
 using Microsoft.JSInterop;
 
 namespace SpeiseDirekt3.Components.Shared.Sortable;
@@ -28,6 +29,9 @@ public sealed record SortableRow<TItem>(TItem Item, int Index, int Count, Render
 public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
 {
     [Inject] private IJSRuntime JS { get; set; } = default!;
+
+    /// <summary>The handle's label and the announcements (Sort_* in Resources/ShellText.resx).</summary>
+    [Inject] private IStringLocalizer<ShellText> T { get; set; } = default!;
 
     [Parameter, EditorRequired] public IReadOnlyList<TItem> Items { get; set; } = Array.Empty<TItem>();
 
@@ -104,9 +108,9 @@ public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
         builder.AddAttribute(1, "type", "button");
         builder.AddAttribute(2, "class", "sd-sort-handle");
         builder.AddAttribute(3, "data-sortable-handle", "");
-        builder.AddAttribute(4, "aria-label", $"Reorder {name}");
+        builder.AddAttribute(4, "aria-label", T["Sort_Handle", name].Value);
         builder.AddAttribute(5, "aria-describedby", "sd-sort-help");
-        builder.AddAttribute(6, "title", "Drag to reorder (or use the arrow keys)");
+        builder.AddAttribute(6, "title", T["Sort_HandleTitle"].Value);
         builder.AddAttribute(7, "data-testid", "sort-handle");
         builder.AddMarkupContent(8,
             "<svg viewBox=\"0 0 20 20\" fill=\"currentColor\" aria-hidden=\"true\">" +
@@ -173,7 +177,7 @@ public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
             return false;
         if (newIndex < 0 || newIndex >= count)
         {
-            announcement = newIndex < 0 ? $"{name} is already first." : $"{name} is already last.";
+            announcement = newIndex < 0 ? T["Sort_AlreadyFirst", name] : T["Sort_AlreadyLast", name];
             StateHasChanged();
             return false;
         }
@@ -195,8 +199,8 @@ public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
         }
 
         announcement = kept
-            ? $"Moved {name} to position {newIndex + 1} of {count}."
-            : $"{name} could not be moved. The previous order is shown again.";
+            ? T["Sort_Moved", name, newIndex + 1, count]
+            : T["Sort_Failed", name];
         if (!disposed)
             StateHasChanged();
         return kept;

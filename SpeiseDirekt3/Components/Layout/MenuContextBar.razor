@@ -3,6 +3,8 @@
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
+@inject IStringLocalizer<ShellText> T
+@inject IStringLocalizer<CommonText> C
 
 @* The sub-header of every page that belongs to one menu (ShellNavigation.MenuPageOf): "Menus ›" plus the menu's
    name as a switcher to the other menus (same tab), the tabs Overview · Categories · Items · Allergens · Combos ·
@@ -14,8 +16,8 @@
     <div class="sd-ctx" data-testid="menu-context">
         <div class="sd-container">
             <div class="sd-ctx-head">
-                <nav class="sd-ctx-crumbs" aria-label="Breadcrumb">
-                    <a href="/menus" class="sd-ctx-crumb">Menus</a>
+                <nav class="sd-ctx-crumbs" aria-label="@T["Context_BreadcrumbLabel"]">
+                    <a href="/menus" class="sd-ctx-crumb">@T["Nav_Menus"]</a>
                     <svg class="sd-ctx-sep" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
@@ -23,13 +25,13 @@
                         <button type="button" class="sd-ctx-switch-button" aria-expanded="false" aria-controls="sd-menu-switcher"
                                 data-sd-dropdown-toggle data-testid="menu-switcher-button">
                             <span class="sd-ctx-menu-name" data-testid="menu-context-name">@menu.Name</span>
-                            <span class="sd-sr-only">, switch menu</span>
+                            <span class="sd-sr-only">@T["Context_SwitchMenuHint"]</span>
                             <svg class="sd-chevron" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
                             </svg>
                         </button>
                         <div class="sd-menu sd-menu--start sd-menu--scroll" id="sd-menu-switcher" hidden data-sd-dropdown-panel data-testid="menu-switcher">
-                            <div class="sd-menu-label">Switch menu</div>
+                            <div class="sd-menu-label">@T["Context_SwitchMenu"]</div>
                             @foreach (var other in menus)
                             {
                                 var isCurrent = other.Id == menu.Id;
@@ -42,26 +44,26 @@
                                 </a>
                             }
                             <div class="sd-menu-sep" role="separator"></div>
-                            <a href="/menus" class="sd-menu-item sd-menu-item--muted">All menus</a>
+                            <a href="/menus" class="sd-menu-item sd-menu-item--muted">@T["Context_AllMenus"]</a>
                         </div>
                     </div>
                 </nav>
                 <a href="@ShellNavigation.PreviewHrefOf(menu.Id)" target="_blank" rel="noopener noreferrer"
-                   class="sd-ctx-preview" title="See the menu as your guests do (new tab)" data-testid="menu-preview-link">
+                   class="sd-ctx-preview" title="@T["Context_PreviewTitle"]" data-testid="menu-preview-link">
                     <svg class="sd-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
-                    <span>Preview</span>
+                    <span>@C["Preview"]</span>
                 </a>
             </div>
-            <nav class="sd-ctx-tabs" data-sd-tab-strip aria-label="@($"Menu: {menu.Name}")" @ref="tabStrip" data-testid="menu-tabs">
+            <nav class="sd-ctx-tabs" data-sd-tab-strip aria-label="@T["Context_TabsLabel", menu.Name]" @ref="tabStrip" data-testid="menu-tabs">
                 <ul role="list">
-                    @foreach (var (tab, label) in Tabs)
+                    @foreach (var (tab, labelKey) in Tabs)
                     {
                         <li>
                             <a href="@ShellNavigation.HrefOf(tab, menu.Id)" class="sd-ctx-tab"
                                aria-current="@(tab == p.Tab ? "page" : null)" data-tab="@tab.ToString().ToLowerInvariant()"
-                               data-testid="menu-tab">@label</a>
+                               data-testid="menu-tab">@T[labelKey]</a>
                         </li>
                     }
                 </ul>
@@ -71,14 +73,15 @@
 }
 
 @code {
-    private static readonly (MenuTab Tab, string Label)[] Tabs =
+    /// <summary>The tabs and their ShellText keys (nameof: checked by the compiler).</summary>
+    private static readonly (MenuTab Tab, string LabelKey)[] Tabs =
     [
-        (MenuTab.Overview, "Overview"),
-        (MenuTab.Categories, "Categories"),
-        (MenuTab.Items, "Items"),
-        (MenuTab.Allergens, "Allergens"),
-        (MenuTab.Combos, "Combos"),
-        (MenuTab.Settings, "Settings"),
+        (MenuTab.Overview, nameof(ShellText.Tab_Overview)),
+        (MenuTab.Categories, nameof(ShellText.Tab_Categories)),
+        (MenuTab.Items, nameof(ShellText.Tab_Items)),
+        (MenuTab.Allergens, nameof(ShellText.Tab_Allergens)),
+        (MenuTab.Combos, nameof(ShellText.Tab_Combos)),
+        (MenuTab.Settings, nameof(ShellText.Tab_Settings)),
     ];
 
     private sealed record MenuRef(Guid Id, string Name);

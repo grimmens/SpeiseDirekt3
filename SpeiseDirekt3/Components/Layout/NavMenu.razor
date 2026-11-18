@@ -1,9 +1,10 @@
 ﻿@implements IDisposable
 @inject NavigationManager NavigationManager
+@inject IStringLocalizer<ShellText> T
 
 @* The primary navigation (ShellNavigation.Items): the top bar's links from 1024 px (Variant "bar") and the list in
    the phone drawer (Variant "drawer", with icons). The entry of the current page carries aria-current="page". *@
-<nav class="@(Drawer ? "sd-drawer-nav" : "sd-topnav")" aria-label="@AriaLabel" data-testid="@(Drawer ? "drawer-nav" : "top-nav")">
+<nav class="@(Drawer ? "sd-drawer-nav" : "sd-topnav")" aria-label="@T["MainNavLabel"]" data-testid="@(Drawer ? "drawer-nav" : "top-nav")">
     <ul role="list">
         @foreach (var item in ShellNavigation.Items)
         {
@@ -19,7 +20,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="@item.IconPath" />
                         </svg>
                     }
-                    <span>@item.Label</span>
+                    <span>@T[item.LabelKey]</span>
                 </a>
             </li>
         }
@@ -29,8 +30,6 @@
 @code {
     /// <summary>"bar" (top bar) or "drawer" (phone drawer).</summary>
     [Parameter] public string Variant { get; set; } = "bar";
-
-    [Parameter] public string AriaLabel { get; set; } = "Main";
 
     private bool Drawer => Variant == "drawer";
 

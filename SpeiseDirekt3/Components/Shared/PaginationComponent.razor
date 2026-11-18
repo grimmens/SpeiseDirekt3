@@ -1,9 +1,10 @@
-﻿<nav aria-label="Page navigation">
+﻿@inject IStringLocalizer<ShellText> T
+<nav aria-label="@T["Pagination_Label"]">
     <ul class="flex justify-center space-x-1">
         <li class="@(CurrentPage == 1 ? "opacity-50 cursor-not-allowed" : "")">
             @if (CurrentPage > 1)
             {
-                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight text-gray-700 bg-white border border-gray-400 rounded-l-lg hover:bg-gray-200 hover:text-gray-900 cursor-pointer" @onclick="() => ChangePage(CurrentPage - 1)">
+                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight text-gray-700 bg-white border border-gray-400 rounded-l-lg hover:bg-gray-200 hover:text-gray-900 cursor-pointer" @onclick="() => ChangePage(CurrentPage - 1)" aria-label="@T["Pagination_Previous"]">
                     <span aria-hidden="true">&laquo;</span>
                 </a>
             }
@@ -18,13 +19,13 @@
         {
             var pageNumber = i; // Capture the current value of i
             <li class="@(CurrentPage == pageNumber ? "" : "")">
-                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight @(CurrentPage == pageNumber ? "text-white bg-brand-600 border border-brand-600 hover:bg-brand-700 hover:border-brand-700" : "text-gray-700 bg-white border border-gray-400 hover:bg-gray-200 hover:text-gray-900") cursor-pointer" @onclick="() => ChangePage(pageNumber)">@pageNumber</a>
+                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight @(CurrentPage == pageNumber ? "text-white bg-brand-600 border border-brand-600 hover:bg-brand-700 hover:border-brand-700" : "text-gray-700 bg-white border border-gray-400 hover:bg-gray-200 hover:text-gray-900") cursor-pointer" @onclick="() => ChangePage(pageNumber)" aria-label="@T["Pagination_Page", pageNumber]">@pageNumber</a>
             </li>
         }
         <li class="@(CurrentPage == TotalPages ? "opacity-50 cursor-not-allowed" : "")">
             @if (CurrentPage < TotalPages)
             {
-                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight text-gray-700 bg-white border border-gray-400 rounded-r-lg hover:bg-gray-200 hover:text-gray-900 cursor-pointer" @onclick="() => ChangePage(CurrentPage + 1)">
+                <a class="flex items-center justify-center px-3 py-2 text-sm leading-tight text-gray-700 bg-white border border-gray-400 rounded-r-lg hover:bg-gray-200 hover:text-gray-900 cursor-pointer" @onclick="() => ChangePage(CurrentPage + 1)" aria-label="@T["Pagination_Next"]">
                     <span aria-hidden="true">&raquo;</span>
                 </a>
             }

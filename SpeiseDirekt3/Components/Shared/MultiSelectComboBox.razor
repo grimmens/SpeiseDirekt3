@@ -1,5 +1,6 @@
 @typeparam TItem
 @implements IDisposable
+@inject IStringLocalizer<ShellText> T
 
 <div class="relative" @ref="containerRef">
     <!-- Selected Items + Input -->
@@ -11,8 +12,9 @@
         {
             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-sm font-medium bg-brand-100 text-brand-800">
                 @ItemTemplate(item)
-                <button type="button" class="ml-0.5 text-brand-600 hover:text-brand-900 transition-colors" @onclick="() => RemoveItem(item)" @onclick:stopPropagation="true">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button type="button" class="ml-0.5 text-brand-600 hover:text-brand-900 transition-colors" @onclick="() => RemoveItem(item)" @onclick:stopPropagation="true"
+                        aria-label="@T["Combo_Remove", SearchSelector(item)]">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -25,7 +27,7 @@
                @oninput="OnSearchInput"
                @onfocus="OnFocus"
                @onkeydown="OnKeyDown"
-               placeholder="@(SelectedItems.Any() ? "" : Placeholder)"
+               placeholder="@(SelectedItems.Any() ? "" : Placeholder ?? T["Combo_TypeToSearch"])"
                class="flex-1 min-w-[120px] border-none outline-none bg-transparent text-sm text-gray-900 placeholder-gray-400 p-0.5" />
     </div>
 
@@ -48,7 +50,7 @@
     else if (isOpen && !string.IsNullOrEmpty(searchText))
     {
         <div class="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg">
-            <div class="px-3 py-2 text-sm text-gray-500">No matches found</div>
+            <div class="px-3 py-2 text-sm text-gray-500">@T["Combo_NoMatches"]</div>
         </div>
     }
 </div>
@@ -60,7 +62,8 @@
     [Parameter, EditorRequired] public Func<TItem, string> SearchSelector { get; set; } = default!;
     [Parameter] public RenderFragment<TItem> ItemTemplate { get; set; } = default!;
     [Parameter] public RenderFragment<TItem> SuggestionTemplate { get; set; } = default!;
-    [Parameter] public string Placeholder { get; set; } = "Type to search...";
+    /// <summary>Shown while nothing is selected; default "Type to search…" (ShellText Combo_TypeToSearch).</summary>
+    [Parameter] public string? Placeholder { get; set; }
 
     [Inject] private IJSRuntime JS { get; set; } = default!;
 

@@ -90,6 +90,105 @@ public class LocalizationTests : BackOfficeTestBase
         }
     }
 
+    // --- The back-office shell ---
+
+    private static readonly string[] GermanNav = ["Dashboard", "Speisekarten", "QR-Codes", "Statistik", "Restaurant", "Team"];
+    private static readonly string[] EnglishNav = ["Dashboard", "Menus", "QR Codes", "Analytics", "Restaurant", "Team"];
+
+    /// <summary>A browser context in <paramref name="locale"/> with the cookies of <see cref="E2ETestBase.Context"/>.</summary>
+    private async Task<IBrowserContext> SignedInContextAsync(string locale, int width = 1280) =>
+        await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
+        {
+            BaseURL = App.ServerAddress, StorageState = await Context.StorageStateAsync(), Locale = locale,
+            ViewportSize = new ViewportSize { Width = width, Height = 900 }
+        });
+
+    [Fact]
+    public async Task Shell_SpeaksTheBrowsersLanguage()
+    {
+        await RegisterNewOwnerAsync();
+        foreach (var (locale, nav, settings, logout) in new[]
+                 {
+                     (German, GermanNav, "Kontoeinstellungen", "Abmelden"), ("de-AT", GermanNav, "Kontoeinstellungen", "Abmelden"),
+                     (English, EnglishNav, "Account settings", "Log out"), ("fr-FR", EnglishNav, "Account settings", "Log out")
+                 })
+        {
+            await using var context = await SignedInContextAsync(locale);
+            var page = await context.NewPageAsync();
+            await GotoInteractiveAsync(page, "/dashboard");
+            await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", locale.StartsWith("de") ? "de" : "en");
+            await Assertions.Expect(page.GetByTestId("top-nav").Locator("a")).ToHaveTextAsync(nav);
+            await page.GetByTestId("user-menu-button").ClickAsync();
+            await Assertions.Expect(page.GetByTestId("account-settings-link")).ToHaveTextAsync(settings);
+            await Assertions.Expect(page.GetByTestId("user-menu").GetByTestId("logout-button")).ToHaveTextAsync(logout);
+            await Assertions.Expect(page.GetByTestId("user-role")).ToHaveTextAsync(locale.StartsWith("de") ? "Inhaber" : "Owner");
+        }
+
+        // The phone drawer and the anonymous header
+        await using (var phone = await SignedInContextAsync(German, width: 390))
+        {
+            var page = await phone.NewPageAsync();
+            await GotoInteractiveAsync(page, "/dashboard");
+            await Assertions.Expect(page.GetByTestId("nav-drawer-button")).ToHaveAttributeAsync("aria-label", "Navigation öffnen");
+            await page.GetByTestId("nav-drawer-button").ClickAsync();
+            await Assertions.Expect(page.GetByTestId("drawer-nav").Locator("a")).ToHaveTextAsync(GermanNav);
+            await Assertions.Expect(page.GetByTestId("nav-drawer-close")).ToHaveAttributeAsync("aria-label", "Navigation schließen");
+        }
+        var (anonymous, anonymousPage) = await NewContextAsync(German);
+        await using (anonymous)
+        {
+            await anonymousPage.GotoAsync("/Account/Login");
+            await Assertions.Expect(anonymousPage.GetByTestId("anonymous-nav").Locator("a")).ToHaveTextAsync(["Anmelden", "Registrieren"]);
+            await Assertions.Expect(anonymousPage.Locator("[data-sd-skip]")).ToHaveTextAsync("Zum Inhalt springen");
+        }
+    }
+
+    /// <summary>
+    /// The Interactive Server circuit takes the culture of the request that opened it and keeps it: client-side
+    /// navigations (no page load) render the context bar, and a drag handle's announcement, in German.
+    /// </summary>
+    [Fact]
+    public async Task RunningCircuit_KeepsTheBrowsersLanguage_AcrossClientSideNavigation()
+    {
+        var owner = await OwnerIdAsync(await RegisterNewOwnerAsync());
+        var menuId = Guid.NewGuid();
+        await App.SeedAsync(owner, db =>
+        {
+            db.Menus.Add(new Menu { Id = menuId, Name = "Mittagskarte", Description = "", Theme = DesignTheme.Modern, Language = MenuLanguage.German });
+            db.Categories.Add(new Category { Id = Guid.NewGuid(), Name = "Suppen", MenuId = menuId, SortOrder = 0 });
+            db.Categories.Add(new Category { Id = Guid.NewGuid(), Name = "Desserts", MenuId = menuId, SortOrder = 1 });
+            return Task.CompletedTask;
+        });
+
+        await using var context = await SignedInContextAsync(German);
+        var page = await context.NewPageAsync();
+        await GotoInteractiveAsync(page, "/dashboard");
+        await page.EvaluateAsync("() => window.__sameDocument = true");
+
+        // Client-side navigation through the top bar
+        await page.GetByTestId("top-nav").GetByRole(AriaRole.Link, new() { Name = "Speisekarten" }).ClickAsync();
+        await Assertions.Expect(page).ToHaveURLAsync(new Regex("/menus$"));
+        await Assertions.Expect(page.GetByTestId("top-nav").Locator("a[aria-current='page']")).ToHaveTextAsync("Speisekarten");
+
+        // …and by the router: the context bar is rendered by the circuit after the navigation
+        await page.EvaluateAsync($"() => Blazor.navigateTo('/Categories/{menuId}')");
+        await Assertions.Expect(page.GetByTestId("menu-tabs").Locator("a"))
+            .ToHaveTextAsync(["Übersicht", "Kategorien", "Gerichte", "Allergene", "Kombi-Angebote", "Einstellungen"]);
+        await Assertions.Expect(page.GetByTestId("menu-preview-link")).ToContainTextAsync("Vorschau");
+        await Assertions.Expect(page.GetByTestId("menu-switcher-button")).ToContainTextAsync("Speisekarte wechseln");
+
+        // A string made in the circuit at event time: the drag handle's announcement
+        var handle = page.GetByRole(AriaRole.Button, new() { Name = "Desserts verschieben" });
+        await handle.FocusAsync();
+        await page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(page)).ToHaveTextAsync("Desserts an Position 1 von 2 verschoben.");
+        await page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(page)).ToHaveTextAsync("Desserts steht bereits an erster Stelle.");
+
+        (await page.EvaluateAsync<bool>("() => window.__sameDocument === true")).Should().BeTrue("no page was loaded");
+        await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", "de");
+    }
+
     // --- Guest pages keep the menu's language ---
 
     [Fact]

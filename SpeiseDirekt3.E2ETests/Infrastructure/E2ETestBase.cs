@@ -205,7 +205,8 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         await page.Locator("#Input\\.Email").FillAsync(email);
         await page.Locator("#Input\\.Password").FillAsync(password);
         await page.Locator("#Input\\.ConfirmPassword").FillAsync(password);
-        await WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Create Account" }).ClickAsync());
+        // By test id: the button's text depends on the browser language
+        await WaitForInteractiveAsync(page, () => page.GetByTestId("register-submit").ClickAsync());
     }
 
     /// <summary>Logs in via <c>/Account/Login</c> and waits for the (interactive) start page.</summary>
@@ -214,7 +215,7 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         await page.GotoAsync(returnUrl is null ? "/Account/Login" : $"/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}");
         await page.Locator("#Input\\.Email").FillAsync(email);
         await page.Locator("#Input\\.Password").FillAsync(password);
-        await WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync());
+        await WaitForInteractiveAsync(page, () => page.GetByTestId("login-submit").ClickAsync());
     }
 
     /// <summary>Registers a fresh owner account (own tenant) in <see cref="Page"/> and returns its e-mail.</summary>
@@ -244,7 +245,7 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
             await userMenu.ClickAsync();
         else
             await page.GetByTestId("nav-drawer-button").ClickAsync();
-        await page.GetByRole(AriaRole.Button, new() { Name = "Log out", Exact = true }).ClickAsync();
+        await page.GetByTestId("logout-button").Filter(new() { Visible = true }).ClickAsync();
         await Assertions.Expect(page.GetByTestId("user-menu-button")).ToHaveCountAsync(0);
         await Assertions.Expect(page.GetByTestId("nav-drawer-button")).ToHaveCountAsync(0);
         await page.WaitForLoadStateAsync(LoadState.Load);
