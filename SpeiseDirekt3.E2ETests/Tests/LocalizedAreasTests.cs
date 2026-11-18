@@ -132,8 +132,7 @@ public class LocalizedAreasTests : QrCalendarTestBase
         // A new calendar code without entries: the model's message in German
         await GotoInteractiveAsync("/qrcode/edit");
         await Page.Locator("#qrTitle").FillAsync("Leer");
-        await Page.Locator("#calendar").CheckAsync();
-        await WaitForCalendarAsync(Page);
+        await SelectCalendarModeAsync(); // click, then wait for the server's re-render (CheckAsync expects it at once)
         await Page.GetByRole(AriaRole.Button, new() { Name = "QR-Code erstellen", Exact = true }).ClickAsync();
         await Assertions.Expect(Page.GetByText("Es muss mindestens einen Eintrag im Kalender geben.").First).ToBeVisibleAsync();
     }

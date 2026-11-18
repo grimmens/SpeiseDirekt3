@@ -41,6 +41,13 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         return stream.ToArray();
     }
 
+    /// <summary>
+    /// Waiting for an upload (circuit, ImageSharp resize, database): 2–5 s under parallel load measured in AP12b, past the
+    /// 5 s default in a busy run (the "Profile_IsSaved… under load" flake of AP12a), so uploads get the 15 s of the
+    /// context's action timeout. The assertions themselves are unchanged.
+    /// </summary>
+    private static readonly LocatorAssertionsToHaveAttributeOptions Upload = new() { Timeout = 15_000 };
+
     private static FilePayload PngFile(string name, byte r, byte g, byte b) =>
         new() { Name = name, MimeType = "image/png", Buffer = Png(r, g, b) };
 
@@ -71,9 +78,9 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await Page.Locator("#Restaurant\\.GoogleReviewUrl").FillAsync("https://example.com/review");
 
         await Page.Locator("#Restaurant\\.Cover").SetInputFilesAsync(PngFile("cover.png", 200, 80, 40));
-        await Assertions.Expect(Page.GetByTestId("cover-preview").Locator("img")).ToHaveAttributeAsync("src", new Regex("^/image/"));
+        await Assertions.Expect(Page.GetByTestId("cover-preview").Locator("img")).ToHaveAttributeAsync("src", new Regex("^/image/"), Upload);
         await Page.Locator("#Restaurant\\.Logo").SetInputFilesAsync(PngFile("logo.png", 20, 60, 160));
-        await Assertions.Expect(Page.GetByTestId("logo-preview").Locator("img")).ToHaveAttributeAsync("src", new Regex("^/image/"));
+        await Assertions.Expect(Page.GetByTestId("logo-preview").Locator("img")).ToHaveAttributeAsync("src", new Regex("^/image/"), Upload);
 
         await SaveProfile.ClickAsync();
         await Assertions.Expect(Page.GetByTestId("profile-saved")).ToContainTextAsync("Profile saved");
@@ -101,7 +108,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
 
         // Replace the logo and remove the cover: after saving, both old pictures are gone from the database
         await Page.Locator("#Restaurant\\.Logo").SetInputFilesAsync(PngFile("logo2.png", 10, 140, 60));
-        await Assertions.Expect(Page.GetByTestId("logo-preview").Locator("img")).Not.ToHaveAttributeAsync("src", "/" + stored.LogoImagePath);
+        await Assertions.Expect(Page.GetByTestId("logo-preview").Locator("img")).Not.ToHaveAttributeAsync("src", "/" + stored.LogoImagePath, Upload);
         await Page.GetByRole(AriaRole.Button, new() { Name = "Remove cover image" }).ClickAsync();
         await Assertions.Expect(Page.GetByTestId("cover-preview")).ToContainTextAsync("No cover image yet");
         await SaveProfile.ClickAsync();

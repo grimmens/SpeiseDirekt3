@@ -242,6 +242,13 @@ public class ItemEditPageTests : BackOfficeTestBase
         await Assertions.Expect(employee.GetByTestId("item-edit-form")).ToHaveCountAsync(0);
     }
 
+    /// <summary>
+    /// Waiting for an upload: the file goes through the circuit, is resized (ImageSharp) and stored. Measured 2.2 s alone
+    /// and 4.4 s with three other test classes in parallel; a busier run went past the 5 s default (AP12b), so uploads get
+    /// the 15 s of the context's action timeout. The assertions themselves are unchanged.
+    /// </summary>
+    private static readonly LocatorAssertionsToHaveAttributeOptions Upload = new() { Timeout = 15_000 };
+
     private static FilePayload Png(string name, byte r, byte g, byte b)
     {
         using var image = new Image<Rgba32>(320, 240, new Rgba32(r, g, b));
@@ -260,7 +267,7 @@ public class ItemEditPageTests : BackOfficeTestBase
 
         // Upload and save: the item points at the new image
         await Page.Locator("#MenuItem\\.Image").SetInputFilesAsync(Png("suppe.png", 200, 60, 40));
-        await Assertions.Expect(preview).ToHaveAttributeAsync("src", new Regex("^/image/"));
+        await Assertions.Expect(preview).ToHaveAttributeAsync("src", new Regex("^/image/"), Upload);
         await Assertions.Expect(Page.GetByTestId("item-dirty-state")).ToHaveTextAsync("Unsaved changes");
         await SaveItemAndReturnAsync();
         string stored;
@@ -273,7 +280,7 @@ public class ItemEditPageTests : BackOfficeTestBase
         await OpenItemEditorAsync("Tomatensuppe");
         await Assertions.Expect(preview).ToHaveAttributeAsync("src", "/" + stored);
         await Page.Locator("#MenuItem\\.Image").SetInputFilesAsync(Png("neu.png", 20, 120, 60));
-        await Assertions.Expect(preview).Not.ToHaveAttributeAsync("src", "/" + stored);
+        await Assertions.Expect(preview).Not.ToHaveAttributeAsync("src", "/" + stored, Upload);
         var replacement = (await preview.GetAttributeAsync("src"))!.TrimStart('/');
         await Page.GetByTestId("item-savebar").GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"/MenuItems/Category/{startersId}\\?highlight=", RegexOptions.IgnoreCase));
