@@ -8,8 +8,8 @@ public record MenuDto
     [Required]
     public string Name { get; init; } = string.Empty;
 
-    [Required]
-    public string Description { get; init; } = string.Empty;
+    /// <summary>Optional; null or omitted is stored as an empty description.</summary>
+    public string? Description { get; init; }
 
     public DesignTheme Theme { get; init; } = DesignTheme.Modern;
 

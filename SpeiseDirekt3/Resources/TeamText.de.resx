@@ -260,4 +260,7 @@
   <data name="Perm_Remove" xml:space="preserve">
     <value>Entfernen</value>
   </data>
+  <data name="JoinedOn" xml:space="preserve">
+    <value>Hinzugefügt am {0}</value>
+  </data>
 </root>

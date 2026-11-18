@@ -668,4 +668,25 @@
   <data name="DeleteData_Submit" xml:space="preserve">
     <value>Delete data and close my account</value>
   </data>
+  <data name="Email_ConfirmSubject" xml:space="preserve">
+    <value>Confirm your e-mail address</value>
+  </data>
+  <data name="Email_ConfirmText" xml:space="preserve">
+    <value>Please confirm your Speise-Direkt account with this link:</value>
+  </data>
+  <data name="Email_ConfirmLink" xml:space="preserve">
+    <value>Confirm account</value>
+  </data>
+  <data name="Email_ResetSubject" xml:space="preserve">
+    <value>Reset your password</value>
+  </data>
+  <data name="Email_ResetText" xml:space="preserve">
+    <value>You can choose a new password with this link:</value>
+  </data>
+  <data name="Email_ResetLink" xml:space="preserve">
+    <value>Reset password</value>
+  </data>
+  <data name="Email_ResetCodeText" xml:space="preserve">
+    <value>Your code for resetting the password: {0}</value>
+  </data>
 </root>

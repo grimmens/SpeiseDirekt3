@@ -657,4 +657,25 @@
   <data name="DeleteData_Submit" xml:space="preserve">
     <value>Daten löschen und Konto schließen</value>
   </data>
+  <data name="Email_ConfirmSubject" xml:space="preserve">
+    <value>Bestätigen Sie Ihre E-Mail-Adresse</value>
+  </data>
+  <data name="Email_ConfirmText" xml:space="preserve">
+    <value>Bitte bestätigen Sie Ihr Speise-Direkt-Konto mit diesem Link:</value>
+  </data>
+  <data name="Email_ConfirmLink" xml:space="preserve">
+    <value>Konto bestätigen</value>
+  </data>
+  <data name="Email_ResetSubject" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="Email_ResetText" xml:space="preserve">
+    <value>Mit diesem Link können Sie ein neues Passwort wählen:</value>
+  </data>
+  <data name="Email_ResetLink" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="Email_ResetCodeText" xml:space="preserve">
+    <value>Ihr Code zum Zurücksetzen des Passworts: {0}</value>
+  </data>
 </root>

@@ -94,6 +94,36 @@ public class MenuEditorLivePreviewTests : BackOfficeTestBase
         await Assertions.Expect(Frame.Locator("h1")).ToHaveTextAsync("Herbstkarte");
     }
 
+    /// <summary>
+    /// The description is optional (AP13; it was [Required] without a message in the form, so clearing it silently
+    /// blocked saving): a new menu without one and an existing one cleared both save, and the guests see no intro line.
+    /// </summary>
+    [Fact]
+    public async Task Description_IsOptional_SavesEmpty_GuestsSeeNoIntro()
+    {
+        var menu = await SeedForNewOwnerAsync();
+        await OpenEditorAsync(menu.MenuId);
+        await Assertions.Expect(Page.Locator("label[for='menuDesc']")).ToContainTextAsync("(optional)");
+
+        await Page.Locator("#menuDesc").FillAsync("");
+        await Button("Save Changes").ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"/menudetail/{menu.MenuId}$"));
+        (await MenuInDbAsync(menu.MenuId)).Description.Should().BeEmpty();
+
+        var newId = await CreateMenuViaUiAsync("Ohne Beschreibung", description: "");
+        (await MenuInDbAsync(newId)).Description.Should().BeEmpty();
+
+        var (guestContext, guest) = await NewContextAsync();
+        await using (guestContext)
+        {
+            await OpenGuestPageAsync(guest, $"/menu/{menu.MenuId}");
+            await Assertions.Expect(guest.Locator("h1")).ToHaveTextAsync("Sommerkarte");
+            await Assertions.Expect(guest.Locator(".gm-hero-desc")).ToHaveCountAsync(0);
+            // The meta description falls back to the restaurant's description
+            (await guest.Locator("meta[name='description']").GetAttributeAsync("content")).Should().StartWith("Familienbetrieb");
+        }
+    }
+
     [Fact]
     public async Task ThemeSwitchesInPlace_LanguageReloads_BothKeepTheDraft()
     {

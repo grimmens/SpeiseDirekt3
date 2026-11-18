@@ -42,9 +42,6 @@
   <data name="Name_RequiredShort" xml:space="preserve">
     <value>Bitte geben Sie einen Namen ein.</value>
   </data>
-  <data name="Menu_DescriptionRequired" xml:space="preserve">
-    <value>Bitte geben Sie eine Beschreibung ein.</value>
-  </data>
   <data name="Allergen_CodeRequired" xml:space="preserve">
     <value>Bitte geben Sie ein Kürzel ein.</value>
   </data>

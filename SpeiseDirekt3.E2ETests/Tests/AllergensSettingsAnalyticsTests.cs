@@ -419,6 +419,42 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
         (await TitleOf(TenantRole.GeneralManager)).Should().Contain("Subscription: manage");
     }
 
+    /// <summary>
+    /// AP13: on a phone the team is a list of cards (name, e-mail, role, status, joined, Edit) instead of a table that
+    /// scrolled sideways; from 1024 px the table.
+    /// </summary>
+    [Fact]
+    public async Task UsersPage_OnAPhone_ShowsCards_WithoutSidewaysScrolling()
+    {
+        var ownerId = await RegisterOwnerAsync();
+        await SeedSubAccountAsync(ownerId, "Max Kellner", TenantRole.Employee);
+        await SeedSubAccountAsync(ownerId, "Anna Langername-Mitbindestrich", TenantRole.GeneralManager);
+
+        await Page.SetViewportSizeAsync(390, 844);
+        await GotoInteractiveAsync("/users");
+        var cards = Page.GetByTestId("user-card");
+        await Assertions.Expect(cards).ToHaveCountAsync(2);
+        await Assertions.Expect(Page.GetByTestId("users-table")).ToBeHiddenAsync();
+        var max = cards.Filter(new() { HasTextString = "Max Kellner" });
+        await Assertions.Expect(max).ToContainTextAsync("Employee");
+        await Assertions.Expect(max).ToContainTextAsync("Active");
+        await Assertions.Expect(max.GetByRole(AriaRole.Button, new() { Name = "Edit Max Kellner" })).ToBeVisibleAsync();
+        var wide = await Page.EvaluateAsync<string[]>("""
+            () => [...document.querySelectorAll('body *')]
+                .filter(e => e.getBoundingClientRect().right > window.innerWidth + 1)
+                .map(e => e.tagName + '.' + e.className + ' ' + Math.round(e.getBoundingClientRect().right))
+            """);
+        wide.Should().BeEmpty("nothing on the page is wider than the phone");
+
+        await max.GetByRole(AriaRole.Button, new() { Name = "Edit Max Kellner" }).ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/users/edit/"));
+
+        await Page.SetViewportSizeAsync(1280, 900);
+        await GotoInteractiveAsync("/users");
+        await Assertions.Expect(Page.GetByTestId("users-table")).ToBeVisibleAsync();
+        await Assertions.Expect(cards.First).ToBeHiddenAsync();
+    }
+
     // --- Screenshots for the design review (opt-in, like AdminScreenshotTour) ---
 
     [Fact]

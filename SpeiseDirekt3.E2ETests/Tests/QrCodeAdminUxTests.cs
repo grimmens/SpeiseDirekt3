@@ -351,6 +351,44 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
     }
 
+    /// <summary>
+    /// AP13: the thumbnail opens the code enlarged in a quiet native dialog (no Bootstrap modal): title, the large image,
+    /// Escape / the close button / the backdrop close it, and the focus returns to the thumbnail.
+    /// </summary>
+    [Fact]
+    public async Task List_Thumbnail_OpensTheEnlargedCode_InANativeDialog()
+    {
+        var ownerId = await RegisterOwnerAsync();
+        var menu = await SeedMenuAsync(ownerId, "Vorschau Menü");
+        await SeedQrAsync(ownerId, new QRCode { Title = "Tisch 7", MenuId = menu });
+
+        await GotoInteractiveAsync("/qrcodes");
+        var thumbnail = Card("Tisch 7").GetByTestId("qr-preview-button");
+        var dialog = Card("Tisch 7").GetByTestId("qr-preview-dialog");
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+        (await Page.Locator("[data-bs-toggle=modal], .modal").CountAsync()).Should().Be(0);
+
+        await thumbnail.ClickAsync();
+        await Assertions.Expect(dialog).ToBeVisibleAsync();
+        await Assertions.Expect(dialog.Locator("h2")).ToHaveTextAsync("Tisch 7");
+        await Assertions.Expect(dialog.Locator("img")).ToHaveJSPropertyAsync("complete", true);
+        (await dialog.Locator("img").EvaluateAsync<int>("i => i.naturalWidth")).Should().BeGreaterThan(0);
+        await Assertions.Expect(dialog.GetByRole(AriaRole.Button, new() { Name = "Close" })).ToBeFocusedAsync();
+
+        await Page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+        await Assertions.Expect(thumbnail).ToBeFocusedAsync();
+
+        await thumbnail.ClickAsync();
+        await dialog.GetByRole(AriaRole.Button, new() { Name = "Close" }).ClickAsync();
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+
+        await thumbnail.ClickAsync();
+        await Assertions.Expect(dialog).ToBeVisibleAsync();
+        await Page.Mouse.ClickAsync(5, 5); // the backdrop
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+    }
+
     [Fact]
     public async Task ImageEndpoint_WithoutDownload_IsInline_AndRejectsUnsafeNames()
     {

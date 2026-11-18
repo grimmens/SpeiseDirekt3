@@ -45,7 +45,7 @@ public static class E2ESettings
         .hidden{display:none}
         @media (min-width:640px){.sm\:flex{display:flex}.sm\:grid{display:grid}}
         @media (min-width:768px){.md\:grid{display:grid}}
-        @media (min-width:1024px){.lg\:flex{display:flex}.lg\:grid{display:grid}.lg\:hidden{display:none}}
+        @media (min-width:1024px){.lg\:flex{display:flex}.lg\:block{display:block}.lg\:grid{display:grid}.lg\:hidden{display:none}}
         @media (min-width:1280px){.xl\:block{display:block}.xl\:grid{display:grid}.xl\:hidden{display:none}}
         """;
 }

@@ -155,7 +155,7 @@
     <comment>{0} = category name</comment>
   </data>
   <data name="Table_EmptyText" xml:space="preserve">
-    <value>Add the dishes or drinks guests can order in this category.</value>
+    <value>Add the dishes or drinks guests will find in this category.</value>
   </data>
   <data name="Table_Generating" xml:space="preserve">
     <value>Generating…</value>
@@ -335,7 +335,7 @@
     <value>Sizes or versions with their own price, e.g. “0,25 l” and “0,5 l” or “Standard” and “Vegan”. The price above then follows the lowest variant.</value>
   </data>
   <data name="Options_ExtrasHelp" xml:space="preserve">
-    <value>Add-ons guests can order with this item, e.g. “+ Halloumi”.</value>
+    <value>Add-ons with their own surcharge, e.g. “+ Halloumi”.</value>
   </data>
   <data name="Options_VariantPlaceholder" xml:space="preserve">
     <value>e.g. 0,5 l</value>

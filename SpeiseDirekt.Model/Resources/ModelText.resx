@@ -42,9 +42,6 @@
   <data name="Name_RequiredShort" xml:space="preserve">
     <value>Name is required.</value>
   </data>
-  <data name="Menu_DescriptionRequired" xml:space="preserve">
-    <value>The Description field is required.</value>
-  </data>
   <data name="Allergen_CodeRequired" xml:space="preserve">
     <value>The Code field is required.</value>
   </data>

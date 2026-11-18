@@ -12,6 +12,9 @@
  *   (the page behind is inert, focus moves in: the current page's link, else the close button); closed by Escape,
  *   the backdrop, `[data-sd-drawer-close]`, a followed link and widening to ≥ 1024 px. Focus returns to the button,
  *   whose `aria-expanded` follows the dialog. The page does not scroll behind it.
+ * - Simple dialogs: `[data-sd-dialog-open]` button (`aria-controls` = the `<dialog data-sd-dialog>`) opens it with
+ *   showModal() (focus moves to its `[data-sd-dialog-close]` button); Escape, the backdrop and `[data-sd-dialog-close]`
+ *   close it and the focus returns to the button (e.g. the enlarged QR code, QrCodePreview). No Blazor state involved.
  * - `[data-sd-skip]`: the skip link focuses `<main>` (a plain #fragment would resolve against <base href> and leave
  *   the page).
  * - `sdShell.revealActiveTab(strip)`: scrolls a horizontal tab strip so its `[aria-current="page"]` tab is centred
@@ -83,6 +86,26 @@
         if (opener?.isConnected && opener.getClientRects().length > 0) opener.focus({ preventScroll: true });
     }, true);
 
+    // --- Simple dialogs (no Blazor state: the enlarged QR code) ---
+
+    let dialogOpener = null;
+
+    function openSimpleDialog(button) {
+        const dialog = document.getElementById(button.getAttribute('aria-controls') ?? '');
+        if (!(dialog instanceof HTMLDialogElement) || dialog.open) return;
+        closeAllDropdowns();
+        dialogOpener = button;
+        dialog.showModal();
+        dialog.querySelector('[data-sd-dialog-close]')?.focus({ preventScroll: true });
+    }
+
+    document.addEventListener('close', e => {
+        if (!(e.target instanceof HTMLDialogElement) || !e.target.matches('[data-sd-dialog]')) return;
+        const opener = dialogOpener;
+        dialogOpener = null;
+        if (opener?.isConnected && opener.getClientRects().length > 0) opener.focus({ preventScroll: true });
+    }, true);
+
     WIDE.addEventListener('change', () => {
         if (WIDE.matches) document.querySelectorAll('dialog[data-sd-drawer][open]').forEach(closeDrawer);
     });
@@ -91,7 +114,7 @@
 
     let pressedOnBackdrop = false;
     document.addEventListener('pointerdown', e => {
-        const dialog = e.target instanceof HTMLDialogElement && e.target.matches('[data-sd-drawer]') ? e.target : null;
+        const dialog = e.target instanceof HTMLDialogElement && e.target.matches('[data-sd-drawer], [data-sd-dialog]') ? e.target : null;
         pressedOnBackdrop = !!dialog && isOutside(dialog, e);
     }, true);
 
@@ -126,6 +149,20 @@
             if (target === drawer && pressedOnBackdrop && isOutside(drawer, e)) closeDrawer(drawer);
             else if (target.closest('[data-sd-drawer-close]')) closeDrawer(drawer);
             else if (target.closest('a[href]')) closeDrawer(drawer); // navigation: the link still navigates
+            pressedOnBackdrop = false;
+            return;
+        }
+
+        // Simple dialogs
+        const dialogButton = target.closest('[data-sd-dialog-open]');
+        if (dialogButton) {
+            openSimpleDialog(dialogButton);
+            return;
+        }
+        const simple = target.closest('dialog[data-sd-dialog]');
+        if (simple) {
+            if (target === simple && pressedOnBackdrop && isOutside(simple, e)) simple.close();
+            else if (target.closest('[data-sd-dialog-close]')) simple.close();
             pressedOnBackdrop = false;
             return;
         }

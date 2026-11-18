@@ -9,7 +9,7 @@ namespace SpeiseDirekt.Model
         [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Name_Required))]
         public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Menu_DescriptionRequired))]
+        /// <summary>Optional (AP13): never null, empty when not set; the guest pages then show no intro line.</summary>
         public string Description { get; set; } = string.Empty;
 
         public DesignTheme Theme { get; set; } = DesignTheme.Modern;
