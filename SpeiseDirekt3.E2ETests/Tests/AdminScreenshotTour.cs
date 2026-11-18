@@ -16,7 +16,8 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// E2E_SCREENSHOT_DIR=/tmp/shots E2E_ALLOW_EXTERNAL_REQUESTS=1 dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~AdminScreenshotTour
 /// </code>
 /// The browser language is <c>E2E_LOCALE</c> (default <c>en-US</c>; <c>de-DE</c> for the German back office — use another
-/// <c>E2E_SCREENSHOT_DIR</c> per language, the file names are the same).
+/// <c>E2E_SCREENSHOT_DIR</c> per language, the file names are the same). Next to every full-page shot a <c>.txt</c> holds
+/// the page's visible text and its title/aria-label/placeholder/alt texts, to look for words left in the other language.
 /// </summary>
 public class AdminScreenshotTour : QrCalendarTestBase
 {
@@ -159,6 +160,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
             if (after is not null) await after(page);
             await SettleAsync(page);
             await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-{name}.png"), FullPage = true });
+            await File.WriteAllTextAsync(Path.Combine(dir, $"{prefix}-{name}.txt"), await PageTextsAsync(page));
         }
 
         await Shot("home", "/dashboard");
@@ -179,15 +181,16 @@ public class AdminScreenshotTour : QrCalendarTestBase
         await Shot("restaurant", "/restaurant");
         await Shot("menuitems-drinks", $"/MenuItems/Category/{s.DrinksCategoryId}");
         // The item edit page (AP11: its own page instead of the modal), full page and at the variants with the save bar
+        // Selectors here work in every language (the tour runs with E2E_LOCALE): the item's name links to its page
         await Shot("menuitems-editor-options", $"/MenuItems/Category/{s.DrinksCategoryId}", async p =>
         {
-            await p.GetByRole(AriaRole.Link, new() { Name = "Edit Melange", Exact = true }).ClickAsync();
+            await p.GetByRole(AriaRole.Link, new() { Name = "Melange", Exact = true }).ClickAsync();
             await Assertions.Expect(p.GetByTestId("item-edit-form")).ToBeVisibleAsync();
         });
         await GotoInteractiveAsync(page, $"/MenuItems/Category/{s.DrinksCategoryId}");
-        await page.GetByRole(AriaRole.Link, new() { Name = "Edit Melange", Exact = true }).ClickAsync();
+        await page.GetByRole(AriaRole.Link, new() { Name = "Melange", Exact = true }).ClickAsync();
         await page.GetByTestId("price-variants").ScrollIntoViewIfNeededAsync();
-        await page.GetByLabel("Name of variant 1").FillAsync("Klein (0,25 l)");
+        await page.GetByTestId("variant-row").First.Locator("input").First.FillAsync("Klein (0,25 l)");
         await SettleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-menuitems-editor-options-scrolled.png"), FullPage = false });
         // Leaving with unsaved changes asks first (the quiet confirmation)
@@ -213,22 +216,22 @@ public class AdminScreenshotTour : QrCalendarTestBase
 
         // Inline edit of a category and of an allergen
         await GotoInteractiveAsync(page, $"/Categories/{s.MenuId}");
-        await page.GetByTestId("category-row").Nth(1).GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^Edit ") }).ClickAsync();
+        await page.GetByTestId("category-row").Nth(1).Locator("button.sd-row-action").First.ClickAsync();
         await SettleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-categories-inline-edit.png"), FullPage = false });
         await GotoInteractiveAsync(page, $"/allergens/{s.MenuId}");
-        await page.GetByTestId("allergen-row").First.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^Edit ") }).ClickAsync();
+        await page.GetByTestId("allergen-row").First.Locator("button.sd-row-action").First.ClickAsync();
         await SettleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-allergens-inline-edit.png"), FullPage = false });
 
         // The quiet confirmation and the combo editor panel
         await GotoInteractiveAsync(page, $"/combos/{s.MenuId}");
-        await page.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^Delete combo ") }).First.ClickAsync();
+        await page.GetByTestId("combo-card").First.Locator("button.sd-row-action--danger").ClickAsync();
         await Assertions.Expect(page.Locator("#confirmationModal")).ToBeVisibleAsync();
         await SettleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-confirmation.png"), FullPage = false });
         await page.Locator("#cancelBtn").ClickAsync();
-        await page.GetByRole(AriaRole.Button, new() { Name = "Edit", Exact = true }).First.ClickAsync();
+        await page.GetByTestId("combo-card").First.Locator("button.sd-btn--secondary").ClickAsync();
         await Assertions.Expect(page.GetByTestId("combo-editor")).ToBeVisibleAsync();
         await SettleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-combo-editor.png"), FullPage = false });
@@ -315,12 +318,14 @@ public class AdminScreenshotTour : QrCalendarTestBase
         await Assertions.Expect(page.GetByTestId("calendar-conflicts")).ToBeVisibleAsync();
         await SettleAsync(page);
         await editor.ScreenshotAsync(new() { Path = File("qrcode-calendar-conflict") });
+        await System.IO.File.WriteAllTextAsync(Path.Combine(dir, $"{prefix}-qrcode-calendar-conflict.txt"), await PageTextsAsync(page));
 
         // List view of the month
         await CalendarOf(page).Locator(".fc-listMonth-button").ClickAsync();
         await Assertions.Expect(CalendarOf(page).Locator(".fc-list").First).ToBeVisibleAsync();
         await SettleAsync(page);
         await editor.ScreenshotAsync(new() { Path = File("qrcode-calendar-list") });
+        await System.IO.File.WriteAllTextAsync(Path.Combine(dir, $"{prefix}-qrcode-calendar-list.txt"), await PageTextsAsync(page));
     }
 
     /// <summary>Tailwind's CDN build compiles classes after load; give it a moment and wait for fonts.</summary>
@@ -450,6 +455,13 @@ public class AdminScreenshotTour : QrCalendarTestBase
             await emptyPage.ScreenshotAsync(new() { Path = Path.Combine(target, "desktop-dashboard-empty.png"), FullPage = true });
         }
     }
+
+    /// <summary>The visible text of the page plus every title, aria-label, placeholder and alt text, one per line.</summary>
+    internal static Task<string> PageTextsAsync(IPage page) => page.EvaluateAsync<string>(@"() => {
+        const attrs = [...document.querySelectorAll('[title],[aria-label],[placeholder],[alt]')]
+            .flatMap(el => ['title', 'aria-label', 'placeholder', 'alt'].filter(a => el.hasAttribute(a)).map(a => `@${a}: ${el.getAttribute(a)}`));
+        return [document.title, document.body.innerText, ...attrs].join('\n');
+    }");
 
     private static async Task SettleAsync(IPage page)
     {

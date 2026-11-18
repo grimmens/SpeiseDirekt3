@@ -86,6 +86,39 @@ public class ResourceCompletenessTests
         common.Should().ContainKey("Role_Owner");
     }
 
+    /// <summary>
+    /// Keys the back-office areas build at run time (AP12b): design names, label names, time ranges, QR code modes, role
+    /// descriptions and the permission catalog of the team pages.
+    /// </summary>
+    [Fact]
+    public void AreaKeysBuiltAtRunTime_Exist()
+    {
+        var menus = Entries(typeof(SpeiseDirekt3.MenusText), CultureInfo.InvariantCulture);
+        foreach (var theme in Enum.GetNames<SpeiseDirekt.Model.DesignTheme>())
+            menus.Should().ContainKey($"Theme_{theme}");
+
+        var items = Entries(typeof(SpeiseDirekt3.ItemsText), CultureInfo.InvariantCulture);
+        foreach (var label in SpeiseDirekt.Infrastructure.ItemLabels.All)
+            items.Should().ContainKey(SpeiseDirekt3.Components.MenuItem.ItemsDisplay.LabelKey(label));
+
+        var analytics = Entries(typeof(SpeiseDirekt3.AnalyticsText), CultureInfo.InvariantCulture);
+        foreach (var range in Enum.GetNames<SpeiseDirekt.ServiceInterface.TimeRange>())
+            analytics.Should().ContainKey($"Range_{range}");
+
+        var qrCodes = Entries(typeof(SpeiseDirekt3.QrCodesText), CultureInfo.InvariantCulture);
+        qrCodes.Should().ContainKeys("Mode_Direct", "Mode_Schedule", "Mode_Calendar");
+
+        var team = Entries(typeof(SpeiseDirekt3.TeamText), CultureInfo.InvariantCulture);
+        foreach (var role in Enum.GetNames<SpeiseDirekt.Model.TenantRole>())
+            team.Should().ContainKey($"RoleDesc_{role}");
+        foreach (var area in SpeiseDirekt3.Components.UserManagement.PermissionCatalog.Areas)
+        {
+            team.Should().ContainKey(area.NameKey);
+            foreach (var entry in area.Entries)
+                team.Should().ContainKeys(entry.ActionKey, entry.LabelKey);
+        }
+    }
+
     /// <summary>Every message Identity can produce is overridden by the localized describer and has its IdentityText key.</summary>
     [Fact]
     public void IdentityErrorDescriber_CoversEveryIdentityError()
