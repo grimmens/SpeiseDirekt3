@@ -10,15 +10,17 @@
 @inject IUserIdProvider UserIdProvider
 @inject IAuthorizationService AuthorizationService
 @inject TimeProvider TimeProvider
+@inject IStringLocalizer<DashboardText> T
+@inject IStringLocalizer<CommonText> C
 
 @* The back office's dashboard on /dashboard ("/" is the landing page and sends a logged-in user here): stat tiles,
    quick actions, the getting-started checklist and the menus. *@
-<PageTitle>Dashboard - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
 
 @if (dashboard is { } d)
 {
     <!-- Header -->
-    <PageHeader Title="Welcome back" Icon="DashboardIcon" Tone="TileTone.Brand" Class="mb-8">
+    <PageHeader Title="@T["Welcome"]" Icon="DashboardIcon" Tone="TileTone.Brand" Class="mb-8">
         <Description><span class="break-all" data-testid="dashboard-user">@d.UserName</span></Description>
         <Actions>
                 @if (d.CanCreateMenu || d.CanCreateQrCode || d.CanViewAnalytics)
@@ -30,7 +32,7 @@
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                                 </svg>
-                                Create menu
+                                @T["Action_CreateMenu"]
                             </a>
                         }
                         @if (d.CanCreateQrCode)
@@ -39,7 +41,7 @@
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                                 </svg>
-                                Create QR code
+                                @T["Action_CreateQrCode"]
                             </a>
                         }
                         @if (d.CanViewAnalytics)
@@ -48,7 +50,7 @@
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
                                 </svg>
-                                Analytics
+                                @T["Action_Analytics"]
                             </a>
                         }
                     </div>
@@ -67,10 +69,10 @@
                 </span>
                 <div class="min-w-0">
                     <div class="text-2xl font-extrabold text-gray-900 font-display" data-testid="stat-value">@d.MenuCount</div>
-                    <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Menus</div>
+                    <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">@T["Stat_Menus"]</div>
                 </div>
             </div>
-            <div class="mt-2 text-xs text-gray-500">@Count(d.ItemCount, "item", "items") in total</div>
+            <div class="mt-2 text-xs text-gray-500">@T.Plural(d.ItemCount, "Stat_ItemsInTotal")</div>
         </a>
         <a href="qrcodes" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-qrcodes">
             <div class="flex items-center gap-3">
@@ -81,10 +83,10 @@
                 </span>
                 <div class="min-w-0">
                     <div class="text-2xl font-extrabold text-gray-900 font-display" data-testid="stat-value">@d.QrCodeCount</div>
-                    <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">QR codes</div>
+                    <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">@T["Stat_QrCodes"]</div>
                 </div>
             </div>
-            <div class="mt-2 text-xs text-gray-500">For your tables and windows</div>
+            <div class="mt-2 text-xs text-gray-500">@T["Stat_QrCodesHint"]</div>
         </a>
         @if (d.CanViewAnalytics)
         {
@@ -98,10 +100,10 @@
                     </span>
                     <div class="min-w-0">
                         <div class="text-2xl font-extrabold text-gray-900 font-display" data-testid="stat-value">@d.ViewsLast7Days</div>
-                        <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Menu views</div>
+                        <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">@T["Stat_Views"]</div>
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-500">Last 7 days</div>
+                <div class="mt-2 text-xs text-gray-500">@T["Stat_ViewsHint"]</div>
             </a>
         }
         <a href="users" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-team">
@@ -113,10 +115,10 @@
                 </span>
                 <div class="min-w-0">
                     <div class="text-2xl font-extrabold text-gray-900 font-display" data-testid="stat-value">@d.TeamCount</div>
-                    <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Team members</div>
+                    <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">@T["Stat_Team"]</div>
                 </div>
             </div>
-            <div class="mt-2 text-xs text-gray-500">Active sub-accounts</div>
+            <div class="mt-2 text-xs text-gray-500">@T["Stat_TeamHint"]</div>
         </a>
     </div>
 
@@ -128,10 +130,10 @@
                 <div class="sd-card-head sd-card-head--stack">
                     <div class="flex items-start justify-between gap-4">
                         <div class="min-w-0">
-                            <h2 class="sd-card-title">Getting started</h2>
-                            <p class="mt-1 text-sm text-gray-500">Four steps until your guests can scan your menu at the table.</p>
+                            <h2 class="sd-card-title">@T["Checklist_Title"]</h2>
+                            <p class="mt-1 text-sm text-gray-500">@T["Checklist_Intro"]</p>
                         </div>
-                        <span class="flex-shrink-0 text-sm font-medium text-gray-600" data-testid="getting-started-progress">@d.Steps.Count(s => s.Done) of @d.Steps.Count done</span>
+                        <span class="flex-shrink-0 text-sm font-medium text-gray-600" data-testid="getting-started-progress">@T["Checklist_Progress", d.Steps.Count(s => s.Done), d.Steps.Count]</span>
                     </div>
                     <div class="mt-4 h-2 rounded-full bg-gray-100 overflow-hidden" aria-hidden="true">
                         <div class="h-full rounded-full bg-green-500 transition-all duration-500" style="width: @(d.Steps.Count(s => s.Done) * 100 / d.Steps.Count)%"></div>
@@ -148,7 +150,7 @@
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
                                     </svg>
-                                    <span class="sr-only">Done:</span>
+                                    <span class="sr-only">@T["Checklist_DonePrefix"]</span>
                                 }
                                 else
                                 {
@@ -160,7 +162,7 @@
                                     <h3 class="text-base font-medium @(step.Done ? "text-gray-500" : "text-gray-900")">@step.Title</h3>
                                     @if (step.Done)
                                     {
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">Done</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700">@C["Done"]</span>
                                     }
                                 </div>
                                 @if (!step.Done)
@@ -194,13 +196,13 @@
                         </span>
                         <div class="min-w-0 flex-1">
                             <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                <h3 class="text-base font-medium text-gray-900 mb-0">Add your restaurant profile</h3>
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">Optional</span>
+                                <h3 class="text-base font-medium text-gray-900 mb-0">@T["Profile_Title"]</h3>
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-700">@C["Optional"]</span>
                             </div>
-                            <p class="mt-1 text-sm text-gray-500">Logo, cover picture, opening hours and contact details for the top of your menus.</p>
+                            <p class="mt-1 text-sm text-gray-500">@T["Profile_Text"]</p>
                             <a href="restaurant" data-testid="checklist-optional-action"
                                class="mt-3 inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg transition-colors bg-white border border-gray-300 hover:bg-gray-50 text-gray-700">
-                                Add profile
+                                @T["Profile_Action"]
                                 <span class="ml-1" aria-hidden="true">&rarr;</span>
                             </a>
                         </div>
@@ -212,16 +214,16 @@
         <!-- Menus -->
         <section class="@(d.ShowChecklist ? "" : "lg:col-span-3") bg-white rounded-xl border border-gray-200 shadow-sm self-start" data-testid="dashboard-menus">
             <div class="sd-card-head">
-                <h2 class="sd-card-title">Your menus</h2>
-                <a href="menus" class="flex-shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700">All menus <span aria-hidden="true">&rarr;</span></a>
+                <h2 class="sd-card-title">@T["Menus_Title"]</h2>
+                <a href="menus" class="flex-shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700">@T["Menus_All"] <span aria-hidden="true">&rarr;</span></a>
             </div>
             @if (d.Menus.Count == 0)
             {
                 <div class="px-[1rem] sm:px-6 py-8 text-center text-sm text-gray-500">
-                    No menus yet.
+                    @T["Menus_None"]
                     @if (d.CanCreateMenu)
                     {
-                        <a href="menu/edit" class="font-medium text-brand-600 hover:text-brand-700">Create your first menu</a>
+                        <a href="menu/edit" class="font-medium text-brand-600 hover:text-brand-700">@T["Menus_CreateFirst"]</a>
                     }
                 </div>
             }
@@ -235,7 +237,7 @@
                                class="group flex items-center gap-3 rounded-lg border border-gray-200 px-4 py-3 hover:border-brand-300 hover:bg-brand-50/40 transition-colors">
                                 <div class="min-w-0 flex-1">
                                     <div class="font-medium text-gray-900 group-hover:text-brand-600 break-words">@menu.Name</div>
-                                    <div class="text-sm text-gray-500">@Count(menu.Categories, "category", "categories") &middot; @Count(menu.Items, "item", "items")</div>
+                                    <div class="text-sm text-gray-500">@T.Plural(menu.Categories, "Categories") &middot; @T.Plural(menu.Items, "Items")</div>
                                 </div>
                                 <svg class="h-4 w-4 flex-shrink-0 text-gray-400 group-hover:text-brand-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -246,7 +248,7 @@
                 </ul>
                 @if (d.MenuCount > d.Menus.Count)
                 {
-                    <div class="px-[1rem] sm:px-6 pb-[1rem] sm:pb-6 -mt-2 text-sm text-gray-500">and @(d.MenuCount - d.Menus.Count) more</div>
+                    <div class="px-[1rem] sm:px-6 pb-[1rem] sm:pb-6 -mt-2 text-sm text-gray-500">@T["Menus_More", d.MenuCount - d.Menus.Count]</div>
                 }
             }
         </section>
@@ -342,7 +344,8 @@
         };
     }
 
-    private static List<ChecklistStep> BuildChecklist(
+    /// <summary>The four steps (texts in the request's language: DashboardText Step*).</summary>
+    private List<ChecklistStep> BuildChecklist(
         List<MenuSummary> menus, int menuCount, int itemCount, int qrCodeCount, bool scanned, bool canCreateMenu, bool canCreateQrCode)
     {
         // Step 2 goes to the menu that is furthest along: one with categories (add items), else the first one
@@ -350,23 +353,19 @@
 
         return new List<ChecklistStep>
         {
-            new(1, "Create a menu",
-                "Give it a name, pick a design theme and the language of your dishes.",
-                menuCount > 0, canCreateMenu ? "menu/edit" : null, "Create menu"),
-            new(2, "Add categories and items",
-                "Group the menu into categories such as starters and mains, then add dishes with prices and allergens.",
+            new(1, T["Step1_Title"], T["Step1_Text"],
+                menuCount > 0, canCreateMenu ? "menu/edit" : null, T["Step1_Action"]),
+            new(2, T["Step2_Title"], T["Step2_Text"],
                 itemCount > 0,
                 setupMenu is null ? null : setupMenu.Categories == 0 ? $"categories/{setupMenu.Id}" : $"menuitems/{setupMenu.Id}",
-                setupMenu is { Categories: > 0 } ? "Add items" : "Add categories",
-                Blocker: "Create a menu first."),
-            new(3, "Create a QR code",
-                "A QR code opens your menu on the guest's phone. It can also switch menus by time of day.",
-                qrCodeCount > 0, menuCount == 0 ? null : canCreateQrCode ? "qrcode/edit" : "qrcodes", "Create QR code",
-                Blocker: "Create a menu first."),
-            new(4, "Print it and put it on the tables",
-                "Download the QR code on the QR codes page and print it. This step ticks itself off when the first guest scans a code.",
-                scanned, qrCodeCount == 0 ? null : "qrcodes", "Go to QR codes",
-                Blocker: "Create a QR code first.")
+                setupMenu is { Categories: > 0 } ? T["Step2_AddItems"] : T["Step2_AddCategories"],
+                Blocker: T["Blocker_CreateMenuFirst"]),
+            new(3, T["Step3_Title"], T["Step3_Text"],
+                qrCodeCount > 0, menuCount == 0 ? null : canCreateQrCode ? "qrcode/edit" : "qrcodes", T["Step3_Action"],
+                Blocker: T["Blocker_CreateMenuFirst"]),
+            new(4, T["Step4_Title"], T["Step4_Text"],
+                scanned, qrCodeCount == 0 ? null : "qrcodes", T["Step4_Action"],
+                Blocker: T["Blocker_CreateQrCodeFirst"])
         };
     }
 
@@ -385,6 +384,4 @@
         return string.IsNullOrWhiteSpace(displayName) ? email : displayName;
     }
 
-    private static string Count(int count, string singular, string plural) =>
-        $"{count} {(count == 1 ? singular : plural)}";
 }

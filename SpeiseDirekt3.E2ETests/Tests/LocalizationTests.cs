@@ -189,6 +189,45 @@ public class LocalizationTests : BackOfficeTestBase
         await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", "de");
     }
 
+    // --- Dashboard ---
+
+    [Fact]
+    public async Task Dashboard_InGerman_WithGermanCountsAndChecklist()
+    {
+        var (context, page) = await NewContextAsync(German);
+        await using var _ = context;
+        var email = UniqueEmail("dashboard");
+        await RegisterAsync(page, email);
+        await Assertions.Expect(page).ToHaveURLAsync(new Regex("/dashboard$"));
+        await Assertions.Expect(page).ToHaveTitleAsync("Dashboard - Speise-Direkt");
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Willkommen zurück" })).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByTestId("getting-started-progress")).ToHaveTextAsync("0 von 4 erledigt");
+        await Assertions.Expect(page.GetByTestId("getting-started")).ToContainTextAsync("Erste Schritte");
+        await Assertions.Expect(page.GetByTestId("checklist-step").Nth(1)).ToContainTextAsync("Legen Sie zuerst eine Speisekarte an.");
+        await Assertions.Expect(page.GetByTestId("quick-actions").Locator("a")).ToHaveTextAsync(["Speisekarte anlegen", "QR-Code erstellen", "Statistik"]);
+        await Assertions.Expect(page.GetByTestId("stat-menus")).ToContainTextAsync("0 Gerichte insgesamt");
+        await Assertions.Expect(page.GetByTestId("stat-team")).ToContainTextAsync("Teammitglieder");
+        await Assertions.Expect(page.GetByTestId("dashboard-menus")).ToContainTextAsync("Noch keine Speisekarten.");
+
+        // Counts with one/other forms
+        var owner = await OwnerIdAsync(email);
+        await App.SeedAsync(owner, db =>
+        {
+            var menuId = Guid.NewGuid();
+            var categoryId = Guid.NewGuid();
+            db.Menus.Add(new Menu { Id = menuId, Name = "Abendkarte", Description = "", Theme = DesignTheme.Modern, Language = MenuLanguage.German });
+            db.Categories.Add(new Category { Id = categoryId, Name = "Suppen", MenuId = menuId });
+            foreach (var name in new[] { "Gulaschsuppe", "Frittatensuppe", "Kürbissuppe" })
+                db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = name, Description = "", Price = 4.5m, CategoryId = categoryId });
+            return Task.CompletedTask;
+        });
+        await GotoInteractiveAsync(page, "/dashboard");
+        await Assertions.Expect(page.GetByTestId("dashboard-menu")).ToContainTextAsync("1 Kategorie · 3 Gerichte");
+        await Assertions.Expect(page.GetByTestId("stat-menus")).ToContainTextAsync("3 Gerichte insgesamt");
+        await Assertions.Expect(page.GetByTestId("getting-started-progress")).ToHaveTextAsync("2 von 4 erledigt");
+        await Assertions.Expect(page.GetByTestId("checklist-action").First).ToHaveTextAsync(new Regex("QR-Code erstellen"));
+    }
+
     // --- Account pages, validation and Identity messages ---
 
     [Fact]
