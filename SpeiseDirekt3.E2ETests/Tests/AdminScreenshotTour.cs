@@ -145,7 +145,8 @@ public class AdminScreenshotTour : QrCalendarTestBase
                 if (url.StartsWith("/Account")) await page.GotoAsync(url);
                 else await GotoInteractiveAsync(page, url);
                 await SettleAsync(page);
-                var overflow = await page.EvaluateAsync<int>("() => document.documentElement.scrollWidth - window.innerWidth");
+                // Against the configured width, not innerWidth: a mobile viewport grows to fit wide content
+                var overflow = await page.EvaluateAsync<int>("width => document.documentElement.scrollWidth - width", width);
                 if (overflow > 0) findings.Add($"{width}px {url}: {overflow}px too wide");
             }
         }
