@@ -37,6 +37,12 @@ public static class LandingImages
         new("dark", "Dunkel", "#d27b90", Phone("guest-dark", "Die Speisekarte „Trattoria Lago“ im Design Dunkel auf einem Handy"))
     ];
 
+    /// <summary>
+    /// The design the switcher shows first (not the hero's, so the page shows two designs right away). landing.css
+    /// names it too, for browsers without :has().
+    /// </summary>
+    public const string DefaultThemeKey = "classic";
+
     /// <summary>The hero's phone: the demo menu with its restaurant profile.</summary>
     public static readonly LandingImage Hero =
         Phone("guest-modern", "Die digitale Speisekarte der „Trattoria Lago“ auf einem Handy: Titelbild, Logo, Kategorien und Gerichte mit Fotos");

@@ -137,7 +137,7 @@
                         {
                             var id = $"lp-theme-{theme.Key}";
                             <input type="radio" class="lp-theme-input" name="lp-theme" id="@id" value="@theme.Key"
-                                   checked="@(theme == LandingImages.Themes[0])" data-testid="theme-option" />
+                                   checked="@(theme.Key == LandingImages.DefaultThemeKey)" data-testid="theme-option" />
                             <label class="lp-theme-chip" for="@id">
                                 <span class="lp-swatch" style="--lp-swatch: @theme.Swatch" aria-hidden="true"></span>
                                 @theme.Label

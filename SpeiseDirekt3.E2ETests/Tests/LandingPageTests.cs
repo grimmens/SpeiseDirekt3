@@ -292,17 +292,19 @@ public class LandingPageTests : E2ETestBase
             await Page.WaitForFunctionAsync($"() => {{ const i = document.querySelector(\"[data-testid='theme-shot'][data-theme='{key}']\"); return i.complete && i.naturalWidth > 0; }}");
         }
 
-        await ExpectShownAsync("modern");
+        // The switcher starts with another design than the hero's
+        await ExpectShownAsync("classic");
+        await Assertions.Expect(Page.Locator("#lp-theme-classic")).ToBeCheckedAsync();
         await Page.Locator("label[for='lp-theme-dark']").ClickAsync();
         await ExpectShownAsync("dark");
         await Assertions.Expect(Page.Locator("#lp-theme-dark")).ToBeCheckedAsync();
 
-        // A radio group: the arrow keys move the choice
-        await Page.Locator("#lp-theme-classic").FocusAsync();
+        // A radio group: Space picks the focused design, the arrow keys move the choice
+        await Page.Locator("#lp-theme-modern").FocusAsync();
         await Page.Keyboard.PressAsync("Space");
-        await ExpectShownAsync("classic");
+        await ExpectShownAsync("modern");
         await Page.Keyboard.PressAsync("ArrowRight");
-        await ExpectShownAsync("elegant");
+        await ExpectShownAsync("classic");
         await Assertions.Expect(Page.GetByRole(AriaRole.Group, new() { Name = "Design in der Vorschau" })).ToBeVisibleAsync();
     }
 
@@ -342,7 +344,7 @@ public class LandingPageTests : E2ETestBase
         await page.EvaluateAsync("() => document.getElementById('designs').scrollIntoView({ behavior: 'instant' })");
         await page.Locator("label[for='lp-theme-fancy']").ClickAsync();
         await Assertions.Expect(page.Locator("[data-testid='theme-shot'][data-theme='fancy']")).ToBeVisibleAsync();
-        await Assertions.Expect(page.Locator("[data-testid='theme-shot'][data-theme='modern']")).ToBeHiddenAsync();
+        await Assertions.Expect(page.Locator("[data-testid='theme-shot'][data-theme='classic']")).ToBeHiddenAsync();
     }
 
     [Fact]

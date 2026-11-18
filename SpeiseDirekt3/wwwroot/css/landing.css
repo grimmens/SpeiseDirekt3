@@ -1006,12 +1006,12 @@ html[data-landing-ready] .lp-header:not([data-scrolled]) { border-bottom-color: 
     --lp-phone-w: clamp(14rem, 66vw, 18.75rem);
 }
 
-/* One screenshot at a time: the checked radio's (modern without :has() support) */
+/* One screenshot at a time: the checked radio's (without :has() support the default, LandingImages.DefaultThemeKey) */
 .lp-theme-shot { display: none; }
-.lp-theme-shot[data-theme="modern"] { display: block; }
+.lp-theme-shot[data-theme="classic"] { display: block; }
 
 @supports selector(:has(*)) {
-    .lp-designs .lp-theme-shot[data-theme="modern"] { display: none; }
+    .lp-designs .lp-theme-shot[data-theme="classic"] { display: none; }
 
     .lp-designs:has(#lp-theme-modern:checked) .lp-theme-shot[data-theme="modern"],
     .lp-designs:has(#lp-theme-classic:checked) .lp-theme-shot[data-theme="classic"],
@@ -1019,6 +1019,14 @@ html[data-landing-ready] .lp-header:not([data-scrolled]) { border-bottom-color: 
     .lp-designs:has(#lp-theme-minimal:checked) .lp-theme-shot[data-theme="minimal"],
     .lp-designs:has(#lp-theme-fancy:checked) .lp-theme-shot[data-theme="fancy"],
     .lp-designs:has(#lp-theme-dark:checked) .lp-theme-shot[data-theme="dark"] { display: block; }
+}
+
+/* Below 1024 px the phone sits between the text and the choices, so a tap shows its result right above the finger */
+@media (max-width: 1023.98px) {
+    .lp-designs-grid { gap: 0; }
+    .lp-designs-copy { display: contents; }
+    .lp-designs-visual { order: 1; margin: 2.5rem 0 2rem; }
+    .lp-theme-picker { order: 2; margin-top: 0; }
 }
 
 @media (min-width: 1024px) {
