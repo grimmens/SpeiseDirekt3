@@ -25,7 +25,8 @@ public class AuthTests : E2ETestBase
     {
         var email = await RegisterNewOwnerAsync();
 
-        await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"^{Regex.Escape(App.ServerAddress)}/?$"));
+        // The default return URL "/" is the landing page, which sends a logged-in user to the dashboard
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"^{Regex.Escape(App.ServerAddress)}/dashboard$"));
         await Assertions.Expect(Page.GetByText(email).First).ToBeVisibleAsync();
         await ExpectSignedInAsync(email);
     }

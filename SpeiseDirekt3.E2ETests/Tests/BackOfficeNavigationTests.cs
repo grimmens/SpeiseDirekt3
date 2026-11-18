@@ -51,7 +51,7 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
 
         var expected = new (string Url, string Section)[]
         {
-            ("/", "Dashboard"),
+            ("/dashboard", "Dashboard"),
             ("/menus", "Menus"),
             ($"/menudetail/{menuId}", "Menus"),
             ($"/Categories/{menuId}", "Menus"),
@@ -85,6 +85,7 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
         await Assertions.Expect(ActiveTopLink).ToHaveTextAsync("QR Codes");
         await TopNav.GetByRole(AriaRole.Link, new() { Name = "Dashboard", Exact = true }).ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/dashboard$"));
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Welcome back" })).ToBeVisibleAsync();
         await Assertions.Expect(ActiveTopLink).ToHaveTextAsync("Dashboard");
 
@@ -102,7 +103,7 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
         var categoryId = await FirstCategoryAsync(ownerId, menuId);
 
         // Only on the pages of one menu
-        foreach (var url in new[] { "/", "/menus", "/menu/edit", "/qrcodes" })
+        foreach (var url in new[] { "/dashboard", "/menus", "/menu/edit", "/qrcodes" })
         {
             await GotoInteractiveAsync(url);
             await Assertions.Expect(Context).ToHaveCountAsync(0);
@@ -439,6 +440,8 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
         await Assertions.Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Log in" })).ToHaveAttributeAsync("href", "Account/Login");
         await Assertions.Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Register" })).ToHaveAttributeAsync("href", "Account/Register");
         await Assertions.Expect(Page.GetByTestId("brand-link")).ToBeVisibleAsync();
+        // Anonymous: the brand leads to the landing page (logged in: to the dashboard)
+        await Assertions.Expect(Page.GetByTestId("brand-link")).ToHaveAttributeAsync("href", "/");
         await Assertions.Expect(Page.GetByTestId("brand-link").Locator("img")).ToHaveAttributeAsync("src", "/images/brand/logo-inverse.svg");
         await Assertions.Expect(TopNav).ToHaveCountAsync(0);
         await Assertions.Expect(UserButton).ToHaveCountAsync(0);

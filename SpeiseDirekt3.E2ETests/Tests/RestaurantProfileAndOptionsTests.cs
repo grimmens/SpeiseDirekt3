@@ -53,7 +53,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         var ownerId = await OwnerIdAsync(email);
 
         // Top navigation entry next to Menus / QR codes
-        await GotoInteractiveAsync("/");
+        await GotoInteractiveAsync("/dashboard");
         await Page.GetByTestId("top-nav").GetByRole(AriaRole.Link, new() { Name = "Restaurant", Exact = true }).ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/restaurant$"));
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Restaurant profile" })).ToBeVisibleAsync();
@@ -502,7 +502,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
     public async Task Dashboard_SuggestsTheProfile_AsAnOptionalStep_UntilOneExists()
     {
         var email = await RegisterNewOwnerAsync();
-        await GotoInteractiveAsync("/");
+        await GotoInteractiveAsync("/dashboard");
 
         // Not one of the four counted steps
         await Assertions.Expect(Page.GetByTestId("checklist-step")).ToHaveCountAsync(4);
@@ -516,7 +516,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
             db.RestaurantProfiles.Add(new RestaurantProfile { Id = Guid.NewGuid(), Name = "Schon da" });
             return Task.CompletedTask;
         });
-        await GotoInteractiveAsync("/");
+        await GotoInteractiveAsync("/dashboard");
         await Assertions.Expect(Page.GetByTestId("checklist-step")).ToHaveCountAsync(4);
         await Assertions.Expect(optional).ToHaveCountAsync(0);
     }

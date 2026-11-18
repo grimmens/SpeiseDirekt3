@@ -1,0 +1,578 @@
+using System.Text.RegularExpressions;
+using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Playwright;
+using SpeiseDirekt3.E2ETests.Infrastructure;
+
+namespace SpeiseDirekt3.E2ETests.Tests;
+
+/// <summary>
+/// The landing page on <c>/</c> (AP10): static SSR with its own document (no circuit, no Tailwind/Bootstrap/blazor.web.js,
+/// nothing external), sections and calls to action, the phone menu sheet, no sideways scrolling, readable without JS,
+/// reduced motion, images and the weight budget, SEO tags, the operator's legal links, and the routing around it
+/// (logged in → <c>/dashboard</c>).
+/// </summary>
+public class LandingPageTests : E2ETestBase
+{
+    public LandingPageTests(E2EFixture fixture) : base(fixture) { }
+
+    private const string Headline = "Ihre Speisekarte, ein Scan entfernt.";
+
+    /// <summary>Loads <c>/</c> and waits for <c>js/landing.js</c> (it sets <c>data-landing-ready</c>).</summary>
+    private static async Task OpenLandingAsync(IPage page)
+    {
+        var response = await page.GotoAsync("/");
+        response!.Status.Should().Be(200);
+        await page.Locator("html[data-landing-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
+    }
+
+    private async Task<(IBrowserContext Context, IPage Page)> PhoneAsync(int width = 390, bool javaScript = true, ReducedMotion? motion = null)
+    {
+        var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        {
+            BaseURL = App.ServerAddress, ViewportSize = new ViewportSize { Width = width, Height = 844 },
+            IsMobile = true, HasTouch = true, JavaScriptEnabled = javaScript, ReducedMotion = motion
+        });
+        context.SetDefaultTimeout(15_000);
+        // Same rule as every test context: nothing leaves the app
+        var origin = new Uri(App.ServerAddress).GetLeftPart(UriPartial.Authority);
+        await context.RouteAsync("**/*", r => r.Request.Url.StartsWith(origin, StringComparison.OrdinalIgnoreCase) ? r.ContinueAsync() : r.AbortAsync());
+        return (context, await context.NewPageAsync());
+    }
+
+    /// <summary>Makes every image eager and waits until the visible ones are decoded.</summary>
+    private static Task LoadAllImagesAsync(IPage page) => page.EvaluateAsync("""
+        async () => {
+            for (const img of document.images) img.loading = 'eager';
+            await Promise.all([...document.images].filter(i => i.checkVisibility()).map(i => i.decode().catch(() => {})));
+        }
+        """);
+
+    private static readonly string[] SectionIds =
+    [
+        "landing-hero", "landing-proof", "landing-features", "landing-designs", "landing-admin", "landing-more",
+        "landing-steps", "landing-faq", "landing-cta", "landing-footer"
+    ];
+
+    // --- Document ---
+
+    [Fact]
+    public async Task AnonymousRoot_IsStatic_WithItsOwnDocument_AndNoErrors()
+    {
+        var origin = new Uri(App.ServerAddress).GetLeftPart(UriPartial.Authority);
+        var requests = new List<string>();
+        var errors = new List<string>();
+        var sockets = new List<string>();
+        Page.Request += (_, r) => { lock (requests) requests.Add(r.Url); };
+        Page.Console += (_, m) => { if (m.Type == "error") lock (errors) errors.Add(m.Text); };
+        Page.PageError += (_, e) => { lock (errors) errors.Add(e); };
+        Page.WebSocket += (_, ws) => { lock (sockets) sockets.Add(ws.Url); };
+
+        await OpenLandingAsync(Page);
+        await LoadAllImagesAsync(Page);
+        await Page.EvaluateAsync("() => window.scrollTo(0, document.documentElement.scrollHeight)");
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+
+        await Assertions.Expect(Page.Locator("html")).ToHaveAttributeAsync("lang", "de");
+        await Assertions.Expect(Page.Locator("html[data-landing-page]")).ToHaveCountAsync(1);
+        await Assertions.Expect(Page.Locator("html[data-guest-page]")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.Locator("base")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.Locator("script[src*='blazor'], script[src*='tailwind'], link[href*='bootstrap'], script[src*='chart']")).ToHaveCountAsync(0);
+        (await Page.EvaluateAsync<bool>("() => typeof window.Blazor === 'undefined' && typeof window.tailwind === 'undefined'")).Should().BeTrue();
+
+        requests.Should().OnlyContain(u => u.StartsWith(origin, StringComparison.OrdinalIgnoreCase) || u.StartsWith("data:"),
+            "the landing page requests nothing from another host");
+        requests.Should().NotContain(u => u.Contains("blazor.web") || u.Contains("bootstrap") || u.Contains("tailwind") || u.Contains("_framework"));
+        sockets.Should().BeEmpty("no circuit: the page is static SSR");
+        errors.Should().BeEmpty();
+    }
+
+    // --- Content and links ---
+
+    [Fact]
+    public async Task Sections_CallsToAction_AndAnchors_AreThere_AndLinkCorrectly()
+    {
+        await OpenLandingAsync(Page);
+
+        // One h1, a logical heading order
+        await Assertions.Expect(Page.Locator("h1")).ToHaveCountAsync(1);
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Level = 1, Name = Headline })).ToBeVisibleAsync();
+        var levels = await Page.EvaluateAsync<int[]>("() => [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].map(h => +h.tagName[1])");
+        levels[0].Should().Be(1);
+        for (var i = 1; i < levels.Length; i++)
+            levels[i].Should().BeLessThanOrEqualTo(levels[i - 1] + 1, "no heading level is skipped (heading {0})", i);
+
+        foreach (var id in SectionIds)
+            await Assertions.Expect(Page.GetByTestId(id)).ToHaveCountAsync(1);
+        await Assertions.Expect(Page.GetByTestId("faq-item")).ToHaveCountAsync(9);
+
+        // Calls to action
+        foreach (var id in new[] { "landing-register", "hero-register", "steps-register", "cta-register", "footer-register" })
+            await Assertions.Expect(Page.GetByTestId(id)).ToHaveAttributeAsync("href", "/Account/Register");
+        foreach (var id in new[] { "landing-login", "cta-login", "footer-login" })
+            await Assertions.Expect(Page.GetByTestId(id)).ToHaveAttributeAsync("href", "/Account/Login");
+        await Assertions.Expect(Page.GetByTestId("landing-nav").Locator("a"))
+            .ToHaveTextAsync(new[] { "Funktionen", "Designs", "So funktioniert’s", "FAQ" });
+
+        // Every in-page link has its target
+        var missing = await Page.EvaluateAsync<string[]>("""
+            () => [...document.querySelectorAll('a[href^="#"]')].map(a => a.getAttribute('href').slice(1))
+                .filter(id => !document.getElementById(id))
+            """);
+        missing.Should().BeEmpty();
+
+        // An anchor scrolls its section into view below the sticky header
+        await Page.GetByTestId("landing-nav").GetByRole(AriaRole.Link, new() { Name = "FAQ" }).ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("#faq$"));
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Häufige Fragen" })).ToBeInViewportAsync();
+        await Page.WaitForFunctionAsync("""
+            () => { const h = document.querySelector('[data-lp-header]').getBoundingClientRect();
+                    const t = document.getElementById('faq').getBoundingClientRect(); return Math.abs(t.top - h.bottom) < 24 || t.top >= h.bottom; }
+            """);
+
+        // The hero's CTA opens the registration
+        await Page.GetByTestId("hero-register").ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/Account/Register$"));
+        await Assertions.Expect(Page.Locator("#Input\\.Email")).ToBeVisibleAsync();
+        await Page.GoBackAsync();
+        await Page.GetByTestId("landing-login").ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/Account/Login$"));
+    }
+
+    [Fact]
+    public async Task Faq_IsNativeDetails_AndHonestAboutCost()
+    {
+        await OpenLandingAsync(Page);
+
+        var cost = Page.GetByTestId("faq-item").Filter(new() { HasText = "Was kostet Speise-Direkt?" });
+        await Assertions.Expect(cost).ToHaveJSPropertyAsync("open", false);
+        await cost.Locator("summary").ClickAsync();
+        await Assertions.Expect(cost).ToHaveJSPropertyAsync("open", true);
+        await Assertions.Expect(cost.Locator(".lp-faq-answer")).ToHaveTextAsync("Die Registrierung ist kostenlos.");
+
+        // Keyboard: Enter on the summary toggles it
+        var app = Page.GetByTestId("faq-item").Filter(new() { HasText = "Brauchen meine Gäste eine App?" });
+        await app.Locator("summary").FocusAsync();
+        await Page.Keyboard.PressAsync("Enter");
+        await Assertions.Expect(app).ToHaveJSPropertyAsync("open", true);
+
+        // No prices, no "forever free", no fake proof anywhere on the page
+        var text = await Page.Locator("body").InnerTextAsync();
+        text.Should().NotContain("€").And.NotContainAny("dauerhaft kostenlos", "für immer kostenlos", "Kunden", "Bewertungen von");
+    }
+
+    // --- Phone menu sheet ---
+
+    [Fact]
+    public async Task PhoneMenuSheet_OpensAndCloses_WithEscape_Backdrop_Button_Link_AndWidening()
+    {
+        var (context, page) = await PhoneAsync();
+        await using var _ = context;
+        await OpenLandingAsync(page);
+
+        var button = page.GetByTestId("landing-menu-button");
+        var sheet = page.GetByTestId("landing-menu");
+        var openSheet = page.Locator("dialog[data-testid='landing-menu'][open]");
+        await Assertions.Expect(page.GetByTestId("landing-nav")).ToBeHiddenAsync();
+        await Assertions.Expect(page.GetByTestId("landing-register")).ToBeInViewportAsync();
+        await Assertions.Expect(button).ToHaveAttributeAsync("role", "button");
+        await Assertions.Expect(button).ToHaveAttributeAsync("aria-expanded", "false");
+
+        // Escape
+        await button.ClickAsync();
+        await Assertions.Expect(openSheet).ToHaveCountAsync(1);
+        await Assertions.Expect(button).ToHaveAttributeAsync("aria-expanded", "true");
+        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = "Funktionen" })).ToBeFocusedAsync();
+        await Assertions.Expect(page.Locator("html[data-lp-menu-open]")).ToHaveCountAsync(1);
+        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = "Kostenlos registrieren" })).ToHaveAttributeAsync("href", "/Account/Register");
+        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = "Anmelden" })).ToHaveAttributeAsync("href", "/Account/Login");
+        await page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(openSheet).ToHaveCountAsync(0);
+        await Assertions.Expect(button).ToBeFocusedAsync();
+        await Assertions.Expect(button).ToHaveAttributeAsync("aria-expanded", "false");
+        await Assertions.Expect(page.Locator("html[data-lp-menu-open]")).ToHaveCountAsync(0);
+
+        // Close button
+        await button.ClickAsync();
+        await page.GetByTestId("landing-menu-close").ClickAsync();
+        await Assertions.Expect(openSheet).ToHaveCountAsync(0);
+        await Assertions.Expect(button).ToBeFocusedAsync();
+
+        // Backdrop (below the panel)
+        await button.ClickAsync();
+        await Assertions.Expect(openSheet).ToHaveCountAsync(1);
+        await page.Mouse.ClickAsync(195, 820);
+        await Assertions.Expect(openSheet).ToHaveCountAsync(0);
+
+        // A followed link closes it and scrolls to its section
+        await button.ClickAsync();
+        await sheet.GetByRole(AriaRole.Link, new() { Name = "FAQ" }).ClickAsync();
+        await Assertions.Expect(openSheet).ToHaveCountAsync(0);
+        await Assertions.Expect(page).ToHaveURLAsync(new Regex("#faq$"));
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Häufige Fragen" })).ToBeInViewportAsync();
+
+        // Widening to the desktop header closes it
+        await page.EvaluateAsync("() => window.scrollTo(0, 0)");
+        await button.ClickAsync();
+        await Assertions.Expect(openSheet).ToHaveCountAsync(1);
+        await page.SetViewportSizeAsync(1280, 900);
+        await Assertions.Expect(openSheet).ToHaveCountAsync(0);
+        await Assertions.Expect(button).ToBeHiddenAsync();
+        await Assertions.Expect(page.GetByTestId("landing-nav")).ToBeVisibleAsync();
+    }
+
+    // --- Layout ---
+
+    [Fact]
+    public async Task NoHorizontalOverflow_AtPhoneTabletAndDesktopWidths()
+    {
+        foreach (var width in new[] { 360, 390, 768, 1024, 1280, 1440 })
+        {
+            var (context, page) = await PhoneAsync(width);
+            await using var _ = context;
+            await OpenLandingAsync(page);
+            await LoadAllImagesAsync(page);
+            var overflow = await page.EvaluateAsync<int>("() => document.documentElement.scrollWidth - window.innerWidth");
+            overflow.Should().BeLessThanOrEqualTo(0, $"the page does not scroll sideways at {width} px");
+
+            // Nothing sticks out of the viewport either (elements clipped by an overflow:hidden parent excepted)
+            var wide = await page.EvaluateAsync<string[]>("""
+                () => [...document.querySelectorAll('main *, header *, footer *')].filter(e => {
+                    const r = e.getBoundingClientRect();
+                    if (r.width === 0 || r.right <= innerWidth + 1) return false;
+                    for (let p = e.parentElement; p; p = p.parentElement)
+                        if (getComputedStyle(p).overflowX !== 'visible') return false;
+                    return true;
+                }).map(e => e.className || e.tagName)
+                """);
+            wide.Should().BeEmpty($"no element is wider than the viewport at {width} px");
+        }
+    }
+
+    [Fact]
+    public async Task SkipLink_IsTheFirstTabStop_AndTheHeaderCondensesOnScroll()
+    {
+        await OpenLandingAsync(Page);
+
+        await Page.Keyboard.PressAsync("Tab");
+        var skip = Page.GetByTestId("landing-skip");
+        await Assertions.Expect(skip).ToBeFocusedAsync();
+        await Assertions.Expect(skip).ToBeInViewportAsync();
+        await Page.Keyboard.PressAsync("Enter");
+        await Assertions.Expect(Page.Locator("#lp-main")).ToBeFocusedAsync();
+
+        var header = Page.GetByTestId("landing-header");
+        await Assertions.Expect(header).Not.ToHaveAttributeAsync("data-scrolled", new Regex(".*"));
+        var tall = (await header.BoundingBoxAsync())!.Height;
+        await Page.Mouse.WheelAsync(0, 600);
+        await Assertions.Expect(header).ToHaveAttributeAsync("data-scrolled", "");
+        await Page.WaitForFunctionAsync($"() => document.querySelector('[data-lp-header]').getBoundingClientRect().height < {tall.ToString(System.Globalization.CultureInfo.InvariantCulture)} - 4");
+        (await header.BoundingBoxAsync())!.Y.Should().Be(0, "the header stays at the top");
+        await Page.EvaluateAsync("() => window.scrollTo(0, 0)");
+        await Assertions.Expect(header).Not.ToHaveAttributeAsync("data-scrolled", new Regex(".*"));
+    }
+
+    [Fact]
+    public async Task ThemeSwitcher_ShowsTheChosenDesign_ByMouseAndKeyboard()
+    {
+        await OpenLandingAsync(Page);
+        var shots = Page.GetByTestId("theme-shot");
+        await Assertions.Expect(shots).ToHaveCountAsync(6);
+        await Page.GetByTestId("landing-designs").ScrollIntoViewIfNeededAsync();
+
+        async Task ExpectShownAsync(string key)
+        {
+            foreach (var other in new[] { "modern", "classic", "elegant", "minimal", "fancy", "dark" })
+            {
+                var shot = Page.Locator($"[data-testid='theme-shot'][data-theme='{other}']");
+                if (other == key) await Assertions.Expect(shot).ToBeVisibleAsync();
+                else await Assertions.Expect(shot).ToBeHiddenAsync();
+            }
+            await Page.WaitForFunctionAsync($"() => {{ const i = document.querySelector(\"[data-testid='theme-shot'][data-theme='{key}']\"); return i.complete && i.naturalWidth > 0; }}");
+        }
+
+        await ExpectShownAsync("modern");
+        await Page.Locator("label[for='lp-theme-dark']").ClickAsync();
+        await ExpectShownAsync("dark");
+        await Assertions.Expect(Page.Locator("#lp-theme-dark")).ToBeCheckedAsync();
+
+        // A radio group: the arrow keys move the choice
+        await Page.Locator("#lp-theme-classic").FocusAsync();
+        await Page.Keyboard.PressAsync("Space");
+        await ExpectShownAsync("classic");
+        await Page.Keyboard.PressAsync("ArrowRight");
+        await ExpectShownAsync("elegant");
+        await Assertions.Expect(Page.GetByRole(AriaRole.Group, new() { Name = "Design in der Vorschau" })).ToBeVisibleAsync();
+    }
+
+    // --- Without JS, reduced motion ---
+
+    [Fact]
+    public async Task WithoutJavaScript_EverySectionIsReadable_AndTheFaqMenuAndSwitcherWork()
+    {
+        var (context, page) = await PhoneAsync(javaScript: false);
+        await using var _ = context;
+        var response = await page.GotoAsync("/");
+        response!.Status.Should().Be(200);
+
+        await Assertions.Expect(page.Locator("html[data-landing-ready]")).ToHaveCountAsync(0);
+        foreach (var id in SectionIds)
+        {
+            await page.GetByTestId(id).ScrollIntoViewIfNeededAsync();
+            await Assertions.Expect(page.GetByTestId(id)).ToBeVisibleAsync();
+        }
+        var hidden = await page.EvaluateAsync<int>("() => [...document.querySelectorAll('[data-reveal]')].filter(e => getComputedStyle(e).opacity !== '1').length");
+        hidden.Should().Be(0, "nothing waits for a script to fade in");
+
+        // FAQ
+        var cost = page.GetByTestId("faq-item").Filter(new() { HasText = "Was kostet Speise-Direkt?" });
+        await cost.Locator("summary").ClickAsync();
+        await Assertions.Expect(cost.Locator(".lp-faq-answer")).ToBeVisibleAsync();
+
+        // The menu button is a link to the footer's navigation
+        await page.EvaluateAsync("() => window.scrollTo(0, 0)");
+        await page.GetByTestId("landing-menu-button").ClickAsync();
+        await Assertions.Expect(page).ToHaveURLAsync(new Regex("#lp-footer-nav$"));
+        await Assertions.Expect(page.GetByTestId("footer-nav")).ToBeInViewportAsync();
+        await Assertions.Expect(page.GetByTestId("footer-nav").Locator("a")).ToHaveCountAsync(4);
+
+        // The theme switcher is CSS only (jump there instantly: Playwright's click cannot hit a target that a smooth
+        // scroll (scroll-behavior: smooth) is still moving)
+        await page.EvaluateAsync("() => document.getElementById('designs').scrollIntoView({ behavior: 'instant' })");
+        await page.Locator("label[for='lp-theme-fancy']").ClickAsync();
+        await Assertions.Expect(page.Locator("[data-testid='theme-shot'][data-theme='fancy']")).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("[data-testid='theme-shot'][data-theme='modern']")).ToBeHiddenAsync();
+    }
+
+    [Fact]
+    public async Task ReducedMotion_ShowsEverythingAtOnce_OtherwiseSectionsFadeInWhenReached()
+    {
+        var (calm, calmPage) = await PhoneAsync(1280, motion: ReducedMotion.Reduce);
+        await using (calm)
+        {
+            await OpenLandingAsync(calmPage);
+            await Assertions.Expect(calmPage.Locator("html[data-lp-reveal]")).ToHaveCountAsync(0);
+            (await calmPage.EvaluateAsync<int>("() => [...document.querySelectorAll('[data-reveal]')].filter(e => getComputedStyle(e).opacity !== '1').length"))
+                .Should().Be(0);
+            (await calmPage.EvaluateAsync<string>("() => getComputedStyle(document.documentElement).scrollBehavior")).Should().Be("auto");
+        }
+
+        var (moving, page) = await PhoneAsync(1280, motion: ReducedMotion.NoPreference);
+        await using (moving)
+        {
+            await OpenLandingAsync(page);
+            await Assertions.Expect(page.Locator("html[data-lp-reveal]")).ToHaveCountAsync(1);
+            // The hero is never hidden; a section further down waits until it is reached
+            await Assertions.Expect(page.GetByTestId("landing-hero")).ToBeVisibleAsync();
+            var faq = page.Locator("#faq .lp-faq-list");
+            (await faq.EvaluateAsync<string>("e => getComputedStyle(e).opacity")).Should().Be("0");
+            await faq.ScrollIntoViewIfNeededAsync();
+            await Assertions.Expect(faq).ToHaveAttributeAsync("data-revealed", "");
+            await page.WaitForFunctionAsync("() => getComputedStyle(document.querySelector('#faq .lp-faq-list')).opacity === '1'");
+        }
+    }
+
+    // --- Images ---
+
+    [Fact]
+    public async Task Images_HaveAltAndDimensions_Load_AndStayWithinTheBudget()
+    {
+        var responses = new List<IResponse>();
+        Page.Response += (_, r) => { lock (responses) responses.Add(r); };
+        async Task<long> BytesAsync(Func<string, bool> path)
+        {
+            IResponse[] all;
+            lock (responses) all = responses.ToArray();
+            long sum = 0;
+            foreach (var r in all.Where(r => path(new Uri(r.Url).AbsolutePath)))
+            {
+                var sizes = await r.Request.SizesAsync();
+                sum += sizes.ResponseBodySize + sizes.ResponseHeadersSize;
+            }
+            return sum;
+        }
+
+        // First load at 1280 px (1x images, nothing below the fold)
+        await OpenLandingAsync(Page);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        (await BytesAsync(_ => true)).Should().BeLessThan(1_500_000, "the whole first load stays under 1.5 MB");
+        (await BytesAsync(p => p.Contains("/images/landing/guest-modern"))).Should().BePositive()
+            .And.BeLessThan(200_000, "the hero image ≤ 200 KB");
+        var hero = Page.GetByTestId("hero-phone").Locator("img");
+        await Assertions.Expect(hero).ToHaveAttributeAsync("loading", "eager");
+        await Assertions.Expect(hero).ToHaveAttributeAsync("fetchpriority", "high");
+        var lazy = await Page.EvaluateAsync<string[]>(
+            "() => [...document.querySelectorAll('.lp-phone img, .lp-browser img, .lp-card-media img')].filter(i => !i.closest('[data-testid=hero-phone]') && i.getAttribute('loading') !== 'lazy').map(i => i.src)");
+        lazy.Should().BeEmpty("every image below the hero loads lazily");
+
+        // Every image: alt text, width/height, and loaded with 200
+        await LoadAllImagesAsync(Page);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var report = System.Text.Json.JsonSerializer.Deserialize<ImageInfo[]>(await Page.EvaluateAsync<string>("""
+            () => JSON.stringify([...document.images].map(i => ({
+                src: i.currentSrc || i.src, alt: i.getAttribute('alt'), width: i.getAttribute('width'), height: i.getAttribute('height'),
+                visible: i.checkVisibility(), loaded: i.complete && i.naturalWidth > 0,
+                product: i.closest('.lp-phone, .lp-browser, .lp-card-media') !== null })))
+            """), new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web))!;
+        report.Should().NotBeEmpty();
+        foreach (var image in report)
+        {
+            image.Alt.Should().NotBeNull($"{image.Src} has an alt attribute");
+            image.Width.Should().NotBeNullOrEmpty($"{image.Src} reserves its width");
+            image.Height.Should().NotBeNullOrEmpty($"{image.Src} reserves its height");
+            if (image.Product) image.Alt.Should().NotBeEmpty($"{image.Src} describes the screenshot");
+            if (image.Visible) image.Loaded.Should().BeTrue($"{image.Src} loads");
+        }
+        IResponse[] images;
+        lock (responses) images = responses.Where(r => new Uri(r.Url).AbsolutePath.StartsWith("/images/landing/")).ToArray();
+        images.Should().NotBeEmpty().And.OnlyContain(r => r.Status == 200);
+        images.Should().OnlyContain(r => new Uri(r.Url).AbsolutePath.EndsWith(".webp"));
+    }
+
+    public sealed record ImageInfo(string Src, string? Alt, string? Width, string? Height, bool Visible, bool Loaded, bool Product);
+
+    // --- SEO ---
+
+    [Fact]
+    public async Task Head_HasTitle_Description_Canonical_AndOpenGraph()
+    {
+        await OpenLandingAsync(Page);
+
+        await Assertions.Expect(Page).ToHaveTitleAsync("Digitale Speisekarte mit QR-Code | Speise-Direkt");
+        string? Meta(string selector) => Page.Locator(selector).GetAttributeAsync("content").GetAwaiter().GetResult();
+        var description = Meta("meta[name='description']");
+        description.Should().Contain("QR-Code");
+        description!.Length.Should().BeLessThanOrEqualTo(160);
+        (await Page.Locator("link[rel='canonical']").GetAttributeAsync("href")).Should().Be(App.ServerAddress + "/");
+        Meta("meta[property='og:url']").Should().Be(App.ServerAddress + "/");
+        Meta("meta[property='og:type']").Should().Be("website");
+        Meta("meta[property='og:locale']").Should().Be("de_DE");
+        Meta("meta[property='og:title']").Should().Be("Digitale Speisekarte mit QR-Code | Speise-Direkt");
+        Meta("meta[property='og:description']").Should().NotBeNullOrWhiteSpace();
+        Meta("meta[name='twitter:card']").Should().Be("summary_large_image");
+        var image = Meta("meta[property='og:image']");
+        image.Should().StartWith(App.ServerAddress + "/images/landing/og");
+        Meta("meta[property='og:image:width']").Should().Be("1200");
+        Meta("meta[property='og:image:height']").Should().Be("630");
+
+        var png = await Page.APIRequest.GetAsync(image!);
+        png.Status.Should().Be(200);
+        png.Headers["content-type"].Should().Be("image/png");
+        var bytes = await png.BodyAsync();
+        // PNG IHDR: width and height (big-endian) at bytes 16 and 20
+        (bytes[16] << 24 | bytes[17] << 16 | bytes[18] << 8 | bytes[19]).Should().Be(1200);
+        (bytes[20] << 24 | bytes[21] << 16 | bytes[22] << 8 | bytes[23]).Should().Be(630);
+
+        // Behind a proxy the absolute URLs use the forwarded scheme and host
+        var proxied = await Page.APIRequest.GetAsync("/", new()
+        {
+            Headers = new Dictionary<string, string> { ["X-Forwarded-Proto"] = "https", ["X-Forwarded-Host"] = "speisekarte.example" }
+        });
+        var html = await proxied.TextAsync();
+        html.Should().Contain("<link rel=\"canonical\" href=\"https://speisekarte.example/\"")
+            .And.Contain("content=\"https://speisekarte.example/images/landing/og");
+    }
+
+    // --- Operator settings ---
+
+    [Fact]
+    public async Task LegalLinks_AndContact_AreHiddenByDefault_AndShownWhenConfigured()
+    {
+        await OpenLandingAsync(Page);
+        await Assertions.Expect(Page.GetByTestId("footer-legal")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByText("Impressum")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByText("Datenschutz")).ToHaveCountAsync(0);
+
+        var configuration = App.ServerServices.GetRequiredService<IConfiguration>();
+        try
+        {
+            configuration["Legal:ImprintUrl"] = "https://example.com/impressum";
+            configuration["Legal:PrivacyUrl"] = "/datenschutz";
+            configuration["Landing:ContactEmail"] = "hallo@example.com";
+            await OpenLandingAsync(Page);
+            await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveAttributeAsync("href", "https://example.com/impressum");
+            await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveTextAsync("Impressum");
+            await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveAttributeAsync("href", "/datenschutz");
+            await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveTextAsync("Datenschutz");
+            await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveAttributeAsync("href", "mailto:hallo@example.com");
+            await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveTextAsync("hallo@example.com");
+
+            // Only http(s) or a path on this site; only the configured one of the two
+            configuration["Legal:ImprintUrl"] = "javascript:alert(1)";
+            configuration["Legal:PrivacyUrl"] = "";
+            configuration["Landing:ContactEmail"] = "kein mail";
+            await OpenLandingAsync(Page);
+            await Assertions.Expect(Page.GetByTestId("footer-legal")).ToHaveCountAsync(0);
+            await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveCountAsync(0);
+            configuration["Legal:PrivacyUrl"] = "https://example.com/datenschutz";
+            await OpenLandingAsync(Page);
+            await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveCountAsync(0);
+            await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToBeVisibleAsync();
+        }
+        finally
+        {
+            configuration["Legal:ImprintUrl"] = "";
+            configuration["Legal:PrivacyUrl"] = "";
+            configuration["Landing:ContactEmail"] = "";
+        }
+    }
+
+    // --- Routing ---
+
+    [Fact]
+    public async Task LoggedInUser_OnRoot_LandsOnTheDashboard()
+    {
+        var email = await RegisterNewOwnerAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/dashboard$"));
+
+        // A server-side redirect, not a page that loads first
+        var root = await Page.APIRequest.GetAsync("/", new() { MaxRedirects = 0 });
+        root.Status.Should().Be(302);
+        root.Headers["location"].Should().EndWith("/dashboard");
+
+        await GotoInteractiveAsync("/");
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/dashboard$"));
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Welcome back" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByTestId("dashboard-user")).ToHaveTextAsync(email);
+        await Assertions.Expect(Page.GetByTestId("brand-link")).ToHaveAttributeAsync("href", "/dashboard");
+        await Assertions.Expect(Page.GetByTestId("top-nav").GetByRole(AriaRole.Link, new() { Name = "Dashboard" })).ToHaveAttributeAsync("href", "dashboard");
+
+        // Client-side navigation to "/" from a circuit: the router does not know the static page, loads it from the
+        // server, and the server sends the user to the dashboard
+        await GotoInteractiveAsync("/menus");
+        await WaitForInteractiveAsync(Page, () => Page.EvaluateAsync("() => Blazor.navigateTo('/')"));
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/dashboard$"));
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Welcome back" })).ToBeVisibleAsync();
+
+        // Logged out, "/" is the landing page again
+        await LogoutAsync(Page);
+        await OpenLandingAsync(Page);
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Level = 1, Name = Headline })).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task Dashboard_LivesAtDashboard_AndAsksAnonymousVisitorsToLogIn()
+    {
+        var email = UniqueEmail();
+        var (context, page) = await NewContextAsync();
+        await using (context)
+            await RegisterAsync(page, email);
+
+        await Page.GotoAsync("/dashboard");
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/Account/Login\\?ReturnUrl=%2Fdashboard", RegexOptions.IgnoreCase));
+        await Page.Locator("#Input\\.Email").FillAsync(email);
+        await Page.Locator("#Input\\.Password").FillAsync(Password);
+        await WaitForInteractiveAsync(Page, () => Page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync());
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/dashboard$"));
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Welcome back" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByTestId("top-nav").Locator("a[aria-current='page']")).ToHaveTextAsync("Dashboard");
+        await Assertions.Expect(Page.GetByTestId("quick-actions")).ToBeVisibleAsync();
+
+        // Logging in without a return URL ends on the dashboard as well
+        await LogoutAsync(Page);
+        await LoginAsync(Page, email);
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/dashboard$"));
+    }
+}

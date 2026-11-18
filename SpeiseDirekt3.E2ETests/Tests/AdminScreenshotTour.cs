@@ -96,7 +96,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
         await using (emptyContext)
         {
             await RegisterAsync(emptyPage, UniqueEmail("empty"));
-            foreach (var (name, url) in new[] { ("menus", "/menus"), ("qrcodes", "/qrcodes"), ("analytics", "/analytics"), ("users", "/users"), ("home", "/") })
+            foreach (var (name, url) in new[] { ("menus", "/menus"), ("qrcodes", "/qrcodes"), ("analytics", "/analytics"), ("users", "/users"), ("home", "/dashboard") })
             {
                 await GotoInteractiveAsync(emptyPage, url);
                 await SettleAsync(emptyPage);
@@ -113,7 +113,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
     {
         var urls = new[]
         {
-            "/", "/menus", $"/menudetail/{s.MenuId}", $"/Categories/{s.MenuId}", $"/MenuItems/Category/{s.CategoryId}",
+            "/dashboard", "/menus", $"/menudetail/{s.MenuId}", $"/Categories/{s.MenuId}", $"/MenuItems/Category/{s.CategoryId}",
             $"/MenuItems/Category/{s.DrinksCategoryId}", $"/allergens/{s.MenuId}", $"/combos/{s.MenuId}", $"/menu/edit/{s.MenuId}",
             "/menu/edit", $"/menudetail/{s.EmptyMenuId}", $"/MenuItems/{s.EmptyMenuId}", "/qrcodes", $"/qrcode/edit/{s.TimeTableQrId}",
             $"/qrcode/edit/{s.HolidayQrId}", "/qrcode/edit", "/analytics", "/restaurant", "/users", "/users/invite",
@@ -154,7 +154,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
             await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-{name}.png"), FullPage = true });
         }
 
-        await Shot("home", "/");
+        await Shot("home", "/dashboard");
         await Shot("menus", "/menus");
         await Shot("menudetail", $"/menudetail/{s.MenuId}");
         await Shot("categories", $"/Categories/{s.MenuId}");

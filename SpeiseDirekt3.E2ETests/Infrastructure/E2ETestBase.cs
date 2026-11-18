@@ -57,14 +57,16 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
                     : route.AbortAsync());
 
             // Adopted stylesheets survive Blazor's DOM patching of <head> (enhanced navigation).
-            // Guest pages (<html data-guest-page>) do not use Tailwind: the stand-in is removed there again.
+            // Guest pages (<html data-guest-page>) and the landing page (<html data-landing-page>) do not use Tailwind:
+            // the stand-in is removed there again.
             await context.AddInitScriptAsync($$"""
                 (() => {
                     const sheet = new CSSStyleSheet();
                     sheet.replaceSync({{System.Text.Json.JsonSerializer.Serialize(E2ESettings.TailwindVisibilityCss)}});
                     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
                     document.addEventListener('DOMContentLoaded', () => {
-                        if (document.documentElement.hasAttribute('data-guest-page'))
+                        const root = document.documentElement;
+                        if (root.hasAttribute('data-guest-page') || root.hasAttribute('data-landing-page'))
                             document.adoptedStyleSheets = document.adoptedStyleSheets.filter(s => s !== sheet);
                     });
                 })();
@@ -226,7 +228,9 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
     }
 
     /// <summary>
-    /// Logs out with the logout form of the top bar's user menu (from 1024 px) or of the navigation drawer (narrower).
+    /// Logs out with the logout form of the top bar's user menu (from 1024 px) or of the navigation drawer (narrower) and
+    /// waits for the page it returns to: the same URL, which asks for a login when it needs one (the dashboard does:
+    /// the static login page, no circuit).
     /// </summary>
     protected static async Task LogoutAsync(IPage page)
     {
@@ -235,6 +239,9 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
             await userMenu.ClickAsync();
         else
             await page.GetByTestId("nav-drawer-button").ClickAsync();
-        await WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Log out", Exact = true }).ClickAsync());
+        await page.GetByRole(AriaRole.Button, new() { Name = "Log out", Exact = true }).ClickAsync();
+        await Assertions.Expect(page.GetByTestId("user-menu-button")).ToHaveCountAsync(0);
+        await Assertions.Expect(page.GetByTestId("nav-drawer-button")).ToHaveCountAsync(0);
+        await page.WaitForLoadStateAsync(LoadState.Load);
     }
 }

@@ -10,7 +10,7 @@ using SpeiseDirekt3.E2ETests.Infrastructure;
 namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
-/// Back-office shell (package P1): the dashboard on <c>/</c> with its getting-started checklist, the menu
+/// Back-office shell (package P1): the dashboard on <c>/dashboard</c> with its getting-started checklist, the menu
 /// cards on <c>/menus</c>, the menu delete confirmation, the QR code tile on <c>/menudetail</c> and the user shown in the
 /// chrome (the navigation itself: <see cref="BackOfficeNavigationTests"/>).
 /// </summary>
@@ -62,11 +62,11 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
     public async Task NewOwner_SeesDashboard_WithAllChecklistStepsOpen()
     {
         var (email, _) = await RegisterOwnerAsync();
-        await GotoInteractiveAsync("/");
+        await GotoInteractiveAsync("/dashboard");
 
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Welcome back" })).ToBeVisibleAsync();
         await Assertions.Expect(Page.GetByTestId("dashboard-user")).ToHaveTextAsync(email);
-        await Assertions.Expect(Page.GetByText("Powerful Features")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByTestId("landing")).ToHaveCountAsync(0);
 
         await Assertions.Expect(Steps).ToHaveCountAsync(4);
         for (var i = 0; i < 4; i++)
@@ -125,7 +125,7 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
             return Task.CompletedTask;
         });
 
-        await GotoInteractiveAsync("/");
+        await GotoInteractiveAsync("/dashboard");
 
         for (var i = 0; i < 3; i++)
             await Assertions.Expect(Steps.Nth(i)).ToHaveAttributeAsync("data-state", "done");
@@ -151,7 +151,7 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
             db.MenuViews.Add(new MenuView { Id = Guid.NewGuid(), SessionId = "old", MenuId = menu.Id, ViewedAt = DateTime.UtcNow.AddDays(-10) });
             return Task.CompletedTask;
         });
-        await GotoInteractiveAsync("/");
+        await GotoInteractiveAsync("/dashboard");
 
         await Assertions.Expect(StatValue("stat-views")).ToHaveTextAsync("1");
         await Assertions.Expect(Page.GetByTestId("getting-started")).ToHaveCountAsync(0);
@@ -163,7 +163,7 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
     {
         await Page.GotoAsync("/");
 
-        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Powerful Features" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Ihre Speisekarte, ein Scan entfernt." })).ToBeVisibleAsync();
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Welcome back" })).ToHaveCountAsync(0);
     }
 
