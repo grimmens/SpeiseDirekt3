@@ -7,12 +7,14 @@
 @using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.ServiceInterface
 @attribute [Authorize]
+@inject IStringLocalizer<AllergensText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>Allergens - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
 
 @* "Menus › menu" and the links to categories, items and combos are in the menu context bar *@
-<PageHeader Title="Allergens" Icon="PageIcons.Allergens" Tone="TileTone.Green">
-    <Description>The allergen codes guests see on the dishes of <strong>@menu?.Name</strong>.</Description>
+<PageHeader Title="@T["Title"]" Icon="PageIcons.Allergens" Tone="TileTone.Green">
+    <Description>@UiMarkup.Strong(T["Description"], menu?.Name ?? "")</Description>
     <Actions>
         @if (canCreate)
         {
@@ -21,16 +23,16 @@
                         class="sd-btn sd-btn--primary w-full sm:w-auto"
                         disabled="@(AllEuAllergensPresent || quickFillBusy)"
                         @onclick="AddEuAllergensAsync">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0"/></svg>Add the 14 EU allergens
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true"><path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5M3.854 2.146a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 3.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 1 1 .708-.708L2 7.293l1.146-1.147a.5.5 0 0 1 .708 0m0 4a.5.5 0 0 1 0 .708l-1.5 1.5a.5.5 0 0 1-.708 0l-.5-.5a.5.5 0 0 1 .708-.708l.146.147 1.146-1.147a.5.5 0 0 1 .708 0"/></svg>@T["EuFill"]
                 </button>
                 <p class="mt-2 mb-0 text-xs text-gray-500" data-testid="eu-quick-fill-hint">
                     @if (AllEuAllergensPresent)
                     {
-                        <text>All 14 EU allergens are already on this menu.</text>
+                        @T["EuFill_AllPresent"]
                     }
                     else
                     {
-                        <text>Codes A–R, @(UsesGermanNames ? "German" : "English") names; existing codes are kept.</text>
+                        @(UsesGermanNames ? T["EuFill_HintGerman"] : T["EuFill_HintEnglish"])
                     }
                 </p>
             </div>
@@ -51,19 +53,19 @@
     <!-- Allergens list: code and name are edited in the row -->
     <section class="bg-white rounded-xl shadow-sm border border-gray-200 lg:col-span-2" aria-labelledby="allergens-heading">
         <div class="sd-card-head">
-            <h2 id="allergens-heading" class="sd-card-title">Allergens on this menu <span class="sd-count">@rows.Count</span></h2>
+            <h2 id="allergens-heading" class="sd-card-title">@T["List_Heading"] <span class="sd-count">@rows.Count</span></h2>
         </div>
         @if (rows.Any())
         {
             <table class="w-full text-left text-sm" data-testid="allergen-list">
                 <thead class="sd-thead">
                     <tr>
-                        <th class="py-[0.625rem] pl-[1rem] sm:pl-6 pr-2 w-14">Code</th>
-                        <th class="py-[0.625rem] px-2">Name</th>
-                        <th class="py-[0.625rem] px-2 whitespace-nowrap">Used by</th>
+                        <th class="py-[0.625rem] pl-[1rem] sm:pl-6 pr-2 w-14">@T["Column_Code"]</th>
+                        <th class="py-[0.625rem] px-2">@T["Column_Name"]</th>
+                        <th class="py-[0.625rem] px-2 whitespace-nowrap">@T["Column_UsedBy"]</th>
                         @if (canEdit || canDelete)
                         {
-                            <th class="py-[0.625rem] pl-2 pr-[1rem] sm:pr-6"><span class="sr-only">Actions</span></th>
+                            <th class="py-[0.625rem] pl-2 pr-[1rem] sm:pr-6"><span class="sr-only">@T["Column_Actions"]</span></th>
                         }
                     </tr>
                 </thead>
@@ -79,20 +81,20 @@
                                         <EditForm EditContext="draftContext" OnSubmit="SaveEditAsync" class="sd-inline-form" data-testid="allergen-edit">
                                             <DataAnnotationsValidator />
                                             <div class="sd-inline-field sd-inline-field--narrow">
-                                                <label for="Allergen.Code" class="sd-inline-label">Code</label>
+                                                <label for="Allergen.Code" class="sd-inline-label">@T["Field_Code"]</label>
                                                 <InputText @ref="draftCodeInput" @bind-Value="draft.Code" id="Allergen.Code" class="sd-input font-mono" />
                                                 <ValidationMessage For="() => draft.Code" class="sd-field-error" />
                                             </div>
                                             <div class="sd-inline-field">
-                                                <label for="Allergen.Name" class="sd-inline-label">Name</label>
+                                                <label for="Allergen.Name" class="sd-inline-label">@T["Field_Name"]</label>
                                                 <InputText @bind-Value="draft.Name" id="Allergen.Name" class="sd-input" />
                                                 <ValidationMessage For="() => draft.Name" class="sd-field-error" />
                                             </div>
                                             <div class="sd-inline-actions">
-                                                <button type="submit" class="sd-btn sd-btn--primary sd-btn--small" disabled="@savingDraft">Save</button>
-                                                <button type="button" class="sd-btn sd-btn--secondary sd-btn--small" @onclick="CancelEdit">Cancel</button>
+                                                <button type="submit" class="sd-btn sd-btn--primary sd-btn--small" disabled="@savingDraft">@C["Save"]</button>
+                                                <button type="button" class="sd-btn sd-btn--secondary sd-btn--small" @onclick="CancelEdit">@C["Cancel"]</button>
                                             </div>
-                                            <p class="sd-inline-hint">Enter saves, Escape cancels.</p>
+                                            <p class="sd-inline-hint">@T["InlineHint"]</p>
                                         </EditForm>
                                     </div>
                                 </td>
@@ -106,11 +108,11 @@
                                 <td class="py-2 px-2 whitespace-nowrap align-middle" data-testid="allergen-usage">
                                     @if (row.UsageCount > 0)
                                     {
-                                        <span class="inline-flex items-center rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-semibold text-brand-800">@ItemCount(row.UsageCount)</span>
+                                        <span class="inline-flex items-center rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-semibold text-brand-800">@T.Plural(row.UsageCount, "Usage_Items")</span>
                                     }
                                     else
                                     {
-                                        <span class="text-xs text-gray-500">Not used</span>
+                                        <span class="text-xs text-gray-500">@T["Usage_None"]</span>
                                     }
                                 </td>
                                 @if (canEdit || canDelete)
@@ -118,7 +120,7 @@
                                     <td class="py-1 pl-2 pr-[0.5rem] sm:pr-4 text-right whitespace-nowrap align-middle">
                                         @if (canEdit)
                                         {
-                                            <button type="button" class="sd-row-action" title="Edit" aria-label="@($"Edit allergen {item.Code}")"
+                                            <button type="button" class="sd-row-action" title="@C["Edit"]" aria-label="@T["EditLabel", item.Code]"
                                                     @ref="editButtons[item.Id]" @onclick="() => StartEdit(item)">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
@@ -127,7 +129,7 @@
                                         }
                                         @if (canDelete)
                                         {
-                                            <button type="button" class="sd-row-action sd-row-action--danger" title="Delete" aria-label="@($"Delete allergen {item.Code}")"
+                                            <button type="button" class="sd-row-action sd-row-action--danger" title="@C["Delete"]" aria-label="@T["DeleteLabel", item.Code]"
                                                     @onclick="() => DeleteAllergen(item.Id)">
                                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -148,16 +150,9 @@
                 <span class="sd-empty-icon" aria-hidden="true">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Allergens.Path" /></svg>
                 </span>
-                <h3 class="sd-empty-title">No allergens yet</h3>
+                <h3 class="sd-empty-title">@T["EmptyTitle"]</h3>
                 <p class="sd-empty-text">
-                    @if (canCreate)
-                    {
-                        <text>Add the 14 EU allergens with one click or enter your own codes.</text>
-                    }
-                    else
-                    {
-                        <text>Nobody has added allergens to this menu yet.</text>
-                    }
+                    @(canCreate ? T["EmptyTextCreate"] : T["EmptyText"])
                 </p>
             </div>
         }
@@ -168,26 +163,26 @@
         <!-- Add New Allergen Form -->
         <section class="bg-white rounded-xl shadow-sm border border-gray-200" aria-labelledby="add-allergen-heading">
             <div class="sd-card-head">
-                <h2 id="add-allergen-heading" class="sd-card-title">Add New Allergen</h2>
+                <h2 id="add-allergen-heading" class="sd-card-title">@T["Add_Title"]</h2>
             </div>
             <div class="p-[1rem] sm:p-6">
                 <EditForm @ref="editForm" EditContext="editContext" OnValidSubmit="SaveAsync">
                     <DataAnnotationsValidator />
 
                     <div class="mb-4">
-                        <label for="Input.Code" class="block text-sm font-medium text-gray-700 mb-1">Code</label>
-                        <InputText @bind-Value="Input.Code" id="Input.Code" placeholder="e.g. A" class="sd-input" />
+                        <label for="Input.Code" class="block text-sm font-medium text-gray-700 mb-1">@T["Field_Code"]</label>
+                        <InputText @bind-Value="Input.Code" id="Input.Code" placeholder="@T["Add_CodePlaceholder"]" class="sd-input" />
                         <ValidationMessage For="() => Input.Code" class="sd-field-error" />
                     </div>
 
                     <div class="mb-4">
-                        <label for="Input.Name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                        <InputText @bind-Value="Input.Name" id="Input.Name" placeholder="e.g. Glutenhaltiges Getreide" class="sd-input" />
+                        <label for="Input.Name" class="block text-sm font-medium text-gray-700 mb-1">@T["Field_Name"]</label>
+                        <InputText @bind-Value="Input.Name" id="Input.Name" placeholder="@T["Add_NamePlaceholder"]" class="sd-input" />
                         <ValidationMessage For="() => Input.Name" class="sd-field-error" />
                     </div>
 
                     <button type="submit" class="sd-btn sd-btn--primary w-full">
-                        Add Allergen
+                        @T["Add_Submit"]
                     </button>
                 </EditForm>
             </div>
@@ -227,7 +222,6 @@
     bool AllEuAllergensPresent => EuAllergens.Missing(rows.Select(r => r.Allergen.Code)).Count == 0;
     bool UsesGermanNames => (menu?.Language ?? MenuLanguage.German) == MenuLanguage.German;
 
-    static string ItemCount(int count) => count == 1 ? "1 item" : $"{count} items";
 
     protected override Task OnParametersSetAsync()
     {
@@ -261,7 +255,7 @@
             if (authState?.User?.Identity?.IsAuthenticated != true)
             {
                 var messages = new ValidationMessageStore(editContext);
-                messages.Add(() => Input.Code, "You must be logged in to add allergens.");
+                messages.Add(() => Input.Code, T["Error_NotLoggedIn"]);
                 editContext.NotifyValidationStateChanged();
                 StateHasChanged();
                 return;
@@ -271,7 +265,7 @@
             if (codeExists)
             {
                 var messages = new ValidationMessageStore(editContext);
-                messages.Add(() => Input.Code, "This code already exists for this menu.");
+                messages.Add(() => Input.Code, T["Error_CodeTaken"]);
                 editContext.NotifyValidationStateChanged();
                 StateHasChanged();
                 return;
@@ -292,7 +286,7 @@
         catch (Exception ex)
         {
             var messages = new ValidationMessageStore(editContext);
-            messages.Add(() => Input.Code, $"Error adding allergen: {ex.Message}");
+            messages.Add(() => Input.Code, T["Error_Add"]);
             editContext.NotifyValidationStateChanged();
             StateHasChanged();
             Console.WriteLine($"Error in SaveAsync: {ex}");
@@ -323,14 +317,14 @@
             var alreadyThere = EuAllergens.All.Count - missing.Count;
             quickFillAddedAny = missing.Count > 0;
             quickFillNotice = missing.Count == 0
-                ? $"No allergens added: all {EuAllergens.All.Count} EU allergens already existed."
-                : $"{missing.Count} {(missing.Count == 1 ? "allergen" : "allergens")} added, {alreadyThere} already existed.";
+                ? T["EuFill_NoneAdded", EuAllergens.All.Count]
+                : T.Plural(missing.Count, "EuFill_Added", alreadyThere);
             await LoadAllergensAsync();
         }
         catch (Exception ex)
         {
             quickFillAddedAny = false;
-            quickFillNotice = $"Could not add the EU allergens: {ex.Message}";
+            quickFillNotice = T["EuFill_Failed"];
             Console.WriteLine($"Error in AddEuAllergensAsync: {ex}");
         }
         finally
@@ -385,7 +379,7 @@
             var codeExists = await Context.Allergens.AnyAsync(a => a.Id != draft.Id && a.MenuId == draft.MenuId && a.Code == draft.Code);
             if (codeExists)
             {
-                messages.Add(() => draft.Code, "This code already exists for this menu.");
+                messages.Add(() => draft.Code, T["Error_CodeTaken"]);
                 draftContext.NotifyValidationStateChanged();
                 return;
             }
@@ -393,7 +387,7 @@
             var allergen = await Context.Allergens.FindAsync(draft.Id);
             if (allergen is null)
             {
-                messages.Add(() => draft.Code, "This allergen no longer exists.");
+                messages.Add(() => draft.Code, T["Error_Gone"]);
                 draftContext.NotifyValidationStateChanged();
                 return;
             }
@@ -408,7 +402,7 @@
         {
             Console.WriteLine($"Error updating allergen: {ex}");
             Context.ChangeTracker.Clear();
-            messages.Add(() => draft!.Code, "The allergen could not be saved. Please try again.");
+            messages.Add(() => draft!.Code, T["Error_Save"]);
             draftContext.NotifyValidationStateChanged();
             await LoadAllergensAsync();
         }
@@ -443,9 +437,13 @@
                 // Count fresh from the database: an item may have been tagged since the list was loaded
                 var usage = await Context.Allergens.Where(a => a.Id == id).Select(a => a.MenuItems.Count).SingleAsync();
                 var message = usage > 0
-                    ? $"The allergen \"{allergen.Code} – {allergen.Name}\" is used by {ItemCount(usage)}. Deleting it removes it from {(usage == 1 ? "that item" : "these items")}. Delete anyway?"
-                    : $"Are you sure you want to delete the allergen \"{allergen.Name}\"?";
-                var res = await NotificationService.ShowConfirmation(("Delete", message));
+                    ? T.Plural(usage, "Delete_MessageUsed", allergen.Code, allergen.Name)
+                    : T["Delete_Message", allergen.Name];
+                var res = await NotificationService.ShowConfirmation(new ConfirmationRequest(T["Delete_Title"], message)
+                {
+                    ConfirmText = C["Delete"],
+                    Destructive = true
+                });
                 if (res)
                 {
                     if (draft?.Id == id)

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Allergene</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Die Allergen-Kürzel, die Gäste bei den Gerichten von {0} sehen.</value>
+    <comment>{0} = menu name (bold)</comment>
+  </data>
+  <data name="EuFill" xml:space="preserve">
+    <value>Die 14 EU-Allergene hinzufügen</value>
+  </data>
+  <data name="EuFill_AllPresent" xml:space="preserve">
+    <value>Alle 14 EU-Allergene sind bereits auf dieser Speisekarte.</value>
+  </data>
+  <data name="EuFill_HintGerman" xml:space="preserve">
+    <value>Kürzel A–R, deutsche Namen; vorhandene Kürzel bleiben erhalten.</value>
+  </data>
+  <data name="EuFill_HintEnglish" xml:space="preserve">
+    <value>Kürzel A–R, englische Namen; vorhandene Kürzel bleiben erhalten.</value>
+  </data>
+  <data name="EuFill_NoneAdded" xml:space="preserve">
+    <value>Keine Allergene hinzugefügt: Alle {0} EU-Allergene waren schon vorhanden.</value>
+  </data>
+  <data name="EuFill_Added_One" xml:space="preserve">
+    <value>1 Allergen hinzugefügt, bereits vorhanden: {1}.</value>
+    <comment>{1} = allergens that existed</comment>
+  </data>
+  <data name="EuFill_Added_Other" xml:space="preserve">
+    <value>{0} Allergene hinzugefügt, bereits vorhanden: {1}.</value>
+    <comment>{1} = allergens that existed</comment>
+  </data>
+  <data name="EuFill_Failed" xml:space="preserve">
+    <value>Die EU-Allergene konnten nicht hinzugefügt werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="List_Heading" xml:space="preserve">
+    <value>Allergene dieser Speisekarte</value>
+  </data>
+  <data name="Column_Code" xml:space="preserve">
+    <value>Kürzel</value>
+  </data>
+  <data name="Column_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Column_UsedBy" xml:space="preserve">
+    <value>Verwendet bei</value>
+  </data>
+  <data name="Column_Actions" xml:space="preserve">
+    <value>Aktionen</value>
+  </data>
+  <data name="Field_Code" xml:space="preserve">
+    <value>Kürzel</value>
+  </data>
+  <data name="Field_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="InlineHint" xml:space="preserve">
+    <value>Eingabetaste speichert, Escape bricht ab.</value>
+  </data>
+  <data name="Usage_Items_One" xml:space="preserve">
+    <value>1 Gericht</value>
+  </data>
+  <data name="Usage_Items_Other" xml:space="preserve">
+    <value>{0} Gerichte</value>
+  </data>
+  <data name="Usage_None" xml:space="preserve">
+    <value>Nicht verwendet</value>
+  </data>
+  <data name="EditLabel" xml:space="preserve">
+    <value>Allergen {0} bearbeiten</value>
+    <comment>aria-label, {0} = code</comment>
+  </data>
+  <data name="DeleteLabel" xml:space="preserve">
+    <value>Allergen {0} löschen</value>
+    <comment>aria-label, {0} = code</comment>
+  </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>Noch keine Allergene</value>
+  </data>
+  <data name="EmptyTextCreate" xml:space="preserve">
+    <value>Fügen Sie die 14 EU-Allergene mit einem Klick hinzu oder legen Sie eigene Kürzel an.</value>
+  </data>
+  <data name="EmptyText" xml:space="preserve">
+    <value>Für diese Speisekarte wurden noch keine Allergene angelegt.</value>
+  </data>
+  <data name="Add_Title" xml:space="preserve">
+    <value>Neues Allergen</value>
+  </data>
+  <data name="Add_CodePlaceholder" xml:space="preserve">
+    <value>z. B. A</value>
+  </data>
+  <data name="Add_NamePlaceholder" xml:space="preserve">
+    <value>z. B. Glutenhaltiges Getreide</value>
+  </data>
+  <data name="Add_Submit" xml:space="preserve">
+    <value>Allergen hinzufügen</value>
+  </data>
+  <data name="Error_NotLoggedIn" xml:space="preserve">
+    <value>Sie müssen angemeldet sein, um Allergene anzulegen.</value>
+  </data>
+  <data name="Error_CodeTaken" xml:space="preserve">
+    <value>Dieses Kürzel gibt es auf dieser Speisekarte bereits.</value>
+  </data>
+  <data name="Error_Add" xml:space="preserve">
+    <value>Das Allergen konnte nicht angelegt werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="Error_Gone" xml:space="preserve">
+    <value>Dieses Allergen gibt es nicht mehr.</value>
+  </data>
+  <data name="Error_Save" xml:space="preserve">
+    <value>Das Allergen konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Allergen löschen</value>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>Möchten Sie das Allergen „{0}“ wirklich löschen?</value>
+    <comment>{0} = name</comment>
+  </data>
+  <data name="Delete_MessageUsed_One" xml:space="preserve">
+    <value>Das Allergen „{1} – {2}“ wird bei 1 Gericht verwendet. Beim Löschen wird es dort entfernt. Trotzdem löschen?</value>
+    <comment>{1} = code, {2} = name</comment>
+  </data>
+  <data name="Delete_MessageUsed_Other" xml:space="preserve">
+    <value>Das Allergen „{1} – {2}“ wird bei {0} Gerichten verwendet. Beim Löschen wird es dort entfernt. Trotzdem löschen?</value>
+    <comment>{0} = items, {1} = code, {2} = name</comment>
+  </data>
+</root>
