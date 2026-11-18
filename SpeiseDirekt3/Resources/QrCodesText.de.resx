@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="List_Title" xml:space="preserve">
+    <value>QR-Codes</value>
+  </data>
+  <data name="List_Description" xml:space="preserve">
+    <value>Erstellen und verwalten Sie QR-Codes für Ihre digitalen Speisekarten</value>
+  </data>
+  <data name="List_Create" xml:space="preserve">
+    <value>Neuer QR-Code</value>
+  </data>
+  <data name="List_CannotCreate" xml:space="preserve">
+    <value>Derzeit kann kein neuer QR-Code erstellt werden</value>
+  </data>
+  <data name="List_Loading" xml:space="preserve">
+    <value>QR-Codes werden geladen …</value>
+  </data>
+  <data name="List_EmptyTitle" xml:space="preserve">
+    <value>Noch keine QR-Codes</value>
+  </data>
+  <data name="List_EmptyText" xml:space="preserve">
+    <value>Erstellen Sie Ihren ersten QR-Code, um Ihre digitalen Speisekarten zu teilen</value>
+  </data>
+  <data name="List_EmptyCreate" xml:space="preserve">
+    <value>Ersten QR-Code erstellen</value>
+  </data>
+  <data name="List_View" xml:space="preserve">
+    <value>Ansehen</value>
+  </data>
+  <data name="List_DeleteLabel" xml:space="preserve">
+    <value>{0} löschen</value>
+    <comment>aria-label, {0} = QR code title</comment>
+  </data>
+  <data name="Mode_Direct" xml:space="preserve">
+    <value>Direkt</value>
+  </data>
+  <data name="Mode_Schedule" xml:space="preserve">
+    <value>Zeitplan</value>
+  </data>
+  <data name="Mode_Calendar" xml:space="preserve">
+    <value>Kalender</value>
+  </data>
+  <data name="Target_NoMenu" xml:space="preserve">
+    <value>Keine Speisekarte gewählt</value>
+  </data>
+  <data name="Target_CalendarSchedule_One" xml:space="preserve">
+    <value>1 Eintrag, sonst der Zeitplan: {1}</value>
+    <comment>{1} = the time windows</comment>
+  </data>
+  <data name="Target_CalendarSchedule_Other" xml:space="preserve">
+    <value>{0} Einträge, sonst der Zeitplan: {1}</value>
+    <comment>{1} = the time windows</comment>
+  </data>
+  <data name="Target_CalendarMenu_One" xml:space="preserve">
+    <value>1 Eintrag, sonst {1}</value>
+    <comment>{1} = the fallback menu</comment>
+  </data>
+  <data name="Target_CalendarMenu_Other" xml:space="preserve">
+    <value>{0} Einträge, sonst {1}</value>
+    <comment>{1} = the fallback menu</comment>
+  </data>
+  <data name="Target_CalendarNone_One" xml:space="preserve">
+    <value>1 Eintrag, sonst keine Speisekarte</value>
+  </data>
+  <data name="Target_CalendarNone_Other" xml:space="preserve">
+    <value>{0} Einträge, sonst keine Speisekarte</value>
+  </data>
+  <data name="Schedule_None" xml:space="preserve">
+    <value>Noch keine Zeitfenster</value>
+  </data>
+  <data name="Schedule_Window" xml:space="preserve">
+    <value>{0}–{1} {2}</value>
+    <comment>{0}/{1} = times, {2} = menu</comment>
+  </data>
+  <data name="NoMenu" xml:space="preserve">
+    <value>(keine Speisekarte)</value>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>QR-Code löschen</value>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>Möchten Sie den QR-Code „{0}“ wirklich löschen?</value>
+  </data>
+  <data name="Share_Download" xml:space="preserve">
+    <value>PNG herunterladen</value>
+  </data>
+  <data name="Share_Copy" xml:space="preserve">
+    <value>Link kopieren</value>
+  </data>
+  <data name="Share_Copied" xml:space="preserve">
+    <value>Kopiert</value>
+  </data>
+  <data name="Share_CopyFailed" xml:space="preserve">
+    <value>Kopieren fehlgeschlagen</value>
+  </data>
+  <data name="Preview_Enlarge" xml:space="preserve">
+    <value>Zum Vergrößern klicken</value>
+  </data>
+  <data name="Preview_Alt" xml:space="preserve">
+    <value>QR-Code {0}</value>
+    <comment>{0} = title</comment>
+  </data>
+  <data name="Preview_AltUntitled" xml:space="preserve">
+    <value>QR-Code</value>
+  </data>
+  <data name="Preview_Loading" xml:space="preserve">
+    <value>QR-Code wird geladen …</value>
+  </data>
+  <data name="Preview_Title" xml:space="preserve">
+    <value>Vorschau des QR-Codes</value>
+  </data>
+  <data name="Preview_LargeAlt" xml:space="preserve">
+    <value>QR-Code, vergrößert</value>
+  </data>
+  <data name="Edit_TitleNew" xml:space="preserve">
+    <value>QR-Code erstellen</value>
+  </data>
+  <data name="Edit_TitleView" xml:space="preserve">
+    <value>QR-Code</value>
+  </data>
+  <data name="Edit_TitleEdit" xml:space="preserve">
+    <value>QR-Code bearbeiten</value>
+  </data>
+  <data name="Edit_CrumbNew" xml:space="preserve">
+    <value>Erstellen</value>
+  </data>
+  <data name="Edit_CrumbView" xml:space="preserve">
+    <value>Ansehen</value>
+  </data>
+  <data name="Edit_CrumbEdit" xml:space="preserve">
+    <value>Bearbeiten</value>
+  </data>
+  <data name="Edit_TextNew" xml:space="preserve">
+    <value>Erstellen Sie einen neuen QR-Code für Ihre digitale Speisekarte</value>
+  </data>
+  <data name="Edit_TextView" xml:space="preserve">
+    <value>Die Einstellungen dieses QR-Codes ansehen</value>
+  </data>
+  <data name="Edit_TextEdit" xml:space="preserve">
+    <value>Die Einstellungen Ihres QR-Codes ändern</value>
+  </data>
+  <data name="Edit_Loading" xml:space="preserve">
+    <value>QR-Code wird geladen …</value>
+  </data>
+  <data name="Edit_ReadOnly" xml:space="preserve">
+    <value>Sie können diesen QR-Code ansehen, aber nicht ändern: Ihr Konto hat keine Berechtigung, QR-Codes zu bearbeiten.</value>
+  </data>
+  <data name="Edit_Title" xml:space="preserve">
+    <value>Titel des QR-Codes</value>
+  </data>
+  <data name="Edit_TitlePlaceholder" xml:space="preserve">
+    <value>z. B. Tisch 1 oder Eingang</value>
+  </data>
+  <data name="Edit_TitleHint" xml:space="preserve">
+    <value>Mit diesem Titel finden Sie den QR-Code in Ihrer Übersicht wieder</value>
+  </data>
+  <data name="Edit_Mode" xml:space="preserve">
+    <value>Welche Speisekarte erscheint</value>
+  </data>
+  <data name="Edit_ModeDirect" xml:space="preserve">
+    <value>Eine Speisekarte</value>
+  </data>
+  <data name="Edit_ModeDirectText" xml:space="preserve">
+    <value>Zeigt immer dieselbe Speisekarte</value>
+  </data>
+  <data name="Edit_ModeSchedule" xml:space="preserve">
+    <value>Nach Zeitplan</value>
+  </data>
+  <data name="Edit_ModeScheduleText" xml:space="preserve">
+    <value>Zeigt je nach Uhrzeit eine andere Speisekarte (Frühstück, Mittag, Abend)</value>
+  </data>
+  <data name="Edit_ModeCalendar" xml:space="preserve">
+    <value>Nach Kalender</value>
+  </data>
+  <data name="Edit_ModeCalendarText" xml:space="preserve">
+    <value>Zeigt an bestimmten Tagen oder Wochentagen eine andere Speisekarte (Feiertage, Aktionswochen, ein wöchentliches Angebot)</value>
+  </data>
+  <data name="Edit_SelectMenu" xml:space="preserve">
+    <value>Speisekarte wählen</value>
+  </data>
+  <data name="Edit_SelectMenuEmpty" xml:space="preserve">
+    <value>-- Speisekarte wählen --</value>
+  </data>
+  <data name="Edit_SelectMenuHint" xml:space="preserve">
+    <value>Wählen Sie, welche Speisekarte Gäste beim Scannen dieses QR-Codes sehen</value>
+  </data>
+  <data name="Edit_Schedule" xml:space="preserve">
+    <value>Zeitplan</value>
+  </data>
+  <data name="Edit_Calendar" xml:space="preserve">
+    <value>Kalender</value>
+  </data>
+  <data name="Edit_CalendarPrecedence" xml:space="preserve">
+    <value>Ein einzelnes Datum oder ein Zeitraum hat Vorrang vor einem wöchentlichen Eintrag am selben Tag.</value>
+  </data>
+  <data name="Edit_CalendarFollowsSchedule" xml:space="preserve">
+    <value>Ohne passenden Eintrag im Kalender folgt dieser QR-Code seinem Zeitplan ({0}).</value>
+    <comment>{0} = the time windows</comment>
+  </data>
+  <data name="Edit_CalendarSwitchToSchedule" xml:space="preserve">
+    <value>Wechseln Sie zu „{0}“, um ihn zu bearbeiten.</value>
+    <comment>{0} = Edit_ModeSchedule</comment>
+  </data>
+  <data name="Edit_Fallback" xml:space="preserve">
+    <value>Standard-Speisekarte</value>
+  </data>
+  <data name="Edit_FallbackEmpty" xml:space="preserve">
+    <value>-- Keine Speisekarte --</value>
+  </data>
+  <data name="Edit_FallbackHint" xml:space="preserve">
+    <value>Erscheint, wenn heute kein Eintrag im Kalender passt</value>
+  </data>
+  <data name="Edit_Preview" xml:space="preserve">
+    <value>Vorschau des QR-Codes</value>
+  </data>
+  <data name="Edit_PreviewOpens" xml:space="preserve">
+    <value>Gäste, die diesen Code scannen, öffnen</value>
+  </data>
+  <data name="Edit_PreviewNotYet" xml:space="preserve">
+    <value>Der Link funktioniert, sobald Sie den QR-Code erstellt haben.</value>
+  </data>
+  <data name="Edit_Create" xml:space="preserve">
+    <value>QR-Code erstellen</value>
+  </data>
+  <data name="Edit_SaveChanges" xml:space="preserve">
+    <value>Änderungen speichern</value>
+  </data>
+  <data name="Times_Empty" xml:space="preserve">
+    <value>Noch keine Zeitfenster. Legen Sie eines je Service an, z. B. Mittag 11:00–14:00 und Abend 17:00–22:00.</value>
+  </data>
+  <data name="Times_Menu" xml:space="preserve">
+    <value>Speisekarte</value>
+  </data>
+  <data name="Times_SelectMenu" xml:space="preserve">
+    <value>-- Speisekarte wählen --</value>
+  </data>
+  <data name="Times_Start" xml:space="preserve">
+    <value>Beginn</value>
+  </data>
+  <data name="Times_End" xml:space="preserve">
+    <value>Ende</value>
+  </data>
+  <data name="Times_Add" xml:space="preserve">
+    <value>Zeitfenster hinzufügen</value>
+  </data>
+  <data name="Times_SetTimes" xml:space="preserve">
+    <value>Legen Sie Beginn und Ende fest</value>
+  </data>
+  <data name="Times_Window" xml:space="preserve">
+    <value>{0} – {1}</value>
+    <comment>{0} = start, {1} = end</comment>
+  </data>
+  <data name="Times_PastMidnight" xml:space="preserve">
+    <value>{0} (über Mitternacht)</value>
+    <comment>{0} = Times_Window</comment>
+  </data>
+  <data name="Cal_HelpReadOnly" xml:space="preserve">
+    <value>Welche Speisekarte Gäste an welchem Tag bekommen.</value>
+  </data>
+  <data name="Cal_Help" xml:space="preserve">
+    <value>Klicken oder tippen Sie auf einen Tag, um einen Eintrag anzulegen, oder ziehen Sie über mehrere Tage für einen Zeitraum. Klicken Sie auf einen Eintrag, um ihn zu ändern, und ziehen Sie ihn, um ihn zu verschieben.</value>
+  </data>
+  <data name="Cal_AriaLabel" xml:space="preserve">
+    <value>Kalender: welche Speisekarte Gäste an welchem Tag bekommen</value>
+  </data>
+  <data name="Cal_Legend" xml:space="preserve">
+    <value>Legende</value>
+  </data>
+  <data name="Cal_LegendOverridden" xml:space="preserve">
+    <value>Durchgestrichen: An diesem Tag gilt ein einzelnes Datum oder ein Zeitraum</value>
+  </data>
+  <data name="Cal_ConflictsTitle" xml:space="preserve">
+    <value>Gäste können pro Tag nur eine Speisekarte bekommen. Ändern Sie vor dem Speichern einen dieser Einträge:</value>
+  </data>
+  <data name="Cal_Entries" xml:space="preserve">
+    <value>Einträge</value>
+  </data>
+  <data name="Cal_AddEntry" xml:space="preserve">
+    <value>Eintrag hinzufügen</value>
+  </data>
+  <data name="Cal_Empty" xml:space="preserve">
+    <value>Noch keine Einträge im Kalender. Legen Sie einen an, z. B. für einen Feiertag, eine Aktionswoche oder ein wöchentliches Angebot.</value>
+  </data>
+  <data name="Cal_PanelNew" xml:space="preserve">
+    <value>Neuer Eintrag im Kalender</value>
+  </data>
+  <data name="Cal_PanelEdit" xml:space="preserve">
+    <value>Eintrag im Kalender bearbeiten</value>
+  </data>
+  <data name="Cal_Menu" xml:space="preserve">
+    <value>Speisekarte</value>
+  </data>
+  <data name="Cal_SelectMenu" xml:space="preserve">
+    <value>-- Speisekarte wählen --</value>
+  </data>
+  <data name="Cal_Weekly" xml:space="preserve">
+    <value>Wiederholt sich wöchentlich am</value>
+  </data>
+  <data name="Cal_NoRepeat" xml:space="preserve">
+    <value>Keine Wiederholung</value>
+  </data>
+  <data name="Cal_From" xml:space="preserve">
+    <value>Ab</value>
+  </data>
+  <data name="Cal_Until" xml:space="preserve">
+    <value>Bis (optional)</value>
+  </data>
+  <data name="Cal_PanelConflict" xml:space="preserve">
+    <value>Überschneidet sich mit {0}. Speichern ist erst möglich, wenn sich einer davon ändert.</value>
+    <comment>{0} = the entries (Cal_ListTwo)</comment>
+  </data>
+  <data name="Cal_ListTwo" xml:space="preserve">
+    <value>{0} und {1}</value>
+    <comment>joins entry labels</comment>
+  </data>
+  <data name="Cal_DeleteEntry" xml:space="preserve">
+    <value>Eintrag löschen</value>
+  </data>
+  <data name="Cal_Apply" xml:space="preserve">
+    <value>Übernehmen</value>
+  </data>
+  <data name="Cal_Overlaps" xml:space="preserve">
+    <value>Überschneidet sich mit einem anderen Eintrag</value>
+  </data>
+  <data name="Cal_OverlapPair" xml:space="preserve">
+    <value>{0} und {1} überschneiden sich.</value>
+    <comment>{0}, {1} = entry labels</comment>
+  </data>
+  <data name="Cal_UntilBeforeFirst" xml:space="preserve">
+    <value>„Bis“ liegt vor dem ersten Tag</value>
+  </data>
+  <data name="Cal_UntilBeforeFirstOf" xml:space="preserve">
+    <value>{0} ab {1}: „Bis“ liegt vor dem ersten Tag.</value>
+    <comment>{0} = menu, {1} = date</comment>
+  </data>
+  <data name="Cal_Tooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>{0} = menu, {1} = the entry in words</comment>
+  </data>
+  <data name="Cal_TooltipProblem" xml:space="preserve">
+    <value>{0}: {1} ({2})</value>
+    <comment>{2} = the problem</comment>
+  </data>
+  <data name="Cal_NotOn" xml:space="preserve">
+    <value>{0}: nicht am {1}, an diesem Tag gilt {2}</value>
+    <comment>{0} = menu, {1} = date, {2} = the menu that applies</comment>
+  </data>
+  <data name="Cal_FallbackSchedule" xml:space="preserve">
+    <value>Andere Tage: Es gilt der Zeitplan</value>
+  </data>
+  <data name="Cal_FallbackMenu" xml:space="preserve">
+    <value>Andere Tage: {0} (Standard-Speisekarte)</value>
+    <comment>{0} = menu</comment>
+  </data>
+  <data name="Cal_FallbackNone" xml:space="preserve">
+    <value>Andere Tage: keine Speisekarte (Gäste sehen einen Hinweis)</value>
+  </data>
+  <data name="Cal_Label" xml:space="preserve">
+    <value>„{0}: {1}“</value>
+    <comment>{0} = menu, {1} = the entry in words</comment>
+  </data>
+  <data name="Cal_DateFormat" xml:space="preserve">
+    <value>ddd, d. MMM yyyy</value>
+    <comment>.NET date format of the entry texts</comment>
+  </data>
+  <data name="Cal_UntilBeforeDate" xml:space="preserve">
+    <value>„Bis“ liegt vor dem Datum</value>
+  </data>
+  <data name="Cal_WeeklyUntil" xml:space="preserve">
+    <value>Jeden {0} ab {1} bis {2}</value>
+    <comment>{0} = weekday, {1}/{2} = dates</comment>
+  </data>
+  <data name="Cal_WeeklyOpen" xml:space="preserve">
+    <value>Jeden {0} ab {1}</value>
+    <comment>{0} = weekday, {1} = date</comment>
+  </data>
+  <data name="Cal_Range" xml:space="preserve">
+    <value>Täglich vom {0} bis {1}</value>
+    <comment>dates</comment>
+  </data>
+  <data name="Cal_Single" xml:space="preserve">
+    <value>Nur am {0}</value>
+    <comment>date</comment>
+  </data>
+  <data name="Cal_NoEvents" xml:space="preserve">
+    <value>In diesem Monat keine Einträge</value>
+  </data>
+  <data name="Cal_ChooseMenu" xml:space="preserve">
+    <value>Wählen Sie die Speisekarte, die Gäste bekommen.</value>
+  </data>
+  <data name="Cal_UntilMustFollow" xml:space="preserve">
+    <value>„Bis“ darf nicht vor dem ersten Tag liegen.</value>
+  </data>
+</root>

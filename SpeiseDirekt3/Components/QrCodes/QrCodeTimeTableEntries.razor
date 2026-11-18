@@ -1,12 +1,14 @@
 ﻿@using SpeiseDirekt.Model
 @using Microsoft.AspNetCore.Components.Forms
+@inject IStringLocalizer<QrCodesText> T
+@inject IStringLocalizer<CommonText> C
 
 @* Time windows of a schedule-based QR code. Rendered inside the editor's EditForm; the parent saves the
    collection with the QR code. *@
 <div class="space-y-3">
     @if (TimeTableEntries.Count == 0)
     {
-        <p class="text-sm text-gray-500">No time windows yet. Add one per service, e.g. lunch 11:00–14:00 and dinner 17:00–22:00.</p>
+        <p class="text-sm text-gray-500">@T["Times_Empty"]</p>
     }
     @{ var index = 0; }
     @foreach (var timeTableEntry in TimeTableEntries)
@@ -18,14 +20,14 @@
                 <button type="button"
                         class="flex-shrink-0 inline-flex items-center px-2.5 py-1 text-sm font-medium text-red-700 bg-white border border-red-200 hover:bg-red-50 rounded-lg transition-colors duration-200"
                         @onclick="() => RemoveTimeTableEntry(timeTableEntry)">
-                    Remove
+                    @C["Remove"]
                 </button>
             </div>
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-3">
                 <div class="col-span-2">
-                    <label for="@($"tt-{i}-menu")" class="block text-xs font-medium text-gray-600 mb-1">Menu</label>
+                    <label for="@($"tt-{i}-menu")" class="block text-xs font-medium text-gray-600 mb-1">@T["Times_Menu"]</label>
                     <InputSelect @bind-Value="timeTableEntry.MenuId" id="@($"tt-{i}-menu")" class="@FieldClass">
-                        <option value="@Guid.Empty">-- Select Menu --</option>
+                        <option value="@Guid.Empty">@T["Times_SelectMenu"]</option>
                         @foreach (var m in Menus)
                         {
                             <option value="@m.Id">@m.Name</option>
@@ -33,11 +35,11 @@
                     </InputSelect>
                 </div>
                 <div>
-                    <label for="@($"tt-{i}-start")" class="block text-xs font-medium text-gray-600 mb-1">Start Time</label>
+                    <label for="@($"tt-{i}-start")" class="block text-xs font-medium text-gray-600 mb-1">@T["Times_Start"]</label>
                     <InputTime @bind-Value="timeTableEntry.StartTime" id="@($"tt-{i}-start")" class="@FieldClass" />
                 </div>
                 <div>
-                    <label for="@($"tt-{i}-end")" class="block text-xs font-medium text-gray-600 mb-1">End Time</label>
+                    <label for="@($"tt-{i}-end")" class="block text-xs font-medium text-gray-600 mb-1">@T["Times_End"]</label>
                     <InputTime @bind-Value="timeTableEntry.EndTime" id="@($"tt-{i}-end")" class="@FieldClass" />
                 </div>
             </div>
@@ -50,7 +52,7 @@
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
         </svg>
-        Add Time Entry
+        @T["Times_Add"]
     </button>
 </div>
 
@@ -82,11 +84,12 @@
     }
 
     /// <summary>The window as text, e.g. "11:00 – 14:00" or "22:00 – 02:00 (past midnight)".</summary>
-    private static string Describe(TimeTableEntry entry)
+    private string Describe(TimeTableEntry entry)
     {
         if (entry.StartTime is not { } start || entry.EndTime is not { } end)
-            return "Set a start and an end time";
-        var text = $"{start:HH\\:mm} – {end:HH\\:mm}";
-        return end < start ? $"{text} (past midnight)" : text;
+            return T["Times_SetTimes"];
+        string text = T["Times_Window", start.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture),
+            end.ToString("HH:mm", System.Globalization.CultureInfo.InvariantCulture)];
+        return end < start ? T["Times_PastMidnight", text] : text;
     }
 }

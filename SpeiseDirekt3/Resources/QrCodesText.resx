@@ -1,0 +1,406 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="List_Title" xml:space="preserve">
+    <value>QR Codes</value>
+  </data>
+  <data name="List_Description" xml:space="preserve">
+    <value>Generate and manage QR codes for your digital menus</value>
+  </data>
+  <data name="List_Create" xml:space="preserve">
+    <value>Create New QR Code</value>
+  </data>
+  <data name="List_CannotCreate" xml:space="preserve">
+    <value>Cannot create a new QR code at this time</value>
+  </data>
+  <data name="List_Loading" xml:space="preserve">
+    <value>Loading QR codes…</value>
+  </data>
+  <data name="List_EmptyTitle" xml:space="preserve">
+    <value>No QR codes yet</value>
+  </data>
+  <data name="List_EmptyText" xml:space="preserve">
+    <value>Create your first QR code to start sharing your digital menus</value>
+  </data>
+  <data name="List_EmptyCreate" xml:space="preserve">
+    <value>Create Your First QR Code</value>
+  </data>
+  <data name="List_View" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="List_DeleteLabel" xml:space="preserve">
+    <value>Delete {0}</value>
+    <comment>aria-label, {0} = QR code title</comment>
+  </data>
+  <data name="Mode_Direct" xml:space="preserve">
+    <value>Direct</value>
+  </data>
+  <data name="Mode_Schedule" xml:space="preserve">
+    <value>Schedule</value>
+  </data>
+  <data name="Mode_Calendar" xml:space="preserve">
+    <value>Calendar</value>
+  </data>
+  <data name="Target_NoMenu" xml:space="preserve">
+    <value>No menu selected</value>
+  </data>
+  <data name="Target_CalendarSchedule_One" xml:space="preserve">
+    <value>1 entry, otherwise the schedule: {1}</value>
+    <comment>{1} = the time windows</comment>
+  </data>
+  <data name="Target_CalendarSchedule_Other" xml:space="preserve">
+    <value>{0} entries, otherwise the schedule: {1}</value>
+    <comment>{1} = the time windows</comment>
+  </data>
+  <data name="Target_CalendarMenu_One" xml:space="preserve">
+    <value>1 entry, otherwise {1}</value>
+    <comment>{1} = the fallback menu</comment>
+  </data>
+  <data name="Target_CalendarMenu_Other" xml:space="preserve">
+    <value>{0} entries, otherwise {1}</value>
+    <comment>{1} = the fallback menu</comment>
+  </data>
+  <data name="Target_CalendarNone_One" xml:space="preserve">
+    <value>1 entry, otherwise no menu</value>
+  </data>
+  <data name="Target_CalendarNone_Other" xml:space="preserve">
+    <value>{0} entries, otherwise no menu</value>
+  </data>
+  <data name="Schedule_None" xml:space="preserve">
+    <value>No time windows yet</value>
+  </data>
+  <data name="Schedule_Window" xml:space="preserve">
+    <value>{0}–{1} {2}</value>
+    <comment>{0}/{1} = times, {2} = menu</comment>
+  </data>
+  <data name="NoMenu" xml:space="preserve">
+    <value>(no menu)</value>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Delete QR Code</value>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>Are you sure you want to delete the QR code “{0}”?</value>
+  </data>
+  <data name="Share_Download" xml:space="preserve">
+    <value>Download PNG</value>
+  </data>
+  <data name="Share_Copy" xml:space="preserve">
+    <value>Copy link</value>
+  </data>
+  <data name="Share_Copied" xml:space="preserve">
+    <value>Copied</value>
+  </data>
+  <data name="Share_CopyFailed" xml:space="preserve">
+    <value>Copy failed</value>
+  </data>
+  <data name="Preview_Enlarge" xml:space="preserve">
+    <value>Click to enlarge</value>
+  </data>
+  <data name="Preview_Alt" xml:space="preserve">
+    <value>QR code {0}</value>
+    <comment>{0} = title</comment>
+  </data>
+  <data name="Preview_AltUntitled" xml:space="preserve">
+    <value>QR Code</value>
+  </data>
+  <data name="Preview_Loading" xml:space="preserve">
+    <value>Loading QR…</value>
+  </data>
+  <data name="Preview_Title" xml:space="preserve">
+    <value>QR Code Preview</value>
+  </data>
+  <data name="Preview_LargeAlt" xml:space="preserve">
+    <value>QR code, enlarged</value>
+  </data>
+  <data name="Edit_TitleNew" xml:space="preserve">
+    <value>Create QR Code</value>
+  </data>
+  <data name="Edit_TitleView" xml:space="preserve">
+    <value>QR Code</value>
+  </data>
+  <data name="Edit_TitleEdit" xml:space="preserve">
+    <value>Edit QR Code</value>
+  </data>
+  <data name="Edit_CrumbNew" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Edit_CrumbView" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="Edit_CrumbEdit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Edit_TextNew" xml:space="preserve">
+    <value>Generate a new QR code for your digital menu</value>
+  </data>
+  <data name="Edit_TextView" xml:space="preserve">
+    <value>View the settings of this QR code</value>
+  </data>
+  <data name="Edit_TextEdit" xml:space="preserve">
+    <value>Update your QR code settings</value>
+  </data>
+  <data name="Edit_Loading" xml:space="preserve">
+    <value>Loading QR code…</value>
+  </data>
+  <data name="Edit_ReadOnly" xml:space="preserve">
+    <value>You can view this QR code but not change it: your account has no permission to edit QR codes.</value>
+  </data>
+  <data name="Edit_Title" xml:space="preserve">
+    <value>QR Code Title</value>
+  </data>
+  <data name="Edit_TitlePlaceholder" xml:space="preserve">
+    <value>Enter a descriptive title for your QR code</value>
+  </data>
+  <data name="Edit_TitleHint" xml:space="preserve">
+    <value>This title will help you identify the QR code in your dashboard</value>
+  </data>
+  <data name="Edit_Mode" xml:space="preserve">
+    <value>Menu Display Mode</value>
+  </data>
+  <data name="Edit_ModeDirect" xml:space="preserve">
+    <value>Simple Menu</value>
+  </data>
+  <data name="Edit_ModeDirectText" xml:space="preserve">
+    <value>Display a single menu at all times</value>
+  </data>
+  <data name="Edit_ModeSchedule" xml:space="preserve">
+    <value>Schedule-based Menu</value>
+  </data>
+  <data name="Edit_ModeScheduleText" xml:space="preserve">
+    <value>Display different menus based on time schedules (breakfast, lunch, dinner)</value>
+  </data>
+  <data name="Edit_ModeCalendar" xml:space="preserve">
+    <value>Calendar-based Menu</value>
+  </data>
+  <data name="Edit_ModeCalendarText" xml:space="preserve">
+    <value>Show a different menu on specific dates or weekdays (holidays, festival weeks, a weekly special)</value>
+  </data>
+  <data name="Edit_SelectMenu" xml:space="preserve">
+    <value>Select Menu</value>
+  </data>
+  <data name="Edit_SelectMenuEmpty" xml:space="preserve">
+    <value>-- Select a Menu --</value>
+  </data>
+  <data name="Edit_SelectMenuHint" xml:space="preserve">
+    <value>Choose which menu will be displayed when guests scan this QR code</value>
+  </data>
+  <data name="Edit_Schedule" xml:space="preserve">
+    <value>Time-based Menu Schedule</value>
+  </data>
+  <data name="Edit_Calendar" xml:space="preserve">
+    <value>Calendar</value>
+  </data>
+  <data name="Edit_CalendarPrecedence" xml:space="preserve">
+    <value>A single date or period beats a weekly entry on the same day.</value>
+  </data>
+  <data name="Edit_CalendarFollowsSchedule" xml:space="preserve">
+    <value>Without a matching calendar entry this QR code follows its time schedule ({0}).</value>
+    <comment>{0} = the time windows</comment>
+  </data>
+  <data name="Edit_CalendarSwitchToSchedule" xml:space="preserve">
+    <value>Switch to “{0}” to edit it.</value>
+    <comment>{0} = Edit_ModeSchedule</comment>
+  </data>
+  <data name="Edit_Fallback" xml:space="preserve">
+    <value>Fallback Menu</value>
+  </data>
+  <data name="Edit_FallbackEmpty" xml:space="preserve">
+    <value>-- No menu --</value>
+  </data>
+  <data name="Edit_FallbackHint" xml:space="preserve">
+    <value>Shown when no calendar entry matches today</value>
+  </data>
+  <data name="Edit_Preview" xml:space="preserve">
+    <value>QR Code Preview</value>
+  </data>
+  <data name="Edit_PreviewOpens" xml:space="preserve">
+    <value>Guests who scan this code open</value>
+  </data>
+  <data name="Edit_PreviewNotYet" xml:space="preserve">
+    <value>The link works once you have created the QR code.</value>
+  </data>
+  <data name="Edit_Create" xml:space="preserve">
+    <value>Create QR Code</value>
+  </data>
+  <data name="Edit_SaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
+  <data name="Times_Empty" xml:space="preserve">
+    <value>No time windows yet. Add one per service, e.g. lunch 11:00–14:00 and dinner 17:00–22:00.</value>
+  </data>
+  <data name="Times_Menu" xml:space="preserve">
+    <value>Menu</value>
+  </data>
+  <data name="Times_SelectMenu" xml:space="preserve">
+    <value>-- Select Menu --</value>
+  </data>
+  <data name="Times_Start" xml:space="preserve">
+    <value>Start Time</value>
+  </data>
+  <data name="Times_End" xml:space="preserve">
+    <value>End Time</value>
+  </data>
+  <data name="Times_Add" xml:space="preserve">
+    <value>Add Time Entry</value>
+  </data>
+  <data name="Times_SetTimes" xml:space="preserve">
+    <value>Set a start and an end time</value>
+  </data>
+  <data name="Times_Window" xml:space="preserve">
+    <value>{0} – {1}</value>
+    <comment>{0} = start, {1} = end</comment>
+  </data>
+  <data name="Times_PastMidnight" xml:space="preserve">
+    <value>{0} (past midnight)</value>
+    <comment>{0} = Times_Window</comment>
+  </data>
+  <data name="Cal_HelpReadOnly" xml:space="preserve">
+    <value>Which menu guests get on each day.</value>
+  </data>
+  <data name="Cal_Help" xml:space="preserve">
+    <value>Click or tap a day to add an entry, or drag across days for a period. Click an entry to change it, drag it to move it.</value>
+  </data>
+  <data name="Cal_AriaLabel" xml:space="preserve">
+    <value>Calendar: which menu guests get on each day</value>
+  </data>
+  <data name="Cal_Legend" xml:space="preserve">
+    <value>Legend</value>
+  </data>
+  <data name="Cal_LegendOverridden" xml:space="preserve">
+    <value>Struck through: a single date or period wins that day</value>
+  </data>
+  <data name="Cal_ConflictsTitle" xml:space="preserve">
+    <value>Guests can get only one menu per day. Change one of these entries before saving:</value>
+  </data>
+  <data name="Cal_Entries" xml:space="preserve">
+    <value>Entries</value>
+  </data>
+  <data name="Cal_AddEntry" xml:space="preserve">
+    <value>Add entry</value>
+  </data>
+  <data name="Cal_Empty" xml:space="preserve">
+    <value>No calendar entries yet. Add one for a holiday, a festival week or a weekly special.</value>
+  </data>
+  <data name="Cal_PanelNew" xml:space="preserve">
+    <value>New calendar entry</value>
+  </data>
+  <data name="Cal_PanelEdit" xml:space="preserve">
+    <value>Edit calendar entry</value>
+  </data>
+  <data name="Cal_Menu" xml:space="preserve">
+    <value>Menu</value>
+  </data>
+  <data name="Cal_SelectMenu" xml:space="preserve">
+    <value>-- Select a menu --</value>
+  </data>
+  <data name="Cal_Weekly" xml:space="preserve">
+    <value>Repeats weekly on</value>
+  </data>
+  <data name="Cal_NoRepeat" xml:space="preserve">
+    <value>Does not repeat</value>
+  </data>
+  <data name="Cal_From" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="Cal_Until" xml:space="preserve">
+    <value>Until (optional)</value>
+  </data>
+  <data name="Cal_PanelConflict" xml:space="preserve">
+    <value>Overlaps {0}. Saving is refused until one of them changes.</value>
+    <comment>{0} = the entries (Cal_ListTwo)</comment>
+  </data>
+  <data name="Cal_ListTwo" xml:space="preserve">
+    <value>{0} and {1}</value>
+    <comment>joins entry labels</comment>
+  </data>
+  <data name="Cal_DeleteEntry" xml:space="preserve">
+    <value>Delete entry</value>
+  </data>
+  <data name="Cal_Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="Cal_Overlaps" xml:space="preserve">
+    <value>Overlaps another entry</value>
+  </data>
+  <data name="Cal_OverlapPair" xml:space="preserve">
+    <value>{0} and {1} overlap.</value>
+    <comment>{0}, {1} = entry labels</comment>
+  </data>
+  <data name="Cal_UntilBeforeFirst" xml:space="preserve">
+    <value>“Until” is before the first day</value>
+  </data>
+  <data name="Cal_UntilBeforeFirstOf" xml:space="preserve">
+    <value>{0} from {1}: “Until” is before the first day.</value>
+    <comment>{0} = menu, {1} = date</comment>
+  </data>
+  <data name="Cal_Tooltip" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>{0} = menu, {1} = the entry in words</comment>
+  </data>
+  <data name="Cal_TooltipProblem" xml:space="preserve">
+    <value>{0}: {1} ({2})</value>
+    <comment>{2} = the problem</comment>
+  </data>
+  <data name="Cal_NotOn" xml:space="preserve">
+    <value>{0}: not on {1}, {2} applies that day</value>
+    <comment>{0} = menu, {1} = date, {2} = the menu that applies</comment>
+  </data>
+  <data name="Cal_FallbackSchedule" xml:space="preserve">
+    <value>Other days: the time schedule applies</value>
+  </data>
+  <data name="Cal_FallbackMenu" xml:space="preserve">
+    <value>Other days: {0} (fallback menu)</value>
+    <comment>{0} = menu</comment>
+  </data>
+  <data name="Cal_FallbackNone" xml:space="preserve">
+    <value>Other days: no menu (guests see a notice)</value>
+  </data>
+  <data name="Cal_Label" xml:space="preserve">
+    <value>“{0}: {1}”</value>
+    <comment>{0} = menu, {1} = the entry in words</comment>
+  </data>
+  <data name="Cal_DateFormat" xml:space="preserve">
+    <value>ddd, MMM d, yyyy</value>
+    <comment>.NET date format of the entry texts</comment>
+  </data>
+  <data name="Cal_UntilBeforeDate" xml:space="preserve">
+    <value>“Until” is before the date</value>
+  </data>
+  <data name="Cal_WeeklyUntil" xml:space="preserve">
+    <value>Every {0} from {1} until {2}</value>
+    <comment>{0} = weekday, {1}/{2} = dates</comment>
+  </data>
+  <data name="Cal_WeeklyOpen" xml:space="preserve">
+    <value>Every {0} from {1}</value>
+    <comment>{0} = weekday, {1} = date</comment>
+  </data>
+  <data name="Cal_Range" xml:space="preserve">
+    <value>Every day from {0} to {1}</value>
+    <comment>dates</comment>
+  </data>
+  <data name="Cal_Single" xml:space="preserve">
+    <value>Only on {0}</value>
+    <comment>date</comment>
+  </data>
+  <data name="Cal_NoEvents" xml:space="preserve">
+    <value>No calendar entries this month</value>
+  </data>
+  <data name="Cal_ChooseMenu" xml:space="preserve">
+    <value>Choose the menu guests get.</value>
+  </data>
+  <data name="Cal_UntilMustFollow" xml:space="preserve">
+    <value>“Until” must be on or after the first day.</value>
+  </data>
+</root>

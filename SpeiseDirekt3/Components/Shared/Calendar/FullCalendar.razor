@@ -2,20 +2,24 @@
 @using System.Text.Json
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject IStringLocalizer<ShellText> S
+@inject IStringLocalizer<CommonText> C
 
 @* Blazor wrapper around FullCalendar 6 (wwwroot/lib/fullcalendar, MIT standard bundle), all-day events only.
    Controlled: the calendar shows exactly `Events`; clicks, selections and drags are reported through the callbacks and
    the parent answers with new events (a refused drag puts the event back). The bundle is loaded lazily by
    js/fullcalendar-interop.js on the first render, so pages without a calendar never load it. Interactive render mode
-   only: during prerendering an empty placeholder is rendered and the calendar is created in OnAfterRenderAsync. *@
+   only: during prerendering an empty placeholder is rendered and the calendar is created in OnAfterRenderAsync.
+   Language (AP12): FullCalendar gets the page's language as `locale` (month and day names through Intl; only the English
+   locale is in the bundle) and every text it shows from ShellText (buttons, hints, "+2 more", the list's "all-day"). *@
 <div class="sd-fc @Class" data-testid="@TestId">
     @if (loadFailed)
     {
-        <p class="sd-fc-message" role="status" data-testid="calendar-load-error">The calendar could not be loaded. Reload the page to try again.</p>
+        <p class="sd-fc-message" role="status" data-testid="calendar-load-error">@S["Calendar_LoadError"]</p>
     }
     else if (!ready)
     {
-        <p class="sd-fc-message" aria-hidden="true">Loading calendar…</p>
+        <p class="sd-fc-message" aria-hidden="true">@S["Calendar_Loading"]</p>
     }
     @* FullCalendar renders into a child that the script creates; Blazor never touches it *@
     <div @ref="host" class="sd-fc-host" role="region" aria-label="@AriaLabel"></div>
@@ -192,7 +196,29 @@
     private sealed record JsOptions(
         string InitialView, string? InitialDate, string? Today, string Locale, int FirstDay, string Height,
         JsToolbar? HeaderToolbar, IReadOnlyDictionary<string, string>? ButtonText, bool Selectable, bool Editable,
-        int? DayMaxEventRows, string NoEventsText);
+        int? DayMaxEventRows, string NoEventsText, JsTexts Texts);
+
+    /// <summary>FullCalendar's other texts; <c>$0</c> is FullCalendar's placeholder (a count, a button text).</summary>
+    private sealed record JsTexts(
+        string AllDay, string MoreLink, string MoreHintOne, string MoreHintOther, IReadOnlyDictionary<string, string> ButtonHints,
+        string ViewHint, string CloseHint);
+
+    private IReadOnlyDictionary<string, string> DefaultButtonText() => new Dictionary<string, string>
+    {
+        ["today"] = S["Calendar_Today"], ["month"] = S["Calendar_Month"], ["list"] = S["Calendar_List"],
+        ["week"] = S["Calendar_Week"], ["year"] = S["Calendar_Year"]
+    };
+
+    private JsTexts Texts() => new(
+        S["Calendar_AllDay"], Placeholder(S["Calendar_MoreLink"]), S.Plural(1, "Calendar_MoreHint"), Placeholder(S["Calendar_MoreHint_Other"]),
+        new Dictionary<string, string>
+        {
+            ["prev"] = S["Calendar_PrevHint"], ["next"] = S["Calendar_NextHint"], ["today"] = S["Calendar_TodayHint"]
+        },
+        Placeholder(S["Calendar_ViewHint"]), C["Close"]);
+
+    /// <summary>A resource's <c>{0}</c> as FullCalendar's <c>$0</c>.</summary>
+    private static string Placeholder(string text) => text.Replace("{0}", "$0", StringComparison.Ordinal);
 
     private (List<JsEvent> Payload, string Json) EventsPayload()
     {
@@ -210,9 +236,10 @@
     {
         var o = Options;
         var payload = new JsOptions(
-            o.InitialView, Iso(o.InitialDate), Iso(o.Today), o.Locale, (int)o.FirstDay, o.Height,
+            o.InitialView, Iso(o.InitialDate), Iso(o.Today), o.Locale ?? AppCultures.HtmlLang, (int)o.FirstDay, o.Height,
             o.HeaderToolbar is { } t ? new JsToolbar(t.Start, t.Center, t.End) : null,
-            o.ButtonText, o.Selectable, o.Editable, o.DayMaxEventRows, o.NoEventsText);
+            o.ButtonText ?? DefaultButtonText(), o.Selectable, o.Editable, o.DayMaxEventRows, o.NoEventsText ?? S["Calendar_NoEvents"],
+            Texts());
         return (payload, JsonSerializer.Serialize(payload, PayloadJson));
     }
 

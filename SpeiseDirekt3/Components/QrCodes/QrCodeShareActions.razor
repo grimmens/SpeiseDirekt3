@@ -1,4 +1,5 @@
 ﻿@inject NavigationManager NavManager
+@inject IStringLocalizer<QrCodesText> T
 
 @* Download PNG + Copy link for one QR code, followed by optional extra buttons (Edit, Delete) in the same
    wrapping row. "Copy link" is handled client-side by wwwroot/js/qr-codes.js, which the page imports. *@
@@ -10,7 +11,7 @@
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
         </svg>
-        Download PNG
+        @T["Share_Download"]
     </a>
     <button type="button"
             data-copy-url="@GuestUrl"
@@ -19,9 +20,9 @@
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
         </svg>
-        <span data-copy-state="idle">Copy link</span>
-        <span data-copy-state="done" class="hidden text-green-700" role="status">Copied</span>
-        <span data-copy-state="failed" class="hidden text-red-700" role="status">Copy failed</span>
+        <span data-copy-state="idle">@T["Share_Copy"]</span>
+        <span data-copy-state="done" class="hidden text-green-700" role="status">@T["Share_Copied"]</span>
+        <span data-copy-state="failed" class="hidden text-red-700" role="status">@T["Share_CopyFailed"]</span>
     </button>
     @ChildContent
 </div>

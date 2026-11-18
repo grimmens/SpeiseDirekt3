@@ -171,4 +171,54 @@
   <data name="ErrorPage_RequestId" xml:space="preserve">
     <value>Anfrage-ID:</value>
   </data>
+  <data name="Calendar_LoadError" xml:space="preserve">
+    <value>Der Kalender konnte nicht geladen werden. Laden Sie die Seite neu, um es noch einmal zu versuchen.</value>
+  </data>
+  <data name="Calendar_Loading" xml:space="preserve">
+    <value>Kalender wird geladen …</value>
+  </data>
+  <data name="Calendar_Today" xml:space="preserve">
+    <value>Heute</value>
+  </data>
+  <data name="Calendar_Month" xml:space="preserve">
+    <value>Monat</value>
+  </data>
+  <data name="Calendar_List" xml:space="preserve">
+    <value>Liste</value>
+  </data>
+  <data name="Calendar_Week" xml:space="preserve">
+    <value>Woche</value>
+  </data>
+  <data name="Calendar_Year" xml:space="preserve">
+    <value>Jahr</value>
+  </data>
+  <data name="Calendar_NoEvents" xml:space="preserve">
+    <value>In diesem Monat nichts</value>
+  </data>
+  <data name="Calendar_AllDay" xml:space="preserve">
+    <value>ganztägig</value>
+  </data>
+  <data name="Calendar_MoreLink" xml:space="preserve">
+    <value>+{0} weitere</value>
+    <comment>{0} = hidden entries of a day</comment>
+  </data>
+  <data name="Calendar_MoreHint_One" xml:space="preserve">
+    <value>1 weiteren Eintrag anzeigen</value>
+  </data>
+  <data name="Calendar_MoreHint_Other" xml:space="preserve">
+    <value>{0} weitere Einträge anzeigen</value>
+  </data>
+  <data name="Calendar_PrevHint" xml:space="preserve">
+    <value>Vorheriger Monat</value>
+  </data>
+  <data name="Calendar_NextHint" xml:space="preserve">
+    <value>Nächster Monat</value>
+  </data>
+  <data name="Calendar_TodayHint" xml:space="preserve">
+    <value>Dieser Monat</value>
+  </data>
+  <data name="Calendar_ViewHint" xml:space="preserve">
+    <value>Ansicht {0}</value>
+    <comment>{0} = the view's button text</comment>
+  </data>
 </root>

@@ -12,22 +12,25 @@
 @inject IJSRuntime JS
 @inject IAuthorizationService AuthorizationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IStringLocalizer<QrCodesText> T
+@inject IStringLocalizer<CommonText> C
+@inject IStringLocalizer<ShellText> S
 
-<PageTitle>@(IsNew ? "Create QR Code" : readOnly ? "QR Code" : "Edit QR Code") - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", HeadingText]</PageTitle>
 
 <!-- QR Code Edit Page -->
 <!-- Header Section -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
     <div class="p-[1rem] sm:p-6">
             <!-- Breadcrumb -->
-            <nav class="flex mb-4" aria-label="Breadcrumb">
+            <nav class="flex mb-4" aria-label="@S["Context_BreadcrumbLabel"]">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
                     <li class="inline-flex items-center">
                         <a href="/qrcodes" class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-brand-600">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                             </svg>
-                            QR Codes
+                            @T["List_Title"]
                         </a>
                     </li>
                     <li>
@@ -35,7 +38,7 @@
                             <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
                             </svg>
-                            <span class="ml-1 text-sm font-medium text-gray-500">@(IsNew ? "Create" : readOnly ? "View" : "Edit")</span>
+                            <span class="ml-1 text-sm font-medium text-gray-500">@(IsNew ? T["Edit_CrumbNew"] : readOnly ? T["Edit_CrumbView"] : T["Edit_CrumbEdit"])</span>
                         </div>
                     </li>
                 </ol>
@@ -51,8 +54,8 @@
                     </div>
                 </div>
                 <div class="ml-4">
-                    <h1 class="text-3xl font-bold text-gray-900 font-display">@(IsNew ? "Create QR Code" : readOnly ? "QR Code" : "Edit QR Code")</h1>
-                    <p class="mt-1 text-gray-600">@(IsNew ? "Generate a new QR code for your digital menu" : readOnly ? "View the settings of this QR code" : "Update your QR code settings")</p>
+                    <h1 class="text-3xl font-bold text-gray-900 font-display">@HeadingText</h1>
+                    <p class="mt-1 text-gray-600">@(IsNew ? T["Edit_TextNew"] : readOnly ? T["Edit_TextView"] : T["Edit_TextEdit"])</p>
                 </div>
             </div>
         </div>
@@ -67,7 +70,7 @@
                throw-away form is lost when the real one replaces it *@
             <div class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-                <span class="ml-3 text-gray-600">Loading QR code...</span>
+                <span class="ml-3 text-gray-600">@T["Edit_Loading"]</span>
             </div>
         }
         else
@@ -79,7 +82,7 @@
             @if (readOnly)
             {
                 <div class="bg-brand-50 border border-brand-200 text-brand-800 rounded-lg px-3.5 py-2.5 text-sm" role="status" data-testid="qr-readonly-notice">
-                    You can view this QR code but not change it: your account has no permission to edit QR codes.
+                    @T["Edit_ReadOnly"]
                 </div>
             }
 
@@ -88,7 +91,7 @@
             <fieldset disabled="@readOnly" class="space-y-8">
             <!-- QR Code Title -->
             <div>
-                <label for="qrTitle" class="block text-sm font-medium text-gray-700 mb-2">QR Code Title</label>
+                <label for="qrTitle" class="block text-sm font-medium text-gray-700 mb-2">@T["Edit_Title"]</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -98,15 +101,15 @@
                     <InputText @bind-Value="Item.Title"
                                id="qrTitle"
                                class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
-                               placeholder="Enter a descriptive title for your QR code" />
+                               placeholder="@T["Edit_TitlePlaceholder"]" />
                 </div>
                 <ValidationMessage For="@(() => Item.Title)" class="mt-1 text-sm text-red-600" />
-                <p class="mt-1 text-xs text-gray-500">This title will help you identify the QR code in your dashboard</p>
+                <p class="mt-1 text-xs text-gray-500">@T["Edit_TitleHint"]</p>
             </div>
 
             <!-- Display Mode Selection -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-4">Menu Display Mode</label>
+                <label class="block text-sm font-medium text-gray-700 mb-4">@T["Edit_Mode"]</label>
                 <div class="bg-gray-50 rounded-lg p-[1rem] sm:p-6">
                     <InputRadioGroup Name="displayMode" TValue="DisplayMode" Value="mode" ValueChanged="OnModeChanged" ValueExpression="() => mode" class="space-y-4">
                         <div class="flex items-start">
@@ -114,8 +117,8 @@
                                 <InputRadio id="simple" name="displayMode" Value="DisplayMode.Direct" class="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300" />
                             </div>
                             <div class="ml-3">
-                                <label for="simple" class="font-medium text-gray-900 cursor-pointer">Simple Menu</label>
-                                <p class="text-gray-500 text-sm">Display a single menu at all times</p>
+                                <label for="simple" class="font-medium text-gray-900 cursor-pointer">@T["Edit_ModeDirect"]</label>
+                                <p class="text-gray-500 text-sm">@T["Edit_ModeDirectText"]</p>
                             </div>
                         </div>
                         <div class="flex items-start">
@@ -123,8 +126,8 @@
                                 <InputRadio id="timetable" name="displayMode" Value="DisplayMode.Schedule" class="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300" />
                             </div>
                             <div class="ml-3">
-                                <label for="timetable" class="font-medium text-gray-900 cursor-pointer">Schedule-based Menu</label>
-                                <p class="text-gray-500 text-sm">Display different menus based on time schedules (breakfast, lunch, dinner)</p>
+                                <label for="timetable" class="font-medium text-gray-900 cursor-pointer">@T["Edit_ModeSchedule"]</label>
+                                <p class="text-gray-500 text-sm">@T["Edit_ModeScheduleText"]</p>
                             </div>
                         </div>
                         <div class="flex items-start">
@@ -132,8 +135,8 @@
                                 <InputRadio id="calendar" name="displayMode" Value="DisplayMode.Calendar" class="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300" />
                             </div>
                             <div class="ml-3">
-                                <label for="calendar" class="font-medium text-gray-900 cursor-pointer">Calendar-based Menu</label>
-                                <p class="text-gray-500 text-sm">Show a different menu on specific dates or weekdays (holidays, festival weeks, a weekly special)</p>
+                                <label for="calendar" class="font-medium text-gray-900 cursor-pointer">@T["Edit_ModeCalendar"]</label>
+                                <p class="text-gray-500 text-sm">@T["Edit_ModeCalendarText"]</p>
                             </div>
                         </div>
                     </InputRadioGroup>
@@ -145,7 +148,7 @@
             {
                 <!-- Simple Menu Selection -->
                 <div>
-                    <label for="menuSelect" class="block text-sm font-medium text-gray-700 mb-2">Select Menu</label>
+                    <label for="menuSelect" class="block text-sm font-medium text-gray-700 mb-2">@T["Edit_SelectMenu"]</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -154,7 +157,7 @@
                         </div>
                         <InputSelect @bind-Value="Item.MenuId" id="menuSelect" disabled="@readOnly"
                                      class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200">
-                            <option value="">-- Select a Menu --</option>
+                            <option value="">@T["Edit_SelectMenuEmpty"]</option>
                             @foreach (var m in menus)
                             {
                                 <option value="@m.Id">@m.Name</option>
@@ -162,14 +165,14 @@
                         </InputSelect>
                     </div>
                     <ValidationMessage For="@(() => Item.MenuId)" class="mt-1 text-sm text-red-600" />
-                    <p class="mt-1 text-xs text-gray-500">Choose which menu will be displayed when customers scan this QR code</p>
+                    <p class="mt-1 text-xs text-gray-500">@T["Edit_SelectMenuHint"]</p>
                 </div>
             }
             else if (mode == DisplayMode.Schedule)
             {
                 <!-- Schedule-based Menu Configuration -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-4">Time-based Menu Schedule</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-4">@T["Edit_Schedule"]</label>
                     <fieldset disabled="@readOnly" class="bg-gray-50 rounded-lg p-2.5 sm:p-6">
                         <QrCodeTimeTableEntries QRCodeId="@Item.Id" TimeTableEntries="@Item.TimeTableEntries" Menus="@menus">
                             <ValidationMessage For="@(() => Item.TimeTableEntries)" class="mt-1 text-sm text-red-600" />
@@ -181,53 +184,52 @@
             {
                 <!-- Calendar-based Menu Configuration -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-4">Calendar</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-4">@T["Edit_Calendar"]</label>
                     <QrCodeCalendarEntries QRCodeId="@Item.Id" CalendarEntries="@Item.CalendarEntries" Menus="@menus" Today="@Today"
                                            FallbackMenuId="@Item.MenuId" FallbackIsSchedule="@Item.IsTimeTableBased" ReadOnly="@readOnly">
                         <ValidationMessage For="@(() => Item.CalendarEntries)" class="text-sm text-red-600" />
                     </QrCodeCalendarEntries>
-                    <p class="mt-2 text-xs text-gray-500">A single date or period beats a weekly entry on the same day.</p>
+                    <p class="mt-2 text-xs text-gray-500">@T["Edit_CalendarPrecedence"]</p>
                 </div>
 
                 @if (Item.IsTimeTableBased)
                 {
                     @* Only possible via the API: calendar plus time schedule. Without a matching entry the schedule applies. *@
                     <div class="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-3.5 py-2.5 text-sm" data-testid="calendar-schedule-fallback">
-                        Without a matching calendar entry this QR code follows its time schedule
-                        (@ScheduleText()). Switch to <span class="font-medium">Schedule-based Menu</span> to edit it.
+                        @T["Edit_CalendarFollowsSchedule", ScheduleText()] @T["Edit_CalendarSwitchToSchedule", T["Edit_ModeSchedule"]]
                     </div>
                 }
                 else
                 {
                     <div>
-                        <label for="fallbackMenuSelect" class="block text-sm font-medium text-gray-700 mb-2">Fallback Menu</label>
+                        <label for="fallbackMenuSelect" class="block text-sm font-medium text-gray-700 mb-2">@T["Edit_Fallback"]</label>
                         <InputSelect @bind-Value="Item.MenuId" id="fallbackMenuSelect" disabled="@readOnly"
                                      class="block w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200">
-                            <option value="">-- No menu --</option>
+                            <option value="">@T["Edit_FallbackEmpty"]</option>
                             @foreach (var m in menus)
                             {
                                 <option value="@m.Id">@m.Name</option>
                             }
                         </InputSelect>
-                        <p class="mt-1 text-xs text-gray-500">Shown when no calendar entry matches today</p>
+                        <p class="mt-1 text-xs text-gray-500">@T["Edit_FallbackHint"]</p>
                     </div>
                 }
             }
 
             <!-- QR Code Preview -->
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-4">QR Code Preview</label>
+                <label class="block text-sm font-medium text-gray-700 mb-4">@T["Edit_Preview"]</label>
                 <div class="bg-gray-50 rounded-lg p-3.5 sm:p-6">
                     <div class="flex flex-col sm:flex-row items-center gap-x-6 gap-y-4">
                         <div class="flex-shrink-0 p-2.5 bg-white rounded-lg shadow-sm">
                             <QrCodePreview QrId="@Item.Id" ThumbnailSize="150" Title="@Item.Title" />
                         </div>
                         <div class="min-w-0 w-full sm:flex-1 max-sm:text-center">
-                            <p class="text-sm text-gray-600">Guests who scan this code open</p>
+                            <p class="text-sm text-gray-600">@T["Edit_PreviewOpens"]</p>
                             <p class="mt-1 text-sm font-medium text-gray-900 break-all" data-testid="qr-url">@GuestUrl</p>
                             @if (IsNew)
                             {
-                                <p class="mt-1 text-xs text-gray-500">The link works once you have created the QR code.</p>
+                                <p class="mt-1 text-xs text-gray-500">@T["Edit_PreviewNotYet"]</p>
                             }
                             <QrCodeShareActions QrId="@Item.Id" Title="@Item.Title" Class="mt-3.5 justify-center sm:justify-start" />
                         </div>
@@ -243,7 +245,7 @@
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
-                    @(readOnly ? "Back" : "Cancel")
+                    @(readOnly ? C["Back"] : C["Cancel"])
                 </button>
                 @if (!readOnly)
                 {
@@ -252,7 +254,7 @@
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    @(IsNew ? "Create QR Code" : "Save Changes")
+                    @(IsNew ? T["Edit_Create"] : T["Edit_SaveChanges"])
                 </button>
                 }
             </div>
@@ -278,6 +280,7 @@
     private bool IsNew => !Id.HasValue;
     private DateOnly Today => DateOnly.FromDateTime(Clock.GetLocalNow().DateTime);
     private string GuestUrl => NavManager.BaseUri + QrCodeLinks.GuestPath(Item.Id);
+    private string HeadingText => IsNew ? T["Edit_TitleNew"] : readOnly ? T["Edit_TitleView"] : T["Edit_TitleEdit"];
 
     protected override async Task OnInitializedAsync()
     {
@@ -348,7 +351,7 @@
         Item.IsCalendarBased = value == DisplayMode.Calendar;
     }
 
-    private string MenuName(Guid menuId) => menus.FirstOrDefault(m => m.Id == menuId)?.Name ?? "(no menu)";
+    private string MenuName(Guid menuId) => menus.FirstOrDefault(m => m.Id == menuId)?.Name ?? T["NoMenu"];
 
     private string ScheduleText() =>
         string.Join(" · ", (Item.TimeTableEntries ?? new()).Select(e => $"{e.StartTime:HH\\:mm}–{e.EndTime:HH\\:mm} {MenuName(e.MenuId)}"));

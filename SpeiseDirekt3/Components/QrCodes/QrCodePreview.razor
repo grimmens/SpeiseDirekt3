@@ -1,4 +1,6 @@
 ﻿@inject NavigationManager NavManager
+@inject IStringLocalizer<QrCodesText> T
+@inject IStringLocalizer<CommonText> C
 
 
 <div class="qr-preview">
@@ -6,11 +8,11 @@
     {
         <button type="button"
                 class="block p-0 border-0 bg-transparent"
-                title="Click to enlarge"
+                title="@T["Preview_Enlarge"]"
                 data-bs-toggle="modal"
                 data-bs-target="#@ModalId">
             <img src="@_imageUrl"
-                 alt="@(string.IsNullOrEmpty(Title) ? "QR Code" : $"QR code {Title}")"
+                 alt="@(string.IsNullOrEmpty(Title) ? T["Preview_AltUntitled"] : T["Preview_Alt", Title])"
                  width="@ThumbnailSize"
                  height="@ThumbnailSize"
                  class="@ImageClass"
@@ -19,7 +21,7 @@
     }
     else
     {
-        <p class="text-muted">Loading QR…</p>
+        <p class="text-muted">@T["Preview_Loading"]</p>
     }
 </div>
 
@@ -27,15 +29,15 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="@($"{ModalId}Label")">@(string.IsNullOrEmpty(Title) ? "QR Code Preview" : Title)</h5>
+                <h5 class="modal-title" id="@($"{ModalId}Label")">@(string.IsNullOrEmpty(Title) ? T["Preview_Title"] : Title)</h5>
                 <button type="button"
                         class="btn-close"
                         data-bs-dismiss="modal"
-                        aria-label="Close"></button>
+                        aria-label="@C["Close"]"></button>
             </div>
             <div class="modal-body text-center">
                 <img src="@_imageUrl"
-                     alt="QR Code Large"
+                     alt="@T["Preview_LargeAlt"]"
                      loading="lazy"
                      class="img-fluid" />
             </div>
