@@ -6,27 +6,20 @@
 @inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<AccountText> T
 
-@* The external login providers (Google, …) of the login and registration pages, as a card under the form with
-   Heading. Renders nothing while no provider is configured (today: none) — the scaffold's developer note about
-   setting up providers is not for visitors. *@
+@* The external login providers (Google, …) inside the login and registration cards (css/auth.css): a divider with
+   Heading, one button per provider. Renders nothing while no provider is configured (today: none) — the scaffold's
+   developer note about setting up providers is not for visitors. *@
 @if (externalLogins.Length > 0)
 {
-    <div class="bg-white rounded-xl shadow-lg p-8" data-testid="external-logins">
-        <div class="text-center mb-6">
-            <h3 class="text-lg font-medium text-gray-900">@Heading</h3>
-            <div class="mt-2 border-t border-gray-200"></div>
-        </div>
-        <form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
-            <div>
-                <AntiforgeryToken />
-                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-                <p>
-                    @foreach (var provider in externalLogins)
-                    {
-                        <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="@T["External_ButtonTitle", provider.DisplayName ?? provider.Name]">@provider.DisplayName</button>
-                    }
-                </p>
-            </div>
+    <div data-testid="external-logins">
+        <p class="au-divider">@Heading</p>
+        <form action="/Account/PerformExternalLogin" method="post" class="au-form">
+            <AntiforgeryToken />
+            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+            @foreach (var provider in externalLogins)
+            {
+                <button type="submit" class="au-button au-button--secondary" name="provider" value="@provider.Name" title="@T["External_ButtonTitle", provider.DisplayName ?? provider.Name]">@provider.DisplayName</button>
+            }
         </form>
     </div>
 }

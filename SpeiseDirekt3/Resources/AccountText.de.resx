@@ -288,11 +288,8 @@
   <data name="Forgot_BackToLogin" xml:space="preserve">
     <value>Zur Anmeldung</value>
   </data>
-  <data name="Forgot_HelpTitle" xml:space="preserve">
-    <value>Brauchen Sie Hilfe?</value>
-  </data>
   <data name="Forgot_HelpText" xml:space="preserve">
-    <value>Wenn Sie nicht in Ihr Konto kommen, wenden Sie sich bitte an unseren Support.</value>
+    <value>Sie kommen nicht in Ihr Konto? Schreiben Sie uns:</value>
   </data>
   <data name="ForgotConfirm_Title" xml:space="preserve">
     <value>Passwort vergessen</value>
@@ -311,9 +308,6 @@
   </data>
   <data name="Reset_Submit" xml:space="preserve">
     <value>Passwort zurücksetzen</value>
-  </data>
-  <data name="Reset_SecurityTitle" xml:space="preserve">
-    <value>Sicherheitshinweis</value>
   </data>
   <data name="Reset_SecurityText" xml:space="preserve">
     <value>Nach dem Zurücksetzen werden Sie aus Sicherheitsgründen auf allen Geräten abgemeldet.</value>
@@ -677,5 +671,20 @@
   </data>
   <data name="Email_ResetCodeText" xml:space="preserve">
     <value>Ihr Code zum Zurücksetzen des Passworts: {0}</value>
+  </data>
+  <data name="Auth_Skip" xml:space="preserve">
+    <value>Zum Formular springen</value>
+  </data>
+  <data name="Auth_Home" xml:space="preserve">
+    <value>Zur Startseite</value>
+  </data>
+  <data name="Auth_ToDashboard" xml:space="preserve">
+    <value>Zum Dashboard</value>
+  </data>
+  <data name="Auth_PanelLabel" xml:space="preserve">
+    <value>Speise-Direkt auf einen Blick</value>
+  </data>
+  <data name="Login_Or" xml:space="preserve">
+    <value>oder</value>
   </data>
 </root>

@@ -294,11 +294,8 @@
   <data name="Forgot_BackToLogin" xml:space="preserve">
     <value>Back to login</value>
   </data>
-  <data name="Forgot_HelpTitle" xml:space="preserve">
-    <value>Need help?</value>
-  </data>
   <data name="Forgot_HelpText" xml:space="preserve">
-    <value>If you're having trouble accessing your account, please contact our support team for assistance.</value>
+    <value>Cannot get into your account? Write to us:</value>
   </data>
   <data name="ForgotConfirm_Title" xml:space="preserve">
     <value>Forgot password confirmation</value>
@@ -317,9 +314,6 @@
   </data>
   <data name="Reset_Submit" xml:space="preserve">
     <value>Reset Password</value>
-  </data>
-  <data name="Reset_SecurityTitle" xml:space="preserve">
-    <value>Security notice</value>
   </data>
   <data name="Reset_SecurityText" xml:space="preserve">
     <value>After resetting your password, you'll be automatically signed out of all devices for security reasons.</value>
@@ -688,5 +682,20 @@
   </data>
   <data name="Email_ResetCodeText" xml:space="preserve">
     <value>Your code for resetting the password: {0}</value>
+  </data>
+  <data name="Auth_Skip" xml:space="preserve">
+    <value>Skip to the form</value>
+  </data>
+  <data name="Auth_Home" xml:space="preserve">
+    <value>Home page</value>
+  </data>
+  <data name="Auth_ToDashboard" xml:space="preserve">
+    <value>Go to the dashboard</value>
+  </data>
+  <data name="Auth_PanelLabel" xml:space="preserve">
+    <value>Speise-Direkt at a glance</value>
+  </data>
+  <data name="Login_Or" xml:space="preserve">
+    <value>or</value>
   </data>
 </root>

@@ -258,7 +258,7 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
 
         // Log out: the anti-forgery form, back on the page (which asks for a login)
         await UserMenu.GetByRole(AriaRole.Button, new() { Name = "Log out" }).ClickAsync();
-        await Assertions.Expect(Page.GetByTestId("anonymous-nav")).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByTestId("auth-header")).ToBeVisibleAsync();
         await Assertions.Expect(UserButton).ToHaveCountAsync(0);
         await Page.GotoAsync("/menus");
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/Account/Login", RegexOptions.IgnoreCase));
@@ -431,29 +431,30 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
 
     // --- Anonymous ---
 
+    /// <summary>
+    /// The login page has its own document since AP13 (AuthTests covers it): none of the back office's chrome — no top
+    /// navigation, user menu or drawer — but its header with the logo back to the landing page and "Register".
+    /// </summary>
     [Fact]
-    public async Task AnonymousHeader_OnTheLoginPage()
+    public async Task LoginPage_HasNoBackOfficeChrome()
     {
         await Page.GotoAsync("/Account/Login");
 
-        var nav = Page.GetByTestId("anonymous-nav");
-        await Assertions.Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Log in" })).ToHaveAttributeAsync("href", "Account/Login");
-        await Assertions.Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Register" })).ToHaveAttributeAsync("href", "Account/Register");
-        await Assertions.Expect(Page.GetByTestId("brand-link")).ToBeVisibleAsync();
-        // Anonymous: the brand leads to the landing page (logged in: to the dashboard)
-        await Assertions.Expect(Page.GetByTestId("brand-link")).ToHaveAttributeAsync("href", "/");
-        await Assertions.Expect(Page.GetByTestId("brand-link").Locator("img")).ToHaveAttributeAsync("src", "/images/brand/logo-inverse.svg");
+        await Assertions.Expect(Page.GetByTestId("auth-brand")).ToHaveAttributeAsync("href", "/");
+        await Assertions.Expect(Page.GetByTestId("auth-brand").Locator("img")).ToHaveAttributeAsync("src", "/images/brand/logo.svg");
+        await Assertions.Expect(Page.GetByTestId("auth-header-link")).ToHaveAttributeAsync("href", "/Account/Register");
+        await Assertions.Expect(Page.GetByTestId("topbar")).ToHaveCountAsync(0);
         await Assertions.Expect(TopNav).ToHaveCountAsync(0);
         await Assertions.Expect(UserButton).ToHaveCountAsync(0);
         await Assertions.Expect(DrawerButton).ToHaveCountAsync(0);
         await Assertions.Expect(Page.Locator("dialog[data-testid='nav-drawer']")).ToHaveCountAsync(0);
 
-        // Same on a phone: both links stay in the bar
+        // Same on a phone: the link stays in the bar
         await Page.SetViewportSizeAsync(360, 740);
-        await Assertions.Expect(nav.GetByRole(AriaRole.Link, new() { Name = "Register" })).ToBeInViewportAsync();
+        await Assertions.Expect(Page.GetByTestId("auth-header-link")).ToBeInViewportAsync();
         (await Page.EvaluateAsync<bool>("() => document.documentElement.scrollWidth <= window.innerWidth")).Should().BeTrue();
 
-        await nav.GetByRole(AriaRole.Link, new() { Name = "Register" }).ClickAsync();
+        await Page.GetByTestId("auth-header-link").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/Account/Register$"));
     }
 
@@ -462,8 +463,11 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
     [Fact]
     public async Task FaviconsAndLogos_AreServed_AndAreValidImages()
     {
-        // Both documents link the same favicon set
+        // Every document (account pages, back office, guest pages) links the same favicon set
         await Page.GotoAsync("/Account/Login");
+        await ExpectIconLinksAsync(Page);
+        await RegisterNewOwnerAsync();
+        await Assertions.Expect(Page.GetByTestId("topbar")).ToBeVisibleAsync();
         await ExpectIconLinksAsync(Page);
         var (guestContext, guest) = await NewContextAsync();
         await using (guestContext)

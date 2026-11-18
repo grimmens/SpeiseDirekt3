@@ -8,11 +8,20 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>@T["ConfirmEmail_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["ConfirmEmail_Title"]]</PageTitle>
 
-<h1>@T["ConfirmEmail_Title"]</h1>
-<StatusMessage Message="@statusMessage" IsError="isError" />
+<AuthCard Title="@T["ConfirmEmail_Title"]" Icon="mail" Tone="@(isError ? "danger" : "success")">
+    <ChildContent>
+        <StatusMessage Message="@statusMessage" IsError="isError" />
+    </ChildContent>
+    <Links>
+        <li><a href="/Account/Login" class="au-link">@T["Forgot_BackToLogin"]</a></li>
+    </Links>
+</AuthCard>
 
 @code {
     private string? statusMessage;

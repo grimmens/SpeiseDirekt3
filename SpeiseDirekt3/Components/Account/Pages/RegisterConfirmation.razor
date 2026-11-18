@@ -10,24 +10,29 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>@T["RegisterConfirm_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["RegisterConfirm_Title"]]</PageTitle>
 
-<h1>@T["RegisterConfirm_Title"]</h1>
-
-<StatusMessage Message="@statusMessage" IsError="true" />
-
-@* Without a real e-mail sender (IdentityNoOpEmailSender) the confirmation link is shown here instead of being mailed *@
-@if (emailConfirmationLink is not null)
-{
-    <p>
-        <a href="@emailConfirmationLink">@T["RegisterConfirm_ConfirmLink"]</a>
-    </p>
-}
-else
-{
-    <p role="alert">@T["RegisterConfirm_CheckEmail"]</p>
-}
+<AuthCard Title="@T["RegisterConfirm_Title"]" Icon="mail">
+    <ChildContent>
+        <StatusMessage Message="@statusMessage" IsError="true" />
+        @* Without a real e-mail sender (IdentityNoOpEmailSender) the confirmation link is shown here instead of being mailed *@
+        @if (emailConfirmationLink is not null)
+        {
+            <a class="au-button au-button--primary" href="@emailConfirmationLink">@T["RegisterConfirm_ConfirmLink"]</a>
+        }
+        else
+        {
+            <p class="au-text" role="alert">@T["RegisterConfirm_CheckEmail"]</p>
+        }
+    </ChildContent>
+    <Links>
+        <li><a href="/Account/Login" class="au-link">@T["Forgot_BackToLogin"]</a></li>
+    </Links>
+</AuthCard>
 
 @code {
     private string? emailConfirmationLink;

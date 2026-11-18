@@ -142,8 +142,9 @@ public class LocalizationTests : BackOfficeTestBase
         await using (anonymous)
         {
             await anonymousPage.GotoAsync("/Account/Login");
-            await Assertions.Expect(anonymousPage.GetByTestId("anonymous-nav").Locator("a")).ToHaveTextAsync(["Anmelden", "Registrieren"]);
-            await Assertions.Expect(anonymousPage.Locator("[data-sd-skip]")).ToHaveTextAsync("Zum Inhalt springen");
+            // The account pages' own header (AP13): logo and "Registrieren"; the skip link jumps to the form
+            await Assertions.Expect(anonymousPage.GetByTestId("auth-header-link")).ToHaveTextAsync("Registrieren");
+            await Assertions.Expect(anonymousPage.GetByTestId("auth-skip")).ToHaveTextAsync("Zum Formular springen");
         }
     }
 
@@ -185,7 +186,7 @@ public class LocalizationTests : BackOfficeTestBase
                 await anonymousPage.GotoAsync("/Account/Login");
                 (await anonymousPage.EvaluateAsync<int>("() => document.documentElement.scrollWidth - innerWidth"))
                     .Should().BeLessThanOrEqualTo(0, $"the login page fits at {width} px");
-                var right = await anonymousPage.EvaluateAsync<double>("() => document.querySelector('.sd-anon-cta').getBoundingClientRect().right");
+                var right = await anonymousPage.EvaluateAsync<double>("() => document.querySelector('[data-testid=auth-header-link]').getBoundingClientRect().right");
                 right.Should().BeLessThanOrEqualTo(width - 8, $"the register button keeps a gutter at {width} px");
             }
         }

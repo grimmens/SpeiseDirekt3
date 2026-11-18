@@ -2,15 +2,18 @@
 @implements IDisposable
 @inject GuestDocument GuestDocument
 <!DOCTYPE html>
-@if (Document is PageDocument.Guest or PageDocument.Landing)
+@if (Document is PageDocument.Guest or PageDocument.Landing or PageDocument.Auth)
 {
-    @* Pages with their own document (OwnDocumentAttribute): the guest pages (/qr, /menu, /menu/preview — Components/Guest)
-       and the landing page (/ — Components/Landing). Static SSR, own assets only, no Tailwind CDN, Bootstrap or
-       blazor.web.js. No <base href>: every URL on these pages is absolute (fragment and ?item= links must stay on the page).
+    @* Pages with their own document (OwnDocumentAttribute): the guest pages (/qr, /menu, /menu/preview, /demo —
+       Components/Guest), the landing page (/ — Components/Landing) and the anonymous account pages (/Account/Login, … —
+       [AuthPage], AP13). Static SSR, own assets only, no Tailwind CDN, Bootstrap or blazor.web.js. No <base href>: every
+       URL on these pages is absolute (fragment and ?item= links must stay on the page).
        lang: the guest menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages — never the browser's),
-       the landing page the request's language (AppCultures: Accept-Language). *@
+       the landing and account pages the request's language (AppCultures: Accept-Language). *@
     var guest = Document == PageDocument.Guest;
-    <html lang="@(guest ? GuestDocument.Language : AppCultures.HtmlLang)" data-guest-page="@guest" data-landing-page="@(!guest)">
+    var auth = Document == PageDocument.Auth;
+    <html lang="@(guest ? GuestDocument.Language : AppCultures.HtmlLang)" data-guest-page="@guest"
+          data-landing-page="@(Document == PageDocument.Landing)" data-auth-page="@auth">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,6 +23,13 @@
             <link rel="stylesheet" href="@Assets.Absolute("css/guest-themes.css")" />
             <link rel="stylesheet" href="@Assets.Absolute("css/guest-menu.css")" />
             <script type="module" src="@Assets.Absolute("js/guest-menu.js")"></script>
+        }
+        else if (auth)
+        {
+            <link rel="stylesheet" href="@Assets.Absolute("css/brand.css")" />
+            <link rel="stylesheet" href="@Assets.Absolute("css/auth.css")" />
+            <meta name="theme-color" content="#fff8ec" />
+            <meta name="robots" content="noindex" />
         }
         else
         {
@@ -33,7 +43,7 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <HeadOutlet />
     </head>
-    <body class="@(guest ? "gm-body" : "lp-body")">
+    <body class="@(guest ? "gm-body" : auth ? "au-body" : "lp-body")">
         <Routes />
     </body>
     </html>
@@ -135,7 +145,8 @@ else
 
     /// <summary>
     /// The document of the page: its <see cref="OwnDocumentAttribute"/> (<see cref="GuestPageAttribute"/>,
-    /// <see cref="SpeiseDirekt3.Components.Landing.LandingPageAttribute"/>), else the back office's.
+    /// <see cref="SpeiseDirekt3.Components.Landing.LandingPageAttribute"/>, <see cref="Account.AuthPageAttribute"/>), else the
+    /// back office's.
     /// </summary>
     private PageDocument Document =>
         HttpContext.GetEndpoint()?.Metadata.GetMetadata<OwnDocumentAttribute>()?.Document ?? PageDocument.BackOffice;

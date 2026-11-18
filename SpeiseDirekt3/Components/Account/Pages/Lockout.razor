@@ -1,9 +1,16 @@
 ﻿@page "/Account/Lockout"
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>@T["Lockout_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["Lockout_Title"]]</PageTitle>
 
-<header>
-    <h1 class="text-danger">@T["Lockout_Title"]</h1>
-    <p class="text-danger" role="alert">@T["Lockout_Text"]</p>
-</header>
+<AuthCard Title="@T["Lockout_Title"]" Icon="alert" Tone="danger">
+    <ChildContent>
+        <p class="au-text" role="alert">@T["Lockout_Text"]</p>
+    </ChildContent>
+    <Links>
+        <li><a href="/Account/ForgotPassword" class="au-link">@T["Login_ForgotPassword"]</a></li>
+    </Links>
+</AuthCard>

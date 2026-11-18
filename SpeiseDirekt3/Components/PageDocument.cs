@@ -10,14 +10,20 @@ public enum PageDocument
     Guest,
 
     /// <summary>The landing page (<c>/</c>): <c>css/brand.css</c>, <c>css/landing.css</c>, <c>js/landing.js</c>.</summary>
-    Landing
+    Landing,
+
+    /// <summary>
+    /// The anonymous account pages (<c>/Account/Login</c>, <c>/Account/Register</c>, …; not <c>/Account/Manage</c>):
+    /// <c>css/brand.css</c>, <c>css/auth.css</c>, no script at all (plain static SSR forms).
+    /// </summary>
+    Auth
 }
 
 /// <summary>
 /// Marks a page that renders <b>its own document</b> in <c>App.razor</c>: static SSR, only its own CSS/JS (plus the
 /// self-hosted fonts and the favicons), no Tailwind CDN, Bootstrap, Chart.js, back-office scripts or
 /// <c>blazor.web.js</c>, no <c>&lt;base href&gt;</c> (every URL on such a page is absolute). The concrete markers are
-/// <see cref="Guest.GuestPageAttribute"/> and <see cref="Landing.LandingPageAttribute"/>.
+/// <see cref="Guest.GuestPageAttribute"/>, <see cref="Landing.LandingPageAttribute"/> and <see cref="Account.AuthPageAttribute"/>.
 /// Always combine it with <c>[ExcludeFromInteractiveRouting]</c>, which keeps the page static SSR (no render mode, no
 /// circuit). The interactive router of the back office then does not know the page; its <c>NotFound</c>
 /// (<c>Shared/ServerPageLoad</c>) loads it from the server (full page load).

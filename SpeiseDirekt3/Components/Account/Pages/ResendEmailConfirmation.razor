@@ -12,27 +12,33 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>@T["Resend_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["Resend_Title"]]</PageTitle>
 
-<h1>@T["Resend_Title"]</h1>
-<h2>@T["Resend_Intro"]</h2>
-<hr />
-<StatusMessage Message="@message" />
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post">
+<AuthCard Title="@T["Resend_Title"]" Lead="@T["Resend_Intro"]" Icon="mail">
+    <ChildContent>
+        <StatusMessage Message="@message" />
+        <EditForm Model="Input" FormName="resend-email-confirmation" OnValidSubmit="OnValidSubmitAsync" method="post" class="au-form">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email" class="form-label">@T["Field_Email"]</label>
-                <ValidationMessage For="() => Input.Email" class="text-danger" />
+            <div class="au-field">
+                <label for="Input.Email" class="au-label">@T["Field_EmailAddress"]</label>
+                <div class="au-input-wrap">
+                    <LandingIcon Name="mail" Class="au-icon" />
+                    <InputText @bind-Value="Input.Email" id="Input.Email" class="au-input" inputmode="email"
+                               autocomplete="username" aria-required="true" placeholder="@T["Placeholder_Email"]" />
+                </div>
+                <ValidationMessage For="() => Input.Email" class="validation-message" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">@T["Resend_Submit"]</button>
+            <button type="submit" class="au-button au-button--primary">@T["Resend_Submit"]</button>
         </EditForm>
-    </div>
-</div>
+    </ChildContent>
+    <Links>
+        <li><a href="/Account/Login" class="au-link">@T["Forgot_BackToLogin"]</a></li>
+    </Links>
+</AuthCard>
 
 @code {
     private string? message;

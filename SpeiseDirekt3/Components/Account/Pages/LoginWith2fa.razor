@@ -10,73 +10,38 @@
 @inject ILogger<LoginWith2fa> Logger
 @inject IStringLocalizer<AccountText> T
 @inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
 <PageTitle>@C["PageTitle", T["TwoFactorLogin_Title"]]</PageTitle>
 
-<!-- 2FA Login Page -->
-<div class="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <!-- Header -->
-        <div class="text-center">
-            <div class="flex justify-center mb-6">
-                <BrandLogo MarkOnly="true" Height="64" Class="h-16 w-16" />
+<AuthCard Title="@T["TwoFactorLogin_Title"]" Lead="@T["TwoFactorLogin_Text"]" Icon="shield">
+    <ChildContent>
+        <StatusMessage Message="@message" IsError="true" />
+        <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post" class="au-form">
+            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+            <input type="hidden" name="RememberMe" value="@RememberMe" />
+            <DataAnnotationsValidator />
+            <div class="au-field">
+                <label for="Input.TwoFactorCode" class="au-label">@T["Field_AuthenticatorCode"]</label>
+                <div class="au-input-wrap">
+                    <LandingIcon Name="key" Class="au-icon" />
+                    <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="au-input" inputmode="numeric"
+                               autocomplete="one-time-code" aria-required="true" placeholder="@T["Placeholder_SixDigitCode"]" />
+                </div>
+                <ValidationMessage For="() => Input.TwoFactorCode" class="validation-message" />
             </div>
-            <h2 class="text-3xl font-bold text-gray-900 font-display">@T["TwoFactorLogin_Title"]</h2>
-            <p class="mt-2 text-gray-600">@T["TwoFactorLogin_Text"]</p>
-        </div>
-
-        <!-- 2FA Form -->
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <StatusMessage Message="@message" IsError="true" />
-            <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post" class="space-y-6">
-                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-                <input type="hidden" name="RememberMe" value="@RememberMe" />
-                <DataAnnotationsValidator />
-                <ValidationSummary class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert" />
-
-                <!-- Authenticator Code Field -->
-                <div>
-                    <label for="Input.TwoFactorCode" class="block text-sm font-medium text-gray-700 mb-2">@T["Field_AuthenticatorCode"]</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                        </div>
-                        <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
-                                   autocomplete="off" aria-required="true" placeholder="@T["Placeholder_SixDigitCode"]" />
-                    </div>
-                    <ValidationMessage For="() => Input.TwoFactorCode" class="mt-1 text-sm text-red-600" />
-                </div>
-
-                <!-- Remember Machine -->
-                <div class="flex items-center">
-                    <InputCheckbox @bind-Value="Input.RememberMachine" id="Input.RememberMachine"
-                                   class="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded" />
-                    <label for="Input.RememberMachine" class="ml-2 block text-sm text-gray-700">
-                        @T["TwoFactorLogin_RememberMachine"]
-                    </label>
-                </div>
-
-                <!-- Submit Button -->
-                <div>
-                    <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors duration-200">
-                        @T["TwoFactorLogin_Submit"]
-                    </button>
-                </div>
-
-                <!-- Recovery Code Link -->
-                <div class="text-center">
-                    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl" class="text-sm text-brand-600 hover:text-brand-500 hover:underline">
-                        @T["TwoFactorLogin_UseRecovery"]
-                    </a>
-                </div>
-            </EditForm>
-        </div>
-    </div>
-</div>
+            <label class="au-check" for="Input.RememberMachine">
+                <InputCheckbox @bind-Value="Input.RememberMachine" id="Input.RememberMachine" />
+                @T["TwoFactorLogin_RememberMachine"]
+            </label>
+            <button type="submit" class="au-button au-button--primary">@T["TwoFactorLogin_Submit"]</button>
+        </EditForm>
+    </ChildContent>
+    <Links>
+        <li><a href="@($"/Account/LoginWithRecoveryCode?ReturnUrl={Uri.EscapeDataString(ReturnUrl ?? "")}")" class="au-link">@T["TwoFactorLogin_UseRecovery"]</a></li>
+    </Links>
+</AuthCard>
 
 @code {
     private string? message;

@@ -4,7 +4,8 @@
 @if (!string.IsNullOrEmpty(DisplayMessage))
 {
     var error = Message is not null ? IsError : cookieIsError;
-    <div class="alert alert-@(error ? "danger" : "success")" role="@(error ? "alert" : "status")" data-testid="status-message">
+    @* Both class sets: Bootstrap's alert in the back office (Account/Manage), au-alert on the anonymous pages (css/auth.css) *@
+    <div class="alert alert-@(error ? "danger" : "success") au-alert au-alert--@(error ? "error" : "success")" role="@(error ? "alert" : "status")" data-testid="status-message">
         @DisplayMessage
     </div>
 }
