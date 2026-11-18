@@ -28,6 +28,9 @@
         </ol>
     </nav>
 
+    <PageHeader Title="@(tenantUser?.DisplayName is { Length: > 0 } title ? T["Edit_Crumb", title] : T["Edit_CrumbUnnamed"])"
+                Icon="PageIcons.Team" Tone="TileTone.Accent" Class="mb-6" />
+
     @if (tenantUser == null)
     {
         <div class="flex items-center justify-center py-12" role="status">
@@ -40,7 +43,7 @@
         <div class="space-y-6">
             <!-- User Info Card -->
             <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
-                <h1 class="text-xl font-bold text-gray-900 mb-4">@T["Edit_Details"]</h1>
+                <h2 class="text-lg font-bold text-gray-900 mb-4">@T["Edit_Details"]</h2>
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
                         <span class="text-gray-500">@T["Column_Name"]</span>

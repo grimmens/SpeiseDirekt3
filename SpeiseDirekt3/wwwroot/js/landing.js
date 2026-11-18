@@ -8,7 +8,9 @@
  *   - menu sheet (below 1024 px): the link [data-lp-menu-open] opens <dialog data-lp-menu> as a modal; Escape, the
  *     backdrop, [data-lp-menu-close] and a followed link [data-lp-menu-link] close it, and so does widening the window
  *     to 1024 px; focus moves into the sheet and back to the button (not after a followed in-page link: the browser
- *     moves the focus start to the target); the page behind does not scroll (data-lp-menu-open on <html>)
+ *     moves the focus start to the target); the page behind does not scroll (data-lp-menu-open on <html>). Opened by a
+ *     tap or click, the first link gets data-lp-quiet (no ring: WebKit shows one for a script focus after a tap) until
+ *     the first key press
  *   - reveal: [data-reveal] blocks below the first screen fade in when they scroll into view — only when motion is
  *     allowed (prefers-reduced-motion), never before this module ran (CSS keys on data-lp-reveal), and everything is
  *     shown for printing
@@ -51,14 +53,22 @@ function initMenu() {
     let restoreFocus = true;
     let pressStartedOnBackdrop = false;
 
-    const open = () => {
+    const open = byPointer => {
         if (dialog.open) return;
         restoreFocus = true;
         root.setAttribute('data-lp-menu-open', '');
         dialog.showModal();
         opener.setAttribute('aria-expanded', 'true');
-        dialog.querySelector('[data-lp-menu-link]')?.focus();
+        const first = dialog.querySelector('[data-lp-menu-link]');
+        if (!first) return;
+        if (byPointer) first.setAttribute('data-lp-quiet', '');
+        first.focus();
     };
+
+    // The first key press shows the focus ring again (keyboard users need it)
+    document.addEventListener('keydown', () => {
+        for (const quiet of document.querySelectorAll('[data-lp-quiet]')) quiet.removeAttribute('data-lp-quiet');
+    }, true);
 
     const close = () => {
         if (dialog.open) dialog.close();
@@ -66,13 +76,14 @@ function initMenu() {
 
     opener.addEventListener('click', event => {
         event.preventDefault();
-        open();
+        // detail = the click count: 0 when Enter activated the link
+        open(event.detail > 0);
     });
     opener.addEventListener('keydown', event => {
         // role="button" on a link: Space activates it too
         if (event.key === ' ') {
             event.preventDefault();
-            open();
+            open(false);
         }
     });
 

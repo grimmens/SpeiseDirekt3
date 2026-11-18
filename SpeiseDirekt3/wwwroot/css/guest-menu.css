@@ -84,7 +84,7 @@ html:not([data-guest-ready]) [data-js-only] { visibility: hidden; }
    top bar (white on #1b3d46 12.6:1, the link #fbbd62 on it 7.6:1) ---------------------------------------------- */
 .gm-demo-bar {
     margin: 0;
-    padding: 8px 16px;
+    padding: 4px 16px;
     background: #1b3d46;
     color: #fff;
     font-family: var(--gm-font-ui);
@@ -94,9 +94,11 @@ html:not([data-guest-ready]) [data-js-only] { visibility: hidden; }
     text-wrap: balance;
 }
 .gm-demo-bar a {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px; /* a touch target */
     margin-left: 6px;
-    padding: 4px 0;
+    padding: 0 2px;
     color: #fbbd62;
     font-weight: 600;
     text-decoration: underline;

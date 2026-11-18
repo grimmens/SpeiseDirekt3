@@ -742,11 +742,12 @@ html.sd-sorting * {
     gap: 1.25rem;
     margin: 0;
     padding-left: 1.25rem;
+    list-style: decimal; /* Tailwind's preflight removes list markers */
 }
 
 .sd-steps > li::marker { color: rgb(var(--sd-brand-700)); font-weight: 700; }
 .sd-steps p { margin: 0 0 .5rem; }
-.sd-steps ul { margin: 0; padding-left: 1.125rem; }
+.sd-steps ul { margin: 0; padding-left: 1.125rem; list-style: disc; }
 .sd-steps a { color: rgb(var(--sd-brand-700)); }
 
 .sd-key {

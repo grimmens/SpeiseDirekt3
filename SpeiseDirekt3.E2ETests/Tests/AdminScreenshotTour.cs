@@ -113,6 +113,90 @@ public class AdminScreenshotTour : QrCalendarTestBase
     }
 
     /// <summary>
+    /// The final review of AP13: every back-office page, the account settings and the anonymous account pages at 360,
+    /// 390, 768, 1024, 1280 and 1440 px (or <c>E2E_REVIEW_WIDTHS</c>, comma-separated), full page at device scale 1, into
+    /// <c>$E2E_SCREENSHOT_DIR/review/{width}/{name}.png</c>, and <c>review/overflow.txt</c>: every page whose document,
+    /// or a visible element, is wider than the viewport ("none" when all fit). Opt-in like the other facts; run it per
+    /// language with <c>E2E_LOCALE</c> and <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> (Tailwind from the CDN).
+    /// </summary>
+    [Fact]
+    public async Task Capture_review_widths()
+    {
+        var dir = Directory;
+        if (dir is null) return; // opt-in only
+        var widths = (Environment.GetEnvironmentVariable("E2E_REVIEW_WIDTHS") is { Length: > 0 } w ? w : "360,390,768,1024,1280,1440")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(int.Parse).ToArray();
+        var root = Path.Combine(dir, "review");
+        System.IO.Directory.CreateDirectory(root);
+
+        var email = await RegisterNewOwnerAsync();
+        Guid ownerId;
+        await using (var db = App.CreateDbContext(Guid.Empty))
+            ownerId = Guid.Parse((await db.Users.SingleAsync(u => u.Email == email)).Id);
+        var s = await SeedTenantAsync(ownerId);
+        var state = await Context.StorageStateAsync();
+
+        var pages = new (string Name, string Url)[]
+        {
+            ("dashboard", "/dashboard"), ("menus", "/menus"), ("menudetail", $"/menudetail/{s.MenuId}"),
+            ("categories", $"/Categories/{s.MenuId}"), ("items", $"/MenuItems/Category/{s.CategoryId}"),
+            ("items-drinks", $"/MenuItems/Category/{s.DrinksCategoryId}"), ("item-new", $"/MenuItems/Category/{s.CategoryId}/new"),
+            ("allergens", $"/allergens/{s.MenuId}"), ("combos", $"/combos/{s.MenuId}"), ("menu-edit", $"/menu/edit/{s.MenuId}"),
+            ("menu-new", "/menu/edit"), ("menudetail-empty", $"/menudetail/{s.EmptyMenuId}"), ("qrcodes", "/qrcodes"),
+            ("qrcode-timetable", $"/qrcode/edit/{s.TimeTableQrId}"), ("qrcode-calendar", $"/qrcode/edit/{s.HolidayQrId}"),
+            ("qrcode-new", "/qrcode/edit"), ("analytics", "/analytics"), ("restaurant", "/restaurant"), ("users", "/users"),
+            ("users-invite", "/users/invite"), ("users-edit", $"/users/edit/{s.TenantUserId}"), ("manage", "/Account/Manage"),
+            ("manage-email", "/Account/Manage/Email"), ("manage-password", "/Account/Manage/ChangePassword"),
+            ("manage-2fa", "/Account/Manage/TwoFactorAuthentication"), ("manage-authenticator", "/Account/Manage/EnableAuthenticator"),
+            ("manage-data", "/Account/Manage/PersonalData")
+        };
+        var anonymousPages = new (string Name, string Url)[]
+        {
+            ("login", "/Account/Login"), ("register", "/Account/Register"), ("forgot", "/Account/ForgotPassword"),
+            ("reset", "/Account/ResetPassword?code=YWJj"), ("lockout", "/Account/Lockout"), ("access-denied", "/Account/AccessDenied")
+        };
+
+        const string WideElements = """
+            width => [...document.querySelectorAll('body *')]
+                .filter(e => e.checkVisibility() && e.getBoundingClientRect().right > width + 1
+                    && !e.closest('[data-sd-tab-strip], .fc-scroller, .overflow-x-auto'))
+                .slice(0, 5).map(e => e.tagName.toLowerCase() + '.' + String(e.className).split(' ').slice(0, 3).join('.'))
+            """;
+        var findings = new List<string>();
+        foreach (var width in widths)
+        {
+            var folder = Path.Combine(root, width.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            System.IO.Directory.CreateDirectory(folder);
+            foreach (var signedIn in new[] { true, false })
+            {
+                await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
+                {
+                    BaseURL = App.ServerAddress,
+                    Locale = ContextLocale,
+                    StorageState = signedIn ? state : null,
+                    ViewportSize = new ViewportSize { Width = width, Height = 900 },
+                    IsMobile = width < 768,
+                    HasTouch = width < 1024
+                });
+                context.SetDefaultTimeout(15_000);
+                var page = await context.NewPageAsync();
+                foreach (var (name, url) in signedIn ? pages : anonymousPages)
+                {
+                    if (url.StartsWith("/Account")) await page.GotoAsync(url);
+                    else await GotoInteractiveAsync(page, url);
+                    await SettleAsync(page);
+                    var overflow = await page.EvaluateAsync<int>("width => document.documentElement.scrollWidth - width", width);
+                    var wide = await page.EvaluateAsync<string[]>(WideElements, width);
+                    if (overflow > 0 || wide.Length > 0)
+                        findings.Add($"{width}px {url}: document +{overflow}px; {string.Join(", ", wide)}");
+                    await page.ScreenshotAsync(new() { Path = Path.Combine(folder, $"{name}.png"), FullPage = true });
+                }
+            }
+        }
+        await File.WriteAllLinesAsync(Path.Combine(root, "overflow.txt"), findings.Count == 0 ? ["none"] : findings);
+    }
+
+    /// <summary>
     /// Loads every back-office page at 360 and 390 px (Tailwind from the CDN, as in production) and writes the pages whose
     /// document is wider than the viewport to <c>phone-overflow.txt</c> ("none" when all fit).
     /// </summary>

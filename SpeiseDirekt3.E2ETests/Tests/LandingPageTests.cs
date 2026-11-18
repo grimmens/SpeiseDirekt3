@@ -238,7 +238,14 @@ public class LandingPageTests : E2ETestBase
         await button.ClickAsync();
         await Assertions.Expect(openSheet).ToHaveCountAsync(1);
         await Assertions.Expect(button).ToHaveAttributeAsync("aria-expanded", "true");
-        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = copy.Nav[0] })).ToBeFocusedAsync();
+        var first = sheet.GetByRole(AriaRole.Link, new() { Name = copy.Nav[0] });
+        await Assertions.Expect(first).ToBeFocusedAsync();
+        // AP13: opened by a tap, the focused first link shows no ring (WebKit would draw one for a script focus) until
+        // a key is pressed; opened by the keyboard it shows the ring at once
+        await Assertions.Expect(first).ToHaveAttributeAsync("data-lp-quiet", "");
+        (await first.EvaluateAsync<string>("e => getComputedStyle(e).outlineStyle")).Should().Be("none");
+        await page.Keyboard.PressAsync("Shift");
+        await Assertions.Expect(first).Not.ToHaveAttributeAsync("data-lp-quiet", "");
         await Assertions.Expect(page.Locator("html[data-lp-menu-open]")).ToHaveCountAsync(1);
         await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = copy.Register })).ToHaveAttributeAsync("href", "/Account/Register");
         await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = copy.Login })).ToHaveAttributeAsync("href", "/Account/Login");
@@ -247,6 +254,16 @@ public class LandingPageTests : E2ETestBase
         await Assertions.Expect(button).ToBeFocusedAsync();
         await Assertions.Expect(button).ToHaveAttributeAsync("aria-expanded", "false");
         await Assertions.Expect(page.Locator("html[data-lp-menu-open]")).ToHaveCountAsync(0);
+
+        // Opened by the keyboard: the ring shows at once
+        await button.FocusAsync();
+        await page.Keyboard.PressAsync("Enter");
+        await Assertions.Expect(openSheet).ToHaveCountAsync(1);
+        await Assertions.Expect(first).ToBeFocusedAsync();
+        await Assertions.Expect(first).Not.ToHaveAttributeAsync("data-lp-quiet", "");
+        (await first.EvaluateAsync<string>("e => getComputedStyle(e).outlineStyle")).Should().Be("solid");
+        await page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(openSheet).ToHaveCountAsync(0);
 
         // Close button
         await button.ClickAsync();

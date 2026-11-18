@@ -61,6 +61,7 @@ public class DemoMenuTests : E2ETestBase
         await Assertions.Expect(Page.Locator("[data-testid='item-card'], [data-testid='list-row']")).ToHaveCountAsync(German.Dishes.Count);
         await Assertions.Expect(Page.GetByTestId("demo-note")).ToContainTextAsync("erfundenes Restaurant");
         await Assertions.Expect(Page.GetByTestId("demo-home-link")).ToHaveAttributeAsync("href", "/");
+        (await Page.GetByTestId("demo-home-link").EvaluateAsync<double>("e => e.getBoundingClientRect().height")).Should().BeGreaterThanOrEqualTo(40, "a touch target");
 
         // Every dish photo is a static file that loads
         var photos = Page.Locator("[data-testid='item-card'] img");

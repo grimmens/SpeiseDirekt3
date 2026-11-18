@@ -16,26 +16,18 @@
 <PageTitle>@C["PageTitle", IsNew ? T["Edit_PageTitleNew"] : T["Edit_PageTitleEdit", Menu.Name]]</PageTitle>
 
 <!-- Header -->
-<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-    <div class="p-[1rem] sm:p-6">
-        @if (IsNew)
-        {
-            @* An existing menu has "Menus › menu" in the menu context bar; a new one has no bar yet *@
-            <nav class="flex items-center text-sm text-gray-500 mb-3" aria-label="@S["Context_BreadcrumbLabel"]">
-                <a href="menus" class="hover:text-brand-600 transition-colors">@S["Nav_Menus"]</a>
-                <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-                <span class="text-gray-900 font-medium">@T["Edit_PageTitleNew"]</span>
-            </nav>
-        }
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-bold text-gray-900 font-display">@(IsNew ? T["Edit_HeadingNew"] : T["Edit_HeadingEdit"])</h1>
-            </div>
-        </div>
-    </div>
-</div>
+@if (IsNew)
+{
+    @* An existing menu has "Menus › menu" in the menu context bar; a new one has no bar yet *@
+    <nav class="flex items-center text-sm text-gray-500 mb-3" aria-label="@S["Context_BreadcrumbLabel"]">
+        <a href="menus" class="hover:text-brand-600 transition-colors">@S["Nav_Menus"]</a>
+        <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-gray-900 font-medium">@T["Edit_PageTitleNew"]</span>
+    </nav>
+}
+<PageHeader Title="@(IsNew ? T["Edit_HeadingNew"] : T["Edit_HeadingEdit"])" Icon="PageIcons.Menus" Class="mb-8" />
 
 <!-- Content -->
 <div>
