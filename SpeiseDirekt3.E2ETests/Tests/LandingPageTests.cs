@@ -11,13 +11,37 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// The landing page on <c>/</c> (AP10): static SSR with its own document (no circuit, no Tailwind/Bootstrap/blazor.web.js,
 /// nothing external), sections and calls to action, the phone menu sheet, no sideways scrolling, readable without JS,
 /// reduced motion, images and the weight budget, SEO tags, the operator's legal links, and the routing around it
-/// (logged in → <c>/dashboard</c>).
+/// (logged in → <c>/dashboard</c>). The language-dependent tests run for a German and an English browser (AP12).
 /// </summary>
 public class LandingPageTests : E2ETestBase
 {
     public LandingPageTests(E2EFixture fixture) : base(fixture) { }
 
-    private const string Headline = "Ihre Speisekarte, ein Scan entfernt.";
+    /// <summary>What the page says in one language (the copy is in Resources/LandingText.resx).</summary>
+    public sealed record Copy(
+        string Locale, string Lang, string OgLocale, string Title, string Headline, string[] Nav, string FaqTitle,
+        string CostQuestion, string CostAnswer, string AppQuestion, string MadeUp, string DemoData, string Legend,
+        string Register, string Login, string Imprint, string Privacy, string[] ForbiddenClaims);
+
+    private static readonly Copy German = new(
+        "de-DE", "de", "de_DE", "Digitale Speisekarte mit QR-Code | Speise-Direkt", "Ihre Speisekarte, ein Scan entfernt.",
+        ["Funktionen", "Designs", "So funktioniert’s", "FAQ"], "Häufige Fragen",
+        "Was kostet Speise-Direkt?", "Die Registrierung ist kostenlos.", "Brauchen meine Gäste eine App?",
+        "erfundene Restaurant", "Demodaten", "Design in der Vorschau", "Kostenlos registrieren", "Anmelden",
+        "Impressum", "Datenschutz", ["dauerhaft kostenlos", "für immer kostenlos", "Kunden", "Bewertungen von"]);
+
+    private static readonly Copy English = new(
+        "en-US", "en", "en_US", "Digital menu with QR code | Speise-Direkt", "Your menu, one scan away.",
+        ["Features", "Designs", "How it works", "FAQ"], "Frequently asked questions",
+        "What does Speise-Direkt cost?", "Registration is free.", "Do my guests need an app?",
+        "made-up restaurant", "demo data", "Design in the preview", "Register for free", "Log in",
+        "Imprint", "Privacy", ["free forever", "forever free", "customers", "reviews from"]);
+
+    public static TheoryData<string> Languages => new() { "de", "en" };
+
+    private static Copy CopyOf(string language) => language == "de" ? German : English;
+
+    private const string Headline = "Your menu, one scan away.";
 
     /// <summary>Loads <c>/</c> and waits for <c>js/landing.js</c> (it sets <c>data-landing-ready</c>).</summary>
     private static async Task OpenLandingAsync(IPage page)
@@ -27,12 +51,13 @@ public class LandingPageTests : E2ETestBase
         await page.Locator("html[data-landing-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
     }
 
-    private async Task<(IBrowserContext Context, IPage Page)> PhoneAsync(int width = 390, bool javaScript = true, ReducedMotion? motion = null)
+    private async Task<(IBrowserContext Context, IPage Page)> PhoneAsync(int width = 390, bool javaScript = true, ReducedMotion? motion = null,
+        string? locale = null)
     {
         var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, ViewportSize = new ViewportSize { Width = width, Height = 844 },
-            IsMobile = true, HasTouch = true, JavaScriptEnabled = javaScript, ReducedMotion = motion
+            IsMobile = true, HasTouch = true, JavaScriptEnabled = javaScript, ReducedMotion = motion, Locale = locale
         });
         context.SetDefaultTimeout(15_000);
         // Same rule as every test context: nothing leaves the app
@@ -57,24 +82,29 @@ public class LandingPageTests : E2ETestBase
 
     // --- Document ---
 
-    [Fact]
-    public async Task AnonymousRoot_IsStatic_WithItsOwnDocument_AndNoErrors()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task AnonymousRoot_IsStatic_WithItsOwnDocument_AndNoErrors(string language)
     {
+        var copy = CopyOf(language);
+        var (context, page) = await NewContextAsync(copy.Locale);
+        await using var _ = context;
         var origin = new Uri(App.ServerAddress).GetLeftPart(UriPartial.Authority);
         var requests = new List<string>();
         var errors = new List<string>();
         var sockets = new List<string>();
-        Page.Request += (_, r) => { lock (requests) requests.Add(r.Url); };
-        Page.Console += (_, m) => { if (m.Type == "error") lock (errors) errors.Add(m.Text); };
-        Page.PageError += (_, e) => { lock (errors) errors.Add(e); };
-        Page.WebSocket += (_, ws) => { lock (sockets) sockets.Add(ws.Url); };
+        page.Request += (_, r) => { lock (requests) requests.Add(r.Url); };
+        page.Console += (_, m) => { if (m.Type == "error") lock (errors) errors.Add(m.Text); };
+        page.PageError += (_, e) => { lock (errors) errors.Add(e); };
+        page.WebSocket += (_, ws) => { lock (sockets) sockets.Add(ws.Url); };
 
-        await OpenLandingAsync(Page);
-        await LoadAllImagesAsync(Page);
-        await Page.EvaluateAsync("() => window.scrollTo(0, document.documentElement.scrollHeight)");
-        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        await OpenLandingAsync(page);
+        await LoadAllImagesAsync(page);
+        await page.EvaluateAsync("() => window.scrollTo(0, document.documentElement.scrollHeight)");
+        await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        var Page = page;
 
-        await Assertions.Expect(Page.Locator("html")).ToHaveAttributeAsync("lang", "de");
+        await Assertions.Expect(Page.Locator("html")).ToHaveAttributeAsync("lang", copy.Lang);
         await Assertions.Expect(Page.Locator("html[data-landing-page]")).ToHaveCountAsync(1);
         await Assertions.Expect(Page.Locator("html[data-guest-page]")).ToHaveCountAsync(0);
         await Assertions.Expect(Page.Locator("base")).ToHaveCountAsync(0);
@@ -90,14 +120,19 @@ public class LandingPageTests : E2ETestBase
 
     // --- Content and links ---
 
-    [Fact]
-    public async Task Sections_CallsToAction_AndAnchors_AreThere_AndLinkCorrectly()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task Sections_CallsToAction_AndAnchors_AreThere_AndLinkCorrectly(string language)
     {
+        var copy = CopyOf(language);
+        var (context, Page) = await NewContextAsync(copy.Locale);
+        await using var _ = context;
         await OpenLandingAsync(Page);
 
         // One h1, a logical heading order
         await Assertions.Expect(Page.Locator("h1")).ToHaveCountAsync(1);
-        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Level = 1, Name = Headline })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Level = 1, Name = copy.Headline })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.Locator("h1 .lp-mark")).ToHaveCountAsync(1);
         var levels = await Page.EvaluateAsync<int[]>("() => [...document.querySelectorAll('h1,h2,h3,h4,h5,h6')].map(h => +h.tagName[1])");
         levels[0].Should().Be(1);
         for (var i = 1; i < levels.Length; i++)
@@ -107,16 +142,15 @@ public class LandingPageTests : E2ETestBase
             await Assertions.Expect(Page.GetByTestId(id)).ToHaveCountAsync(1);
         await Assertions.Expect(Page.GetByTestId("faq-item")).ToHaveCountAsync(9);
         // The examples are labelled as made up
-        await Assertions.Expect(Page.GetByTestId("footer-demo-note")).ToContainTextAsync("erfundene Restaurant");
-        await Assertions.Expect(Page.GetByTestId("card-analytics")).ToContainTextAsync("Demodaten");
+        await Assertions.Expect(Page.GetByTestId("footer-demo-note")).ToContainTextAsync(copy.MadeUp);
+        await Assertions.Expect(Page.GetByTestId("card-analytics")).ToContainTextAsync(copy.DemoData);
 
         // Calls to action
         foreach (var id in new[] { "landing-register", "hero-register", "steps-register", "cta-register", "footer-register" })
             await Assertions.Expect(Page.GetByTestId(id)).ToHaveAttributeAsync("href", "/Account/Register");
         foreach (var id in new[] { "landing-login", "cta-login", "footer-login" })
             await Assertions.Expect(Page.GetByTestId(id)).ToHaveAttributeAsync("href", "/Account/Login");
-        await Assertions.Expect(Page.GetByTestId("landing-nav").Locator("a"))
-            .ToHaveTextAsync(new[] { "Funktionen", "Designs", "So funktioniert’s", "FAQ" });
+        await Assertions.Expect(Page.GetByTestId("landing-nav").Locator("a")).ToHaveTextAsync(copy.Nav);
 
         // Every in-page link has its target
         var missing = await Page.EvaluateAsync<string[]>("""
@@ -128,7 +162,7 @@ public class LandingPageTests : E2ETestBase
         // An anchor scrolls its section into view below the sticky header
         await Page.GetByTestId("landing-nav").GetByRole(AriaRole.Link, new() { Name = "FAQ" }).ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("#faq$"));
-        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Häufige Fragen" })).ToBeInViewportAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = copy.FaqTitle })).ToBeInViewportAsync();
         await Page.WaitForFunctionAsync("""
             () => { const h = document.querySelector('[data-lp-header]').getBoundingClientRect();
                     const t = document.getElementById('faq').getBoundingClientRect(); return Math.abs(t.top - h.bottom) < 24 || t.top >= h.bottom; }
@@ -143,34 +177,40 @@ public class LandingPageTests : E2ETestBase
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/Account/Login$"));
     }
 
-    [Fact]
-    public async Task Faq_IsNativeDetails_AndHonestAboutCost()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task Faq_IsNativeDetails_AndHonestAboutCost(string language)
     {
+        var copy = CopyOf(language);
+        var (context, Page) = await NewContextAsync(copy.Locale);
+        await using var _ = context;
         await OpenLandingAsync(Page);
 
-        var cost = Page.GetByTestId("faq-item").Filter(new() { HasText = "Was kostet Speise-Direkt?" });
+        var cost = Page.GetByTestId("faq-item").Filter(new() { HasText = copy.CostQuestion });
         await Assertions.Expect(cost).ToHaveJSPropertyAsync("open", false);
         await cost.Locator("summary").ClickAsync();
         await Assertions.Expect(cost).ToHaveJSPropertyAsync("open", true);
-        await Assertions.Expect(cost.Locator(".lp-faq-answer")).ToHaveTextAsync("Die Registrierung ist kostenlos.");
+        await Assertions.Expect(cost.Locator(".lp-faq-answer")).ToHaveTextAsync(copy.CostAnswer);
 
         // Keyboard: Enter on the summary toggles it
-        var app = Page.GetByTestId("faq-item").Filter(new() { HasText = "Brauchen meine Gäste eine App?" });
+        var app = Page.GetByTestId("faq-item").Filter(new() { HasText = copy.AppQuestion });
         await app.Locator("summary").FocusAsync();
         await Page.Keyboard.PressAsync("Enter");
         await Assertions.Expect(app).ToHaveJSPropertyAsync("open", true);
 
         // No prices, no "forever free", no fake proof anywhere on the page
         var text = await Page.Locator("body").InnerTextAsync();
-        text.Should().NotContain("€").And.NotContainAny("dauerhaft kostenlos", "für immer kostenlos", "Kunden", "Bewertungen von");
+        text.Should().NotContain("€").And.NotContainAny(copy.ForbiddenClaims);
     }
 
     // --- Phone menu sheet ---
 
-    [Fact]
-    public async Task PhoneMenuSheet_OpensAndCloses_WithEscape_Backdrop_Button_Link_AndWidening()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task PhoneMenuSheet_OpensAndCloses_WithEscape_Backdrop_Button_Link_AndWidening(string language)
     {
-        var (context, page) = await PhoneAsync();
+        var copy = CopyOf(language);
+        var (context, page) = await PhoneAsync(locale: copy.Locale);
         await using var _ = context;
         await OpenLandingAsync(page);
 
@@ -186,10 +226,10 @@ public class LandingPageTests : E2ETestBase
         await button.ClickAsync();
         await Assertions.Expect(openSheet).ToHaveCountAsync(1);
         await Assertions.Expect(button).ToHaveAttributeAsync("aria-expanded", "true");
-        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = "Funktionen" })).ToBeFocusedAsync();
+        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = copy.Nav[0] })).ToBeFocusedAsync();
         await Assertions.Expect(page.Locator("html[data-lp-menu-open]")).ToHaveCountAsync(1);
-        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = "Kostenlos registrieren" })).ToHaveAttributeAsync("href", "/Account/Register");
-        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = "Anmelden" })).ToHaveAttributeAsync("href", "/Account/Login");
+        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = copy.Register })).ToHaveAttributeAsync("href", "/Account/Register");
+        await Assertions.Expect(sheet.GetByRole(AriaRole.Link, new() { Name = copy.Login })).ToHaveAttributeAsync("href", "/Account/Login");
         await page.Keyboard.PressAsync("Escape");
         await Assertions.Expect(openSheet).ToHaveCountAsync(0);
         await Assertions.Expect(button).ToBeFocusedAsync();
@@ -213,7 +253,7 @@ public class LandingPageTests : E2ETestBase
         await sheet.GetByRole(AriaRole.Link, new() { Name = "FAQ" }).ClickAsync();
         await Assertions.Expect(openSheet).ToHaveCountAsync(0);
         await Assertions.Expect(page).ToHaveURLAsync(new Regex("#faq$"));
-        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Häufige Fragen" })).ToBeInViewportAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = copy.FaqTitle })).ToBeInViewportAsync();
 
         // Widening to the desktop header closes it
         await page.EvaluateAsync("() => window.scrollTo(0, 0)");
@@ -227,12 +267,13 @@ public class LandingPageTests : E2ETestBase
 
     // --- Layout ---
 
-    [Fact]
-    public async Task NoHorizontalOverflow_AtPhoneTabletAndDesktopWidths()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task NoHorizontalOverflow_AtPhoneTabletAndDesktopWidths(string language)
     {
         foreach (var width in new[] { 360, 390, 768, 1024, 1280, 1440 })
         {
-            var (context, page) = await PhoneAsync(width);
+            var (context, page) = await PhoneAsync(width, locale: CopyOf(language).Locale);
             await using var _ = context;
             await OpenLandingAsync(page);
             await LoadAllImagesAsync(page);
@@ -276,9 +317,13 @@ public class LandingPageTests : E2ETestBase
         await Assertions.Expect(header).Not.ToHaveAttributeAsync("data-scrolled", new Regex(".*"));
     }
 
-    [Fact]
-    public async Task ThemeSwitcher_ShowsTheChosenDesign_ByMouseAndKeyboard()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task ThemeSwitcher_ShowsTheChosenDesign_ByMouseAndKeyboard(string language)
     {
+        var copy = CopyOf(language);
+        var (context, Page) = await NewContextAsync(copy.Locale);
+        await using var _ = context;
         await OpenLandingAsync(Page);
         var shots = Page.GetByTestId("theme-shot");
         await Assertions.Expect(shots).ToHaveCountAsync(6);
@@ -308,15 +353,17 @@ public class LandingPageTests : E2ETestBase
         await ExpectShownAsync("modern");
         await Page.Keyboard.PressAsync("ArrowRight");
         await ExpectShownAsync("classic");
-        await Assertions.Expect(Page.GetByRole(AriaRole.Group, new() { Name = "Design in der Vorschau" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Group, new() { Name = copy.Legend })).ToBeVisibleAsync();
     }
 
     // --- Without JS, reduced motion ---
 
-    [Fact]
-    public async Task WithoutJavaScript_EverySectionIsReadable_AndTheFaqMenuAndSwitcherWork()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task WithoutJavaScript_EverySectionIsReadable_AndTheFaqMenuAndSwitcherWork(string language)
     {
-        var (context, page) = await PhoneAsync(javaScript: false);
+        var copy = CopyOf(language);
+        var (context, page) = await PhoneAsync(javaScript: false, locale: copy.Locale);
         await using var _ = context;
         var response = await page.GotoAsync("/");
         response!.Status.Should().Be(200);
@@ -331,7 +378,7 @@ public class LandingPageTests : E2ETestBase
         hidden.Should().Be(0, "nothing waits for a script to fade in");
 
         // FAQ
-        var cost = page.GetByTestId("faq-item").Filter(new() { HasText = "Was kostet Speise-Direkt?" });
+        var cost = page.GetByTestId("faq-item").Filter(new() { HasText = copy.CostQuestion });
         await cost.Locator("summary").ClickAsync();
         await Assertions.Expect(cost.Locator(".lp-faq-answer")).ToBeVisibleAsync();
 
@@ -380,9 +427,13 @@ public class LandingPageTests : E2ETestBase
 
     // --- Images ---
 
-    [Fact]
-    public async Task Images_HaveAltAndDimensions_Load_AndStayWithinTheBudget()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task Images_HaveAltAndDimensions_Load_AndStayWithinTheBudget(string language)
     {
+        var copy = CopyOf(language);
+        var (context, Page) = await NewContextAsync(copy.Locale);
+        await using var _ = context;
         var responses = new List<IResponse>();
         Page.Response += (_, r) => { lock (responses) responses.Add(r); };
         async Task<long> BytesAsync(Func<string, bool> path)
@@ -433,31 +484,45 @@ public class LandingPageTests : E2ETestBase
         lock (responses) images = responses.Where(r => new Uri(r.Url).AbsolutePath.StartsWith("/images/landing/")).ToArray();
         images.Should().NotBeEmpty().And.OnlyContain(r => r.Status == 200);
         images.Should().OnlyContain(r => new Uri(r.Url).AbsolutePath.EndsWith(".webp"));
+
+        // The back-office screenshots are the browser language's set, the guest menu's are shared
+        var backOffice = images.Select(r => new Uri(r.Url).AbsolutePath)
+            .Where(p => p.Contains("/qr-calendar-") || p.Contains("/editor-preview-") || p.Contains("/analytics-")).ToArray();
+        backOffice.Should().NotBeEmpty().And.OnlyContain(p => p.Contains($"-{copy.Lang}.") || p.Contains($"-{copy.Lang}-"),
+            "the page shows the back office in the visitor's language");
+        var alt = await Page.Locator("img[src*='/qr-calendar-']").GetAttributeAsync("alt");
+        alt.Should().Contain(language == "de" ? "Kalender" : "calendar");
     }
 
     public sealed record ImageInfo(string Src, string? Alt, string? Width, string? Height, bool Visible, bool Loaded, bool Product);
 
     // --- SEO ---
 
-    [Fact]
-    public async Task Head_HasTitle_Description_Canonical_AndOpenGraph()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task Head_HasTitle_Description_Canonical_AndOpenGraph(string language)
     {
+        var copy = CopyOf(language);
+        var (context, Page) = await NewContextAsync(copy.Locale);
+        await using var _ = context;
         await OpenLandingAsync(Page);
 
-        await Assertions.Expect(Page).ToHaveTitleAsync("Digitale Speisekarte mit QR-Code | Speise-Direkt");
+        await Assertions.Expect(Page).ToHaveTitleAsync(copy.Title);
         string? Meta(string selector) => Page.Locator(selector).GetAttributeAsync("content").GetAwaiter().GetResult();
         var description = Meta("meta[name='description']");
-        description.Should().Contain("QR-Code");
+        description.Should().Contain(language == "de" ? "QR-Code" : "QR code");
         description!.Length.Should().BeLessThanOrEqualTo(160);
         (await Page.Locator("link[rel='canonical']").GetAttributeAsync("href")).Should().Be(App.ServerAddress + "/");
         Meta("meta[property='og:url']").Should().Be(App.ServerAddress + "/");
         Meta("meta[property='og:type']").Should().Be("website");
-        Meta("meta[property='og:locale']").Should().Be("de_DE");
-        Meta("meta[property='og:title']").Should().Be("Digitale Speisekarte mit QR-Code | Speise-Direkt");
+        Meta("meta[property='og:locale']").Should().Be(copy.OgLocale);
+        Meta("meta[property='og:title']").Should().Be(copy.Title);
+        // One URL serves both languages: no hreflang alternates
+        await Assertions.Expect(Page.Locator("link[rel='alternate'][hreflang]")).ToHaveCountAsync(0);
         Meta("meta[property='og:description']").Should().NotBeNullOrWhiteSpace();
         Meta("meta[name='twitter:card']").Should().Be("summary_large_image");
         var image = Meta("meta[property='og:image']");
-        image.Should().StartWith(App.ServerAddress + "/images/landing/og");
+        image.Should().StartWith(App.ServerAddress + $"/images/landing/og-{copy.Lang}");
         Meta("meta[property='og:image:width']").Should().Be("1200");
         Meta("meta[property='og:image:height']").Should().Be("630");
 
@@ -481,14 +546,18 @@ public class LandingPageTests : E2ETestBase
 
     // --- Operator settings ---
 
-    [Fact]
-    public async Task LegalLinks_AndContact_AreHiddenByDefault_AndShownWhenConfigured()
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task LegalLinks_AndContact_AreHiddenByDefault_AndShownWhenConfigured(string language)
     {
+        var copy = CopyOf(language);
+        var (context, Page) = await NewContextAsync(copy.Locale);
+        await using var _ = context;
         await OpenLandingAsync(Page);
         await Assertions.Expect(Page.GetByTestId("footer-legal")).ToHaveCountAsync(0);
         await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByText("Impressum")).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByText("Datenschutz")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByText(copy.Imprint)).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByText(copy.Privacy)).ToHaveCountAsync(0);
 
         var configuration = App.ServerServices.GetRequiredService<IConfiguration>();
         try
@@ -498,9 +567,9 @@ public class LandingPageTests : E2ETestBase
             configuration["Landing:ContactEmail"] = "hallo@example.com";
             await OpenLandingAsync(Page);
             await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveAttributeAsync("href", "https://example.com/impressum");
-            await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveTextAsync("Impressum");
+            await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveTextAsync(copy.Imprint);
             await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveAttributeAsync("href", "/datenschutz");
-            await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveTextAsync("Datenschutz");
+            await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveTextAsync(copy.Privacy);
             await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveAttributeAsync("href", "mailto:hallo@example.com");
             await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveTextAsync("hallo@example.com");
 

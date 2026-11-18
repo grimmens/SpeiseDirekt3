@@ -16,17 +16,19 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// Not a test in the usual sense: the tool that makes the landing page's product images from our own app, and screenshots
 /// of the landing page for design reviews. Runs only when <c>E2E_SCREENSHOT_DIR</c> is set.
 /// <para><see cref="Capture_landing_images"/> seeds the <see cref="GuestDemoData"/> menu ("Trattoria Lago") in all six
-/// themes plus a holiday calendar and two weeks of scans, shoots the guest menu on a phone (390 × 844, 2x: every theme,
-/// the item sheet, the filter sheet, the restaurant info sheet) and the back office on a desktop (2x: the
-/// menu editor with its phone frame, the QR calendar in December, the analytics page), and writes every image of
-/// <see cref="LandingImages"/> as WebP (1x and 2x, exactly the catalog's sizes) plus the Open Graph image
-/// (<c>og.png</c>, 1200 × 630, composed from the hero's phone shot). The WebP files go to <c>E2E_LANDING_IMAGES_DIR</c>
+/// themes plus a holiday calendar per language and two weeks of scans, shoots the guest menu on a phone (390 × 844, 2x:
+/// every theme, the item sheet, the filter sheet, the restaurant info sheet — the demo menu is German content, one set)
+/// and the back office on a desktop in German and in English (2x: the menu editor with its phone frame, the QR
+/// calendar in December, the analytics page — <c>…-de.webp</c> / <c>…-en.webp</c>), and writes every image of
+/// <see cref="LandingImages"/> as WebP (1x and 2x, exactly the catalog's sizes) plus the Open Graph images
+/// (<c>og-de.png</c> / <c>og-en.png</c>, 1200 × 630, the headline from LandingText, composed with the hero's phone
+/// shot). The WebP files go to <c>E2E_LANDING_IMAGES_DIR</c>
 /// (point it at <c>SpeiseDirekt3/wwwroot/images/landing</c> to update the page) or else to
 /// <c>$E2E_SCREENSHOT_DIR/landing-images</c>; the raw PNGs to <c>$E2E_SCREENSHOT_DIR/landing-raw</c>. Its own browser
 /// contexts load the back office's Tailwind from the CDN (as in production).</para>
 /// <para><see cref="Capture_landing_page"/> shoots the landing page at 360, 390, 768, 1024, 1280 and 1440 px (first screen
 /// and full page, reduced motion so nothing waits for a fade-in), the open phone menu, the page without JS and a few
-/// theme switches, into <c>$E2E_SCREENSHOT_DIR/landing-page</c>.</para>
+/// theme switches, in German and English (or only <c>E2E_LOCALE</c>), into <c>$E2E_SCREENSHOT_DIR/landing-page/{de|en}</c>.</para>
 /// <code>
 /// E2E_SCREENSHOT_DIR=/tmp/shots E2E_LANDING_IMAGES_DIR=$PWD/SpeiseDirekt3/wwwroot/images/landing \
 ///   dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~LandingScreenshotTour.Capture_landing_images
@@ -58,7 +60,11 @@ public class LandingScreenshotTour : QrCalendarTestBase
         foreach (var theme in LandingImages.Themes)
             menus[theme.Key] = await GuestDemoData.SeedAsync(App, ownerId, Enum.Parse<DesignTheme>(theme.Key, ignoreCase: true));
         var modern = menus["modern"];
-        var (holidayQr, holidayYear) = await SeedHolidayCalendarAsync(ownerId, modern.MenuId);
+        var holidays = new Dictionary<string, (Guid QrId, int Year)>
+        {
+            ["de"] = await SeedHolidayCalendarAsync(ownerId, modern.MenuId, "Festtage (Kalender)", "Weihnachtsmenü", "Fischfreitag", "Silvester", "Mittagskarte"),
+            ["en"] = await SeedHolidayCalendarAsync(ownerId, modern.MenuId, "Holidays (calendar)", "Christmas menu", "Fish Friday", "New Year's Eve", "Lunch menu")
+        };
         await SeedScansAsync(ownerId, modern);
 
         var state = await Context.StorageStateAsync();
@@ -69,13 +75,6 @@ public class LandingScreenshotTour : QrCalendarTestBase
         });
         phoneContext.SetDefaultTimeout(15_000);
         var phone = await phoneContext.NewPageAsync();
-        await using var desktopContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
-        {
-            BaseURL = App.ServerAddress, StorageState = state, ReducedMotion = ReducedMotion.Reduce,
-            ViewportSize = new ViewportSize { Width = DesktopWidth, Height = 900 }, DeviceScaleFactor = 2
-        });
-        desktopContext.SetDefaultTimeout(20_000);
-        var desktop = await desktopContext.NewPageAsync();
 
         async Task<string> PhoneShot(string name)
         {
@@ -112,30 +111,44 @@ public class LandingScreenshotTour : QrCalendarTestBase
         shots[LandingImages.GuestInfo.Name] = await PhoneShot(LandingImages.GuestInfo.Name);
         await phone.Keyboard.PressAsync("Escape");
 
-        // --- The back office on a desktop (cropped to the catalog's aspect ratio) ---
-        await GotoInteractiveAsync(desktop, $"/menu/edit/{modern.MenuId}");
-        var preview = desktop.FrameLocator("[data-testid='menu-preview-iframe']");
-        await preview.Locator("html[data-guest-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
-        shots[LandingImages.Editor.Name] = await CropShotAsync(desktop, desktop.Locator("div[class*='lg:grid-cols-2']").First,
-            LandingImages.Editor, Path.Combine(raw, "editor-preview.png"), padding: 16);
-
-        await GotoInteractiveAsync(desktop, $"/qrcode/edit/{holidayQr}");
-        await WaitForCalendarAsync(desktop);
-        await GotoMonthAsync(desktop, holidayYear, 12);
-        shots[LandingImages.Calendar.Name] = await CropShotAsync(desktop, CalendarOf(desktop),
-            LandingImages.Calendar, Path.Combine(raw, "qr-calendar.png"), padding: 12);
-
-        await GotoInteractiveAsync(desktop, "/analytics");
-        await Assertions.Expect(desktop.GetByTestId("analytics-summary")).ToBeVisibleAsync();
-        await desktop.WaitForFunctionAsync("() => document.querySelectorAll('canvas').length > 0");
-        shots[LandingImages.Analytics.Name] = await CropShotAsync(desktop, desktop.GetByTestId("analytics-summary"),
-            LandingImages.Analytics, Path.Combine(raw, "analytics.png"), padding: 16);
-
-        // --- WebP 1x/2x in the catalog's sizes ---
-        var report = new StringBuilder();
-        foreach (var image in LandingImages.All)
+        // --- The back office on a desktop, once per language (cropped to the catalog's aspect ratio) ---
+        foreach (var language in LandingImages.Languages)
         {
-            using var source = await ImageSharpImage.LoadAsync(shots[image.Name]);
+            await using var desktopContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
+            {
+                BaseURL = App.ServerAddress, StorageState = state, ReducedMotion = ReducedMotion.Reduce,
+                ViewportSize = new ViewportSize { Width = DesktopWidth, Height = 900 }, DeviceScaleFactor = 2,
+                Locale = language == "de" ? E2ESettings.GermanLocale : E2ESettings.DefaultLocale
+            });
+            desktopContext.SetDefaultTimeout(20_000);
+            var desktop = await desktopContext.NewPageAsync();
+
+            await GotoInteractiveAsync(desktop, $"/menu/edit/{modern.MenuId}");
+            var preview = desktop.FrameLocator("[data-testid='menu-preview-iframe']");
+            await preview.Locator("html[data-guest-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
+            shots[$"{LandingImages.Editor.Name}-{language}"] = await CropShotAsync(desktop, desktop.Locator("div[class*='lg:grid-cols-2']").First,
+                LandingImages.Editor, Path.Combine(raw, $"editor-preview-{language}.png"), padding: 16);
+
+            var (holidayQr, holidayYear) = holidays[language];
+            await GotoInteractiveAsync(desktop, $"/qrcode/edit/{holidayQr}");
+            await WaitForCalendarAsync(desktop);
+            await GotoMonthAsync(desktop, holidayYear, 12);
+            shots[$"{LandingImages.Calendar.Name}-{language}"] = await CropShotAsync(desktop, CalendarOf(desktop),
+                LandingImages.Calendar, Path.Combine(raw, $"qr-calendar-{language}.png"), padding: 12);
+
+            await GotoInteractiveAsync(desktop, "/analytics");
+            await Assertions.Expect(desktop.GetByTestId("analytics-summary")).ToBeVisibleAsync();
+            await desktop.WaitForFunctionAsync("() => document.querySelectorAll('canvas').length > 0");
+            shots[$"{LandingImages.Analytics.Name}-{language}"] = await CropShotAsync(desktop, desktop.GetByTestId("analytics-summary"),
+                LandingImages.Analytics, Path.Combine(raw, $"analytics-{language}.png"), padding: 16);
+        }
+
+        // --- WebP 1x/2x in the catalog's sizes (a per-language image once per language) ---
+        var report = new StringBuilder();
+        foreach (var (image, language) in LandingImages.All.SelectMany(i =>
+                     i.PerLanguage ? LandingImages.Languages.Select(l => (i, l)) : [(i, LandingImages.Languages[0])]))
+        {
+            using var source = await ImageSharpImage.LoadAsync(shots[image.PerLanguage ? $"{image.Name}-{language}" : image.Name]);
             foreach (var scale in new[] { 1, 2 })
             {
                 using var resized = source.Clone(x => x.Resize(new ResizeOptions
@@ -144,7 +157,7 @@ public class LandingScreenshotTour : QrCalendarTestBase
                     Mode = ResizeMode.Stretch,
                     Sampler = KnownResamplers.Lanczos3
                 }));
-                var path = Path.Combine(output, Path.GetFileName(image.PathFor(scale)));
+                var path = Path.Combine(output, Path.GetFileName(image.PathFor(scale, language)));
                 await resized.SaveAsWebpAsync(path, new WebpEncoder
                 {
                     FileFormat = WebpFileFormatType.Lossy,
@@ -156,10 +169,13 @@ public class LandingScreenshotTour : QrCalendarTestBase
             }
         }
 
-        // --- Open Graph image ---
-        var og = Path.Combine(output, Path.GetFileName(LandingImages.OpenGraph));
-        await ComposeOpenGraphAsync(shots[LandingImages.Hero.Name], og);
-        report.AppendLine(CultureInfo.InvariantCulture, $"{Path.GetFileName(og)}\t{LandingImages.OpenGraphWidth}x{LandingImages.OpenGraphHeight}\t{new FileInfo(og).Length / 1024.0:0.0} KB");
+        // --- Open Graph images, one per language ---
+        foreach (var language in LandingImages.Languages)
+        {
+            var og = Path.Combine(output, Path.GetFileName(LandingImages.OpenGraphFor(language)));
+            await ComposeOpenGraphAsync(shots[LandingImages.Hero.Name], og, language);
+            report.AppendLine(CultureInfo.InvariantCulture, $"{Path.GetFileName(og)}\t{LandingImages.OpenGraphWidth}x{LandingImages.OpenGraphHeight}\t{new FileInfo(og).Length / 1024.0:0.0} KB");
+        }
         await File.WriteAllTextAsync(Path.Combine(dir, "landing-images.txt"), report.ToString());
     }
 
@@ -168,7 +184,15 @@ public class LandingScreenshotTour : QrCalendarTestBase
     {
         var dir = Directory;
         if (dir is null) return; // opt-in only
-        var target = Path.Combine(dir, "landing-page");
+        var locales = Environment.GetEnvironmentVariable(E2ESettings.LocaleEnvVar) is { Length: > 0 } only
+            ? new[] { only }
+            : new[] { E2ESettings.GermanLocale, E2ESettings.DefaultLocale };
+        foreach (var locale in locales)
+            await CaptureLandingPageAsync(Path.Combine(dir, "landing-page", locale[..2]), locale);
+    }
+
+    private async Task CaptureLandingPageAsync(string target, string locale)
+    {
         System.IO.Directory.CreateDirectory(target);
 
         foreach (var (width, height, scale) in new[] { (360, 780, 2), (390, 844, 2), (768, 1024, 2), (1024, 768, 1), (1280, 800, 1), (1440, 900, 1) })
@@ -176,7 +200,7 @@ public class LandingScreenshotTour : QrCalendarTestBase
             var mobile = width < 1024;
             await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
             {
-                BaseURL = App.ServerAddress, ReducedMotion = ReducedMotion.Reduce,
+                BaseURL = App.ServerAddress, ReducedMotion = ReducedMotion.Reduce, Locale = locale,
                 ViewportSize = new ViewportSize { Width = width, Height = height }, DeviceScaleFactor = scale, IsMobile = mobile, HasTouch = mobile
             });
             var page = await context.NewPageAsync();
@@ -209,7 +233,7 @@ public class LandingScreenshotTour : QrCalendarTestBase
         // Without JavaScript (390 px, full page)
         await using var noJs = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
-            BaseURL = App.ServerAddress, JavaScriptEnabled = false,
+            BaseURL = App.ServerAddress, JavaScriptEnabled = false, Locale = locale,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true
         });
         var plain = await noJs.NewPageAsync();
@@ -257,11 +281,16 @@ public class LandingScreenshotTour : QrCalendarTestBase
     }
 
     /// <summary>
-    /// The Open Graph image: brand stage with the logo, the headline and the hero's phone. An HTML composition rendered
-    /// on the app's origin (fonts, brand tokens and logo come from the app), saved as PNG.
+    /// The Open Graph image of <paramref name="language"/>: brand stage with the logo, the headline (LandingText
+    /// <c>Og_Headline</c>/<c>Og_Text</c>) and the hero's phone. An HTML composition rendered on the app's origin (fonts,
+    /// brand tokens and logo come from the app), saved as PNG.
     /// </summary>
-    private async Task ComposeOpenGraphAsync(string phoneShot, string path)
+    private async Task ComposeOpenGraphAsync(string phoneShot, string path, string language)
     {
+        var culture = CultureInfo.GetCultureInfo(language);
+        string Text(string key) => System.Net.WebUtility.HtmlEncode(SpeiseDirekt3.LandingText.ResourceManager.GetString(key, culture)!);
+        var headline = Text("Og_Headline").Replace("[", "<mark>").Replace("]", "</mark>");
+        var text = Text("Og_Text");
         await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress,
@@ -273,7 +302,7 @@ public class LandingScreenshotTour : QrCalendarTestBase
         var phone = Convert.ToBase64String(await File.ReadAllBytesAsync(phoneShot));
         await page.SetContentAsync($$"""
             <!DOCTYPE html>
-            <html lang="de"><head>
+            <html lang="{{language}}"><head>
             <link rel="stylesheet" href="/css/fonts.css"><link rel="stylesheet" href="/css/brand.css">
             <style>
               * { box-sizing: border-box; margin: 0; }
@@ -301,8 +330,8 @@ public class LandingScreenshotTour : QrCalendarTestBase
               <div class="dots"></div><div class="glow"></div>
               <div class="copy">
                 <img src="/images/brand/logo-inverse.svg" alt="">
-                <h1>Ihre Speisekarte, <mark>ein&nbsp;Scan entfernt.</mark></h1>
-                <p>Die digitale Speisekarte mit QR-Code – ohne App für Ihre Gäste.</p>
+                <h1>{{headline}}</h1>
+                <p>{{text}}</p>
               </div>
               <div class="phone-wrap"><span class="corner tl"></span><span class="corner tr"></span>
                 <div class="phone"><img src="data:image/png;base64,{{phone}}" alt=""></div></div>
@@ -315,11 +344,13 @@ public class LandingScreenshotTour : QrCalendarTestBase
     }
 
     /// <summary>
-    /// The QR code "Festtage (Kalender)" with the fallback menu <paramref name="fallbackMenuId"/>: the Christmas menu from
-    /// the 24th to the 26th of December, a weekly fish Friday from November into January, New Year's Eve; plus a lunch
-    /// menu. Returns the code and the year of the December shown.
+    /// A QR code (<paramref name="title"/>, e.g. "Festtage (Kalender)") with the fallback menu
+    /// <paramref name="fallbackMenuId"/>: the Christmas menu from the 24th to the 26th of December, a weekly fish Friday
+    /// from November into January, New Year's Eve; plus a lunch menu — the menus named in the shot's language. Returns the
+    /// code and the year of the December shown.
     /// </summary>
-    private async Task<(Guid QrId, int Year)> SeedHolidayCalendarAsync(Guid ownerId, Guid fallbackMenuId)
+    private async Task<(Guid QrId, int Year)> SeedHolidayCalendarAsync(Guid ownerId, Guid fallbackMenuId, string title,
+        string christmasName, string fishName, string newYearName, string lunchName)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         var year = today.Month == 12 && today.Day > 26 ? today.Year + 1 : today.Year;
@@ -328,13 +359,13 @@ public class LandingScreenshotTour : QrCalendarTestBase
         var lastFriday = new DateOnly(year + 1, 1, 31);
         while (lastFriday.DayOfWeek != DayOfWeek.Friday) lastFriday = lastFriday.AddDays(-1);
 
-        var christmas = await SeedMenuAsync(ownerId, "Weihnachtsmenü");
-        var fish = await SeedMenuAsync(ownerId, "Fischfreitag");
-        var newYear = await SeedMenuAsync(ownerId, "Silvester");
-        await SeedMenuAsync(ownerId, "Mittagskarte");
+        var christmas = await SeedMenuAsync(ownerId, christmasName);
+        var fish = await SeedMenuAsync(ownerId, fishName);
+        var newYear = await SeedMenuAsync(ownerId, newYearName);
+        await SeedMenuAsync(ownerId, lunchName);
         var qr = await SeedQrAsync(ownerId, new QRCode
         {
-            Title = "Festtage (Kalender)", IsCalendarBased = true, MenuId = fallbackMenuId,
+            Title = title, IsCalendarBased = true, MenuId = fallbackMenuId,
             CalendarEntries = new List<CalendarEntry>
             {
                 Calendar(firstFriday, fish, until: lastFriday, weekly: DayOfWeek.Friday),

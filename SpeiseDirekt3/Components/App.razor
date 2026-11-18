@@ -8,9 +8,9 @@
        and the landing page (/ — Components/Landing). Static SSR, own assets only, no Tailwind CDN, Bootstrap or
        blazor.web.js. No <base href>: every URL on these pages is absolute (fragment and ?item= links must stay on the page).
        lang: the guest menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages — never the browser's),
-       the landing page "de" (its copy is German). *@
+       the landing page the request's language (AppCultures: Accept-Language). *@
     var guest = Document == PageDocument.Guest;
-    <html lang="@(guest ? GuestDocument.Language : "de")" data-guest-page="@guest" data-landing-page="@(!guest)">
+    <html lang="@(guest ? GuestDocument.Language : AppCultures.HtmlLang)" data-guest-page="@guest" data-landing-page="@(!guest)">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />

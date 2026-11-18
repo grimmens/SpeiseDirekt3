@@ -163,7 +163,7 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
     {
         await Page.GotoAsync("/");
 
-        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Ihre Speisekarte, ein Scan entfernt." })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Your menu, one scan away." })).ToBeVisibleAsync();
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Welcome back" })).ToHaveCountAsync(0);
     }
 

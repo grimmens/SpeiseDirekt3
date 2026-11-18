@@ -1,25 +1,26 @@
+@inject IStringLocalizer<LandingText> T
 @* The landing page's header: sticky, condensed once the page is scrolled (data-scrolled, js/landing.js). From 1024 px
    logo, the section anchors, "Anmelden" and the CTA; narrower the CTA and a menu button. Without JS the menu button
    is a link to the footer's navigation (#lp-footer-nav); with JS it opens the menu sheet (LandingMenu, <dialog>). *@
 <header class="lp-header" data-lp-header data-testid="landing-header">
     <div class="lp-container lp-header-inner">
-        <a class="lp-brand" href="/" aria-label="Speise-Direkt, Startseite" data-testid="landing-brand">
+        <a class="lp-brand" href="/" aria-label="@T["BrandHome"]" data-testid="landing-brand">
             <BrandLogo Height="32" Alt="" Class="lp-brand-logo" TestId="landing-logo" />
         </a>
-        <nav class="lp-nav" aria-label="Hauptnavigation" data-testid="landing-nav">
+        <nav class="lp-nav" aria-label="@T["NavLabel"]" data-testid="landing-nav">
             <ul role="list">
-                @foreach (var (id, label) in LandingPage.Sections)
+                @foreach (var (id, labelKey) in LandingPage.Sections)
                 {
-                    <li><a class="lp-nav-link" href="#@id">@label</a></li>
+                    <li><a class="lp-nav-link" href="#@id">@T[labelKey]</a></li>
                 }
             </ul>
         </nav>
         <div class="lp-header-actions">
-            <a class="lp-text-link lp-header-login" href="/Account/Login" data-testid="landing-login">Anmelden</a>
+            <a class="lp-text-link lp-header-login" href="/Account/Login" data-testid="landing-login">@T["LogIn"]</a>
             <a class="lp-button lp-button--primary lp-header-cta" href="/Account/Register" data-testid="landing-register">
-                <span class="lp-cta-long">Kostenlos registrieren</span><span class="lp-cta-short" aria-hidden="true">Registrieren</span>
+                <span class="lp-cta-long">@T["RegisterFree"]</span><span class="lp-cta-short" aria-hidden="true">@T["RegisterShort"]</span>
             </a>
-            <a class="lp-icon-button lp-menu-button" href="#lp-footer-nav" aria-label="Menü" data-lp-menu-open
+            <a class="lp-icon-button lp-menu-button" href="#lp-footer-nav" aria-label="@T["MenuButton"]" data-lp-menu-open
                data-testid="landing-menu-button">
                 <LandingIcon Name="menu" StrokeWidth="2" />
             </a>
@@ -29,23 +30,23 @@
 
 @* The menu sheet below 1024 px: a native modal <dialog>, opened by the menu button (js/landing.js). Escape, the
    backdrop, the close button and a followed link close it; it closes as well when the window widens to 1024 px. *@
-<dialog class="lp-menu" id="lp-menu" aria-label="Menü" data-lp-menu data-testid="landing-menu">
+<dialog class="lp-menu" id="lp-menu" aria-label="@T["MenuButton"]" data-lp-menu data-testid="landing-menu">
     <div class="lp-menu-panel">
         <div class="lp-menu-head">
-            <a class="lp-brand" href="/" aria-label="Speise-Direkt, Startseite">
+            <a class="lp-brand" href="/" aria-label="@T["BrandHome"]">
                 <BrandLogo Height="30" Alt="" TestId="landing-menu-logo" />
             </a>
-            <button type="button" class="lp-icon-button" aria-label="Menü schließen" data-lp-menu-close data-testid="landing-menu-close">
+            <button type="button" class="lp-icon-button" aria-label="@T["MenuClose"]" data-lp-menu-close data-testid="landing-menu-close">
                 <LandingIcon Name="close" StrokeWidth="2" />
             </button>
         </div>
-        <nav aria-label="Abschnitte">
+        <nav aria-label="@T["SectionsLabel"]">
             <ul role="list" class="lp-menu-links">
-                @foreach (var (id, label) in LandingPage.Sections)
+                @foreach (var (id, labelKey) in LandingPage.Sections)
                 {
                     <li>
                         <a class="lp-menu-link" href="#@id" data-lp-menu-link>
-                            <span>@label</span>
+                            <span>@T[labelKey]</span>
                             <LandingIcon Name="arrow-right" />
                         </a>
                     </li>
@@ -53,8 +54,8 @@
             </ul>
         </nav>
         <div class="lp-menu-actions">
-            <a class="lp-button lp-button--secondary lp-button--lg" href="/Account/Login" data-lp-menu-link>Anmelden</a>
-            <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-lp-menu-link>Kostenlos registrieren</a>
+            <a class="lp-button lp-button--secondary lp-button--lg" href="/Account/Login" data-lp-menu-link>@T["LogIn"]</a>
+            <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-lp-menu-link>@T["RegisterFree"]</a>
         </div>
     </div>
 </dialog>

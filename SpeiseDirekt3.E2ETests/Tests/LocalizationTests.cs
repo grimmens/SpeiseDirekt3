@@ -53,7 +53,7 @@ public class LocalizationTests : BackOfficeTestBase
     [InlineData(null, "de")]
     public async Task AcceptLanguage_ChoosesTheLanguage_OfTheLoginAndTheLandingPage(string? acceptLanguage, string expected)
     {
-        foreach (var url in new[] { "/Account/Login" })
+        foreach (var url in new[] { "/Account/Login", "/" })
         {
             using var response = await GetAsync(url, acceptLanguage);
             response.StatusCode.Should().Be(System.Net.HttpStatusCode.OK, url);
@@ -87,6 +87,10 @@ public class LocalizationTests : BackOfficeTestBase
             await using var _ = context;
             await page.GotoAsync("/Account/Login");
             await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", expected);
+            await page.GotoAsync("/");
+            await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", expected);
+            await Assertions.Expect(page.Locator("h1")).ToHaveTextAsync(expected == "de" ? "Ihre Speisekarte, ein Scan entfernt." : "Your menu, one scan away.");
+            await Assertions.Expect(page.Locator("meta[property='og:locale']")).ToHaveAttributeAsync("content", expected == "de" ? "de_DE" : "en_US");
         }
     }
 

@@ -103,6 +103,23 @@ public class ResourceCompletenessTests
         }
     }
 
+    /// <summary>The landing page's keys kept in data (theme names, image alt texts, FAQ pairs) exist in LandingText.</summary>
+    [Fact]
+    public void LandingCatalog_KeysExist()
+    {
+        var landing = Entries(typeof(SpeiseDirekt3.LandingText), CultureInfo.InvariantCulture);
+        foreach (var theme in SpeiseDirekt3.Components.Landing.LandingImages.Themes)
+            landing.Should().ContainKey(theme.LabelKey);
+        foreach (var image in SpeiseDirekt3.Components.Landing.LandingImages.All
+                     .Append(SpeiseDirekt3.Components.Landing.LandingImages.Hero))
+        {
+            landing.Should().ContainKey(image.AltKey);
+            if (image.AltArgumentKey is { } argument) landing.Should().ContainKey(argument);
+        }
+        foreach (var key in SpeiseDirekt3.Components.Landing.LandingPage.Faq)
+            landing.Should().ContainKeys(key + "_Q", key + "_A");
+    }
+
     // --- Keys used in code ---
 
     /// <summary>The repository root (the folder with SpeiseDirekt3.sln), found from the test binaries upwards.</summary>

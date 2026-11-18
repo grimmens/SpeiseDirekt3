@@ -1,8 +1,15 @@
-@* A product screenshot (LandingImages): 1x/2x WebP by fingerprinted URL, width/height reserved (no layout shift),
-   lazy unless Eager (the hero's image, fetchpriority high). *@
-<img src="@Assets.Absolute(Image.PathFor(1))"
-     srcset="@($"{Assets.Absolute(Image.PathFor(1))} 1x, {Assets.Absolute(Image.PathFor(2))} 2x")"
-     width="@Image.Width" height="@Image.Height" alt="@(Alt ?? Image.Alt)"
+@inject IStringLocalizer<LandingText> T
+@* A product screenshot (LandingImages): 1x/2x WebP by fingerprinted URL — the request's language set for a back-office
+   shot —, width/height reserved (no layout shift), lazy unless Eager (the hero's image, fetchpriority high), the alt
+   text from LandingText. *@
+@{
+    var language = AppCultures.HtmlLang;
+    var one = Assets.Absolute(Image.PathFor(1, language));
+    var two = Assets.Absolute(Image.PathFor(2, language));
+}
+<img src="@one"
+     srcset="@($"{one} 1x, {two} 2x")"
+     width="@Image.Width" height="@Image.Height" alt="@(Alt ?? AltText)"
      loading="@(Eager ? "eager" : "lazy")" fetchpriority="@(Eager ? "high" : null)" decoding="@(Eager ? "sync" : "async")"
      class="@Class" data-testid="@TestId" @attributes="Attributes" />
 
@@ -19,4 +26,6 @@
     [Parameter] public string? TestId { get; set; }
 
     [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? Attributes { get; set; }
+
+    private string AltText => Image.AltArgumentKey is { } argument ? T[Image.AltKey, T[argument].Value] : T[Image.AltKey];
 }
