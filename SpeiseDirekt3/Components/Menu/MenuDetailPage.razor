@@ -7,9 +7,11 @@
 @inject INotificationService NotificationService
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
+@inject IStringLocalizer<MenusText> T
+@inject IStringLocalizer<CommonText> C
 @attribute [Authorize]
 
-<PageTitle>@(menu?.Name ?? "Menu") - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", menu?.Name ?? T["Detail_TitleFallback"]]</PageTitle>
 
 <!-- Header -->
 <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
@@ -21,11 +23,11 @@
                     <h1 class="text-3xl font-bold text-gray-900 font-display break-words min-w-0">@menu?.Name</h1>
                     @if (menu != null)
                     {
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800" title="Design theme">
-                            @menu.Theme
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800" title="@T["Badge_Theme"]">
+                            @T.ThemeName(menu.Theme)
                         </span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" title="Menu language">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="mr-1 shrink-0" aria-hidden="true"><path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286zm1.634-.736L5.5 3.956h-.049l-.679 2.022z"/> <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm7.138 9.995q.289.451.63.846c-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6 6 0 0 1-.415-.492 2 2 0 0 1-.94.31"/></svg>@menu.Language
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" title="@T["Badge_Language"]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="mr-1 shrink-0" aria-hidden="true"><path d="M4.545 6.714 4.11 8H3l1.862-5h1.284L8 8H6.833l-.435-1.286zm1.634-.736L5.5 3.956h-.049l-.679 2.022z"/> <path d="M0 2a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v3h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-3H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zm7.138 9.995q.289.451.63.846c-.748.575-1.673 1.001-2.768 1.292.178.217.451.635.555.867 1.125-.359 2.08-.844 2.886-1.494.777.665 1.739 1.165 2.93 1.472.133-.254.414-.673.629-.89-1.125-.253-2.057-.694-2.82-1.284.681-.747 1.222-1.651 1.621-2.757H14V8h-3v1.047h.765c-.318.844-.74 1.546-1.272 2.13a6 6 0 0 1-.415-.492 2 2 0 0 1-.94.31"/></svg>@MenuDisplay.LanguageName(menu.Language)
                         </span>
                     }
                 </div>
@@ -33,7 +35,7 @@
                 {
                     @if (string.IsNullOrWhiteSpace(menu.Description))
                     {
-                        <p class="mt-1 italic text-gray-400">No description</p>
+                        <p class="mt-1 italic text-gray-400">@T["NoDescription"]</p>
                     }
                     else
                     {
@@ -51,13 +53,13 @@
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
-                            Edit
+                            @C["Edit"]
                         </button>
                     }
                     @if (canDelete)
                     {
                         <button class="inline-flex items-center px-3.5 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
-                                title="Delete menu" aria-label="Delete menu"
+                                title="@T["Delete_Title"]" aria-label="@T["Delete_Title"]"
                                 @onclick="DeleteMenu">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -76,15 +78,15 @@
     {
         <div class="flex items-center justify-center py-12">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-            <span class="ml-3 text-gray-600">Loading...</span>
+            <span class="ml-3 text-gray-600">@C["Loading"]</span>
         </div>
     }
     else if (menu == null)
     {
         <div class="text-center py-12" data-testid="menu-not-found">
-            <h2 class="text-xl font-semibold text-gray-900 mb-2">Menu not found</h2>
-            <p class="text-gray-600 mb-6">It may have been deleted.</p>
-            <a href="menus" class="inline-flex items-center px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors">Back to menus</a>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">@T["Detail_NotFoundTitle"]</h2>
+            <p class="text-gray-600 mb-6">@T["Detail_NotFoundText"]</p>
+            <a href="menus" class="inline-flex items-center px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors">@T["Detail_BackToMenus"]</a>
         </div>
     }
     else
@@ -93,35 +95,35 @@
         <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
             <div class="bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center">
                 <div class="text-2xl font-bold text-gray-900">@categoryCount</div>
-                <div class="text-sm text-gray-500">Categories</div>
+                <div class="text-sm text-gray-500">@T["Detail_StatCategories"]</div>
             </div>
             <div class="bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center">
                 <div class="text-2xl font-bold text-gray-900">@menuItemCount</div>
-                <div class="text-sm text-gray-500">Menu Items</div>
+                <div class="text-sm text-gray-500">@T["Detail_StatItems"]</div>
             </div>
             <div class="bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center">
                 <div class="text-2xl font-bold text-gray-900">@allergenCount</div>
-                <div class="text-sm text-gray-500">Allergens</div>
+                <div class="text-sm text-gray-500">@T["Detail_StatAllergens"]</div>
             </div>
             <div class="bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center">
                 <div class="text-2xl font-bold text-gray-900">@comboCount</div>
-                <div class="text-sm text-gray-500">Combos</div>
+                <div class="text-sm text-gray-500">@T["Detail_StatCombos"]</div>
             </div>
             <a href="qrcodes" class="group col-span-2 sm:col-span-1 bg-white rounded-lg border border-gray-200 p-[1rem] sm:p-6 text-center hover:border-brand-300 hover:shadow-sm transition-all duration-200"
-               data-testid="menu-qr-tile" title="QR codes that show this menu directly or through their schedule">
+               data-testid="menu-qr-tile" title="@T["Detail_StatQrCodesTitle"]">
                 <div class="text-2xl font-bold text-gray-900">@qrCodeCount</div>
                 <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">
-                    @(qrCodeCount == 1 ? "QR Code" : "QR Codes") <span aria-hidden="true">&rarr;</span>
+                    @T.Plural(qrCodeCount, "Detail_StatQrCodes") <span aria-hidden="true">&rarr;</span>
                 </div>
                 @if (qrCodeCount > directQrCodeCount)
                 {
-                    <div class="mt-1 text-xs text-gray-400">@directQrCodeCount direct, @(qrCodeCount - directQrCodeCount) via schedule</div>
+                    <div class="mt-1 text-xs text-gray-400">@T["Detail_StatQrCodesSplit", directQrCodeCount, qrCodeCount - directQrCodeCount]</div>
                 }
             </a>
         </div>
 
         <!-- Navigation Cards -->
-        <h2 class="text-lg font-semibold text-gray-900 mb-4">Manage</h2>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">@T["Detail_Manage"]</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <!-- Categories -->
             <a href="@($"categories/{MenuId}")" class="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200">
@@ -132,11 +134,11 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Categories</h3>
-                        <p class="text-sm text-gray-500">@categoryCount categories</p>
+                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">@T["Detail_CategoriesTitle"]</h3>
+                        <p class="text-sm text-gray-500">@T.Plural(categoryCount, "Count_Categories")</p>
                     </div>
                 </div>
-                <p class="text-sm text-gray-600">Organize your menu items into categories</p>
+                <p class="text-sm text-gray-600">@T["Detail_CategoriesText"]</p>
             </a>
 
             <!-- Menu Items -->
@@ -148,11 +150,11 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Menu Items</h3>
-                        <p class="text-sm text-gray-500">@menuItemCount items</p>
+                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">@T["Detail_ItemsTitle"]</h3>
+                        <p class="text-sm text-gray-500">@T.Plural(menuItemCount, "Count_Items")</p>
                     </div>
                 </div>
-                <p class="text-sm text-gray-600">Add and edit dishes, prices, and descriptions</p>
+                <p class="text-sm text-gray-600">@T["Detail_ItemsText"]</p>
             </a>
 
             <!-- Allergens -->
@@ -164,11 +166,11 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Allergens</h3>
-                        <p class="text-sm text-gray-500">@allergenCount allergens</p>
+                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">@T["Detail_AllergensTitle"]</h3>
+                        <p class="text-sm text-gray-500">@T.Plural(allergenCount, "Count_Allergens")</p>
                     </div>
                 </div>
-                <p class="text-sm text-gray-600">Manage allergen information for your dishes</p>
+                <p class="text-sm text-gray-600">@T["Detail_AllergensText"]</p>
             </a>
 
             <!-- Combos -->
@@ -180,11 +182,11 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Combos</h3>
-                        <p class="text-sm text-gray-500">@comboCount combos</p>
+                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">@T["Detail_CombosTitle"]</h3>
+                        <p class="text-sm text-gray-500">@T.Plural(comboCount, "Count_Combos")</p>
                     </div>
                 </div>
-                <p class="text-sm text-gray-600">Create combo offers for bundled deals</p>
+                <p class="text-sm text-gray-600">@T["Detail_CombosText"]</p>
             </a>
 
             <!-- Settings -->
@@ -197,11 +199,11 @@
                         </svg>
                     </div>
                     <div class="ml-3">
-                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">Settings</h3>
-                        <p class="text-sm text-gray-500">Name, theme, language</p>
+                        <h3 class="font-semibold text-gray-900 group-hover:text-brand-600 transition-colors">@T["Detail_SettingsTitle"]</h3>
+                        <p class="text-sm text-gray-500">@T["Detail_SettingsSummary"]</p>
                     </div>
                 </div>
-                <p class="text-sm text-gray-600">Configure menu name, design theme, and language</p>
+                <p class="text-sm text-gray-600">@T["Detail_SettingsText"]</p>
             </a>
         </div>
     }
@@ -247,8 +249,7 @@
     {
         if (menu == null || !canDelete) return;
 
-        var message = await MenuPage.DeleteConfirmationTextAsync(DbContext, menu);
-        if (await NotificationService.ShowConfirmation(("Delete menu", message)))
+        if (await NotificationService.ShowConfirmation(await MenuPage.DeleteConfirmationAsync(DbContext, T, menu)))
         {
             await MenuPage.DeleteMenuAsync(DbContext, menu.Id);
             NavManager.NavigateTo("/menus");
