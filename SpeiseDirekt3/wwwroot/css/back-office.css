@@ -648,6 +648,139 @@ html.sd-sorting * {
     }
 }
 
+/* --- Account settings (Account/Manage inside ManageLayout's card, AP13): header, notices, fields, recovery codes --- */
+
+.sd-manage-head {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgb(var(--sd-border));
+}
+
+.sd-manage-title {
+    margin: 0;
+    color: rgb(var(--sd-text));
+    font-family: var(--sd-font-display);
+    font-size: 1.375rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.sd-manage-desc {
+    margin: .375rem 0 0;
+    color: rgb(var(--sd-text-muted));
+}
+
+.sd-manage-body {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 40rem;
+}
+
+.sd-manage-subtitle {
+    margin: .5rem 0 0;
+    color: rgb(var(--sd-text));
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.sd-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.sd-actions form { margin: 0; }
+
+.sd-field { display: grid; gap: .375rem; }
+
+.sd-label {
+    color: rgb(var(--sd-gray-800));
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.sd-hint {
+    margin: 0;
+    color: rgb(var(--sd-text-subtle));
+    font-size: .8125rem;
+}
+
+.sd-input:focus {
+    border-color: rgb(var(--sd-brand-600));
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(var(--sd-brand-500) / .25);
+}
+
+.sd-input.invalid { border-color: #b91c1c; }
+
+/* Blazor's ValidationMessage inside the back office's own forms */
+.sd-field .validation-message,
+.sd-manage-body .validation-message {
+    color: #b91c1c;
+    font-size: .8125rem;
+}
+
+.sd-notice {
+    margin: 0;
+    padding: .875rem 1rem;
+    border: 1px solid;
+    border-radius: var(--sd-radius-lg);
+    font-size: .9375rem;
+    line-height: 1.55;
+}
+
+.sd-notice p { margin: 0; }
+.sd-notice p + p { margin-top: .375rem; }
+.sd-notice a { color: inherit; font-weight: 600; text-decoration: underline; }
+.sd-notice--warning { border-color: #fcd34d; background: #fffbeb; color: #78350f; }
+.sd-notice--danger { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+.sd-notice--info { border-color: rgb(var(--sd-brand-200)); background: rgb(var(--sd-brand-50)); color: rgb(var(--sd-brand-900)); }
+
+/* The authenticator's setup steps and key, the recovery codes */
+.sd-steps {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.sd-steps > li::marker { color: rgb(var(--sd-brand-700)); font-weight: 700; }
+.sd-steps p { margin: 0 0 .5rem; }
+.sd-steps ul { margin: 0; padding-left: 1.125rem; }
+.sd-steps a { color: rgb(var(--sd-brand-700)); }
+
+.sd-key {
+    display: inline-block;
+    padding: .375rem .625rem;
+    border-radius: var(--sd-radius-md);
+    background: rgb(var(--sd-gray-100));
+    color: rgb(var(--sd-text));
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: .9375rem;
+    letter-spacing: .04em;
+    word-break: break-all;
+}
+
+.sd-codes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sd-codes code {
+    display: block;
+    padding: .5rem .625rem;
+    border: 1px solid rgb(var(--sd-border));
+    border-radius: var(--sd-radius-md);
+    background: rgb(var(--sd-gray-50));
+    color: rgb(var(--sd-text));
+    font-size: .9375rem;
+    text-align: center;
+}
+
 /* --- The item edit page: calm sections and a sticky save bar --- */
 
 .sd-form-section {

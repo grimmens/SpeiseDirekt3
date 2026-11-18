@@ -8,8 +8,9 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<GenerateRecoveryCodes> Logger
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>@T["GenerateCodes_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["GenerateCodes_Title"]]</PageTitle>
 
 @if (recoveryCodes is not null)
 {
@@ -17,22 +18,16 @@
 }
 else
 {
-    <h3>@T["GenerateCodes_Title"]</h3>
-    <div class="alert alert-warning" role="alert">
-        <p>
-            <strong>@T["RecoveryCodes_SafePlace"]</strong>
-        </p>
-        <p>
-            @T["RecoveryCodes_Warning"]
-        </p>
-        <p>
-            @T["GenerateCodes_KeysUnchanged"] <a href="Account/Manage/ResetAuthenticator">@T["ResetKeyLink"]</a>
-        </p>
-    </div>
-    <div>
-        <form @formname="generate-recovery-codes" @onsubmit="OnSubmitAsync" method="post">
+    <ManageHeader Title="@T["GenerateCodes_Title"]" />
+    <div class="sd-manage-body">
+        <div class="sd-notice sd-notice--warning" role="alert">
+            <p><strong>@T["RecoveryCodes_SafePlace"]</strong></p>
+            <p>@T["RecoveryCodes_Warning"]</p>
+            <p>@T["GenerateCodes_KeysUnchanged"] <a href="Account/Manage/ResetAuthenticator">@T["ResetKeyLink"]</a></p>
+        </div>
+        <form @formname="generate-recovery-codes" @onsubmit="OnSubmitAsync" method="post" class="sd-actions">
             <AntiforgeryToken />
-            <button class="btn btn-danger" type="submit">@T["GenerateCodes_Submit"]</button>
+            <button class="sd-btn sd-btn--danger" type="submit">@T["GenerateCodes_Submit"]</button>
         </form>
     </div>
 }

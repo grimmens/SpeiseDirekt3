@@ -14,8 +14,9 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<EnableAuthenticator> Logger
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>@T["EnableApp_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["EnableApp_Title"]]</PageTitle>
 
 @if (recoveryCodes is not null)
 {
@@ -23,11 +24,10 @@
 }
 else
 {
-    <StatusMessage Message="@message" IsError="true" />
-    <h3>@T["EnableApp_Title"]</h3>
-    <div>
-        <p>@T["EnableApp_Intro"]</p>
-        <ol class="list">
+    <ManageHeader Title="@T["EnableApp_Title"]" Description="@T["EnableApp_Intro"]" />
+    <div class="sd-manage-body">
+        <StatusMessage Message="@message" IsError="true" />
+        <ol class="sd-steps">
             <li>
                 <p>@T["EnableApp_Step1"]</p>
                 @* Product names: the same in every language *@
@@ -40,27 +40,22 @@ else
             </li>
             <li>
                 <p>@T["EnableApp_Step2"]</p>
-                <p><kbd>@sharedKey</kbd></p>
-                <div>
-                    <img src="data:image/png;base64,@qrCodeBase64" alt="@T["EnableApp_QrAlt"]" style="max-width: 200px;" />
-                </div>
+                <p><kbd class="sd-key" data-testid="authenticator-key">@sharedKey</kbd></p>
+                <img src="data:image/png;base64,@qrCodeBase64" alt="@T["EnableApp_QrAlt"]" width="200" height="200" class="rounded-lg border border-gray-200" />
             </li>
             <li>
                 <p>@T["EnableApp_Step3"]</p>
-                <div class="row">
-                    <div class="col-xl-6">
-                        <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
-                            <DataAnnotationsValidator />
-                            <div class="form-floating mb-3">
-                                <InputText @bind-Value="Input.Code" id="Input.Code" class="form-control" autocomplete="off" placeholder="@T["Placeholder_Code"]" />
-                                <label for="Input.Code" class="control-label form-label">@T["Field_VerificationCode"]</label>
-                                <ValidationMessage For="() => Input.Code" class="text-danger" />
-                            </div>
-                            <button type="submit" class="w-100 btn btn-lg btn-primary">@T["EnableApp_Verify"]</button>
-                            <ValidationSummary class="text-danger" role="alert" />
-                        </EditForm>
+                <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post" class="grid gap-3 max-w-xs">
+                    <DataAnnotationsValidator />
+                    <div class="sd-field">
+                        <label for="Input.Code" class="sd-label">@T["Field_VerificationCode"]</label>
+                        <InputText @bind-Value="Input.Code" id="Input.Code" class="sd-input" inputmode="numeric" autocomplete="one-time-code" placeholder="@T["Placeholder_Code"]" />
+                        <ValidationMessage For="() => Input.Code" class="validation-message" />
                     </div>
-                </div>
+                    <div class="sd-actions">
+                        <button type="submit" class="sd-btn sd-btn--primary">@T["EnableApp_Verify"]</button>
+                    </div>
+                </EditForm>
             </li>
         </ol>
     </div>

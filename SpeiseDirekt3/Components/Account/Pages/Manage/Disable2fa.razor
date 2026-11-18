@@ -8,25 +8,20 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<Disable2fa> Logger
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>@T["Disable2fa_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["Disable2fa_Title"]]</PageTitle>
 
-<StatusMessage />
-<h3>@T["Disable2fa_Title"]</h3>
-
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>@T["Disable2fa_OnlyDisables"]</strong>
-    </p>
-    <p>
-        @T["Disable2fa_KeysUnchanged"] <a href="Account/Manage/ResetAuthenticator">@T["ResetKeyLink"]</a>
-    </p>
-</div>
-
-<div>
-    <form @formname="disable-2fa" @onsubmit="OnSubmitAsync" method="post">
+<ManageHeader Title="@T["Disable2fa_Title"]" />
+<div class="sd-manage-body">
+    <StatusMessage />
+    <div class="sd-notice sd-notice--warning" role="alert">
+        <p><strong>@T["Disable2fa_OnlyDisables"]</strong></p>
+        <p>@T["Disable2fa_KeysUnchanged"] <a href="Account/Manage/ResetAuthenticator">@T["ResetKeyLink"]</a></p>
+    </div>
+    <form @formname="disable-2fa" @onsubmit="OnSubmitAsync" method="post" class="sd-actions">
         <AntiforgeryToken />
-        <button class="btn btn-danger" type="submit">@T["Disable2fa_Submit"]</button>
+        <button class="sd-btn sd-btn--danger" type="submit">@T["Disable2fa_Submit"]</button>
     </form>
 </div>
 

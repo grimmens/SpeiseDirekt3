@@ -12,58 +12,44 @@
 @inject IStringLocalizer<AccountText> T
 @inject IStringLocalizer<CommonText> C
 
-<PageTitle>@T["ExternalLogins_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["ExternalLogins_Title"]]</PageTitle>
 
-<StatusMessage />
-@if (currentLogins?.Count > 0)
-{
-    <h3>@T["ExternalLogins_Registered"]</h3>
-    <table class="table">
-        <tbody>
+<ManageHeader Title="@T["ExternalLogins_Title"]" />
+<div class="sd-manage-body">
+    <StatusMessage />
+    @if (currentLogins?.Count > 0)
+    {
+        <h3 class="sd-manage-subtitle">@T["ExternalLogins_Registered"]</h3>
+        <ul class="grid gap-2 list-none p-0 m-0">
             @foreach (var login in currentLogins)
             {
-                <tr>
-                    <td>@login.ProviderDisplayName</td>
-                    <td>
-                        @if (showRemoveButton)
-                        {
-                            <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
-                                <AntiforgeryToken />
-                                <div>
-                                    <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
-                                    <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
-                                    <button type="submit" class="btn btn-primary" title="@T["ExternalLogins_RemoveTitle", login.ProviderDisplayName ?? login.LoginProvider]">@C["Remove"]</button>
-                                </div>
-                            </form>
-                        }
-                        else
-                        {
-                            @: &nbsp;
-                        }
-                    </td>
-                </tr>
+                <li class="flex items-center justify-between gap-3 rounded-lg border border-gray-200 px-[1rem] py-2">
+                    <span class="font-medium">@login.ProviderDisplayName</span>
+                    @if (showRemoveButton)
+                    {
+                        <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
+                            <AntiforgeryToken />
+                            <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
+                            <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
+                            <button type="submit" class="sd-btn sd-btn--secondary sd-btn--small" title="@T["ExternalLogins_RemoveTitle", login.ProviderDisplayName ?? login.LoginProvider]">@C["Remove"]</button>
+                        </form>
+                    }
+                </li>
             }
-        </tbody>
-    </table>
-}
-@if (otherLogins?.Count > 0)
-{
-    <h4>@T["ExternalLogins_AddAnother"]</h4>
-    <hr />
-    <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
-        <AntiforgeryToken />
-        <div>
-            <p>
-                @foreach (var provider in otherLogins)
-                {
-                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="@T["External_ButtonTitle", provider.DisplayName ?? provider.Name]">
-                        @provider.DisplayName
-                    </button>
-                }
-            </p>
-        </div>
-    </form>
-}
+        </ul>
+    }
+    @if (otherLogins?.Count > 0)
+    {
+        <h3 class="sd-manage-subtitle">@T["ExternalLogins_AddAnother"]</h3>
+        <form action="Account/Manage/LinkExternalLogin" method="post" class="sd-actions">
+            <AntiforgeryToken />
+            @foreach (var provider in otherLogins)
+            {
+                <button type="submit" class="sd-btn sd-btn--secondary" name="Provider" value="@provider.Name" title="@T["External_ButtonTitle", provider.DisplayName ?? provider.Name]">@provider.DisplayName</button>
+            }
+        </form>
+    }
+</div>
 
 @code {
     public const string LinkLoginCallbackAction = "LinkLoginCallback";

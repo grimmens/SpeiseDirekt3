@@ -248,6 +248,45 @@ public class AuthTests : E2ETestBase
     }
 
     /// <summary>
+    /// The account settings (Account/Manage) in the back office's look (AP13): page header, the section navigation, each
+    /// page's h2, back-office buttons and fields — no Bootstrap scaffold markup left — and nothing wider than a phone.
+    /// </summary>
+    [Fact]
+    public async Task AccountSettings_AreInTheBackOfficeLook()
+    {
+        await RegisterNewOwnerAsync();
+        foreach (var url in new[]
+        {
+            "/Account/Manage", "/Account/Manage/Email", "/Account/Manage/ChangePassword", "/Account/Manage/TwoFactorAuthentication",
+            "/Account/Manage/EnableAuthenticator", "/Account/Manage/ResetAuthenticator", "/Account/Manage/PersonalData",
+            "/Account/Manage/DeletePersonalData"
+        })
+        {
+            await Page.SetViewportSizeAsync(1280, 900);
+            await Page.GotoAsync(url);
+            await Assertions.Expect(Page.GetByTestId("topbar")).ToBeVisibleAsync();
+            await Assertions.Expect(Page.GetByTestId("page-header").Locator("h1")).ToHaveTextAsync("Account Management");
+            await Assertions.Expect(Page.GetByTestId("manage-head").Locator("h2")).ToHaveCountAsync(1);
+            (await Page.Locator(".form-floating, .btn, .col-md-4, .col-md-6, .col-xl-6, .text-danger").CountAsync())
+                .Should().Be(0, $"{url} has no Bootstrap scaffold markup");
+
+            await Page.SetViewportSizeAsync(390, 844);
+            var wide = await Page.EvaluateAsync<string[]>("""
+                () => [...document.querySelectorAll('main *')]
+                    .filter(e => e.checkVisibility() && e.getBoundingClientRect().right > window.innerWidth + 1)
+                    .map(e => e.tagName + '.' + e.className)
+                """);
+            wide.Should().BeEmpty($"{url} fits a phone");
+        }
+
+        // The authenticator setup: the key, the QR code and the code field
+        await Page.GotoAsync("/Account/Manage/EnableAuthenticator");
+        await Assertions.Expect(Page.GetByTestId("authenticator-key")).Not.ToBeEmptyAsync();
+        await Assertions.Expect(Page.Locator("img[src^='data:image/png']")).ToBeVisibleAsync();
+        await Assertions.Expect(Page.Locator("#Input\\.Code")).ToHaveClassAsync(new Regex("sd-input"));
+    }
+
+    /// <summary>
     /// Behind the reverse proxy (Apache on server2 → http://localhost) the login redirect of a protected page keeps the
     /// browser's scheme and host (UseForwardedHeaders, trusted from the loopback proxy — the test client is on loopback
     /// too). Before AP13 it pointed to http://, one extra hop through Apache's https redirect.

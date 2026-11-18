@@ -4,24 +4,20 @@
 @inject IStringLocalizer<AccountText> T
 @inject IStringLocalizer<CommonText> C
 
-<PageTitle>@T["PersonalData_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["PersonalData_Title"]]</PageTitle>
 
-<StatusMessage />
-<h3>@T["PersonalData_Title"]</h3>
-
-<div class="row">
-    <div class="col-md-6">
-        <p>@T["PersonalData_Text"]</p>
-        <p>
-            <strong>@T["PersonalData_DeleteWarning"]</strong>
-        </p>
+<ManageHeader Title="@T["PersonalData_Title"]" Description="@T["PersonalData_Text"]" />
+<div class="sd-manage-body">
+    <StatusMessage />
+    <div class="sd-notice sd-notice--warning">
+        <p><strong>@T["PersonalData_DeleteWarning"]</strong></p>
+    </div>
+    <div class="sd-actions">
         <form action="Account/Manage/DownloadPersonalData" method="post">
             <AntiforgeryToken />
-            <button class="btn btn-primary" type="submit">@T["PersonalData_Download"]</button>
+            <button class="sd-btn sd-btn--secondary" type="submit">@T["PersonalData_Download"]</button>
         </form>
-        <p>
-            <a href="Account/Manage/DeletePersonalData" class="btn btn-danger">@C["Delete"]</a>
-        </p>
+        <a href="Account/Manage/DeletePersonalData" class="sd-btn sd-btn--danger">@C["Delete"]</a>
     </div>
 </div>
 

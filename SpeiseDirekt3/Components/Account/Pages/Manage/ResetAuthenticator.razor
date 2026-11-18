@@ -9,23 +9,20 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ResetAuthenticator> Logger
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>@T["ResetApp_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["ResetApp_Title"]]</PageTitle>
 
-<StatusMessage />
-<h3>@T["ResetApp_Title"]</h3>
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>@T["ResetApp_Warning"]</strong>
-    </p>
-    <p>
-        @T["ResetApp_Text"]
-    </p>
-</div>
-<div>
-    <form @formname="reset-authenticator" @onsubmit="OnSubmitAsync" method="post">
+<ManageHeader Title="@T["ResetApp_Title"]" />
+<div class="sd-manage-body">
+    <StatusMessage />
+    <div class="sd-notice sd-notice--warning" role="alert">
+        <p><strong>@T["ResetApp_Warning"]</strong></p>
+        <p>@T["ResetApp_Text"]</p>
+    </div>
+    <form @formname="reset-authenticator" @onsubmit="OnSubmitAsync" method="post" class="sd-actions">
         <AntiforgeryToken />
-        <button class="btn btn-danger" type="submit">@T["ResetApp_Submit"]</button>
+        <button class="sd-btn sd-btn--danger" type="submit">@T["ResetApp_Submit"]</button>
     </form>
 </div>
 

@@ -12,46 +12,43 @@
 @inject IdentityUserAccessor UserAccessor
 @inject NavigationManager NavigationManager
 @inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>@T["Email_Title"]</PageTitle>
+<PageTitle>@C["PageTitle", T["Email_Title"]]</PageTitle>
 
-<h3>@T["Email_Title"]</h3>
-
-<StatusMessage Message="@message"/>
-<div class="row">
-    <div class="col-xl-6">
-        <form @onsubmit="OnSendEmailVerificationAsync" @formname="send-verification" id="send-verification-form" method="post">
-            <AntiforgeryToken />
-        </form>
-        <EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            @if (isEmailConfirmed)
-            {
-                <div class="form-floating mb-3 input-group">
-                    <input type="text" value="@email" id="email" class="form-control" placeholder="@T["Placeholder_Email"]" disabled />
-                    <div class="input-group-append">
-                        <span class="h-100 input-group-text text-success font-weight-bold" title="@T["Email_Confirmed"]"><span aria-hidden="true">✓</span><span class="visually-hidden">@T["Email_Confirmed"]</span></span>
-                    </div>
-                    <label for="email" class="form-label">@T["Field_Email"]</label>
-                </div>
-            }
-            else
-            {
-                <div class="form-floating mb-3">
-                    <input type="text" value="@email" id="email" class="form-control" placeholder="@T["Placeholder_Email"]" disabled />
-                    <label for="email" class="form-label">@T["Field_Email"]</label>
-                    <button type="submit" class="btn btn-link" form="send-verification-form">@T["Email_SendVerification"]</button>
-                </div>
-            }
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="form-control" autocomplete="email" aria-required="true" placeholder="@T["Placeholder_NewEmail"]" />
-                <label for="Input.NewEmail" class="form-label">@T["Field_NewEmail"]</label>
-                <ValidationMessage For="() => Input.NewEmail" class="text-danger" />
+<ManageHeader Title="@T["Email_Title"]" />
+<div class="sd-manage-body">
+    <StatusMessage Message="@message"/>
+    <form @onsubmit="OnSendEmailVerificationAsync" @formname="send-verification" id="send-verification-form" method="post">
+        <AntiforgeryToken />
+    </form>
+    <EditForm Model="Input" FormName="change-email" OnValidSubmit="OnValidSubmitAsync" method="post" class="grid gap-4 max-w-md">
+        <DataAnnotationsValidator />
+        <div class="sd-field">
+            <label for="email" class="sd-label">@T["Field_Email"]</label>
+            <div class="flex items-center gap-2">
+                <input type="text" value="@email" id="email" class="sd-input" disabled />
+                @if (isEmailConfirmed)
+                {
+                    <span class="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-800 whitespace-nowrap" data-testid="email-confirmed">
+                        <span aria-hidden="true">✓</span> @T["Email_Confirmed"]
+                    </span>
+                }
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">@T["Email_Submit"]</button>
-        </EditForm>
-    </div>
+            @if (!isEmailConfirmed)
+            {
+                <div><button type="submit" class="sd-btn sd-btn--secondary sd-btn--small" form="send-verification-form">@T["Email_SendVerification"]</button></div>
+            }
+        </div>
+        <div class="sd-field">
+            <label for="Input.NewEmail" class="sd-label">@T["Field_NewEmail"]</label>
+            <InputText @bind-Value="Input.NewEmail" id="Input.NewEmail" class="sd-input" inputmode="email" autocomplete="email" aria-required="true" placeholder="@T["Placeholder_NewEmail"]" />
+            <ValidationMessage For="() => Input.NewEmail" class="validation-message" />
+        </div>
+        <div class="sd-actions">
+            <button type="submit" class="sd-btn sd-btn--primary">@T["Email_Submit"]</button>
+        </div>
+    </EditForm>
 </div>
 
 @code {
