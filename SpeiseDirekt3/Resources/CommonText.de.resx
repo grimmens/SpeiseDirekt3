@@ -75,4 +75,8 @@
   <data name="Role_Driver" xml:space="preserve">
     <value>Fahrdienst</value>
   </data>
+  <data name="OptionalSuffix" xml:space="preserve">
+    <value>(optional)</value>
+    <comment>after a field label</comment>
+  </data>
 </root>
