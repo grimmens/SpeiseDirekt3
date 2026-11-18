@@ -53,9 +53,6 @@ public static class LandingImages
     public static readonly LandingImage GuestFilter =
         Phone("guest-filter", "Der Filter der Speisekarte: Ernährung, Hinweise und Allergene, die ausgeblendet werden");
 
-    public static readonly LandingImage GuestFavorites =
-        Phone("guest-favorites", "Die Merkliste eines Gastes mit Mengen, Varianten und Summe");
-
     public static readonly LandingImage GuestInfo =
         Phone("guest-info", "Das Restaurantprofil in der Speisekarte: Öffnungszeiten, Adresse, Telefon, Website und Links");
 
@@ -72,7 +69,7 @@ public static class LandingImages
     /// <summary>Every WebP image the page uses (each theme once).</summary>
     public static IEnumerable<LandingImage> All =>
         Themes.Select(t => t.Image)
-            .Concat([GuestItem, GuestFilter, GuestFavorites, GuestInfo, Calendar, Editor, Analytics])
+            .Concat([GuestItem, GuestFilter, GuestInfo, Calendar, Editor, Analytics])
             .DistinctBy(i => i.Name);
 
     /// <summary>Open Graph image (link previews), 1200 × 630 PNG.</summary>

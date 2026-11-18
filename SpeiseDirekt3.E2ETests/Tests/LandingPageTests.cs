@@ -106,6 +106,9 @@ public class LandingPageTests : E2ETestBase
         foreach (var id in SectionIds)
             await Assertions.Expect(Page.GetByTestId(id)).ToHaveCountAsync(1);
         await Assertions.Expect(Page.GetByTestId("faq-item")).ToHaveCountAsync(9);
+        // The examples are labelled as made up
+        await Assertions.Expect(Page.GetByTestId("footer-demo-note")).ToContainTextAsync("erfundene Restaurant");
+        await Assertions.Expect(Page.GetByTestId("card-analytics")).ToContainTextAsync("Demodaten");
 
         // Calls to action
         foreach (var id in new[] { "landing-register", "hero-register", "steps-register", "cta-register", "footer-register" })

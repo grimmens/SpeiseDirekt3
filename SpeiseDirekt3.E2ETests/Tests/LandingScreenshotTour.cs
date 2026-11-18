@@ -17,7 +17,7 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// of the landing page for design reviews. Runs only when <c>E2E_SCREENSHOT_DIR</c> is set.
 /// <para><see cref="Capture_landing_images"/> seeds the <see cref="GuestDemoData"/> menu ("Trattoria Lago") in all six
 /// themes plus a holiday calendar and two weeks of scans, shoots the guest menu on a phone (390 × 844, 2x: every theme,
-/// the item sheet, the filter sheet, the Merkliste, the restaurant info sheet) and the back office on a desktop (2x: the
+/// the item sheet, the filter sheet, the restaurant info sheet) and the back office on a desktop (2x: the
 /// menu editor with its phone frame, the QR calendar in December, the analytics page), and writes every image of
 /// <see cref="LandingImages"/> as WebP (1x and 2x, exactly the catalog's sizes) plus the Open Graph image
 /// (<c>og.png</c>, 1200 × 630, composed from the hero's phone shot). The WebP files go to <c>E2E_LANDING_IMAGES_DIR</c>
@@ -105,16 +105,6 @@ public class LandingScreenshotTour : QrCalendarTestBase
         shots[LandingImages.GuestFilter.Name] = await PhoneShot(LandingImages.GuestFilter.Name);
         await phone.Keyboard.PressAsync("Escape");
         await Assertions.Expect(filter).ToBeHiddenAsync();
-
-        foreach (var item in new[] { "Burrata", GuestDemoData.DishWithExtras, "Tiramisu", GuestDemoData.LemonadeName })
-            await ItemEntry(phone, item).GetByTestId("favorite-button").ClickAsync();
-        await phone.GetByTestId("favorites-button").ClickAsync();
-        var favorites = phone.GetByTestId("favorites-sheet");
-        await Assertions.Expect(favorites).ToBeVisibleAsync();
-        await favorites.GetByTestId("favorite-row").Filter(new() { HasText = GuestDemoData.DishWithExtras })
-            .GetByRole(AriaRole.Button, new() { Name = "Eine Portion mehr" }).ClickAsync();
-        shots[LandingImages.GuestFavorites.Name] = await PhoneShot(LandingImages.GuestFavorites.Name);
-        await phone.Keyboard.PressAsync("Escape");
 
         await phone.EvaluateAsync("() => window.scrollTo(0, 0)");
         await phone.GetByTestId("info-button").ClickAsync();
