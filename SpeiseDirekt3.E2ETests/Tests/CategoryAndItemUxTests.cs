@@ -8,9 +8,9 @@ using SpeiseDirekt3.E2ETests.Infrastructure;
 namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
-/// Back-office usability package P2: order of categories and items (back office and guest menu),
-/// the item table (euro prices, labels, icon actions, "Delete All"), empty states, the optional
-/// description and the hidden Ollama generator button.
+/// Back-office usability package P2: order of categories and items (back office and guest menu; since AP11 by drag
+/// handle, here through its keyboard path), the item table (euro prices, labels, icon actions, "Delete All"), empty
+/// states, the optional description, inline renaming of categories and the hidden Ollama generator button.
 /// </summary>
 public class CategoryAndItemUxTests : BackOfficeTestBase
 {
@@ -61,18 +61,22 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         await CreateCategoryViaUiAsync(menuId, "Hauptspeisen");
         await CreateCategoryViaUiAsync(menuId, "Desserts");
 
-        // New categories are appended (creation order, not alphabetical)
+        // New categories are appended (creation order, not alphabetical); every row has a grip handle, no arrows
         await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Vorspeisen", "Hauptspeisen", "Desserts" });
-        await Assertions.Expect(ExactButton("Move Vorspeisen up")).ToBeDisabledAsync();
-        await Assertions.Expect(ExactButton("Move Desserts down")).ToBeDisabledAsync();
+        await Assertions.Expect(CategoryRows.GetByTestId("sort-handle")).ToHaveCountAsync(3);
+        await Assertions.Expect(Page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("^Move .* (up|down)$") })).ToHaveCountAsync(0);
 
-        // Move the third category to the top (wait for each step before the next click)
-        await ExactButton("Move Desserts up").ClickAsync();
+        // Move the third category to the top with the keyboard path of the handle (↑ twice; wait for each step)
+        var handle = ExactButton("Reorder Desserts");
+        await handle.FocusAsync();
+        await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Vorspeisen", "Desserts", "Hauptspeisen" });
-        await ExactButton("Move Desserts up").ClickAsync();
+        await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Desserts", "Vorspeisen", "Hauptspeisen" });
-        await Assertions.Expect(ExactButton("Move Desserts up")).ToBeDisabledAsync();
-        await Assertions.Expect(ExactButton("Move Hauptspeisen down")).ToBeDisabledAsync();
+        // Already at the top: nothing moves
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Desserts is already first.");
+        await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Desserts", "Vorspeisen", "Hauptspeisen" });
 
         // Persisted
         await GotoInteractiveAsync($"/Categories/{menuId}");
@@ -120,36 +124,59 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
     }
 
     [Fact]
-    public async Task Category_CanBeRenamed_AndCancelKeepsTheName()
+    public async Task Category_IsRenamedInTheRow_EnterSaves_EscapeAndCancelKeepTheName()
     {
         await RegisterNewOwnerAsync();
         var menuId = await CreateMenuViaUiAsync("Umbenennen Menü");
         await CreateCategoryViaUiAsync(menuId, "Vorspeisen");
+        await CreateCategoryViaUiAsync(menuId, "Desserts");
 
-        // Bootstrap modal: the test stub does not remove aria-hidden, so its buttons are found by text, not by role
-        var modal = Page.Locator("#categoryEditModal");
-        ILocator ModalButton(string text) => modal.Locator("button", new() { HasTextString = text });
+        // Inline: the row turns into a small form (no modal any more), the name field gets the focus
+        var row = CategoryRows.First;
+        var form = Page.GetByTestId("category-edit");
+        var nameField = form.Locator("#Category\\.Name");
         async Task OpenRenameAsync()
         {
-            await CategoryRows.First.Locator("button", new() { HasTextString = "⋮" }).ClickAsync();
-            await Page.GetByRole(AriaRole.Menuitem, new() { Name = "Edit" }).ClickAsync();
-            await Assertions.Expect(modal).ToBeVisibleAsync();
+            await row.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("^Edit ") }).ClickAsync();
+            await Assertions.Expect(form).ToBeVisibleAsync();
+            await Assertions.Expect(nameField).ToBeFocusedAsync();
         }
 
+        // Enter saves
         await OpenRenameAsync();
-        await modal.Locator("#Category\\.Name").FillAsync("Starters");
-        await ModalButton("Save").ClickAsync();
-        await Assertions.Expect(modal).ToBeHiddenAsync();
-        await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Starters" });
+        await nameField.FillAsync("Starters");
+        await nameField.PressAsync("Enter");
+        await Assertions.Expect(form).ToHaveCountAsync(0);
+        await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Starters", "Desserts" });
+        // The focus returns to the row's edit button
+        await Assertions.Expect(ExactButton("Edit Starters")).ToBeFocusedAsync();
 
+        // Escape cancels
         await OpenRenameAsync();
-        await modal.Locator("#Category\\.Name").FillAsync("Nicht speichern");
-        await ModalButton("Cancel").ClickAsync();
-        await Assertions.Expect(modal).ToBeHiddenAsync();
-        await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Starters" });
+        await nameField.FillAsync("Nicht speichern");
+        await nameField.PressAsync("Escape");
+        await Assertions.Expect(form).ToHaveCountAsync(0);
+        await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Starters", "Desserts" });
+
+        // "Cancel" too
+        await OpenRenameAsync();
+        await nameField.FillAsync("Auch nicht");
+        await form.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await Assertions.Expect(form).ToHaveCountAsync(0);
+        await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Starters", "Desserts" });
+
+        // Same validation messages as before: required, unique within the menu
+        await OpenRenameAsync();
+        await nameField.FillAsync("");
+        await nameField.PressAsync("Enter");
+        await Assertions.Expect(form.GetByText("Name is required.")).ToBeVisibleAsync();
+        await nameField.FillAsync("Desserts");
+        await nameField.PressAsync("Enter");
+        await Assertions.Expect(form.GetByText("This name already exists.")).ToBeVisibleAsync();
+        await nameField.PressAsync("Escape");
 
         await GotoInteractiveAsync($"/Categories/{menuId}");
-        await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Starters" });
+        await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Starters", "Desserts" });
     }
 
     // --- Order of items ---
@@ -165,12 +192,14 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
 
         // Appended in creation order (alphabetically "Brotkorb" would come first)
         await Assertions.Expect(ItemRows).ToContainTextAsync(new[] { "Tomatensuppe", "Brotkorb" });
-        await Assertions.Expect(ExactButton("Move Tomatensuppe up")).ToBeDisabledAsync();
+        await Assertions.Expect(ItemRows.GetByTestId("sort-handle")).ToHaveCountAsync(2);
 
-        await ExactButton("Move Brotkorb up").ClickAsync();
+        await ExactButton("Reorder Brotkorb").FocusAsync();
+        await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(ItemRows).ToContainTextAsync(new[] { "Brotkorb", "Tomatensuppe" });
-        await Assertions.Expect(ExactButton("Move Brotkorb up")).ToBeDisabledAsync();
-        await Assertions.Expect(ExactButton("Move Tomatensuppe down")).ToBeDisabledAsync();
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Moved Brotkorb to position 1 of 2.");
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Brotkorb is already first.");
 
         await GotoInteractiveAsync($"/MenuItems/{menuId}");
         await Assertions.Expect(ItemRows).ToContainTextAsync(new[] { "Brotkorb", "Tomatensuppe" });
@@ -228,15 +257,14 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         await Assertions.Expect(strudel.GetByTestId("item-labels")).ToContainTextAsync("Vegan");
         await Assertions.Expect(Page.Locator("th", new() { HasTextString = "Image" })).ToHaveCountAsync(0);
 
-        // Icon actions carry the item name for screen readers
-        await Assertions.Expect(ExactButton("Edit Wiener Schnitzel")).ToBeVisibleAsync();
+        // Icon actions carry the item name for screen readers (edit is a link to the item's edit page)
+        await Assertions.Expect(Link("Edit Wiener Schnitzel", exact: true)).ToBeVisibleAsync();
         await Assertions.Expect(ExactButton("Delete Wiener Schnitzel")).ToBeVisibleAsync();
-        await ExactButton("Edit Apfelstrudel").ClickAsync();
-        var editor = Page.Locator("#menuItemEditModal");
-        await Assertions.Expect(editor).ToBeVisibleAsync();
-        await Assertions.Expect(editor.Locator("#MenuItem\\.Name")).ToHaveValueAsync("Apfelstrudel");
-        await editor.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
-        await Assertions.Expect(editor).ToBeHiddenAsync();
+        await OpenItemEditorAsync("Apfelstrudel");
+        await Assertions.Expect(ItemEditor.Locator("#MenuItem\\.Name")).ToHaveValueAsync("Apfelstrudel");
+        await ItemEditor.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await Assertions.Expect(ItemEditor).ToHaveCountAsync(0);
+        await Assertions.Expect(strudel).ToBeVisibleAsync();
 
         // The Ollama generator is switched off outside Development
         await Assertions.Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Generate Menu Items" })).ToHaveCountAsync(0);
@@ -334,8 +362,8 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         await GotoInteractiveAsync($"/MenuItems/{menuId}");
         var empty = Page.GetByTestId("menu-items-empty");
         await Assertions.Expect(empty).ToContainTextAsync("No items in Desserts yet");
-        await Assertions.Expect(empty.GetByRole(AriaRole.Button, new() { Name = "New Menu Entry" })).ToBeVisibleAsync();
-        await Assertions.Expect(Page.GetByRole(AriaRole.Button, new() { Name = "New Menu Entry" })).ToHaveCountAsync(1);
+        await Assertions.Expect(empty.GetByRole(AriaRole.Link, new() { Name = "New Menu Entry" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Link, new() { Name = "New Menu Entry" })).ToHaveCountAsync(1);
         await Assertions.Expect(ExactButton("Delete All")).ToHaveCountAsync(0);
         await Assertions.Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Generate Menu Items" })).ToHaveCountAsync(0);
     }
@@ -350,15 +378,13 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         await CreateCategoryViaUiAsync(menuId, "Getränke");
 
         await GotoInteractiveAsync($"/MenuItems/{menuId}");
-        await Button("New Menu Entry").ClickAsync();
-        var editor = Page.Locator("#menuItemEditModal");
-        await Assertions.Expect(editor).ToBeVisibleAsync();
-        await Assertions.Expect(editor.Locator("label[for='MenuItem.Description']")).Not.ToContainTextAsync("*");
-        await editor.Locator("#MenuItem\\.Name").FillAsync("Almdudler 0,35 l");
-        await editor.Locator("#MenuItem\\.Price").FillAsync("3.60");
-        await editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
+        await Link("New Menu Entry").ClickAsync();
+        await Assertions.Expect(ItemEditor).ToBeVisibleAsync();
+        await Assertions.Expect(ItemEditor.Locator("label[for='MenuItem.Description']")).Not.ToContainTextAsync("*");
+        await ItemEditor.Locator("#MenuItem\\.Name").FillAsync("Almdudler 0,35 l");
+        await ItemEditor.Locator("#MenuItem\\.Price").FillAsync("3.60");
+        await SaveItemAndReturnAsync();
 
-        await Assertions.Expect(editor).ToBeHiddenAsync();
         var row = ItemRows.Filter(new() { HasText = "Almdudler 0,35 l" });
         await Assertions.Expect(row).ToContainTextAsync("€ 3.60");
 

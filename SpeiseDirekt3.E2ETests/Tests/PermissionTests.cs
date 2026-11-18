@@ -66,13 +66,20 @@ public class PermissionTests : BackOfficeTestBase
 
         await GotoInteractiveAsync(employee, $"/MenuItems/{menuId}");
         await Assertions.Expect(employee.Locator("td", new() { HasTextString = "Bruschetta" }).First).ToBeVisibleAsync();
+        await Assertions.Expect(employee.GetByRole(AriaRole.Link, new() { Name = "New Menu Entry" })).ToHaveCountAsync(0);
         await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "New Menu Entry" })).ToHaveCountAsync(0);
+        // No edit link to the item page (the header's "Edit categories" link is a plain link to the categories page)
+        await Assertions.Expect(employee.GetByRole(AriaRole.Link, new() { Name = "Edit Bruschetta", Exact = true })).ToHaveCountAsync(0);
+        await Assertions.Expect(employee.Locator("a[href*='/MenuItems/item/']")).ToHaveCountAsync(0);
         await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Edit" })).ToHaveCountAsync(0);
         await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Delete" })).ToHaveCountAsync(0);
+        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Reorder" })).ToHaveCountAsync(0);
 
         await GotoInteractiveAsync(employee, $"/Categories/{menuId}");
         await Assertions.Expect(employee.Locator("table a", new() { HasTextString = "Vorspeisen" })).ToBeVisibleAsync();
         await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Add Category" })).ToHaveCountAsync(0);
+        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Edit" })).ToHaveCountAsync(0);
+        await Assertions.Expect(employee.GetByTestId("sort-handle")).ToHaveCountAsync(0);
     }
 
     [Fact]

@@ -104,11 +104,9 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
         return rows.Select(a => (a.Code, a.Name)).ToList();
     }
 
-    private async Task OpenRowActionAsync(string code, string action)
-    {
-        await AllergenRow(code).Locator("button").First.ClickAsync();
-        await Page.GetByRole(AriaRole.Menuitem, new() { Name = action }).ClickAsync();
-    }
+    /// <summary>The row's icon action ("Edit allergen A", "Delete allergen A"; AP11: no action menu any more).</summary>
+    private async Task OpenRowActionAsync(string code, string action) =>
+        await AllergenRow(code).GetByRole(AriaRole.Button, new() { Name = $"{action} allergen {code}", Exact = true }).ClickAsync();
 
     // --- Allergen quick-fill ---
 
@@ -281,21 +279,21 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
         // In use: the question names the count; aborting keeps it
         await OpenRowActionAsync("A", "Delete");
         await Assertions.Expect(ConfirmationModal).ToBeVisibleAsync();
-        await Assertions.Expect(ConfirmationModal.Locator(".modal-body")).ToContainTextAsync("is used by 2 items");
+        await Assertions.Expect(ConfirmationModal.GetByTestId("confirmation-message")).ToContainTextAsync("is used by 2 items");
         await ConfirmationModal.Locator("#cancelBtn").ClickAsync();
         await Assertions.Expect(ConfirmationModal).ToBeHiddenAsync();
         await Assertions.Expect(AllergenRows).ToHaveCountAsync(3);
 
         // Not in use: the plain question
         await OpenRowActionAsync("L", "Delete");
-        await Assertions.Expect(ConfirmationModal.Locator(".modal-body")).ToContainTextAsync("Are you sure you want to delete the allergen \"Sellerie\"?");
-        await Assertions.Expect(ConfirmationModal.Locator(".modal-body")).Not.ToContainTextAsync("used by");
+        await Assertions.Expect(ConfirmationModal.GetByTestId("confirmation-message")).ToContainTextAsync("Are you sure you want to delete the allergen \"Sellerie\"?");
+        await Assertions.Expect(ConfirmationModal.GetByTestId("confirmation-message")).Not.ToContainTextAsync("used by");
         await ConfirmationModal.Locator("#confirmBtn").ClickAsync();
         await Assertions.Expect(AllergenRow("L")).ToHaveCountAsync(0);
 
         // Confirmed: the allergen goes, the items stay (without it)
         await OpenRowActionAsync("C", "Delete");
-        await Assertions.Expect(ConfirmationModal.Locator(".modal-body")).ToContainTextAsync("is used by 1 item.");
+        await Assertions.Expect(ConfirmationModal.GetByTestId("confirmation-message")).ToContainTextAsync("is used by 1 item.");
         await ConfirmationModal.Locator("#confirmBtn").ClickAsync();
         await Assertions.Expect(AllergenRow("C")).ToHaveCountAsync(0);
         await Assertions.Expect(AllergenRows).ToHaveCountAsync(1);

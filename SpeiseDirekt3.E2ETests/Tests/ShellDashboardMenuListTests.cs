@@ -290,7 +290,7 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
         await GotoInteractiveAsync($"/menudetail/{menu.Id}");
         await Page.Locator("main").GetByRole(AriaRole.Button, new() { Name = "Delete menu" }).ClickAsync();
 
-        await Assertions.Expect(ConfirmationModal.Locator(".modal-body")).ToHaveTextAsync("Delete \"Solo\" with its categories and items?");
+        await Assertions.Expect(ConfirmationModal.GetByTestId("confirmation-message")).ToHaveTextAsync("Delete \"Solo\" with its categories and items?");
         await ConfirmationModal.Locator("#confirmBtn").ClickAsync();
 
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/menus$"));

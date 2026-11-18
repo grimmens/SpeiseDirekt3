@@ -48,7 +48,8 @@ public class LocalAssetsTests : QrCalendarTestBase
         // None of the back-office assets
         local.Should().NotContain(p => p.Contains("bootstrap") || p.Contains("chartjs") || p.Contains("speise.js")
             || p.Contains("analytics") || p.Contains("blazor.web") || p.Contains("tailwind") || p.Contains("app.css")
-            || p.Contains("fullcalendar") || p.Contains("shell.") || p.Contains("brand.css") || p.Contains("landing"));
+            || p.Contains("fullcalendar") || p.Contains("shell.") || p.Contains("brand.css") || p.Contains("landing")
+            || p.Contains("back-office") || p.Contains("sortable-list") || p.Contains("modal-dialog"));
         local.Should().Contain(p => p.StartsWith("/css/guest-menu")).And.Contain(p => p.StartsWith("/css/guest-themes"))
             .And.Contain(p => p.StartsWith("/js/guest-menu"));
         await Assertions.Expect(Page.Locator("script[src*='tailwindcss'], link[href*='bootstrap']")).ToHaveCountAsync(0);
@@ -77,7 +78,7 @@ public class LocalAssetsTests : QrCalendarTestBase
         local.Should().NotContain(p => p.Contains("bootstrap") || p.Contains("chartjs") || p.Contains("speise.js")
             || p.StartsWith("/js/analytics") || p.Contains("blazor.web") || p.Contains("tailwind") || p.Contains("app.css")
             || p.Contains("fullcalendar") || p.Contains("shell.") || p.StartsWith("/css/guest-") || p.StartsWith("/js/guest-")
-            || p.Contains("_content/"));
+            || p.Contains("_content/") || p.Contains("back-office") || p.Contains("sortable-list"));
         local.Should().Contain(p => p.StartsWith("/css/landing")).And.Contain(p => p.StartsWith("/css/brand"))
             .And.Contain(p => p.StartsWith("/js/landing")).And.Contain(p => p.StartsWith("/images/landing/"));
         await Assertions.Expect(Page.Locator("script[src*='tailwindcss'], link[href*='bootstrap'], script[src*='blazor']")).ToHaveCountAsync(0);
@@ -203,5 +204,45 @@ public class LocalAssetsTests : QrCalendarTestBase
         await guest.WaitForLoadStateAsync(LoadState.NetworkIdle);
         calendarFiles.Should().BeEmpty();
         (await guest.EvaluateAsync<bool>("() => typeof window.FullCalendar === 'undefined'")).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SortScript_IsLocal_LoadedOnlyWhereAListCanBeSorted_NeverOnGuestPages()
+    {
+        var ownerId = await RegisterOwnerAsync();
+        var menu = await SeedMenuAsync(ownerId, "Sortier Menü");
+        var external = RecordExternalRequests(Page);
+        var files = new List<(string Path, int Status)>();
+        Page.Response += (_, r) =>
+        {
+            var path = new Uri(r.Url).AbsolutePath;
+            if (path.Contains("sortable", StringComparison.OrdinalIgnoreCase))
+                lock (files) files.Add((path, r.Status));
+        };
+
+        // Pages without a sortable list: not loaded
+        foreach (var url in new[] { "/dashboard", "/menus", $"/allergens/{menu}", $"/combos/{menu}" })
+        {
+            await GotoInteractiveAsync(url);
+            await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        }
+        files.Should().BeEmpty("only pages with a sortable list load the drag-and-drop script");
+
+        // The categories page loads it, from the app (no third-party library)
+        await GotoInteractiveAsync($"/Categories/{menu}");
+        await Assertions.Expect(Page.GetByTestId("sort-handle")).ToHaveCountAsync(1);
+        await Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        files.Should().Contain(f => f.Path.StartsWith("/js/sortable-list") && f.Status == 200);
+        ExpectOnlyTailwindCdn(external);
+
+        // The guest page of that menu: none of it
+        var (guestContext, guest) = await NewContextAsync();
+        await using var _ = guestContext;
+        var guestFiles = new List<string>();
+        guest.Request += (_, r) => { lock (guestFiles) guestFiles.Add(new Uri(r.Url).AbsolutePath); };
+        await OpenGuestPageAsync(guest, $"/menu/{menu}");
+        await guest.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        guestFiles.Should().NotContain(p => p.Contains("sortable") || p.Contains("back-office"));
+        await Assertions.Expect(guest.Locator("[data-sortable-handle], [data-sortable]")).ToHaveCountAsync(0);
     }
 }

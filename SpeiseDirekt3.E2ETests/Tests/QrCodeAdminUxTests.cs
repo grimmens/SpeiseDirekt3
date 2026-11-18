@@ -414,8 +414,11 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
 
         await GotoInteractiveAsync("/qrcodes");
         await Card("Zeitplan weg").GetByRole(AriaRole.Button, new() { Name = "Delete Zeitplan weg" }).ClickAsync();
+        // Wait for the open dialog (its text is rendered before it opens), then confirm
+        await Assertions.Expect(Page.Locator("#confirmationModal")).ToBeVisibleAsync();
         await Assertions.Expect(Page.Locator("#confirmationModal")).ToContainTextAsync("“Zeitplan weg”");
         await Page.Locator("#confirmBtn").ClickAsync();
+        await Assertions.Expect(Page.Locator("#confirmationModal")).ToBeHiddenAsync();
 
         await Assertions.Expect(Card("Zeitplan weg")).ToHaveCountAsync(0);
         await using var db = App.CreateDbContext(ownerId);

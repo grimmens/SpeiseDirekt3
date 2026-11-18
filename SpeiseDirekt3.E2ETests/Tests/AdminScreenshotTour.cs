@@ -171,17 +171,61 @@ public class AdminScreenshotTour : QrCalendarTestBase
         // Guest-menu data model: restaurant profile, an item list with variants/extras, the editor with both
         await Shot("restaurant", "/restaurant");
         await Shot("menuitems-drinks", $"/MenuItems/Category/{s.DrinksCategoryId}");
+        // The item edit page (AP11: its own page instead of the modal), full page and at the variants with the save bar
         await Shot("menuitems-editor-options", $"/MenuItems/Category/{s.DrinksCategoryId}", async p =>
         {
-            await p.GetByRole(AriaRole.Button, new() { Name = "Edit Melange", Exact = true }).ClickAsync();
-            await Assertions.Expect(p.Locator("#menuItemEditModal")).ToBeVisibleAsync();
+            await p.GetByRole(AriaRole.Link, new() { Name = "Edit Melange", Exact = true }).ClickAsync();
+            await Assertions.Expect(p.GetByTestId("item-edit-form")).ToBeVisibleAsync();
         });
-        // The editor scrolls inside the modal: one more shot with the options in view
-        await Shot("menuitems-editor-options-scrolled", $"/MenuItems/Category/{s.DrinksCategoryId}", async p =>
-        {
-            await p.GetByRole(AriaRole.Button, new() { Name = "Edit Melange", Exact = true }).ClickAsync();
-            await p.GetByTestId("price-variants").ScrollIntoViewIfNeededAsync();
-        });
+        await GotoInteractiveAsync(page, $"/MenuItems/Category/{s.DrinksCategoryId}");
+        await page.GetByRole(AriaRole.Link, new() { Name = "Edit Melange", Exact = true }).ClickAsync();
+        await page.GetByTestId("price-variants").ScrollIntoViewIfNeededAsync();
+        await page.GetByLabel("Name of variant 1").FillAsync("Klein (0,25 l)");
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-menuitems-editor-options-scrolled.png"), FullPage = false });
+        // Leaving with unsaved changes asks first (the quiet confirmation)
+        await page.GetByTestId("menu-tabs").GetByRole(AriaRole.Link, new() { Name = "Categories" }).ClickAsync();
+        await Assertions.Expect(page.Locator("#confirmationModal")).ToBeVisibleAsync();
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-menuitems-editor-leave-confirm.png"), FullPage = false });
+        await page.Locator("#cancelBtn").ClickAsync();
+
+        // Drag and drop: a category lifted half-way over the next one (mouse down/move without release)
+        await GotoInteractiveAsync(page, $"/Categories/{s.MenuId}");
+        await SettleAsync(page);
+        var handle = page.GetByTestId("category-row").First.GetByTestId("sort-handle");
+        var box = (await handle.BoundingBoxAsync())!;
+        await page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
+        await page.Mouse.DownAsync();
+        await page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2 + 30, new() { Steps = 4 });
+        await page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2 + 75, new() { Steps = 6 });
+        await page.WaitForTimeoutAsync(300);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-categories-dragging.png"), FullPage = false });
+        await page.Keyboard.PressAsync("Escape");
+        await page.Mouse.UpAsync();
+
+        // Inline edit of a category and of an allergen
+        await GotoInteractiveAsync(page, $"/Categories/{s.MenuId}");
+        await page.GetByTestId("category-row").Nth(1).GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^Edit ") }).ClickAsync();
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-categories-inline-edit.png"), FullPage = false });
+        await GotoInteractiveAsync(page, $"/allergens/{s.MenuId}");
+        await page.GetByTestId("allergen-row").First.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^Edit ") }).ClickAsync();
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-allergens-inline-edit.png"), FullPage = false });
+
+        // The quiet confirmation and the combo editor panel
+        await GotoInteractiveAsync(page, $"/combos/{s.MenuId}");
+        await page.GetByRole(AriaRole.Button, new() { NameRegex = new System.Text.RegularExpressions.Regex("^Delete combo ") }).First.ClickAsync();
+        await Assertions.Expect(page.Locator("#confirmationModal")).ToBeVisibleAsync();
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-confirmation.png"), FullPage = false });
+        await page.Locator("#cancelBtn").ClickAsync();
+        await page.GetByRole(AriaRole.Button, new() { Name = "Edit", Exact = true }).First.ClickAsync();
+        await Assertions.Expect(page.GetByTestId("combo-editor")).ToBeVisibleAsync();
+        await SettleAsync(page);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-combo-editor.png"), FullPage = false });
+        await page.Keyboard.PressAsync("Escape");
 
         // The menu switcher of the context bar, open
         await GotoInteractiveAsync(page, $"/Categories/{s.MenuId}");
@@ -208,12 +252,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
         await SettleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-user-menu-open.png"), FullPage = false });
 
-        await Shot("menuitems-editor", $"/MenuItems/{s.MenuId}", async p =>
-        {
-            await Assertions.Expect(p).ToHaveURLAsync(new System.Text.RegularExpressions.Regex("/MenuItems/Category/", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
-            await p.GetByRole(AriaRole.Button, new() { Name = "New Menu Entry" }).ClickAsync();
-            await Assertions.Expect(p.Locator("#menuItemEditModal")).ToBeVisibleAsync();
-        });
+        await Shot("menuitems-editor", $"/MenuItems/Category/{s.CategoryId}/new");
         await Shot("menu-new", "/menu/edit");
         await Shot("menudetail-empty-menu", $"/menudetail/{s.EmptyMenuId}");
         await Shot("categories-empty-menu", $"/Categories/{s.EmptyMenuId}");
