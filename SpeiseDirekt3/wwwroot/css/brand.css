@@ -14,7 +14,8 @@
  * spelled out at the end and must follow the values above.
  *
  * Contrast (WCAG 2.x): white text on brand-600 6.1:1, on brand-700 8.1:1, on brand-900 11.7:1; brand-600 text on
- * white 6.1:1; brand-950 text on accent-400 7.7:1, on accent-300 9.4:1; accent-400 on brand-900 5.7:1.
+ * white 6.1:1, on the canvas 5.3:1, on brand-50 5.7:1; brand-700 on brand-50 7.5:1, on brand-100 6.7:1; brand-950 text
+ * on accent-400 7.7:1, on accent-300 9.4:1; accent-800 on accent-100 6.1:1; accent-400 on brand-900 5.7:1.
  * White on accent-* below 700 fails AA: the accent always carries dark text.
  */
 :root {
@@ -44,15 +45,31 @@
     --sd-accent-900: 118 55 20;   /* #763714 */
     --sd-accent-950: 68 26 7;     /* #441a07 */
 
-    /* Neutral surfaces and text (cool grays, slightly towards the brand) */
-    --sd-canvas: 245 247 248;      /* #f5f7f8 — page background */
+    /* Neutral surfaces and text (cool grays, slightly towards the brand). AP11: a notch more contrast — the canvas is a
+       light petrol tint so white cards stand out, borders and secondary text are darker. */
+    --sd-canvas: 232 238 241;      /* #e8eef1 — page background (was #f5f7f8) */
     --sd-surface: 255 255 255;     /* cards, bars */
-    --sd-surface-muted: 240 244 245; /* #f0f4f5 — hover rows, inactive tracks */
-    --sd-border: 222 228 231;      /* #dee4e7 */
-    --sd-border-strong: 200 209 213; /* #c8d1d5 */
-    --sd-text: 17 24 39;           /* #111827 */
-    --sd-text-muted: 75 85 99;     /* #4b5563 — 7.6:1 on white */
-    --sd-text-subtle: 107 114 128; /* #6b7280 — 4.8:1 on white */
+    --sd-surface-muted: 240 244 246; /* #f0f4f6 — hover rows, inactive tracks */
+    --sd-border: 215 223 227;      /* #d7dfe3 — 1.35:1 on white (was #dee4e7) */
+    --sd-border-strong: 184 195 201; /* #b8c3c9 — inputs, outlined buttons (was #c8d1d5) */
+    --sd-text: 18 26 31;           /* #121a1f — 17.6:1 on white, 15:1 on the canvas */
+    --sd-text-muted: 70 82 90;     /* #46525a — 8.0:1 on white (was #4b5563) */
+    --sd-text-subtle: 89 102 110;  /* #59666e — 5.9:1 on white, 5.1:1 on the canvas (was #6b7280) */
+
+    /* Back-office grays (AP11): Tailwind's `gray` palette in the back office maps to these (Components/App.razor), so
+       every gray-* utility gets the cool brand tint and AA-level secondary text: gray-400 text 4.5:1 on white (Tailwind's
+       own #9ca3af was 2.5:1), gray-500 5.9:1, gray-600 8.0:1. The landing page and the guest menu do not use them. */
+    --sd-gray-50: 243 246 248;     /* #f3f6f8 */
+    --sd-gray-100: 230 236 239;    /* #e6ecef */
+    --sd-gray-200: 215 223 227;    /* #d7dfe3 = border */
+    --sd-gray-300: 184 195 201;    /* #b8c3c9 = border-strong */
+    --sd-gray-400: 107 120 128;    /* #6b7880 */
+    --sd-gray-500: 89 102 110;     /* #59666e = text-subtle */
+    --sd-gray-600: 70 82 90;       /* #46525a = text-muted */
+    --sd-gray-700: 52 63 70;       /* #343f46 */
+    --sd-gray-800: 32 41 47;       /* #20292f */
+    --sd-gray-900: 18 26 31;       /* #121a1f = text */
+    --sd-gray-950: 9 14 18;        /* #090e12 */
 
     /* Typography (self-hosted, css/fonts.css) */
     --sd-font-sans: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -84,6 +101,10 @@
     --sd-shadow-sm: 0 1px 3px rgb(13 38 45 / .08), 0 1px 2px rgb(13 38 45 / .05);
     --sd-shadow-md: 0 6px 16px -4px rgb(13 38 45 / .12), 0 2px 6px -2px rgb(13 38 45 / .07);
     --sd-shadow-lg: 0 18px 40px -12px rgb(13 38 45 / .22), 0 6px 14px -6px rgb(13 38 45 / .10);
+    /* Back-office cards (Tailwind's shadow-sm maps to it): a little more lift than shadow-sm on the tinted canvas */
+    --sd-shadow-card: 0 1px 2px rgb(13 38 45 / .07), 0 2px 6px -1px rgb(13 38 45 / .08);
+    /* A dragged row (sortable lists) */
+    --sd-shadow-lift: 0 14px 28px -10px rgb(13 38 45 / .35), 0 4px 10px -4px rgb(13 38 45 / .18);
 
     /* Focus ring: a light gap plus brand-500, visible on white and on the dark bar */
     --sd-focus-color: 46 133 149;  /* = brand-500 */

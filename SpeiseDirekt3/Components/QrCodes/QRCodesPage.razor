@@ -15,41 +15,32 @@
 
 <PageTitle>QR Codes - Speise-Direkt</PageTitle>
 
-<!-- Header Section -->
-<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-    <div class="p-[1rem] sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 font-display">QR Codes</h1>
-                <p class="mt-2 text-gray-600">Generate and manage QR codes for your digital menus</p>
+<PageHeader Title="QR Codes" Icon="PageIcons.QrCodes" Tone="TileTone.Violet">
+    <Description>Generate and manage QR codes for your digital menus</Description>
+    <Actions>
+        @if (CanCreateQrCode)
+        {
+            <button type="button" class="sd-btn sd-btn--primary" @onclick="CreateNew">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                </svg>
+                Create New QR Code
+            </button>
+        }
+        else
+        {
+            <div class="text-center">
+                <button type="button" class="sd-btn sd-btn--primary" disabled>
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                    Create New QR Code
+                </button>
+                <p class="mt-2 mb-0 text-sm text-gray-500">Cannot create a new QR code at this time</p>
             </div>
-            <div class="mt-4 sm:mt-0">
-                @if (CanCreateQrCode)
-                {
-                    <button class="inline-flex items-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                            @onclick="CreateNew">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                        </svg>
-                        Create New QR Code
-                    </button>
-                }
-                else
-                {
-                    <div class="text-center">
-                        <button class="inline-flex items-center px-6 py-3 bg-gray-400 text-white font-semibold rounded-lg cursor-not-allowed" disabled>
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                            </svg>
-                            Create New QR Code
-                        </button>
-                        <p class="mt-2 text-sm text-gray-500">Cannot create a new QR code at this time</p>
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
+        }
+    </Actions>
+</PageHeader>
 
 <!-- Content Section -->
     @if (codes == null)

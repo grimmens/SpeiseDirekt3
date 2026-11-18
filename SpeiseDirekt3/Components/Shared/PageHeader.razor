@@ -1,0 +1,49 @@
+@* The header card of a back-office page (css/back-office.css .sd-page-head): an icon tile in the area's tone, the h1
+   (or TitleContent, e.g. the items page's category switcher), a description and the page's actions at the right. *@
+<header class="sd-page-head @Class" data-testid="page-header">
+    <div class="sd-page-head-main">
+        @if (Icon is not null)
+        {
+            <span class="@TileClass" aria-hidden="true">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="@Icon.StrokeWidth.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="@Icon.Path" />
+                </svg>
+            </span>
+        }
+        <div class="sd-page-head-text">
+            @if (Eyebrow is not null)
+            {
+                <p class="sd-page-head-eyebrow">@Eyebrow</p>
+            }
+            @if (TitleContent is not null)
+            {
+                @TitleContent
+            }
+            else
+            {
+                <h1 class="sd-page-head-title">@Title</h1>
+            }
+            @if (Description is not null)
+            {
+                <div class="sd-page-head-desc">@Description</div>
+            }
+        </div>
+    </div>
+    @if (Actions is not null)
+    {
+        <div class="sd-page-head-actions">@Actions</div>
+    }
+</header>
+
+@code {
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public RenderFragment? TitleContent { get; set; }
+    [Parameter] public string? Eyebrow { get; set; }
+    [Parameter] public RenderFragment? Description { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+    [Parameter] public PageIcon? Icon { get; set; }
+    [Parameter] public TileTone Tone { get; set; } = TileTone.Brand;
+    [Parameter] public string? Class { get; set; }
+
+    private string TileClass => $"sd-tile sd-tile--{Tone.ToString().ToLowerInvariant()}";
+}

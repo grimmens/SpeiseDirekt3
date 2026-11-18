@@ -18,13 +18,9 @@
 @if (dashboard is { } d)
 {
     <!-- Header -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-        <div class="p-[1rem] sm:p-6">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div class="min-w-0 flex-1">
-                    <h1 class="text-3xl font-bold text-gray-900 font-display">Welcome back</h1>
-                    <p class="mt-2 text-gray-600 break-all" data-testid="dashboard-user">@d.UserName</p>
-                </div>
+    <PageHeader Title="Welcome back" Icon="DashboardIcon" Tone="TileTone.Brand" Class="mb-8">
+        <Description><span class="break-all" data-testid="dashboard-user">@d.UserName</span></Description>
+        <Actions>
                 @if (d.CanCreateMenu || d.CanCreateQrCode || d.CanViewAnalytics)
                 {
                     <div class="flex flex-wrap gap-2 lg:flex-shrink-0" data-testid="quick-actions">
@@ -57,71 +53,70 @@
                         }
                     </div>
                 }
-            </div>
-        </div>
-    </div>
+        </Actions>
+    </PageHeader>
 
     <!-- Stat tiles -->
     <div class="grid grid-cols-2 @(d.CanViewAnalytics ? "lg:grid-cols-4" : "lg:grid-cols-3") gap-4 mb-8">
         <a href="menus" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-menus">
             <div class="flex items-center gap-3">
-                <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
                 </span>
                 <div class="min-w-0">
-                    <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.MenuCount</div>
+                    <div class="text-2xl font-extrabold text-gray-900 font-display" data-testid="stat-value">@d.MenuCount</div>
                     <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Menus</div>
                 </div>
             </div>
-            <div class="mt-2 text-xs text-gray-400">@Count(d.ItemCount, "item", "items") in total</div>
+            <div class="mt-2 text-xs text-gray-500">@Count(d.ItemCount, "item", "items") in total</div>
         </a>
         <a href="qrcodes" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-qrcodes">
             <div class="flex items-center gap-3">
-                <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+                <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-800">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                     </svg>
                 </span>
                 <div class="min-w-0">
-                    <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.QrCodeCount</div>
+                    <div class="text-2xl font-extrabold text-gray-900 font-display" data-testid="stat-value">@d.QrCodeCount</div>
                     <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">QR codes</div>
                 </div>
             </div>
-            <div class="mt-2 text-xs text-gray-400">For your tables and windows</div>
+            <div class="mt-2 text-xs text-gray-500">For your tables and windows</div>
         </a>
         @if (d.CanViewAnalytics)
         {
             <a href="analytics" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-views">
                 <div class="flex items-center gap-3">
-                    <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-green-50 text-green-600">
+                    <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800">
                         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                         </svg>
                     </span>
                     <div class="min-w-0">
-                        <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.ViewsLast7Days</div>
+                        <div class="text-2xl font-extrabold text-gray-900 font-display" data-testid="stat-value">@d.ViewsLast7Days</div>
                         <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Menu views</div>
                     </div>
                 </div>
-                <div class="mt-2 text-xs text-gray-400">Last 7 days</div>
+                <div class="mt-2 text-xs text-gray-500">Last 7 days</div>
             </a>
         }
         <a href="users" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-team">
             <div class="flex items-center gap-3">
-                <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-accent-100 text-accent-800">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                 </span>
                 <div class="min-w-0">
-                    <div class="text-2xl font-bold text-gray-900" data-testid="stat-value">@d.TeamCount</div>
+                    <div class="text-2xl font-extrabold text-gray-900 font-display" data-testid="stat-value">@d.TeamCount</div>
                     <div class="text-sm text-gray-500 group-hover:text-brand-600 transition-colors">Team members</div>
                 </div>
             </div>
-            <div class="mt-2 text-xs text-gray-400">Active sub-accounts</div>
+            <div class="mt-2 text-xs text-gray-500">Active sub-accounts</div>
         </a>
     </div>
 
@@ -130,10 +125,10 @@
         {
             <!-- Getting started -->
             <section class="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm" data-testid="getting-started">
-                <div class="p-[1rem] sm:p-6 border-b border-gray-100">
+                <div class="sd-card-head sd-card-head--stack">
                     <div class="flex items-start justify-between gap-4">
                         <div class="min-w-0">
-                            <h2 class="text-lg font-semibold text-gray-900">Getting started</h2>
+                            <h2 class="sd-card-title">Getting started</h2>
                             <p class="mt-1 text-sm text-gray-500">Four steps until your guests can scan your menu at the table.</p>
                         </div>
                         <span class="flex-shrink-0 text-sm font-medium text-gray-600" data-testid="getting-started-progress">@d.Steps.Count(s => s.Done) of @d.Steps.Count done</span>
@@ -216,8 +211,8 @@
 
         <!-- Menus -->
         <section class="@(d.ShowChecklist ? "" : "lg:col-span-3") bg-white rounded-xl border border-gray-200 shadow-sm self-start" data-testid="dashboard-menus">
-            <div class="flex items-center justify-between gap-4 px-[1rem] sm:px-6 py-4 border-b border-gray-100">
-                <h2 class="text-lg font-semibold text-gray-900">Your menus</h2>
+            <div class="sd-card-head">
+                <h2 class="sd-card-title">Your menus</h2>
                 <a href="menus" class="flex-shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700">All menus <span aria-hidden="true">&rarr;</span></a>
             </div>
             @if (d.Menus.Count == 0)
@@ -259,6 +254,8 @@
 }
 
 @code {
+    private static readonly PageIcon DashboardIcon = new(ShellNavigation.Items[0].IconPath, 2);
+
     [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
 
     /// <summary>Loaded once the signed-in user is known.</summary>

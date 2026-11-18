@@ -49,7 +49,8 @@ else
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Brand palettes from css/brand.css (RGB channels), so opacity modifiers work: bg-brand-600/20
+        // Brand palettes from css/brand.css (RGB channels), so opacity modifiers work: bg-brand-600/20. `gray` is the
+        // back office's cool, brand-tinted gray (AP11, --sd-gray-*), `shadow-sm` the card shadow (--sd-shadow-card).
         (() => {
             const scale = name => Object.fromEntries([50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
                 .map(step => [step, `rgb(var(--sd-${name}-${step}) / <alpha-value>)`]));
@@ -59,7 +60,11 @@ else
                         colors: {
                             brand: scale('brand'),
                             primary: scale('brand'),
-                            accent: scale('accent')
+                            accent: scale('accent'),
+                            gray: scale('gray')
+                        },
+                        boxShadow: {
+                            sm: 'var(--sd-shadow-card)'
                         },
                         fontFamily: {
                             'sans': ['Inter', 'system-ui', 'sans-serif'],
@@ -79,7 +84,7 @@ else
     <link rel="stylesheet" href="@Assets["SpeiseDirekt3.styles.css"]" />
     <link rel="stylesheet" href="@Assets["css/tailwind-overrides.css"]" />
     <link rel="stylesheet" href="@Assets["css/shell.css"]" />
-    <script src="speise.js"></script>
+    <link rel="stylesheet" href="@Assets["css/back-office.css"]" />
     <!-- Bootstrap JS (required for modal to work) -->
     <script src="@Assets["lib/bootstrap/dist/js/bootstrap.bundle.min.js"]"></script>
 

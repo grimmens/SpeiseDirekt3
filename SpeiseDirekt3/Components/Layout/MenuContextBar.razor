@@ -85,7 +85,7 @@
 
     private List<MenuRef> menus = [];
     private MenuRef? current;
-    private (MenuTab Tab, Guid Id, bool IsCategoryId)? page;
+    private (MenuTab Tab, Guid Id, MenuPageId Kind)? page;
     private ElementReference tabStrip;
     private bool revealTab;
     private int version;
@@ -104,7 +104,7 @@
             try
             {
                 // Another tab of the same menu: mark it at once, the reload below only refreshes the names
-                if (ShellNavigation.MenuPageOf(NavigationManager.ToBaseRelativePath(e.Location)) is { IsCategoryId: false } same
+                if (ShellNavigation.MenuPageOf(NavigationManager.ToBaseRelativePath(e.Location)) is { Kind: MenuPageId.Menu } same
                     && same.Id == current?.Id)
                 {
                     page = same;
@@ -136,9 +136,12 @@
         }
 
         await using var db = await DbFactory.CreateDbContextAsync();
-        var menuId = next.Value.IsCategoryId
-            ? await db.Categories.AsNoTracking().Where(c => c.Id == next.Value.Id).Select(c => (Guid?)c.MenuId).FirstOrDefaultAsync()
-            : next.Value.Id;
+        var menuId = next.Value.Kind switch
+        {
+            MenuPageId.Category => await db.Categories.AsNoTracking().Where(c => c.Id == next.Value.Id).Select(c => (Guid?)c.MenuId).FirstOrDefaultAsync(),
+            MenuPageId.Item => await db.MenuItems.AsNoTracking().Where(i => i.Id == next.Value.Id).Select(i => (Guid?)i.Category!.MenuId).FirstOrDefaultAsync(),
+            _ => next.Value.Id
+        };
         var list = await db.Menus.AsNoTracking()
             .OrderBy(m => m.Name)
             .Select(m => new MenuRef(m.Id, m.Name))

@@ -16,6 +16,8 @@
  *   the page).
  * - `sdShell.revealActiveTab(strip)`: scrolls a horizontal tab strip so its `[aria-current="page"]` tab is centred
  *   (called by MenuContextBar after render); never scrolls the page.
+ * - `sdShell.revealRow(selector)`: scrolls the first visible element matching `selector` to the middle of the screen
+ *   (the item list after the edit page: the row just saved); instant with reduced motion.
  */
 (() => {
     if (window.sdShell) return;
@@ -206,5 +208,13 @@
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', revealAll);
     else revealAll();
 
-    window.sdShell = { revealActiveTab, closeAllDropdowns };
+    function revealRow(selector) {
+        const row = [...document.querySelectorAll(selector)].find(el => el.getClientRects().length > 0);
+        if (!row) return false;
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        row.scrollIntoView({ block: 'center', behavior: reduce ? 'instant' : 'smooth' });
+        return true;
+    }
+
+    window.sdShell = { revealActiveTab, revealRow, closeAllDropdowns };
 })();

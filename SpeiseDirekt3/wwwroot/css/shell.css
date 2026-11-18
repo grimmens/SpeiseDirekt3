@@ -674,8 +674,10 @@ html.sd-drawer-open {
 /* --- Menu context bar (pages of one menu) --- */
 
 .sd-ctx {
-    border-bottom: 1px solid rgb(var(--sd-border));
-    background: rgb(var(--sd-surface));
+    /* AP11: a light brand tint, clearly part of the dark top bar above it */
+    border-bottom: 1px solid rgb(var(--sd-brand-200));
+    background: linear-gradient(to bottom, rgb(var(--sd-brand-100) / .7), rgb(var(--sd-brand-50)) 2.5rem);
+    box-shadow: inset 0 1px 0 rgb(var(--sd-brand-950) / .06);
 }
 
 .sd-ctx-head {
@@ -743,8 +745,8 @@ html.sd-drawer-open {
 
 .sd-ctx-switch-button:hover,
 .sd-ctx-switch-button[aria-expanded="true"] {
-    border-color: rgb(var(--sd-border));
-    background: rgb(var(--sd-surface-muted));
+    border-color: rgb(var(--sd-brand-200));
+    background: rgb(var(--sd-surface));
 }
 
 .sd-ctx-switch-button .sd-chevron {
@@ -840,12 +842,12 @@ html.sd-drawer-open {
 }
 
 .sd-ctx-tab:hover::after {
-    background: rgb(var(--sd-border));
+    background: rgb(var(--sd-brand-200));
 }
 
 .sd-ctx-tab[aria-current="page"] {
-    color: rgb(var(--sd-brand-700));
-    font-weight: 600;
+    color: rgb(var(--sd-brand-800));
+    font-weight: 700;
 }
 
 .sd-ctx-tab[aria-current="page"]::after {

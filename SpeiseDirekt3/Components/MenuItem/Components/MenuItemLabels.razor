@@ -7,12 +7,12 @@
     <div class="flex flex-wrap gap-1 @Class" data-testid="item-labels">
         @foreach (var label in labels)
         {
-            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border @ChipClass(label)"
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold border @ChipClass(label)"
                   data-label="@label.Key">@label.BackOfficeText</span>
         }
         @foreach (var allergen in Item.Allergens.OrderBy(a => a.Code, StringComparer.Ordinal))
         {
-            <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200"
+            <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded text-xs font-bold bg-brand-50 text-brand-800 border border-brand-200"
                   title="@($"Allergen {allergen.Code}: {allergen.Name}")" data-testid="allergen-chip">@allergen.Code</span>
         }
     </div>
@@ -34,16 +34,19 @@ else if (ShowPlaceholder)
 
     private bool HasLabels => labels.Count > 0 || Item.Allergens.Any();
 
-    /// <summary>Chip colours per label key (back office only; the guest view styles labels per theme).</summary>
+    /// <summary>
+    /// Chip colours per label key (back office only; the guest view styles labels per theme). AP11: the 100 step with
+    /// 800 text (6.4–6.8:1) instead of 50/700, so the chips read clearly; highlights use the accent.
+    /// </summary>
     internal static string ChipClass(ItemLabel label) => label.Key switch
     {
-        "popular" => "bg-amber-50 text-amber-800 border-amber-200",
-        "new" => "bg-violet-50 text-violet-700 border-violet-200",
-        "vegan" => "bg-green-50 text-green-700 border-green-200",
-        "vegetarian" => "bg-lime-50 text-lime-700 border-lime-200",
-        "halal" => "bg-teal-50 text-teal-700 border-teal-200",
-        "alcohol-free" => "bg-sky-50 text-sky-700 border-sky-200",
-        "spicy" => "bg-red-50 text-red-700 border-red-200",
-        _ => "bg-gray-50 text-gray-700 border-gray-200"
+        "popular" => "bg-accent-100 text-accent-800 border-accent-200",
+        "new" => "bg-violet-100 text-violet-800 border-violet-200",
+        "vegan" => "bg-green-100 text-green-800 border-green-200",
+        "vegetarian" => "bg-lime-100 text-lime-800 border-lime-200",
+        "halal" => "bg-teal-100 text-teal-800 border-teal-200",
+        "alcohol-free" => "bg-sky-100 text-sky-800 border-sky-200",
+        "spicy" => "bg-red-100 text-red-800 border-red-200",
+        _ => "bg-gray-100 text-gray-800 border-gray-200"
     };
 }

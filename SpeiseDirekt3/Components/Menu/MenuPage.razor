@@ -11,29 +11,20 @@
 
 <PageTitle>Menus - Speise-Direkt</PageTitle>
 
-<!-- Header Section -->
-<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-    <div class="p-[1rem] sm:p-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 font-display">Your Menus</h1>
-                <p class="mt-2 text-gray-600">Create and manage your restaurant's digital menus</p>
-            </div>
-            @if (canCreate)
-            {
-                <div>
-                    <button class="inline-flex items-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                            @onclick="CreateNewMenu">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Create New Menu
-                    </button>
-                </div>
-            }
-        </div>
-    </div>
-</div>
+<PageHeader Title="Your Menus" Icon="PageIcons.Menus" Tone="TileTone.Brand">
+    <Description>Create and manage your restaurant's digital menus</Description>
+    <Actions>
+        @if (canCreate)
+        {
+            <button type="button" class="sd-btn sd-btn--primary" @onclick="CreateNewMenu">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Create New Menu
+            </button>
+        }
+    </Actions>
+</PageHeader>
 
 <!-- Content Section -->
 @if (cards == null)

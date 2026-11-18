@@ -53,6 +53,11 @@
 
 <SpeiseDirekt3.Components.Shared.ConfirmationModal />
 
+@* Status messages for screen readers (js/sortable-list.js: "Moved Desserts to position 3 of 4.") and the description of
+   every drag handle (Shared/Sortable/SortableList). Blazor never renders content into the live region; scripts set it. *@
+<div id="sd-announcer" class="sd-sr-only" role="status" aria-live="polite" aria-atomic="true" data-testid="sd-announcer"></div>
+<span id="sd-sort-help" hidden>Drag to change the order, or press the up and down arrow keys.</span>
+
 <!-- Error UI (shown by blazor.web.js) -->
 <div id="blazor-error-ui" role="alert" data-nosnippet>
     <div class="sd-container sd-error-inner">

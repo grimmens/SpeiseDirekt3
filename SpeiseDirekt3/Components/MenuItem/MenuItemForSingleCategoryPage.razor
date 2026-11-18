@@ -10,12 +10,13 @@
 
 <PageTitle>Menu Items</PageTitle>
 
-<div class="max-w-6xl mx-auto space-y-6">
+<div class="max-w-6xl mx-auto">
     @* "Menus › menu" is in the menu context bar (Layout/MenuContextBar) *@
     @if (Category != null)
     {
         <CategoryDropdownHeadline Category="@Category"
         Categories="@(Categories ?? [])"
+        HighlightId="Highlight"
         CategoryChanged="OnCategoryChanged" />
     }
     else if (loaded)
@@ -29,6 +30,9 @@
 
 @code {
     [Parameter] public Guid CategoryId { get; set; }
+
+    /// <summary>The item to scroll to and highlight (the edit page returns here with ?highlight={itemId}).</summary>
+    [SupplyParameterFromQuery(Name = "highlight")] public Guid? Highlight { get; set; }
 
     [Inject] public ApplicationDbContext Context { get; set; }
     [Inject] public INotificationService NotificationService { get; set; }

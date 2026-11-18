@@ -6,6 +6,9 @@ public sealed record ShellNavItem(string Key, string Label, string Href, string 
 /// <summary>A tab of the menu context bar (<see cref="MenuContextBar"/>).</summary>
 public enum MenuTab { Overview, Categories, Items, Allergens, Combos, Settings }
 
+/// <summary>What the id in a menu page's URL identifies (the context bar looks the menu up for a category or an item).</summary>
+public enum MenuPageId { Menu, Category, Item }
+
 /// <summary>
 /// The back office's navigation in one place: the primary entries, which entry a URL belongs to, and which pages
 /// belong to one menu (they get the menu context bar).
@@ -51,22 +54,25 @@ public static class ShellNavigation
     }
 
     /// <summary>
-    /// A page that belongs to one menu: the tab and the id in the URL. <paramref name="IsCategoryId"/> is set for
-    /// <c>/MenuItems/Category/{categoryId}</c>, whose menu has to be looked up. Null for every other page (also
+    /// A page that belongs to one menu: the tab and the id in the URL. <paramref name="Kind"/> says whether the id is
+    /// the menu's or a category's (<c>/MenuItems/Category/{categoryId}</c> and its <c>/new</c> item page) or an item's
+    /// (<c>/MenuItems/item/{itemId}/edit</c>), whose menu has to be looked up. Null for every other page (also
     /// <c>/menu/edit</c> without an id, i.e. a new menu).
     /// </summary>
-    public static (MenuTab Tab, Guid Id, bool IsCategoryId)? MenuPageOf(string relativeUrl)
+    public static (MenuTab Tab, Guid Id, MenuPageId Kind)? MenuPageOf(string relativeUrl)
     {
         var segments = PathOf(relativeUrl).Split('/', StringSplitOptions.RemoveEmptyEntries);
         return segments switch
         {
-            ["menudetail", var id] when Guid.TryParse(id, out var g) => (MenuTab.Overview, g, false),
-            ["categories", var id] when Guid.TryParse(id, out var g) => (MenuTab.Categories, g, false),
-            ["menuitems", "category", var id] when Guid.TryParse(id, out var g) => (MenuTab.Items, g, true),
-            ["menuitems", var id] when Guid.TryParse(id, out var g) => (MenuTab.Items, g, false),
-            ["allergens", var id] when Guid.TryParse(id, out var g) => (MenuTab.Allergens, g, false),
-            ["combos", var id] when Guid.TryParse(id, out var g) => (MenuTab.Combos, g, false),
-            ["menu", "edit", var id] when Guid.TryParse(id, out var g) => (MenuTab.Settings, g, false),
+            ["menudetail", var id] when Guid.TryParse(id, out var g) => (MenuTab.Overview, g, MenuPageId.Menu),
+            ["categories", var id] when Guid.TryParse(id, out var g) => (MenuTab.Categories, g, MenuPageId.Menu),
+            ["menuitems", "category", var id] when Guid.TryParse(id, out var g) => (MenuTab.Items, g, MenuPageId.Category),
+            ["menuitems", "category", var id, "new"] when Guid.TryParse(id, out var g) => (MenuTab.Items, g, MenuPageId.Category),
+            ["menuitems", "item", var id, "edit"] when Guid.TryParse(id, out var g) => (MenuTab.Items, g, MenuPageId.Item),
+            ["menuitems", var id] when Guid.TryParse(id, out var g) => (MenuTab.Items, g, MenuPageId.Menu),
+            ["allergens", var id] when Guid.TryParse(id, out var g) => (MenuTab.Allergens, g, MenuPageId.Menu),
+            ["combos", var id] when Guid.TryParse(id, out var g) => (MenuTab.Combos, g, MenuPageId.Menu),
+            ["menu", "edit", var id] when Guid.TryParse(id, out var g) => (MenuTab.Settings, g, MenuPageId.Menu),
             _ => null
         };
     }
