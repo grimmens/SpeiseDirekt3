@@ -8,8 +8,10 @@
 @attribute [Authorize]
 @inject NavigationManager Navigation
 @inject IPermissionService PermissionService
+@inject IStringLocalizer<ItemsText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>@(state == State.Loading ? "Loading..." : "Menu Items")</PageTitle>
+<PageTitle>@(state == State.Loading ? C["Loading"] : C["PageTitle", T["Title"]])</PageTitle>
 
 @if (state != State.Loading)
 {
@@ -23,16 +25,16 @@
             </div>
             @if (state == State.MenuNotFound)
             {
-                <h1 class="text-lg font-semibold text-gray-900 mb-1">Menu not found</h1>
-                <p class="text-sm text-gray-500 mb-6">It may have been deleted.</p>
-                <a href="/menus" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors no-underline">Back to the menus</a>
+                <h1 class="text-lg font-semibold text-gray-900 mb-1">@T["Loading_NotFoundTitle"]</h1>
+                <p class="text-sm text-gray-500 mb-6">@T["Loading_NotFoundText"]</p>
+                <a href="/menus" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors no-underline">@T["BackToMenus"]</a>
             }
             else
             {
-                <h1 class="text-lg font-semibold text-gray-900 mb-1">No categories yet</h1>
+                <h1 class="text-lg font-semibold text-gray-900 mb-1">@T["Loading_NoCategoriesTitle"]</h1>
                 <p class="text-sm text-gray-500 mb-6">
-                    Menu items belong to a category, e.g. Starters, Mains or Drinks.
-                    @(canCreateCategories ? "Add a category first, then add the items to it." : "A category has to be added first.")
+                    @T["Loading_NoCategoriesText"]
+                    @(canCreateCategories ? T["Loading_AddCategoryFirst"] : T["Loading_CategoryNeeded"])
                 </p>
                 @if (canCreateCategories)
                 {
@@ -40,7 +42,7 @@
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
-                        Add a category
+                        @T["Loading_AddCategory"]
                     </a>
                 }
             }

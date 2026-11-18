@@ -7,8 +7,10 @@
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @attribute [Authorize]
+@inject IStringLocalizer<ItemsText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>Menu Items</PageTitle>
+<PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
 
 <div class="max-w-6xl mx-auto">
     @* "Menus › menu" is in the menu context bar (Layout/MenuContextBar) *@
@@ -22,8 +24,8 @@
     else if (loaded)
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-[1rem] sm:px-6 py-10 text-center">
-            <h1 class="text-lg font-semibold text-gray-900">Category not found</h1>
-            <p class="mt-1 text-sm text-gray-500">It may have been deleted. <a href="/menus" class="text-brand-600 hover:underline">Back to the menus</a></p>
+            <h1 class="text-lg font-semibold text-gray-900">@T["NotFound_CategoryTitle"]</h1>
+            <p class="mt-1 text-sm text-gray-500">@T["NotFound_CategoryText"] <a href="/menus" class="text-brand-600 hover:underline">@T["BackToMenus"]</a></p>
         </div>
     }
 </div>

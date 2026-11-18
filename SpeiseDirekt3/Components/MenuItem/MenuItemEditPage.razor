@@ -14,6 +14,9 @@
 @inject IPermissionService PermissionService
 @inject INotificationService NotificationService
 @inject NavigationManager Navigation
+@inject IStringLocalizer<ItemsText> T
+@inject IStringLocalizer<CommonText> C
+@inject IStringLocalizer<ShellText> S
 
 @* The item editor as its own page (AP11, instead of the big modal): calm sections Basics · Photo · Price & options ·
    Labels · Allergens and a sticky save bar. Save and Cancel return to the category's list, which scrolls to the item
@@ -21,14 +24,14 @@
    with unsaved changes asks first (NavigationLock; the browser asks on reload/close). New items: category preselected,
    appended at the end. Without MenuItemsEdit an existing item opens read-only; a new item needs MenuItemsCreate. *@
 
-<PageTitle>@PageTitleText</PageTitle>
+<PageTitle>@C["PageTitle", PageTitleText]</PageTitle>
 
 <NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigationAsync" ConfirmExternalNavigation="@(IsDirty && !leaving)" />
 
 <div class="max-w-6xl mx-auto" data-testid="item-edit-page">
     @if (state == PageState.Loading)
     {
-        <p class="text-sm text-gray-500" role="status">Loading…</p>
+        <p class="text-sm text-gray-500" role="status">@C["Loading"]</p>
     }
     else if (state == PageState.NotFound)
     {
@@ -37,40 +40,33 @@
                 <span class="sd-empty-icon" aria-hidden="true">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Items.Path" /></svg>
                 </span>
-                <h1 class="sd-empty-title">Item not found</h1>
-                <p class="sd-empty-text mb-4">It may have been deleted.</p>
-                <a href="/menus" class="sd-btn sd-btn--secondary">Back to the menus</a>
+                <h1 class="sd-empty-title">@T["Edit_NotFoundTitle"]</h1>
+                <p class="sd-empty-text mb-4">@T["Edit_NotFoundText"]</p>
+                <a href="/menus" class="sd-btn sd-btn--secondary">@T["BackToMenus"]</a>
             </div>
         </div>
     }
     else if (Input is not null && category is not null)
     {
-        <nav class="mb-3" aria-label="Breadcrumb" data-testid="item-edit-breadcrumb">
+        <nav class="mb-3" aria-label="@S["Context_BreadcrumbLabel"]" data-testid="item-edit-breadcrumb">
             <ol class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm list-none m-0 p-0">
-                <li><a href="@($"/MenuItems/Category/{category.Id}")" class="font-medium text-brand-700 hover:underline" data-testid="item-edit-back">Items · @category.Name</a></li>
+                <li><a href="@($"/MenuItems/Category/{category.Id}")" class="font-medium text-brand-700 hover:underline" data-testid="item-edit-back">@T["Edit_Breadcrumb", category.Name]</a></li>
                 <li aria-hidden="true" class="text-gray-400">›</li>
-                <li class="text-gray-600" aria-current="page">@(IsNew ? "New item" : storedName)</li>
+                <li class="text-gray-600" aria-current="page">@(IsNew ? T["Edit_PageTitleNew"] : storedName)</li>
             </ol>
         </nav>
 
-        <PageHeader Eyebrow="@(IsNew ? "New item" : (ReadOnly ? "View item" : "Edit item"))" Title="@HeaderTitle"
+        <PageHeader Eyebrow="@(IsNew ? T["Edit_EyebrowNew"] : (ReadOnly ? T["Edit_EyebrowView"] : T["Edit_EyebrowEdit"]))" Title="@HeaderTitle"
                     Icon="@(IsNew ? PageIcons.Add : PageIcons.Edit)" Tone="TileTone.Accent">
             <Description>
-                @if (IsNew)
-                {
-                    <text>A new dish or drink in <strong>@category.Name</strong>, added at the end of the list.</text>
-                }
-                else
-                {
-                    <text>In <strong>@category.Name</strong>. Guests see your changes once you save them.</text>
-                }
+                @UiMarkup.Strong(IsNew ? T["Edit_DescriptionNew"] : T["Edit_DescriptionEdit"], category.Name)
             </Description>
         </PageHeader>
 
         @if (ReadOnly)
         {
             <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-[1rem] py-[0.75rem] text-sm text-amber-900" role="status" data-testid="item-read-only">
-                You can view this item but not change it: your role has no permission to edit menu items.
+                @T["Edit_ReadOnly"]
             </div>
         }
         @if (saveError is not null)
@@ -86,20 +82,20 @@
 
                     <!-- Basics -->
                     <section class="sd-form-section lg:col-span-2" aria-labelledby="item-basics-title" data-testid="item-section-basics">
-                        @SectionHead("item-basics-title", "Basics", "Name, description and the category it belongs to.", PageIcons.Basics)
+                        @SectionHead("item-basics-title", T["Section_Basics"], T["Section_BasicsText"], PageIcons.Basics)
                         <div class="sd-form-section-body">
                             <div>
-                                <label for="MenuItem.Name" class="block text-sm font-semibold text-gray-800 mb-1">Name <span class="text-red-700" aria-hidden="true">*</span></label>
+                                <label for="MenuItem.Name" class="block text-sm font-semibold text-gray-800 mb-1">@T["Field_Name"] <span class="text-red-700" aria-hidden="true">*</span></label>
                                 <InputText @bind-Value="Input.Name" id="MenuItem.Name" class="sd-input" autocomplete="off" />
                                 <ValidationMessage For="() => Input.Name" class="sd-field-error" />
                             </div>
                             <div>
-                                <label for="MenuItem.Description" class="block text-sm font-semibold text-gray-800 mb-1">Description <span class="font-normal text-gray-500">(optional)</span></label>
+                                <label for="MenuItem.Description" class="block text-sm font-semibold text-gray-800 mb-1">@T["Field_Description"] <span class="font-normal text-gray-500">@C["OptionalSuffix"]</span></label>
                                 <InputTextArea @bind-Value="Input.Description" id="MenuItem.Description" rows="3" class="sd-input resize-y" />
                                 <ValidationMessage For="() => Input.Description" class="sd-field-error" />
                             </div>
                             <div>
-                                <label for="MenuItem.CategoryId" class="block text-sm font-semibold text-gray-800 mb-1">Category</label>
+                                <label for="MenuItem.CategoryId" class="block text-sm font-semibold text-gray-800 mb-1">@T["Field_Category"]</label>
                                 <InputSelect @bind-Value="Input.CategoryId" id="MenuItem.CategoryId" class="sd-input">
                                     @foreach (var cat in categories)
                                     {
@@ -108,7 +104,7 @@
                                 </InputSelect>
                                 @if (!IsNew && Input.CategoryId != storedCategoryId)
                                 {
-                                    <p class="mt-1 mb-0 text-xs text-gray-600">Moved items are added at the end of their new category.</p>
+                                    <p class="mt-1 mb-0 text-xs text-gray-600">@T["Field_CategoryMoved"]</p>
                                 }
                                 <ValidationMessage For="() => Input.CategoryId" class="sd-field-error" />
                             </div>
@@ -117,28 +113,28 @@
 
                     <!-- Photo (right column from 1024 px) -->
                     <section class="sd-form-section lg:col-start-3 lg:row-start-1 lg:row-span-4 lg:sticky lg:top-24" aria-labelledby="item-photo-title" data-testid="item-section-photo">
-                        @SectionHead("item-photo-title", "Photo", "Shown on the guest menu and in the item's details.", PageIcons.Photo)
+                        @SectionHead("item-photo-title", T["Section_Photo"], T["Section_PhotoText"], PageIcons.Photo)
                         <div class="sd-form-section-body">
                             <div class="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50 aspect-[4/3]" data-testid="item-photo-preview">
                                 @if (!string.IsNullOrEmpty(Input.ImagePath))
                                 {
-                                    <img src="@ImageUploadService.GetImageUrl(Input.ImagePath)" alt="Photo of the item" class="absolute inset-0 w-full h-full object-cover" />
+                                    <img src="@ImageUploadService.GetImageUrl(Input.ImagePath)" alt="@T["Photo_Alt"]" class="absolute inset-0 w-full h-full object-cover" />
                                 }
                                 else
                                 {
                                     <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 text-gray-500">
                                         <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Photo.Path" /></svg>
-                                        <span class="text-sm">No photo yet</span>
+                                        <span class="text-sm">@T["Photo_None"]</span>
                                     </div>
                                 }
                             </div>
                             @if (!ReadOnly)
                             {
                                 <div>
-                                    <label for="MenuItem.Image" class="block text-sm font-semibold text-gray-800 mb-1">@(string.IsNullOrEmpty(Input.ImagePath) ? "Upload a photo" : "Replace the photo")</label>
+                                    <label for="MenuItem.Image" class="block text-sm font-semibold text-gray-800 mb-1">@(string.IsNullOrEmpty(Input.ImagePath) ? T["Photo_Upload"] : T["Photo_Replace"])</label>
                                     <InputFile id="MenuItem.Image" OnChange="HandleImageUpload" accept="image/*"
                                                class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
-                                    <p class="mt-1 mb-0 text-xs text-gray-500">PNG, JPG, GIF or WEBP, up to 5 MB.</p>
+                                    <p class="mt-1 mb-0 text-xs text-gray-500">@T["Photo_Formats"]</p>
                                     @if (imageUploadError != null)
                                     {
                                         <p class="sd-field-error" role="alert">@imageUploadError</p>
@@ -146,7 +142,7 @@
                                 </div>
                                 @if (!string.IsNullOrEmpty(Input.ImagePath))
                                 {
-                                    <button type="button" class="sd-btn sd-btn--secondary sd-btn--small self-start" @onclick="RemoveImage" disabled="@isUploading">Remove photo</button>
+                                    <button type="button" class="sd-btn sd-btn--secondary sd-btn--small self-start" @onclick="RemoveImage" disabled="@isUploading">@T["Photo_Remove"]</button>
                                 }
                             }
                         </div>
@@ -154,10 +150,10 @@
 
                     <!-- Price & options -->
                     <section class="sd-form-section lg:col-span-2" aria-labelledby="item-price-title" data-testid="item-section-price">
-                        @SectionHead("item-price-title", "Price & options", "The price, sizes with their own price and add-ons.", PageIcons.Price)
+                        @SectionHead("item-price-title", T["Section_Price"], T["Section_PriceText"], PageIcons.Price)
                         <div class="sd-form-section-body">
                             <div class="max-w-[14rem]">
-                                <label for="MenuItem.Price" class="block text-sm font-semibold text-gray-800 mb-1">Price (€) <span class="text-red-700" aria-hidden="true">*</span></label>
+                                <label for="MenuItem.Price" class="block text-sm font-semibold text-gray-800 mb-1">@T["Field_Price"] <span class="text-red-700" aria-hidden="true">*</span></label>
                                 <PriceInput @bind-Value="Input.Price" id="MenuItem.Price" readonly="@HasVariants"
                                             aria-describedby="@(HasVariants ? "MenuItem.PriceHint" : null)" class="sd-input tabular-nums" />
                                 <ValidationMessage For="() => Input.Price" class="sd-field-error" />
@@ -165,7 +161,7 @@
                             @if (HasVariants)
                             {
                                 <p id="MenuItem.PriceHint" class="-mt-3 mb-0 text-xs text-gray-600" data-testid="price-follows-variants">
-                                    Set by the lowest variant price. Guests see “from <span class="whitespace-nowrap">@PriceFormat.Euro(Input.Price)</span>”.
+                                    @T["Price_FollowsVariants", UiFormat.Price(Input.Price)]
                                 </p>
                             }
                             @OptionSection(PriceOptionKind.Variant)
@@ -175,19 +171,19 @@
 
                     <!-- Labels (one list for back office and guests: ItemLabels) -->
                     <section class="sd-form-section lg:col-span-2" aria-labelledby="item-labels-title" data-testid="item-section-labels">
-                        @SectionHead("item-labels-title", "Labels", "Shown as badges on the guest menu. Vegan items do not show “Vegetarian” as well.", PageIcons.Tag)
+                        @SectionHead("item-labels-title", T["Section_Labels"], T["Section_LabelsText"], PageIcons.Tag)
                         <div class="sd-form-section-body" data-testid="item-label-options">
                             @foreach (var group in LabelGroups)
                             {
                                 <fieldset class="m-0 p-0 border-0 min-w-0">
-                                    <legend class="float-none w-auto mb-2 p-0 text-xs font-bold uppercase tracking-wider text-gray-600">@group.Title</legend>
+                                    <legend class="float-none w-auto mb-2 p-0 text-xs font-bold uppercase tracking-wider text-gray-600">@T[group.TitleKey]</legend>
                                     <div class="sd-check-grid">
                                         @foreach (var label in group.Labels)
                                         {
                                             <label class="sd-check">
                                                 <input type="checkbox" id="@($"MenuItem.{label.PropertyName}")" checked="@label.Get(Input)"
                                                        @onchange="e => label.Set(Input, e.Value is true)" />
-                                                <span>@label.BackOfficeText</span>
+                                                <span>@T.LabelName(label)</span>
                                             </label>
                                         }
                                     </div>
@@ -198,7 +194,7 @@
 
                     <!-- Allergens -->
                     <section class="sd-form-section lg:col-span-2" aria-labelledby="item-allergens-title" data-testid="item-section-allergens">
-                        @SectionHead("item-allergens-title", "Allergens", "The allergen codes guests see on this item.", PageIcons.Allergens)
+                        @SectionHead("item-allergens-title", T["Section_Allergens"], T["Section_AllergensText"], PageIcons.Allergens)
                         <div class="sd-form-section-body">
                             @if (allergens.Any())
                             {
@@ -217,8 +213,8 @@
                             else
                             {
                                 <p class="m-0 text-sm text-gray-600">
-                                    No allergens defined for this menu yet.
-                                    <a href="@($"/allergens/{category.MenuId}")" class="text-brand-700 hover:underline">Manage allergens</a>
+                                    @T["Allergens_None"]
+                                    <a href="@($"/allergens/{category.MenuId}")" class="text-brand-700 hover:underline">@T["Allergens_Manage"]</a>
                                 </p>
                             }
                         </div>
@@ -230,15 +226,15 @@
             <div class="sd-savebar" data-testid="item-savebar">
                 @if (ReadOnly)
                 {
-                    <span class="sd-savebar-status">Read-only</span>
-                    <button type="button" class="sd-btn sd-btn--secondary" @onclick="CancelAsync">Back to the list</button>
+                    <span class="sd-savebar-status">@T["Savebar_ReadOnly"]</span>
+                    <button type="button" class="sd-btn sd-btn--secondary" @onclick="CancelAsync">@T["Savebar_BackToList"]</button>
                 }
                 else
                 {
                     <span class="@(IsDirty ? "sd-savebar-status sd-savebar-status--dirty" : "sd-savebar-status")" data-testid="item-dirty-state" aria-live="polite">
-                        @(IsDirty ? "Unsaved changes" : IsNew ? "New item" : "No changes yet")
+                        @(IsDirty ? T["Savebar_Unsaved"] : IsNew ? T["Edit_PageTitleNew"] : T["Savebar_NoChanges"])
                     </span>
-                    <button type="button" class="sd-btn sd-btn--secondary" @onclick="CancelAsync" disabled="@saving">Cancel</button>
+                    <button type="button" class="sd-btn sd-btn--secondary" @onclick="CancelAsync" disabled="@saving">@C["Cancel"]</button>
                     <button type="submit" class="sd-btn sd-btn--primary" disabled="@(isUploading || saving)">
                         @if (isUploading || saving)
                         {
@@ -247,7 +243,7 @@
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                             </svg>
                         }
-                        Save
+                        @C["Save"]
                     </button>
                 }
             </div>
@@ -282,15 +278,15 @@
     private bool ReadOnly => IsNew ? !canCreate : !canEdit;
     private bool HasVariants => Input?.HasVariants() == true;
     private bool IsDirty => Input is not null && !ReadOnly && Snapshot() != initialSnapshot;
-    private string HeaderTitle => IsNew ? (string.IsNullOrWhiteSpace(Input?.Name) ? "New item" : Input!.Name) : storedName;
-    private string PageTitleText => IsNew ? "New item" : $"Edit {storedName}";
+    private string HeaderTitle => IsNew ? (string.IsNullOrWhiteSpace(Input?.Name) ? T["Edit_PageTitleNew"] : Input!.Name) : storedName;
+    private string PageTitleText => IsNew ? T["Edit_PageTitleNew"] : T["Edit_PageTitleEdit", storedName];
 
-    private sealed record LabelGroup(string Title, IReadOnlyList<ItemLabel> Labels);
+    private sealed record LabelGroup(string TitleKey, IReadOnlyList<ItemLabel> Labels);
 
     private static readonly IReadOnlyList<LabelGroup> LabelGroups = new[]
     {
-        new LabelGroup("Dietary", ItemLabels.OfKind(ItemLabelKind.Dietary)),
-        new LabelGroup("Highlights", ItemLabels.OfKind(ItemLabelKind.Highlight))
+        new LabelGroup(nameof(ItemsText.LabelGroup_Dietary), ItemLabels.OfKind(ItemLabelKind.Dietary)),
+        new LabelGroup(nameof(ItemsText.LabelGroup_Highlights), ItemLabels.OfKind(ItemLabelKind.Highlight))
     };
 
     protected override async Task OnParametersSetAsync()
@@ -405,10 +401,13 @@
         return key;
     }
 
-    private static string KindText(PriceOptionKind kind) => kind == PriceOptionKind.Variant ? "variant" : "extra";
+    /// <summary>The kind as a machine word for ids ("variant", "extra"), never shown.</summary>
+    private static string KindId(PriceOptionKind kind) => kind == PriceOptionKind.Variant ? "variant" : "extra";
 
-    private static string OptionTitle(MenuItemPriceOption option, int position) =>
-        string.IsNullOrWhiteSpace(option.Name) ? $"{KindText(option.Kind)} {position}" : $"{KindText(option.Kind)} {option.Name.Trim()}";
+    /// <summary>The row's name in announcements and labels: "variant 0,5 l" / "Variante 0,5 l", or its position.</summary>
+    private string OptionTitle(MenuItemPriceOption option, int position) =>
+        T[option.Kind == PriceOptionKind.Variant ? "Option_Variant" : "Option_Extra",
+          string.IsNullOrWhiteSpace(option.Name) ? position.ToString(System.Globalization.CultureInfo.CurrentCulture) : option.Name.Trim()];
 
     /// <summary>Name inputs of the option rows, to focus a freshly added row.</summary>
     private readonly Dictionary<MenuItemPriceOption, InputText> optionNameInputs = new(ReferenceEqualityComparer.Instance);
@@ -419,21 +418,14 @@
     {
         var options = Input!.OfKind(kind);
         var isVariant = kind == PriceOptionKind.Variant;
-        var noun = KindText(kind);
+        var noun = KindId(kind);
         <div class="pt-4 border-t border-gray-100 space-y-2" data-testid="@(isVariant ? "price-variants" : "price-extras")" role="group" aria-labelledby="@($"options-{noun}-heading")">
             <div>
                 <h3 id="@($"options-{noun}-heading")" class="text-sm font-semibold text-gray-800 mb-0">
-                    @(isVariant ? "Price variants" : "Extras") <span class="font-normal text-gray-500">(optional)</span>
+                    @(isVariant ? T["Options_Variants"] : T["Options_Extras"]) <span class="font-normal text-gray-500">@C["OptionalSuffix"]</span>
                 </h3>
                 <p class="mt-0.5 mb-0 text-xs text-gray-600">
-                    @if (isVariant)
-                    {
-                        <text>Sizes or versions with their own price, e.g. “0,25 l” and “0,5 l” or “Standard” and “Vegan”. The price above then follows the lowest variant.</text>
-                    }
-                    else
-                    {
-                        <text>Add-ons guests can order with this item, e.g. “+ Halloumi”.</text>
-                    }
+                    @(isVariant ? T["Options_VariantsHelp"] : T["Options_ExtrasHelp"])
                 </p>
             </div>
             @if (options.Count > 0)
@@ -448,7 +440,7 @@
                         <div class="flex flex-1 flex-wrap items-start gap-2 min-w-0">
                         <div class="min-w-[9rem] flex-1">
                             <InputText @ref="optionNameInputs[option]" @bind-Value="option.Name" maxlength="@MenuItemPriceOption.NameMaxLength"
-                                       placeholder="@(isVariant ? "e.g. 0,5 l" : "e.g. + Halloumi")" aria-label="@($"Name of {noun} {position}")"
+                                       placeholder="@(isVariant ? T["Options_VariantPlaceholder"] : T["Options_ExtraPlaceholder"])" aria-label="@T[isVariant ? "Option_VariantName" : "Option_ExtraName", position]"
                                        class="sd-input" />
                             <ValidationMessage For="() => option.Name" class="sd-field-error" />
                         </div>
@@ -456,12 +448,12 @@
                             <div class="relative">
                                 <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500" aria-hidden="true">€</span>
                                 <PriceInput @bind-Value="option.Price" @bind-Value:after="OptionsChanged"
-                                            aria-label="@($"Price of {noun} {position}")"
+                                            aria-label="@T[isVariant ? "Option_VariantPrice" : "Option_ExtraPrice", position]"
                                             class="sd-input text-right tabular-nums" style="padding-left: 1.75rem" />
                             </div>
                             <ValidationMessage For="() => option.Price" class="sd-field-error" />
                         </div>
-                        <button type="button" title="Remove" aria-label="@($"Remove {title}")" class="sd-row-action sd-row-action--danger"
+                        <button type="button" title="@C["Remove"]" aria-label="@T["Option_Remove", title]" class="sd-row-action sd-row-action--danger"
                                 @onclick="() => RemoveOption(option)">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -477,7 +469,7 @@
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
-                    @(isVariant ? "Add variant" : "Add extra")
+                    @(isVariant ? T["Options_AddVariant"] : T["Options_AddExtra"])
                 </button>
             }
         </div>
@@ -562,7 +554,7 @@
             valid = false;
             foreach (var result in results)
                 foreach (var member in result.MemberNames)
-                    optionMessages.Add(new FieldIdentifier(option, member), result.ErrorMessage ?? "Invalid value.");
+                    optionMessages.Add(new FieldIdentifier(option, member), result.ErrorMessage ?? T["Error_InvalidValue"]);
         }
         editContext.NotifyValidationStateChanged();
         return valid;
@@ -606,7 +598,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Error saving menu item: {ex}");
-            saveError = "The item could not be saved. Please try again.";
+            saveError = T["Error_SaveItem"];
             saving = false;
             return;
         }
@@ -629,8 +621,12 @@
         if (leaving || !IsDirty)
             return;
         context.PreventNavigation();
-        var name = string.IsNullOrWhiteSpace(Input?.Name) ? "this item" : $"“{Input!.Name.Trim()}”";
-        if (!await NotificationService.ShowConfirmation(("Discard changes", $"You have unsaved changes to {name}. Leave the page and discard them?")))
+        var message = string.IsNullOrWhiteSpace(Input?.Name) ? T["Leave_MessageUnnamed"] : T["Leave_Message", Input!.Name.Trim()];
+        if (!await NotificationService.ShowConfirmation(new ConfirmationRequest(T["Leave_Title"], message)
+            {
+                ConfirmText = T["Leave_Title"],
+                Destructive = true
+            }))
             return;
         await DiscardUploadAsync();
         leaving = true;
@@ -657,7 +653,7 @@
 
         if (!ImageUploadService.IsValidImageFile(file))
         {
-            imageUploadError = "Please select a valid image file (JPG, PNG, GIF, WEBP) under 5MB.";
+            imageUploadError = T["Photo_Invalid"];
             return;
         }
 
@@ -673,11 +669,12 @@
             if (imagePath != null)
                 Input.ImagePath = imagePath;
             else
-                imageUploadError = "Failed to upload image. Please try again.";
+                imageUploadError = T["Photo_UploadFailed"];
         }
         catch (Exception ex)
         {
-            imageUploadError = $"Upload failed: {ex.Message}";
+            Console.WriteLine($"Error uploading the photo: {ex}");
+            imageUploadError = T["Photo_UploadFailed"];
         }
         finally
         {

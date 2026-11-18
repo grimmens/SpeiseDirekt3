@@ -247,8 +247,8 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         var strudel = ItemRows.Filter(new() { HasText = "Apfelstrudel" });
 
         // Euro like the guest menu, never the server culture's currency
-        await Assertions.Expect(schnitzel).ToContainTextAsync("€ 24.90");
-        await Assertions.Expect(strudel).ToContainTextAsync("€ 6.80");
+        await Assertions.Expect(schnitzel).ToContainTextAsync("€24.90");
+        await Assertions.Expect(strudel).ToContainTextAsync("€6.80");
         await Assertions.Expect(Page.GetByTestId("menu-items")).Not.ToContainTextAsync("$");
 
         // Labels: allergen codes sorted, dietary labels; the image column is gone
@@ -271,7 +271,7 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
 
         // Combos page and combo editor use the same format
         await GotoInteractiveAsync($"/combos/{menuId}");
-        await Assertions.Expect(Page.GetByText("€ 29.90")).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("€29.90")).ToBeVisibleAsync();
         await Assertions.Expect(Page.GetByText("$29.90")).ToHaveCountAsync(0);
     }
 
@@ -386,7 +386,7 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         await SaveItemAndReturnAsync();
 
         var row = ItemRows.Filter(new() { HasText = "Almdudler 0,35 l" });
-        await Assertions.Expect(row).ToContainTextAsync("€ 3.60");
+        await Assertions.Expect(row).ToContainTextAsync("€3.60");
 
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;

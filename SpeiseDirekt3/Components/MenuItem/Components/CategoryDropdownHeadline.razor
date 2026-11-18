@@ -1,7 +1,8 @@
 ﻿@implements IDisposable
+@inject IStringLocalizer<ItemsText> T
 <div>
     <!-- Header: category switcher -->
-    <PageHeader Eyebrow="Menu items" Icon="PageIcons.Items" Tone="TileTone.Accent">
+    <PageHeader Eyebrow="@T["Header_Eyebrow"]" Icon="PageIcons.Items" Tone="TileTone.Accent">
         <TitleContent>
             <div class="relative inline-block max-w-full"
                  @onmouseenter="ShowDropdown"
@@ -10,7 +11,7 @@
                 <!-- Category Headline with Dropdown Trigger -->
                 <h1 class="sd-page-head-title">
                     <button type="button" class="inline-flex items-center max-w-full text-left cursor-pointer select-none"
-                            aria-haspopup="true" aria-expanded="@(isDropdownOpen ? "true" : "false")" title="Switch category"
+                            aria-haspopup="true" aria-expanded="@(isDropdownOpen ? "true" : "false")" title="@T["Header_SwitchCategory"]"
                             @onclick="ToggleDropdown">
                         <span class="min-w-0 break-words">@Category?.Name</span>
                         <svg class="ml-2 w-5 h-5 flex-shrink-0 text-gray-500 transition-transform duration-200 @(isDropdownOpen ? "rotate-180" : "")"
@@ -50,7 +51,7 @@
                         else
                         {
                             <div class="px-4 py-2 text-sm text-gray-500 italic">
-                                No categories available
+                                @T["Header_NoCategories"]
                             </div>
                         }
                     </div>
@@ -58,8 +59,8 @@
             </div>
         </TitleContent>
         <Description>
-            Guests see the items in the order of this list.
-            <a href="@($"/Categories/{Category?.MenuId}")" class="text-brand-700 hover:underline whitespace-nowrap">Edit categories</a>
+            @T["Header_Description"]
+            <a href="@($"/Categories/{Category?.MenuId}")" class="text-brand-700 hover:underline whitespace-nowrap">@T["Header_EditCategories"]</a>
         </Description>
     </PageHeader>
 

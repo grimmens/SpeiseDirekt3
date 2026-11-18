@@ -1,6 +1,7 @@
 ﻿@using SpeiseDirekt.Infrastructure
 @using SpeiseDirekt.Model
-@* Labels (ItemLabels, back-office texts) and allergen codes of a menu item as small chips (back office, English). *@
+@inject IStringLocalizer<ItemsText> T
+@* Labels (ItemLabels, named in the back office's language) and allergen codes of a menu item as small chips. *@
 
 @if (HasLabels)
 {
@@ -8,18 +9,18 @@
         @foreach (var label in labels)
         {
             <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-semibold border @ChipClass(label)"
-                  data-label="@label.Key">@label.BackOfficeText</span>
+                  data-label="@label.Key">@T.LabelName(label)</span>
         }
         @foreach (var allergen in Item.Allergens.OrderBy(a => a.Code, StringComparer.Ordinal))
         {
             <span class="inline-flex items-center justify-center min-w-[1.5rem] px-1.5 py-0.5 rounded text-xs font-bold bg-brand-50 text-brand-800 border border-brand-200"
-                  title="@($"Allergen {allergen.Code}: {allergen.Name}")" data-testid="allergen-chip">@allergen.Code</span>
+                  title="@T["AllergenChip", allergen.Code, allergen.Name]" data-testid="allergen-chip">@allergen.Code</span>
         }
     </div>
 }
 else if (ShowPlaceholder)
 {
-    <span class="text-gray-300" aria-label="No labels">—</span>
+    <span class="text-gray-300" aria-label="@T["NoLabels"]">—</span>
 }
 
 @code {

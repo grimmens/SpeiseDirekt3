@@ -13,10 +13,13 @@
 @inject IPermissionService PermissionService
 @inject IOptions<MenuItemGeneratorOptions> GeneratorOptions
 @inject IJSRuntime JS
+@inject IStringLocalizer<ItemsText> T
+@inject IStringLocalizer<CommonText> C
+@inject IStringLocalizer<ShellText> S
 
 @if (Category != null)
 {
-    <section class="bg-white rounded-xl shadow-sm border border-gray-200" data-testid="menu-items" aria-label="@($"Items in {Category.Name}")">
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200" data-testid="menu-items" aria-label="@T["Table_Label", Category.Name]">
         @if (MenuItems.Any())
         {
             <!-- Toolbar -->
@@ -28,7 +31,7 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
-                            New Menu Entry
+                            @T["Table_New"]
                         </a>
                         @if (GeneratorEnabled)
                         {
@@ -39,16 +42,16 @@
                 <div class="ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-2">
                     @if (canEdit && MenuItems.Count > 1)
                     {
-                        <span class="sd-card-hint hidden sm:inline">Drag the handle to change the order.</span>
+                        <span class="sd-card-hint hidden sm:inline">@T["Table_OrderHint"]</span>
                     }
-                    <span class="sd-count" data-testid="menu-item-count">@MenuItems.Count item@(MenuItems.Count == 1 ? "" : "s")</span>
+                    <span class="sd-count" data-testid="menu-item-count">@T.Plural(MenuItems.Count, "Count_Items")</span>
                     @if (canDelete)
                     {
                         <button type="button"
                                 class="inline-flex items-center px-[0.75rem] py-2 text-sm font-semibold rounded-lg border border-red-300 text-red-700 bg-white hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
                                 @onclick="DeleteAll"
                                 disabled="@isWorking">
-                            Delete All
+                            @T["Table_DeleteAll"]
                         </button>
                     }
                 </div>
@@ -58,7 +61,7 @@
             {
                 <div class="mx-[1rem] sm:mx-6 mt-[1rem] rounded-lg border border-red-200 bg-red-50 px-[1rem] py-[0.75rem] text-sm text-red-800 flex items-start justify-between gap-3" role="alert" data-testid="items-error">
                     <span>@errorMessage</span>
-                    <button type="button" class="text-red-700 hover:text-red-900" aria-label="Dismiss" @onclick="() => errorMessage = null">&times;</button>
+                    <button type="button" class="text-red-700 hover:text-red-900" aria-label="@S["Error_Dismiss"]" @onclick="() => errorMessage = null">&times;</button>
                 </div>
             }
 
@@ -69,15 +72,15 @@
                         <tr>
                             @if (canEdit)
                             {
-                                <th class="pl-3 pr-0 py-[0.625rem] text-left w-px"><span class="sr-only">Order</span></th>
+                                <th class="pl-3 pr-0 py-[0.625rem] text-left w-px"><span class="sr-only">@T["Column_Order"]</span></th>
                             }
-                            <th class="px-[0.75rem] py-[0.625rem] text-left">Name</th>
-                            <th class="px-[0.75rem] py-[0.625rem] text-right">Price</th>
-                            <th class="px-[0.75rem] py-[0.625rem] text-left">Labels</th>
-                            <th class="px-[0.75rem] py-[0.625rem] text-left">Description</th>
+                            <th class="px-[0.75rem] py-[0.625rem] text-left">@T["Column_Name"]</th>
+                            <th class="px-[0.75rem] py-[0.625rem] text-right">@T["Column_Price"]</th>
+                            <th class="px-[0.75rem] py-[0.625rem] text-left">@T["Column_Labels"]</th>
+                            <th class="px-[0.75rem] py-[0.625rem] text-left">@T["Column_Description"]</th>
                             @if (canEdit || canDelete)
                             {
-                                <th class="pl-[0.75rem] pr-4 py-[0.625rem] text-right w-px"><span class="sr-only">Actions</span></th>
+                                <th class="pl-[0.75rem] pr-4 py-[0.625rem] text-right w-px"><span class="sr-only">@T["Column_Actions"]</span></th>
                             }
                         </tr>
                     </thead>
@@ -106,7 +109,7 @@
                             <td class="px-[0.75rem] py-[0.75rem] text-sm text-gray-600 align-middle max-w-md">
                                 @if (string.IsNullOrWhiteSpace(item.Description))
                                 {
-                                    <span class="text-gray-300" aria-label="No description">—</span>
+                                    <span class="text-gray-300" aria-label="@T["NoDescription"]">—</span>
                                 }
                                 else
                                 {
@@ -175,8 +178,8 @@
                 <span class="sd-empty-icon" aria-hidden="true">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Items.Path" /></svg>
                 </span>
-                <h3 class="sd-empty-title">No items in @Category.Name yet</h3>
-                <p class="sd-empty-text mb-4">Add the dishes or drinks guests can order in this category.</p>
+                <h3 class="sd-empty-title">@T["Table_EmptyTitle", Category.Name]</h3>
+                <p class="sd-empty-text mb-4">@T["Table_EmptyText"]</p>
                 @if (canCreate)
                 {
                     <div class="flex flex-wrap justify-center gap-2">
@@ -184,7 +187,7 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                             </svg>
-                            New Menu Entry
+                            @T["Table_New"]
                         </a>
                         @if (GeneratorEnabled)
                         {
@@ -258,30 +261,30 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
                 </svg>
-                <span>Generating...</span>
+                <span>@T["Table_Generating"]</span>
             }
             else
             {
-                <span>Generate Menu Items</span>
+                <span>@T["Table_Generate"]</span>
             }
         </button>;
 
-    /// <summary>"€ 9.50", or "from € 3.40" plus "2 variants · 1 extra" when the item has price options.</summary>
-    private static RenderFragment PriceCell(MenuItem item) => __builder =>
+    /// <summary>"€9.50" / "9,50 €", or "from €3.40" plus "2 variants · 1 extra" when the item has price options.</summary>
+    private RenderFragment PriceCell(MenuItem item) => __builder =>
     {
         var variants = item.Variants().Count;
         var extras = item.Extras().Count;
-        <span data-testid="item-price">@(variants > 0 ? "from " : "")@PriceFormat.Euro(item.Price)</span>
+        <span data-testid="item-price">@(variants > 0 ? T["Price_From", UiFormat.Price(item.Price)] : UiFormat.Price(item.Price))</span>
         @if (variants > 0 || extras > 0)
         {
             <span class="block text-xs font-normal text-gray-500" data-testid="item-price-options">@OptionSummary(variants, extras)</span>
         }
     };
 
-    private static string OptionSummary(int variants, int extras) => string.Join(" · ", new[]
+    private string OptionSummary(int variants, int extras) => string.Join(" · ", new[]
     {
-        variants > 0 ? $"{variants} variant{(variants == 1 ? "" : "s")}" : null,
-        extras > 0 ? $"{extras} extra{(extras == 1 ? "" : "s")}" : null
+        variants > 0 ? T.Plural(variants, "Count_Variants") : null,
+        extras > 0 ? T.Plural(extras, "Count_Extras") : null
     }.Where(t => t is not null));
 
     /// <summary>The item's name; a link to its edit page for editors.</summary>
@@ -300,7 +303,7 @@
     private RenderFragment ItemActions(MenuItem item) => @<div class="flex items-center justify-end gap-0.5">
         @if (canEdit)
         {
-            <a href="@EditHref(item)" title="Edit" aria-label="@($"Edit {item.Name}")" class="sd-row-action">
+            <a href="@EditHref(item)" title="@C["Edit"]" aria-label="@T["EditLabel", item.Name]" class="sd-row-action">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                 </svg>
@@ -308,7 +311,7 @@
         }
         @if (canDelete)
         {
-            <button type="button" title="Delete" aria-label="@($"Delete {item.Name}")" class="sd-row-action sd-row-action--danger"
+            <button type="button" title="@C["Delete"]" aria-label="@T["DeleteLabel", item.Name]" class="sd-row-action sd-row-action--danger"
                     @onclick="() => DeleteMenuItem(item.Id)">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -405,7 +408,7 @@
         {
             Console.WriteLine($"Error moving menu item: {ex}");
             Context.ChangeTracker.Clear(); // drop the unsaved SortOrder values
-            errorMessage = $"The new position of \"{moved.Name}\" could not be saved. The previous order is shown again.";
+            errorMessage = T["Error_Order", moved.Name];
             await LoadItems();
             return false;
         }
@@ -417,7 +420,11 @@
         var item = await Context.MenuItems.FindAsync(id);
         if (item != null)
         {
-            var confirm = await NotificationService.ShowConfirmation(("Delete", $"Delete \"{item.Name}\"?"));
+            var confirm = await NotificationService.ShowConfirmation(new ConfirmationRequest(T["Delete_Title"], T["Delete_Message", item.Name])
+            {
+                ConfirmText = C["Delete"],
+                Destructive = true
+            });
             if (confirm)
             {
                 try
@@ -431,7 +438,7 @@
                 {
                     Console.WriteLine($"Error deleting menu item: {ex}");
                     Context.ChangeTracker.Clear();
-                    errorMessage = $"\"{item.Name}\" could not be deleted. It is still used by a combo.";
+                    errorMessage = T["Error_DeleteInCombo", item.Name];
                 }
                 await LoadItems();
             }
@@ -590,8 +597,11 @@
     {
         if (!canDelete || !MenuItems.Any()) return;
         var count = MenuItems.Count;
-        var confirm = await NotificationService.ShowConfirmation(("Delete all items",
-            $"Delete all {count} item{(count == 1 ? "" : "s")} in \"{Category.Name}\"? This cannot be undone."));
+        var confirm = await NotificationService.ShowConfirmation(new ConfirmationRequest(T["DeleteAll_Title"], T.Plural(count, "DeleteAll_Message", Category.Name))
+        {
+            ConfirmText = T["DeleteAll_Title"],
+            Destructive = true
+        });
         if (!confirm) return;
 
         isWorking = true;
@@ -607,7 +617,7 @@
         {
             Console.WriteLine($"Error deleting all menu items: {ex}");
             Context.ChangeTracker.Clear();
-            errorMessage = $"The items of \"{Category.Name}\" could not be deleted. Some of them are still used by a combo.";
+            errorMessage = T["Error_DeleteAllInCombo", Category.Name];
         }
         finally
         {

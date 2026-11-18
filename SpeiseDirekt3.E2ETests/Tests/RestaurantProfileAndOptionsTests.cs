@@ -308,7 +308,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         // The base price is read-only and follows the lowest variant
         await Assertions.Expect(basePrice).ToHaveValueAsync("3.40");
         await Assertions.Expect(basePrice).ToHaveAttributeAsync("readonly", "");
-        await Assertions.Expect(Editor.GetByTestId("price-follows-variants")).ToContainTextAsync("from € 3.40");
+        await Assertions.Expect(Editor.GetByTestId("price-follows-variants")).ToContainTextAsync("from €3.40");
 
         // Smallest size first: the variant's grip handle, keyboard path (↑); at the top it stays
         await Editor.GetByRole(AriaRole.Button, new() { Name = "Reorder variant 0,25 l" }).FocusAsync();
@@ -323,7 +323,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await SaveItemAndReturnAsync();
 
         var row = ItemRows.Filter(new() { HasText = "Hausbier" });
-        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("from € 3.40");
+        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("from €3.40");
         await Assertions.Expect(row.GetByTestId("item-price-options")).ToHaveTextAsync("2 variants");
 
         var ownerId = await OwnerIdAsync(email);
@@ -350,7 +350,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await Assertions.Expect(basePrice).Not.ToHaveAttributeAsync("readonly", "");
         await basePrice.FillAsync("4.50");
         await SaveItemAndReturnAsync();
-        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("€ 4.50");
+        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("€4.50");
         await Assertions.Expect(row.GetByTestId("item-price-options")).ToHaveCountAsync(0);
 
         await using (var db = App.CreateDbContext(ownerId))
@@ -381,7 +381,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
 
         await Editor.GetByLabel("Name of variant 1").FillAsync("0,2 l");
         await SaveItemAndReturnAsync();
-        await Assertions.Expect(ItemRows.Filter(new() { HasText = "Saft" }).GetByTestId("item-price")).ToHaveTextAsync("from € 3.20");
+        await Assertions.Expect(ItemRows.Filter(new() { HasText = "Saft" }).GetByTestId("item-price")).ToHaveTextAsync("from €3.20");
     }
 
     // --- Extras ---
@@ -408,7 +408,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await SaveItemAndReturnAsync();
 
         var row = ItemRows.Filter(new() { HasText = "Fattoush" });
-        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("€ 11.90");
+        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("€11.90");
         await Assertions.Expect(row.GetByTestId("item-price-options")).ToHaveTextAsync("2 extras");
 
         // Unsaved changes are dropped by Cancel, also for a later save of something else (reordering)
