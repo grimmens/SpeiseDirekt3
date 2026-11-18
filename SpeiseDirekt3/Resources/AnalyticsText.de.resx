@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Statistik</value>
+  </data>
+  <data name="Heading" xml:space="preserve">
+    <value>Statistik</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Sehen Sie, wie oft Gäste Ihre Speisekarten öffnen und welche Gerichte sie antippen</value>
+  </data>
+  <data name="TimeRange" xml:space="preserve">
+    <value>Zeitraum</value>
+  </data>
+  <data name="Range_Last24Hours" xml:space="preserve">
+    <value>Letzte 24 Stunden</value>
+  </data>
+  <data name="Range_Last7Days" xml:space="preserve">
+    <value>Letzte 7 Tage</value>
+  </data>
+  <data name="Range_Last30Days" xml:space="preserve">
+    <value>Letzte 30 Tage</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Diagramme aktualisieren</value>
+  </data>
+  <data name="Summary_Views" xml:space="preserve">
+    <value>Kartenaufrufe</value>
+  </data>
+  <data name="Summary_Clicks" xml:space="preserve">
+    <value>Klicks auf Gerichte</value>
+  </data>
+  <data name="Summary_Sessions" xml:space="preserve">
+    <value>Besuche</value>
+  </data>
+  <data name="Summary_SessionsHint" xml:space="preserve">
+    <value>Ein Besuch ist ein Gerät eines Gastes; Gäste bleiben anonym.</value>
+  </data>
+  <data name="Menus_Title" xml:space="preserve">
+    <value>Aufrufe je Speisekarte</value>
+  </data>
+  <data name="Menus_Tracked_One" xml:space="preserve">
+    <value>1 Speisekarte erfasst</value>
+  </data>
+  <data name="Menus_Tracked_Other" xml:space="preserve">
+    <value>{0} Speisekarten erfasst</value>
+  </data>
+  <data name="Sessions_Title" xml:space="preserve">
+    <value>Besuche</value>
+  </data>
+  <data name="Sessions_Count_One" xml:space="preserve">
+    <value>1 Besuch</value>
+  </data>
+  <data name="Sessions_Count_Other" xml:space="preserve">
+    <value>{0} Besuche</value>
+  </data>
+  <data name="Sessions_TextHour" xml:space="preserve">
+    <value>Geräte von Gästen, die eine Speisekarte geöffnet haben, je Stunde. Gäste bleiben anonym.</value>
+  </data>
+  <data name="Sessions_TextDay" xml:space="preserve">
+    <value>Geräte von Gästen, die eine Speisekarte geöffnet haben, je Tag. Gäste bleiben anonym.</value>
+  </data>
+  <data name="Items_Title" xml:space="preserve">
+    <value>Klicks je Gericht</value>
+  </data>
+  <data name="Items_Tracked_One" xml:space="preserve">
+    <value>1 Gericht erfasst</value>
+  </data>
+  <data name="Items_Tracked_Other" xml:space="preserve">
+    <value>{0} Gerichte erfasst</value>
+  </data>
+  <data name="Chart_SessionsTitle" xml:space="preserve">
+    <value>Besuche im Verlauf</value>
+  </data>
+  <data name="Chart_SessionsEmpty" xml:space="preserve">
+    <value>Besuche im Verlauf – keine Daten</value>
+  </data>
+  <data name="Chart_MenusTitle" xml:space="preserve">
+    <value>Kartenaufrufe im Verlauf</value>
+  </data>
+  <data name="Chart_MenusEmpty" xml:space="preserve">
+    <value>Kartenaufrufe im Verlauf – keine Daten</value>
+  </data>
+  <data name="Chart_ItemsTitle" xml:space="preserve">
+    <value>Klicks auf Gerichte im Verlauf</value>
+  </data>
+  <data name="Chart_ItemsEmpty" xml:space="preserve">
+    <value>Klicks auf Gerichte im Verlauf – keine Daten</value>
+  </data>
+  <data name="Chart_AxisHour" xml:space="preserve">
+    <value>Stunde</value>
+  </data>
+  <data name="Chart_AxisDate" xml:space="preserve">
+    <value>Datum</value>
+  </data>
+  <data name="Chart_AxisSessions" xml:space="preserve">
+    <value>Besuche</value>
+  </data>
+  <data name="Chart_AxisCount" xml:space="preserve">
+    <value>Anzahl</value>
+  </data>
+  <data name="Chart_SessionsSeries" xml:space="preserve">
+    <value>Besuche</value>
+  </data>
+</root>

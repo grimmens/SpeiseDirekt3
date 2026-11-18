@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Analytics</value>
+  </data>
+  <data name="Heading" xml:space="preserve">
+    <value>Analytics Dashboard</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Track your menu performance and guest engagement</value>
+  </data>
+  <data name="TimeRange" xml:space="preserve">
+    <value>Time range</value>
+  </data>
+  <data name="Range_Last24Hours" xml:space="preserve">
+    <value>Last 24 Hours</value>
+  </data>
+  <data name="Range_Last7Days" xml:space="preserve">
+    <value>Last 7 Days</value>
+  </data>
+  <data name="Range_Last30Days" xml:space="preserve">
+    <value>Last 30 Days</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Refresh Charts</value>
+  </data>
+  <data name="Summary_Views" xml:space="preserve">
+    <value>Total Views</value>
+  </data>
+  <data name="Summary_Clicks" xml:space="preserve">
+    <value>Total Clicks</value>
+  </data>
+  <data name="Summary_Sessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="Summary_SessionsHint" xml:space="preserve">
+    <value>A session is one guest device; guests stay anonymous.</value>
+  </data>
+  <data name="Menus_Title" xml:space="preserve">
+    <value>Traffic per Menu</value>
+  </data>
+  <data name="Menus_Tracked_One" xml:space="preserve">
+    <value>1 menu tracked</value>
+  </data>
+  <data name="Menus_Tracked_Other" xml:space="preserve">
+    <value>{0} menus tracked</value>
+  </data>
+  <data name="Sessions_Title" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="Sessions_Count_One" xml:space="preserve">
+    <value>1 session</value>
+  </data>
+  <data name="Sessions_Count_Other" xml:space="preserve">
+    <value>{0} sessions</value>
+  </data>
+  <data name="Sessions_TextHour" xml:space="preserve">
+    <value>Guest devices that opened a menu, per hour. Guests stay anonymous.</value>
+  </data>
+  <data name="Sessions_TextDay" xml:space="preserve">
+    <value>Guest devices that opened a menu, per day. Guests stay anonymous.</value>
+  </data>
+  <data name="Items_Title" xml:space="preserve">
+    <value>Traffic per Menu Item</value>
+  </data>
+  <data name="Items_Tracked_One" xml:space="preserve">
+    <value>1 item tracked</value>
+  </data>
+  <data name="Items_Tracked_Other" xml:space="preserve">
+    <value>{0} items tracked</value>
+  </data>
+  <data name="Chart_SessionsTitle" xml:space="preserve">
+    <value>Sessions Over Time</value>
+  </data>
+  <data name="Chart_SessionsEmpty" xml:space="preserve">
+    <value>Sessions Over Time - No Data</value>
+  </data>
+  <data name="Chart_MenusTitle" xml:space="preserve">
+    <value>Menu Views Over Time</value>
+  </data>
+  <data name="Chart_MenusEmpty" xml:space="preserve">
+    <value>Menu Views Over Time - No Data</value>
+  </data>
+  <data name="Chart_ItemsTitle" xml:space="preserve">
+    <value>Menu Item Clicks Over Time</value>
+  </data>
+  <data name="Chart_ItemsEmpty" xml:space="preserve">
+    <value>Menu Item Clicks Over Time - No Data</value>
+  </data>
+  <data name="Chart_AxisHour" xml:space="preserve">
+    <value>Hour</value>
+  </data>
+  <data name="Chart_AxisDate" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="Chart_AxisSessions" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+  <data name="Chart_AxisCount" xml:space="preserve">
+    <value>Count</value>
+  </data>
+  <data name="Chart_SessionsSeries" xml:space="preserve">
+    <value>Sessions</value>
+  </data>
+</root>

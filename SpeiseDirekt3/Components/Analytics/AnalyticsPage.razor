@@ -6,30 +6,27 @@
 @inject IPermissionService PermissionService
 @inject IJSRuntime JSRuntime
 @inject NavigationManager NavManager
+@inject IStringLocalizer<AnalyticsText> T
+@inject IStringLocalizer<CommonText> C
 @inherits PaidTenantComponentBase
 @attribute [Authorize]
 
-<PageTitle>Analytics - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
 
-<PageHeader Title="Analytics Dashboard" Icon="PageIcons.Analytics" Tone="TileTone.Green">
-    <Description>Track your menu performance and guest engagement</Description>
+<PageHeader Title="@T["Heading"]" Icon="PageIcons.Analytics" Tone="TileTone.Green">
+    <Description>@T["Description"]</Description>
     <Actions>
-        <div class="flex flex-wrap items-center gap-2 xl:shrink-0" role="group" aria-label="Time range">
-            <button @onclick="() => SetTimeRange(TimeRange.Last24Hours)"
-                    class="@GetTimeRangeButtonClass(TimeRange.Last24Hours)">
-                Last 24 Hours
-            </button>
-            <button @onclick="() => SetTimeRange(TimeRange.Last7Days)"
-                    class="@GetTimeRangeButtonClass(TimeRange.Last7Days)">
-                Last 7 Days
-            </button>
-            <button @onclick="() => SetTimeRange(TimeRange.Last30Days)"
-                    class="@GetTimeRangeButtonClass(TimeRange.Last30Days)">
-                Last 30 Days
-            </button>
+        <div class="flex flex-wrap items-center gap-2 xl:shrink-0" role="group" aria-label="@T["TimeRange"]">
+            @foreach (var range in new[] { TimeRange.Last24Hours, TimeRange.Last7Days, TimeRange.Last30Days })
+            {
+                <button @onclick="() => SetTimeRange(range)" aria-pressed="@(selectedTimeRange == range ? "true" : "false")"
+                        class="@GetTimeRangeButtonClass(range)">
+                    @T[$"Range_{range}"]
+                </button>
+            }
             <button @onclick="RenderCharts"
                     class="px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap bg-white border border-brand-200 text-brand-700 hover:bg-brand-50">
-                Refresh Charts
+                @T["Refresh"]
             </button>
         </div>
     </Actions>
@@ -37,8 +34,9 @@
 
 @if (isLoading)
 {
-    <div class="flex justify-center items-center py-12">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600"></div>
+    <div class="flex justify-center items-center py-12" role="status">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-brand-600" aria-hidden="true"></div>
+        <span class="sr-only">@C["Loading"]</span>
     </div>
 }
 else
@@ -54,8 +52,8 @@ else
                     </svg>
                 </div>
                 <div class="min-w-0 sm:ml-4 flex flex-col justify-between">
-                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">Total Views</p>
-                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@totalViews</p>
+                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">@T["Summary_Views"]</p>
+                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@UiFormat.Number(totalViews)</p>
                 </div>
             </div>
         </div>
@@ -68,14 +66,14 @@ else
                     </svg>
                 </div>
                 <div class="min-w-0 sm:ml-4 flex flex-col justify-between">
-                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">Total Clicks</p>
-                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@totalClicks</p>
+                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">@T["Summary_Clicks"]</p>
+                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@UiFormat.Number(totalClicks)</p>
                 </div>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[12px] sm:p-6" data-testid="summary-sessions"
-             title="A session is one guest device; guests stay anonymous.">
+             title="@T["Summary_SessionsHint"]">
             <div class="flex h-full items-stretch sm:items-center">
                 <div class="hidden sm:flex shrink-0 self-center p-3 rounded-full bg-purple-100 text-purple-600">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,8 +81,8 @@ else
                     </svg>
                 </div>
                 <div class="min-w-0 sm:ml-4 flex flex-col justify-between">
-                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">Sessions</p>
-                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@userTrafficData.Count</p>
+                    <p class="text-xs sm:text-sm font-medium leading-tight text-gray-600">@T["Summary_Sessions"]</p>
+                    <p class="mt-1 text-xl sm:text-2xl font-bold text-gray-900" data-testid="summary-value">@UiFormat.Number(userTrafficData.Count)</p>
                 </div>
             </div>
         </div>
@@ -95,9 +93,9 @@ else
         <!-- Traffic per Menu Chart -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Traffic per Menu</h3>
+                <h3 class="text-lg font-semibold text-gray-900">@T["Menus_Title"]</h3>
                 <div class="text-sm text-gray-500">
-                    @menuTrafficData.Count menus tracked
+                    @T.Plural(menuTrafficData.Count, "Menus_Tracked")
                 </div>
             </div>
             <div class="h-80">
@@ -108,12 +106,12 @@ else
         <!-- Sessions Chart: guest devices active per hour/day (anonymous, so one series in total) -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-1">
-                <h3 class="text-lg font-semibold text-gray-900">Sessions</h3>
+                <h3 class="text-lg font-semibold text-gray-900">@T["Sessions_Title"]</h3>
                 <div class="text-sm text-gray-500">
-                    @userTrafficData.Count sessions
+                    @T.Plural(userTrafficData.Count, "Sessions_Count")
                 </div>
             </div>
-            <p class="text-sm text-gray-500 mb-4">Guest devices that opened a menu, per @(selectedTimeRange == TimeRange.Last24Hours ? "hour" : "day"). Guests stay anonymous.</p>
+            <p class="text-sm text-gray-500 mb-4">@(selectedTimeRange == TimeRange.Last24Hours ? T["Sessions_TextHour"] : T["Sessions_TextDay"])</p>
             <div class="h-72">
                 <canvas id="userTrafficChart" width="400" height="400"></canvas>
             </div>
@@ -122,9 +120,9 @@ else
         <!-- Traffic per Menu Item Chart -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6 xl:col-span-2">
             <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-4">
-                <h3 class="text-lg font-semibold text-gray-900">Traffic per Menu Item</h3>
+                <h3 class="text-lg font-semibold text-gray-900">@T["Items_Title"]</h3>
                 <div class="text-sm text-gray-500">
-                    @menuItemTrafficData.Count items tracked
+                    @T.Plural(menuItemTrafficData.Count, "Items_Tracked")
                 </div>
             </div>
             <div class="h-80">
@@ -247,7 +245,7 @@ else
             try
             {
                 await JSRuntime.InvokeVoidAsync("renderAnalyticsCharts",
-                    sessionsPerBucket, menuTrafficData, menuItemTrafficData, selectedTimeRange.ToString());
+                    sessionsPerBucket, menuTrafficData, menuItemTrafficData, selectedTimeRange.ToString(), ChartTexts());
                 Console.WriteLine("JSRuntime.InvokeVoidAsync completed successfully");
             }
             catch (Exception ex)
@@ -256,6 +254,28 @@ else
             }
         }
     }
+
+    /// <summary>
+    /// The charts' texts in the page's language for js/analytics.js, which formats dates and numbers with Intl in
+    /// <c>lang</c> ("18. Nov." / "Nov 18"). <c>{0}</c> in sessionOther is the count.
+    /// </summary>
+    private object ChartTexts() => new
+    {
+        lang = AppCultures.HtmlLang,
+        sessionsTitle = T["Chart_SessionsTitle"].Value,
+        sessionsEmpty = T["Chart_SessionsEmpty"].Value,
+        menusTitle = T["Chart_MenusTitle"].Value,
+        menusEmpty = T["Chart_MenusEmpty"].Value,
+        itemsTitle = T["Chart_ItemsTitle"].Value,
+        itemsEmpty = T["Chart_ItemsEmpty"].Value,
+        axisHour = T["Chart_AxisHour"].Value,
+        axisDate = T["Chart_AxisDate"].Value,
+        axisSessions = T["Chart_AxisSessions"].Value,
+        axisCount = T["Chart_AxisCount"].Value,
+        sessionsSeries = T["Chart_SessionsSeries"].Value,
+        sessionOne = T["Sessions_Count_One"].Value,
+        sessionOther = T["Sessions_Count_Other"].Value
+    };
 
     private string GetTimeRangeButtonClass(TimeRange timeRange)
     {
