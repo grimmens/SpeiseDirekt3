@@ -8,31 +8,33 @@
 @inject IPermissionService PermissionService
 @inject NavigationManager NavManager
 @inject ILogger<RestaurantProfilePage> Logger
+@inject IStringLocalizer<RestaurantText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>Restaurant profile</PageTitle>
+<PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
 
 <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
         <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
-            <h1 class="text-3xl font-bold text-gray-900 font-display mb-0">Restaurant profile</h1>
+            <h1 class="text-3xl font-bold text-gray-900 font-display mb-0">@T["Title"]</h1>
             @if (loaded && !hasProfile)
             {
-                <span class="inline-flex items-center rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-medium text-amber-800" data-testid="profile-not-saved">Not saved yet</span>
+                <span class="inline-flex items-center rounded-full bg-amber-50 border border-amber-200 px-2.5 py-0.5 text-xs font-medium text-amber-800" data-testid="profile-not-saved">@T["NotSaved"]</span>
             }
         </div>
-        <p class="mt-2 mb-0 text-gray-600">Name, pictures, contact details and opening hours of your restaurant. Guests see them on all of your menus.</p>
+        <p class="mt-2 mb-0 text-gray-600">@T["Intro"]</p>
         @if (loaded && !canEdit)
         {
             <p class="mt-3 mb-0 rounded-lg border border-brand-200 bg-brand-50 px-[0.75rem] py-2 text-sm text-brand-800" data-testid="profile-read-only">
-                You can view the profile. Changing it needs the permission to edit menus.
+                @T["ReadOnly"]
             </p>
         }
     </div>
 
     @if (!loaded)
     {
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-[1rem] sm:px-6 py-10 text-center text-sm text-gray-500">Loading…</div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-[1rem] sm:px-6 py-10 text-center text-sm text-gray-500">@C["Loading"]</div>
     }
     else
     {
@@ -43,20 +45,20 @@
                 <!-- Restaurant -->
                 <section class="bg-white rounded-xl shadow-sm border border-gray-200" aria-labelledby="restaurant-basics">
                     <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200">
-                        <h2 id="restaurant-basics" class="text-lg font-semibold text-gray-900 mb-0">Restaurant</h2>
+                        <h2 id="restaurant-basics" class="text-lg font-semibold text-gray-900 mb-0">@T["Section_Restaurant"]</h2>
                     </div>
                     <div class="p-[1rem] sm:p-6 space-y-5">
                         <div class="space-y-1.5">
-                            <label for="Restaurant.Name" class="block text-sm font-medium text-gray-700">Name *</label>
+                            <label for="Restaurant.Name" class="block text-sm font-medium text-gray-700">@T["Field_Name"]</label>
                             <InputText @bind-Value="Input.Name" id="Restaurant.Name" maxlength="@RestaurantProfile.NameMaxLength" autocomplete="organization"
-                                       placeholder="e.g. Gasthaus Zur Post" class="@InputClass" />
+                                       placeholder="@T["Field_NamePlaceholder"]" class="@InputClass" />
                             <ValidationMessage For="() => Input.Name" class="text-red-600 text-sm" />
                         </div>
                         <div class="space-y-1.5">
-                            <label for="Restaurant.Description" class="block text-sm font-medium text-gray-700">Description <span class="font-normal text-gray-400">(optional)</span></label>
+                            <label for="Restaurant.Description" class="block text-sm font-medium text-gray-700">@T["Field_Description"] <span class="font-normal text-gray-400">@C["OptionalSuffix"]</span></label>
                             <InputTextArea @bind-Value="Input.Description" id="Restaurant.Description" rows="4" maxlength="@RestaurantProfile.DescriptionMaxLength"
-                                           placeholder="A few words about your kitchen, e.g. what you are known for." class="@($"{InputClass} resize-y")" />
-                            <p class="text-xs text-gray-500 mb-0">Up to 1000 characters.</p>
+                                           placeholder="@T["Field_DescriptionPlaceholder"]" class="@($"{InputClass} resize-y")" />
+                            <p class="text-xs text-gray-500 mb-0">@T["Field_DescriptionHint"]</p>
                             <ValidationMessage For="() => Input.Description" class="text-red-600 text-sm" />
                         </div>
                     </div>
@@ -65,29 +67,29 @@
                 <!-- Pictures -->
                 <section class="bg-white rounded-xl shadow-sm border border-gray-200" aria-labelledby="restaurant-pictures">
                     <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200">
-                        <h2 id="restaurant-pictures" class="text-lg font-semibold text-gray-900 mb-0">Pictures</h2>
-                        <p class="mt-0.5 mb-0 text-sm text-gray-500">JPG, PNG, GIF or WEBP up to 5 MB.</p>
+                        <h2 id="restaurant-pictures" class="text-lg font-semibold text-gray-900 mb-0">@T["Section_Pictures"]</h2>
+                        <p class="mt-0.5 mb-0 text-sm text-gray-500">@T["Pictures_Formats"]</p>
                     </div>
                     <div class="p-[1rem] sm:p-6 space-y-6">
                         <!-- Cover -->
                         <div class="space-y-2">
-                            <label for="Restaurant.Cover" class="block text-sm font-medium text-gray-700">Cover image</label>
+                            <label for="Restaurant.Cover" class="block text-sm font-medium text-gray-700">@T["Cover"]</label>
                             <div class="relative w-full aspect-[3/1] overflow-hidden rounded-lg border border-gray-200 bg-gray-100" data-testid="cover-preview">
                                 @if (!string.IsNullOrEmpty(Input.CoverImagePath))
                                 {
-                                    <img src="@ImageUploadService.GetImageUrl(Input.CoverImagePath)" alt="Cover image" class="absolute inset-0 h-full w-full object-cover" />
+                                    <img src="@ImageUploadService.GetImageUrl(Input.CoverImagePath)" alt="@T["Cover"]" class="absolute inset-0 h-full w-full object-cover" />
                                 }
                                 else
                                 {
-                                    <span class="absolute inset-0 flex items-center justify-center px-[1rem] text-center text-sm text-gray-400">No cover image yet</span>
+                                    <span class="absolute inset-0 flex items-center justify-center px-[1rem] text-center text-sm text-gray-400">@T["Cover_None"]</span>
                                 }
                             </div>
-                            <p class="text-xs text-gray-500 mb-0">A wide picture shown at the top of your menus, e.g. the dining room or a signature dish.</p>
+                            <p class="text-xs text-gray-500 mb-0">@T["Cover_Hint"]</p>
                             <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
                                 <InputFile id="Restaurant.Cover" OnChange="e => UploadAsync(e, ImageSlot.Cover)" accept="image/*" class="@FileInputClass" />
                                 @if (!string.IsNullOrEmpty(Input.CoverImagePath))
                                 {
-                                    <button type="button" class="@RemoveButtonClass" @onclick="() => RemoveImageAsync(ImageSlot.Cover)">Remove cover image</button>
+                                    <button type="button" class="@RemoveButtonClass" @onclick="() => RemoveImageAsync(ImageSlot.Cover)">@T["Cover_Remove"]</button>
                                 }
                             </div>
                             @if (uploadErrors.TryGetValue(ImageSlot.Cover, out var coverError))
@@ -98,25 +100,25 @@
 
                         <!-- Logo -->
                         <div class="space-y-2">
-                            <label for="Restaurant.Logo" class="block text-sm font-medium text-gray-700">Logo</label>
+                            <label for="Restaurant.Logo" class="block text-sm font-medium text-gray-700">@T["Logo"]</label>
                             <div class="flex flex-wrap items-center gap-x-4 gap-y-3">
                                 <div class="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100" data-testid="logo-preview">
                                     @if (!string.IsNullOrEmpty(Input.LogoImagePath))
                                     {
-                                        <img src="@ImageUploadService.GetImageUrl(Input.LogoImagePath)" alt="Logo" class="absolute inset-0 h-full w-full object-contain bg-white" />
+                                        <img src="@ImageUploadService.GetImageUrl(Input.LogoImagePath)" alt="@T["Logo"]" class="absolute inset-0 h-full w-full object-contain bg-white" />
                                     }
                                     else
                                     {
-                                        <span class="absolute inset-0 flex items-center justify-center text-xs text-gray-400">No logo</span>
+                                        <span class="absolute inset-0 flex items-center justify-center text-xs text-gray-400">@T["Logo_None"]</span>
                                     }
                                 </div>
                                 <div class="min-w-0 flex-1 space-y-2">
-                                    <p class="text-xs text-gray-500 mb-0">Square works best.</p>
+                                    <p class="text-xs text-gray-500 mb-0">@T["Logo_Hint"]</p>
                                     <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
                                         <InputFile id="Restaurant.Logo" OnChange="e => UploadAsync(e, ImageSlot.Logo)" accept="image/*" class="@FileInputClass" />
                                         @if (!string.IsNullOrEmpty(Input.LogoImagePath))
                                         {
-                                            <button type="button" class="@RemoveButtonClass" @onclick="() => RemoveImageAsync(ImageSlot.Logo)">Remove logo</button>
+                                            <button type="button" class="@RemoveButtonClass" @onclick="() => RemoveImageAsync(ImageSlot.Logo)">@T["Logo_Remove"]</button>
                                         }
                                     </div>
                                 </div>
@@ -132,31 +134,31 @@
                 <!-- Contact -->
                 <section class="bg-white rounded-xl shadow-sm border border-gray-200" aria-labelledby="restaurant-contact">
                     <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200">
-                        <h2 id="restaurant-contact" class="text-lg font-semibold text-gray-900 mb-0">Contact and address</h2>
+                        <h2 id="restaurant-contact" class="text-lg font-semibold text-gray-900 mb-0">@T["Section_Contact"]</h2>
                     </div>
                     <div class="p-[1rem] sm:p-6 space-y-5">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
                             <div class="space-y-1.5">
-                                <label for="Restaurant.Phone" class="block text-sm font-medium text-gray-700">Phone</label>
+                                <label for="Restaurant.Phone" class="block text-sm font-medium text-gray-700">@T["Field_Phone"]</label>
                                 <InputText @bind-Value="Input.Phone" id="Restaurant.Phone" inputmode="tel" autocomplete="tel" maxlength="40"
                                            placeholder="+43 1 234 56 78" class="@InputClass" />
                                 <ValidationMessage For="() => Input.Phone" class="text-red-600 text-sm" />
                             </div>
                             <div class="space-y-1.5">
-                                <label for="Restaurant.Email" class="block text-sm font-medium text-gray-700">E-mail</label>
+                                <label for="Restaurant.Email" class="block text-sm font-medium text-gray-700">@T["Field_Email"]</label>
                                 <InputText @bind-Value="Input.Email" id="Restaurant.Email" inputmode="email" autocomplete="email" maxlength="200"
                                            placeholder="info@example.com" class="@InputClass" />
                                 <ValidationMessage For="() => Input.Email" class="text-red-600 text-sm" />
                             </div>
                         </div>
                         <div class="space-y-1.5">
-                            <label for="Restaurant.Website" class="block text-sm font-medium text-gray-700">Website</label>
+                            <label for="Restaurant.Website" class="block text-sm font-medium text-gray-700">@T["Field_Website"]</label>
                             <InputText @bind-Value="Input.Website" id="Restaurant.Website" inputmode="url" autocomplete="url" maxlength="@RestaurantProfile.UrlMaxLength"
                                        placeholder="https://www.example.com" class="@InputClass" />
                             <ValidationMessage For="() => Input.Website" class="text-red-600 text-sm" />
                         </div>
                         <div class="space-y-1.5">
-                            <label for="Restaurant.Address" class="block text-sm font-medium text-gray-700">Address</label>
+                            <label for="Restaurant.Address" class="block text-sm font-medium text-gray-700">@T["Field_Address"]</label>
                             <InputTextArea @bind-Value="Input.Address" id="Restaurant.Address" rows="3" maxlength="500" autocomplete="street-address"
                                            placeholder="@("Hauptplatz 1\n1010 Wien")" class="@($"{InputClass} resize-y")" />
                             <ValidationMessage For="() => Input.Address" class="text-red-600 text-sm" />
@@ -167,13 +169,13 @@
                 <!-- Opening hours -->
                 <section class="bg-white rounded-xl shadow-sm border border-gray-200" aria-labelledby="restaurant-hours">
                     <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200">
-                        <h2 id="restaurant-hours" class="text-lg font-semibold text-gray-900 mb-0">Opening hours</h2>
+                        <h2 id="restaurant-hours" class="text-lg font-semibold text-gray-900 mb-0">@T["Section_Hours"]</h2>
                     </div>
                     <div class="p-[1rem] sm:p-6 space-y-1.5">
-                        <label for="Restaurant.OpeningHours" class="sr-only">Opening hours</label>
+                        <label for="Restaurant.OpeningHours" class="sr-only">@T["Section_Hours"]</label>
                         <InputTextArea @bind-Value="Input.OpeningHours" id="Restaurant.OpeningHours" rows="4" maxlength="1000"
-                                       placeholder="@("Mo–Fr 11:00–22:00\nSa 10:00–23:00\nSun closed")" class="@($"{InputClass} resize-y")" />
-                        <p class="text-xs text-gray-500 mb-0">Free text, one line per day or group of days. Guests see it exactly like this.</p>
+                                       placeholder="@HoursPlaceholder" class="@($"{InputClass} resize-y")" />
+                        <p class="text-xs text-gray-500 mb-0">@T["Hours_Hint"]</p>
                         <ValidationMessage For="() => Input.OpeningHours" class="text-red-600 text-sm" />
                     </div>
                 </section>
@@ -181,29 +183,29 @@
                 <!-- Links -->
                 <section class="bg-white rounded-xl shadow-sm border border-gray-200" aria-labelledby="restaurant-links">
                     <div class="px-[1rem] sm:px-6 py-[1rem] border-b border-gray-200">
-                        <h2 id="restaurant-links" class="text-lg font-semibold text-gray-900 mb-0">Social media and reviews</h2>
-                        <p class="mt-0.5 mb-0 text-sm text-gray-500">Full addresses starting with https://.</p>
+                        <h2 id="restaurant-links" class="text-lg font-semibold text-gray-900 mb-0">@T["Section_Links"]</h2>
+                        <p class="mt-0.5 mb-0 text-sm text-gray-500">@T["Links_Hint"]</p>
                     </div>
                     <div class="p-[1rem] sm:p-6 space-y-5">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-5">
                             <div class="space-y-1.5">
-                                <label for="Restaurant.InstagramUrl" class="block text-sm font-medium text-gray-700">Instagram</label>
+                                <label for="Restaurant.InstagramUrl" class="block text-sm font-medium text-gray-700">@T["Field_Instagram"]</label>
                                 <InputText @bind-Value="Input.InstagramUrl" id="Restaurant.InstagramUrl" inputmode="url" maxlength="@RestaurantProfile.UrlMaxLength"
                                            placeholder="https://www.instagram.com/…" class="@InputClass" />
                                 <ValidationMessage For="() => Input.InstagramUrl" class="text-red-600 text-sm" />
                             </div>
                             <div class="space-y-1.5">
-                                <label for="Restaurant.FacebookUrl" class="block text-sm font-medium text-gray-700">Facebook</label>
+                                <label for="Restaurant.FacebookUrl" class="block text-sm font-medium text-gray-700">@T["Field_Facebook"]</label>
                                 <InputText @bind-Value="Input.FacebookUrl" id="Restaurant.FacebookUrl" inputmode="url" maxlength="@RestaurantProfile.UrlMaxLength"
                                            placeholder="https://www.facebook.com/…" class="@InputClass" />
                                 <ValidationMessage For="() => Input.FacebookUrl" class="text-red-600 text-sm" />
                             </div>
                         </div>
                         <div class="space-y-1.5">
-                            <label for="Restaurant.GoogleReviewUrl" class="block text-sm font-medium text-gray-700">Review link</label>
+                            <label for="Restaurant.GoogleReviewUrl" class="block text-sm font-medium text-gray-700">@T["Field_Review"]</label>
                             <InputText @bind-Value="Input.GoogleReviewUrl" id="Restaurant.GoogleReviewUrl" inputmode="url" maxlength="@RestaurantProfile.UrlMaxLength"
                                        placeholder="https://g.page/r/…/review" class="@InputClass" />
-                            <p class="text-xs text-gray-500 mb-0">Where guests can leave a review, e.g. your Google review link.</p>
+                            <p class="text-xs text-gray-500 mb-0">@T["Field_ReviewHint"]</p>
                             <ValidationMessage For="() => Input.GoogleReviewUrl" class="text-red-600 text-sm" />
                         </div>
                     </div>
@@ -220,12 +222,12 @@
                             <svg class="mr-1.5 h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                             </svg>
-                            Profile saved. Guests see it on your menus.
+                            @T["Saved"]
                         </p>
                     }
                     else if (hasValidationErrors)
                     {
-                        <p class="mr-auto mb-0 text-sm text-red-600" role="alert" data-testid="profile-invalid">Please check the highlighted fields.</p>
+                        <p class="mr-auto mb-0 text-sm text-red-600" role="alert" data-testid="profile-invalid">@T["Invalid"]</p>
                     }
                     else if (saveError is not null)
                     {
@@ -233,7 +235,7 @@
                     }
                     <button type="submit" disabled="@(isSaving || isUploading)"
                             class="inline-flex items-center px-6 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        @(isSaving ? "Saving…" : isUploading ? "Uploading…" : "Save profile")
+                        @(isSaving ? C["Saving"] : isUploading ? T["Uploading"] : T["Save"])
                     </button>
                 </div>
             }
@@ -250,6 +252,9 @@
         "px-3 py-1 text-sm text-red-600 hover:text-red-800 border border-red-300 rounded-md hover:bg-red-50 transition-colors";
 
     private enum ImageSlot { Logo, Cover }
+
+    /// <summary>The opening hours' example, one line per resource key.</summary>
+    private string HoursPlaceholder => string.Join("\n", T["Hours_Placeholder1"], T["Hours_Placeholder2"], T["Hours_Placeholder3"]);
 
     private RestaurantProfile Input = new();
     private EditContext editContext = new(new RestaurantProfile());
@@ -317,12 +322,12 @@
         }
         catch (ValidationException ex)
         {
-            saveError = ex.ValidationResult.ErrorMessage ?? "Please check the fields.";
+            saveError = ex.ValidationResult.ErrorMessage ?? T["Error_CheckFields"];
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Saving the restaurant profile failed");
-            saveError = "The profile could not be saved. Please try again.";
+            saveError = T["Error_Save"];
         }
         finally
         {
@@ -350,7 +355,7 @@
 
         if (!ImageUploadService.IsValidImageFile(file))
         {
-            uploadErrors[slot] = "Please select a valid image file (JPG, PNG, GIF, WEBP) under 5 MB.";
+            uploadErrors[slot] = T["Error_InvalidImage"];
             return;
         }
 
@@ -360,7 +365,7 @@
             var path = await ImageUploadService.UploadImageAsync(file);
             if (path is null)
             {
-                uploadErrors[slot] = "The picture could not be uploaded. Please try again.";
+                uploadErrors[slot] = T["Error_Upload"];
                 return;
             }
 
@@ -371,7 +376,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Uploading a restaurant picture failed");
-            uploadErrors[slot] = "The picture could not be uploaded. Please try again.";
+            uploadErrors[slot] = T["Error_Upload"];
         }
         finally
         {

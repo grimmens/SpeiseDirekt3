@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Restaurant profile</value>
+  </data>
+  <data name="NotSaved" xml:space="preserve">
+    <value>Not saved yet</value>
+  </data>
+  <data name="Intro" xml:space="preserve">
+    <value>Name, pictures, contact details and opening hours of your restaurant. Guests see them on all of your menus.</value>
+  </data>
+  <data name="ReadOnly" xml:space="preserve">
+    <value>You can view the profile. Changing it needs the permission to edit menus.</value>
+  </data>
+  <data name="Section_Restaurant" xml:space="preserve">
+    <value>Restaurant</value>
+  </data>
+  <data name="Field_Name" xml:space="preserve">
+    <value>Name *</value>
+  </data>
+  <data name="Field_NamePlaceholder" xml:space="preserve">
+    <value>e.g. Gasthaus Zur Post</value>
+  </data>
+  <data name="Field_Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Field_DescriptionPlaceholder" xml:space="preserve">
+    <value>A few words about your kitchen, e.g. what you are known for.</value>
+  </data>
+  <data name="Field_DescriptionHint" xml:space="preserve">
+    <value>Up to 1000 characters.</value>
+  </data>
+  <data name="Section_Pictures" xml:space="preserve">
+    <value>Pictures</value>
+  </data>
+  <data name="Pictures_Formats" xml:space="preserve">
+    <value>JPG, PNG, GIF or WEBP up to 5 MB.</value>
+  </data>
+  <data name="Cover" xml:space="preserve">
+    <value>Cover image</value>
+  </data>
+  <data name="Cover_None" xml:space="preserve">
+    <value>No cover image yet</value>
+  </data>
+  <data name="Cover_Hint" xml:space="preserve">
+    <value>A wide picture shown at the top of your menus, e.g. the dining room or a signature dish.</value>
+  </data>
+  <data name="Cover_Remove" xml:space="preserve">
+    <value>Remove cover image</value>
+  </data>
+  <data name="Logo" xml:space="preserve">
+    <value>Logo</value>
+  </data>
+  <data name="Logo_None" xml:space="preserve">
+    <value>No logo</value>
+  </data>
+  <data name="Logo_Hint" xml:space="preserve">
+    <value>Square works best.</value>
+  </data>
+  <data name="Logo_Remove" xml:space="preserve">
+    <value>Remove logo</value>
+  </data>
+  <data name="Section_Contact" xml:space="preserve">
+    <value>Contact and address</value>
+  </data>
+  <data name="Field_Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="Field_Email" xml:space="preserve">
+    <value>E-mail</value>
+  </data>
+  <data name="Field_Website" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="Field_Address" xml:space="preserve">
+    <value>Address</value>
+  </data>
+  <data name="Section_Hours" xml:space="preserve">
+    <value>Opening hours</value>
+  </data>
+  <data name="Hours_Placeholder1" xml:space="preserve">
+    <value>Mon–Fri 11:00–22:00</value>
+    <comment>first line of the opening-hours example</comment>
+  </data>
+  <data name="Hours_Placeholder2" xml:space="preserve">
+    <value>Sat 10:00–23:00</value>
+    <comment>second line</comment>
+  </data>
+  <data name="Hours_Placeholder3" xml:space="preserve">
+    <value>Sun closed</value>
+    <comment>third line</comment>
+  </data>
+  <data name="Hours_Hint" xml:space="preserve">
+    <value>Free text, one line per day or group of days. Guests see it exactly like this.</value>
+  </data>
+  <data name="Section_Links" xml:space="preserve">
+    <value>Social media and reviews</value>
+  </data>
+  <data name="Links_Hint" xml:space="preserve">
+    <value>Full addresses starting with https://.</value>
+  </data>
+  <data name="Field_Instagram" xml:space="preserve">
+    <value>Instagram</value>
+  </data>
+  <data name="Field_Facebook" xml:space="preserve">
+    <value>Facebook</value>
+  </data>
+  <data name="Field_Review" xml:space="preserve">
+    <value>Review link</value>
+  </data>
+  <data name="Field_ReviewHint" xml:space="preserve">
+    <value>Where guests can leave a review, e.g. your Google review link.</value>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>Profile saved. Guests see it on your menus.</value>
+  </data>
+  <data name="Invalid" xml:space="preserve">
+    <value>Please check the highlighted fields.</value>
+  </data>
+  <data name="Uploading" xml:space="preserve">
+    <value>Uploading…</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save profile</value>
+  </data>
+  <data name="Error_CheckFields" xml:space="preserve">
+    <value>Please check the fields.</value>
+  </data>
+  <data name="Error_Save" xml:space="preserve">
+    <value>The profile could not be saved. Please try again.</value>
+  </data>
+  <data name="Error_InvalidImage" xml:space="preserve">
+    <value>Please select a valid image file (JPG, PNG, GIF, WEBP) under 5 MB.</value>
+  </data>
+  <data name="Error_Upload" xml:space="preserve">
+    <value>The picture could not be uploaded. Please try again.</value>
+  </data>
+</root>
