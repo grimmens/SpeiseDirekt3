@@ -8,6 +8,7 @@ using OpenAI;
 using SpeiseDirekt3.Components;
 using SpeiseDirekt3.Components.Account;
 using SpeiseDirekt3.Components.Guest;
+using SpeiseDirekt3.Localization;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.ServiceImplementation;
@@ -37,6 +38,10 @@ namespace SpeiseDirekt3
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+
+            // English and German from Resources/*.resx, chosen only by the browser's Accept-Language (AP12; guest pages
+            // excluded, see Localization/LocalizationSetup.cs)
+            builder.Services.AddAppLocalization();
 
             builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddScoped<IdentityUserAccessor>();
@@ -209,6 +214,10 @@ namespace SpeiseDirekt3
             }
 
             app.UseHttpsRedirection();
+
+            // Culture of the request from Accept-Language (back office, account pages, landing page); the guest pages are
+            // pinned to the invariant culture. Needs the endpoint, which the implicit UseRouting has already chosen.
+            app.UseAppRequestLocalization();
 
             app.UseAntiforgery();
 

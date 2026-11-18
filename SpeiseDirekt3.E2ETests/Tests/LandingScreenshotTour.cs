@@ -62,14 +62,14 @@ public class LandingScreenshotTour : QrCalendarTestBase
         await SeedScansAsync(ownerId, modern);
 
         var state = await Context.StorageStateAsync();
-        await using var phoneContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var phoneContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, StorageState = state, ReducedMotion = ReducedMotion.Reduce,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true
         });
         phoneContext.SetDefaultTimeout(15_000);
         var phone = await phoneContext.NewPageAsync();
-        await using var desktopContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var desktopContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, StorageState = state, ReducedMotion = ReducedMotion.Reduce,
             ViewportSize = new ViewportSize { Width = DesktopWidth, Height = 900 }, DeviceScaleFactor = 2
@@ -174,7 +174,7 @@ public class LandingScreenshotTour : QrCalendarTestBase
         foreach (var (width, height, scale) in new[] { (360, 780, 2), (390, 844, 2), (768, 1024, 2), (1024, 768, 1), (1280, 800, 1), (1440, 900, 1) })
         {
             var mobile = width < 1024;
-            await using var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+            await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
             {
                 BaseURL = App.ServerAddress, ReducedMotion = ReducedMotion.Reduce,
                 ViewportSize = new ViewportSize { Width = width, Height = height }, DeviceScaleFactor = scale, IsMobile = mobile, HasTouch = mobile
@@ -207,7 +207,7 @@ public class LandingScreenshotTour : QrCalendarTestBase
         }
 
         // Without JavaScript (390 px, full page)
-        await using var noJs = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var noJs = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, JavaScriptEnabled = false,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true
@@ -262,7 +262,7 @@ public class LandingScreenshotTour : QrCalendarTestBase
     /// </summary>
     private async Task ComposeOpenGraphAsync(string phoneShot, string path)
     {
-        await using var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress,
             ViewportSize = new ViewportSize { Width = LandingImages.OpenGraphWidth, Height = LandingImages.OpenGraphHeight },

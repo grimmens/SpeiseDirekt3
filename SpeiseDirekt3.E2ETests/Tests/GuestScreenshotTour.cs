@@ -42,7 +42,7 @@ public class GuestScreenshotTour : BackOfficeTestBase
             menus[theme] = await GuestDemoData.SeedAsync(App, ownerId, theme);
 
         var state = await Context.StorageStateAsync();
-        await using var phoneContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var phoneContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, StorageState = state,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true
@@ -181,7 +181,7 @@ public class GuestScreenshotTour : BackOfficeTestBase
         await Shot(Page, "desktop-noprofile-top");
 
         // Without JavaScript
-        await using (var noJs = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using (var noJs = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, JavaScriptEnabled = false,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true
@@ -237,7 +237,7 @@ public class GuestScreenshotTour : BackOfficeTestBase
         var ownerId = await OwnerIdAsync(email);
 
         var state = await Context.StorageStateAsync();
-        await using var phoneContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var phoneContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, StorageState = state,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true
@@ -308,7 +308,7 @@ public class GuestScreenshotTour : BackOfficeTestBase
         }
 
         // Without JS: the button jumps to the list at the end of the page
-        await using (var noJs = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using (var noJs = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, JavaScriptEnabled = false,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true

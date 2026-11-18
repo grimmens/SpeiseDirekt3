@@ -47,7 +47,7 @@
                 <!-- Combo Price -->
                 <div class="max-w-[14rem]">
                     <label for="ComboPrice" class="block text-sm font-semibold text-gray-800 mb-1">Combo Price (€) <span class="text-red-700" aria-hidden="true">*</span></label>
-                    <InputNumber @bind-Value="Input.ComboPrice" id="ComboPrice" class="sd-input tabular-nums" placeholder="0.00" />
+                    <PriceInput @bind-Value="Input.ComboPrice" id="ComboPrice" class="sd-input tabular-nums" />
                     <ValidationMessage For="() => Input.ComboPrice" class="sd-field-error" />
                 </div>
 

@@ -29,7 +29,7 @@ public class LandingPageTests : E2ETestBase
 
     private async Task<(IBrowserContext Context, IPage Page)> PhoneAsync(int width = 390, bool javaScript = true, ReducedMotion? motion = null)
     {
-        var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, ViewportSize = new ViewportSize { Width = width, Height = 844 },
             IsMobile = true, HasTouch = true, JavaScriptEnabled = javaScript, ReducedMotion = motion

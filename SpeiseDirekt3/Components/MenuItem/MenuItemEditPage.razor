@@ -158,8 +158,8 @@
                         <div class="sd-form-section-body">
                             <div class="max-w-[14rem]">
                                 <label for="MenuItem.Price" class="block text-sm font-semibold text-gray-800 mb-1">Price (€) <span class="text-red-700" aria-hidden="true">*</span></label>
-                                <InputNumber @bind-Value="Input.Price" id="MenuItem.Price" readonly="@HasVariants" step="0.01" min="0"
-                                             aria-describedby="@(HasVariants ? "MenuItem.PriceHint" : null)" class="sd-input tabular-nums" />
+                                <PriceInput @bind-Value="Input.Price" id="MenuItem.Price" readonly="@HasVariants"
+                                            aria-describedby="@(HasVariants ? "MenuItem.PriceHint" : null)" class="sd-input tabular-nums" />
                                 <ValidationMessage For="() => Input.Price" class="sd-field-error" />
                             </div>
                             @if (HasVariants)
@@ -455,9 +455,9 @@
                         <div class="w-28 flex-shrink-0">
                             <div class="relative">
                                 <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500" aria-hidden="true">€</span>
-                                <InputNumber @bind-Value="option.Price" @bind-Value:after="OptionsChanged" step="0.01" min="0"
-                                             aria-label="@($"Price of {noun} {position}")"
-                                             class="sd-input text-right tabular-nums" style="padding-left: 1.75rem" />
+                                <PriceInput @bind-Value="option.Price" @bind-Value:after="OptionsChanged"
+                                            aria-label="@($"Price of {noun} {position}")"
+                                            class="sd-input text-right tabular-nums" style="padding-left: 1.75rem" />
                             </div>
                             <ValidationMessage For="() => option.Price" class="sd-field-error" />
                         </div>

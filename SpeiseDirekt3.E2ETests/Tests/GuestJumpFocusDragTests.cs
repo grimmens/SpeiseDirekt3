@@ -98,7 +98,7 @@ public class GuestJumpFocusDragTests : E2ETestBase
 
     private async Task<(IBrowserContext Context, IPage Page)> TouchPhoneAsync(bool reducedMotion = false)
     {
-        var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, ViewportSize = new ViewportSize { Width = 390, Height = 844 }, IsMobile = true, HasTouch = true,
             ReducedMotion = reducedMotion ? ReducedMotion.Reduce : ReducedMotion.NoPreference
@@ -497,7 +497,7 @@ public class GuestJumpFocusDragTests : E2ETestBase
     public async Task Drag_WithReducedMotion_ClosesWithoutAnimation()
     {
         var demo = await SeedDemoAsync();
-        await using var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, ViewportSize = new ViewportSize { Width = 390, Height = 844 }, ReducedMotion = ReducedMotion.Reduce
         });

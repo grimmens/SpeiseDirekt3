@@ -491,7 +491,7 @@ public class QrCalendarEditorTests : QrCalendarTestBase
     {
         var s = await SeedHolidayCalendarAsync();
         var state = await Context.StorageStateAsync();
-        await using var phoneContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var phoneContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, StorageState = state,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, IsMobile = true, HasTouch = true

@@ -7,7 +7,8 @@
     @* Pages with their own document (OwnDocumentAttribute): the guest pages (/qr, /menu, /menu/preview — Components/Guest)
        and the landing page (/ — Components/Landing). Static SSR, own assets only, no Tailwind CDN, Bootstrap or
        blazor.web.js. No <base href>: every URL on these pages is absolute (fragment and ?item= links must stay on the page).
-       lang: the guest menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages), the landing page "de". *@
+       lang: the guest menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages — never the browser's),
+       the landing page "de" (its copy is German). *@
     var guest = Document == PageDocument.Guest;
     <html lang="@(guest ? GuestDocument.Language : "de")" data-guest-page="@guest" data-landing-page="@(!guest)">
     <head>
@@ -39,7 +40,8 @@
 }
 else
 {
-<html lang="en">
+@* lang: the request's language (AppCultures, from Accept-Language); an Interactive Server circuit keeps it *@
+<html lang="@AppCultures.HtmlLang">
 
 <head>
     <meta charset="utf-8" />

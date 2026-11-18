@@ -15,12 +15,16 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// <code>
 /// E2E_SCREENSHOT_DIR=/tmp/shots E2E_ALLOW_EXTERNAL_REQUESTS=1 dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~AdminScreenshotTour
 /// </code>
+/// The browser language is <c>E2E_LOCALE</c> (default <c>en-US</c>; <c>de-DE</c> for the German back office — use another
+/// <c>E2E_SCREENSHOT_DIR</c> per language, the file names are the same).
 /// </summary>
 public class AdminScreenshotTour : QrCalendarTestBase
 {
     public const string DirectoryEnvVar = "E2E_SCREENSHOT_DIR";
 
     public AdminScreenshotTour(E2EFixture fixture) : base(fixture) { }
+
+    protected override string ContextLocale => E2ESettings.TourLocale;
 
     private static string? Directory => Environment.GetEnvironmentVariable(DirectoryEnvVar) is { Length: > 0 } d ? d : null;
 
@@ -46,9 +50,10 @@ public class AdminScreenshotTour : QrCalendarTestBase
 
         // Phone: same cookies, narrow viewport
         var state = await Context.StorageStateAsync();
-        await using var phoneContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var phoneContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress,
+            Locale = ContextLocale,
             StorageState = state,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 },
             DeviceScaleFactor = 2,
@@ -76,9 +81,10 @@ public class AdminScreenshotTour : QrCalendarTestBase
         // Anonymous visitors: the Identity pages with the anonymous header, desktop and phone
         foreach (var (prefix, width, height) in new[] { ("desktop", 1280, 900), ("phone", 390, 844) })
         {
-            await using var anonymous = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+            await using var anonymous = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
             {
                 BaseURL = App.ServerAddress,
+                Locale = ContextLocale,
                 ViewportSize = new ViewportSize { Width = width, Height = height },
                 DeviceScaleFactor = prefix == "phone" ? 2 : 1
             });
@@ -122,9 +128,10 @@ public class AdminScreenshotTour : QrCalendarTestBase
         var findings = new List<string>();
         foreach (var width in new[] { 360, 390 })
         {
-            await using var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+            await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
             {
                 BaseURL = App.ServerAddress,
+                Locale = ContextLocale,
                 StorageState = storageState,
                 ViewportSize = new ViewportSize { Width = width, Height = 800 },
                 IsMobile = true,
@@ -184,7 +191,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
         await SettleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-menuitems-editor-options-scrolled.png"), FullPage = false });
         // Leaving with unsaved changes asks first (the quiet confirmation)
-        await page.GetByTestId("menu-tabs").GetByRole(AriaRole.Link, new() { Name = "Categories" }).ClickAsync();
+        await page.GetByTestId("menu-tabs").Locator("[data-tab='categories']").ClickAsync();
         await Assertions.Expect(page.Locator("#confirmationModal")).ToBeVisibleAsync();
         await SettleAsync(page);
         await page.ScreenshotAsync(new() { Path = Path.Combine(dir, $"{prefix}-menuitems-editor-leave-confirm.png"), FullPage = false });

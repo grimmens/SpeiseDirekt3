@@ -27,6 +27,9 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
 
     protected E2ETestBase(E2EFixture fixture) => Fixture = fixture;
 
+    /// <summary>Browser language of <see cref="Page"/> and of <see cref="NewContextAsync"/> without a locale.</summary>
+    protected virtual string ContextLocale => E2ESettings.DefaultLocale;
+
     public async Task InitializeAsync()
     {
         App.Clock.Reset();
@@ -36,15 +39,17 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
     public async Task DisposeAsync() => await Context.DisposeAsync();
 
     /// <summary>
-    /// A new, independent browser context (e.g. an anonymous guest next to a logged-in owner).
+    /// A new, independent browser context (e.g. an anonymous guest next to a logged-in owner), 1280 × 900 px, in the
+    /// browser language <paramref name="locale"/> (default <see cref="ContextLocale"/>, i.e. English).
     /// Disposed by the caller.
     /// </summary>
-    protected async Task<(IBrowserContext Context, IPage Page)> NewContextAsync()
+    protected async Task<(IBrowserContext Context, IPage Page)> NewContextAsync(string? locale = null)
     {
         var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress,
-            ViewportSize = new ViewportSize { Width = 1280, Height = 900 }
+            ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+            Locale = locale ?? ContextLocale
         });
         context.SetDefaultTimeout(15_000);
 

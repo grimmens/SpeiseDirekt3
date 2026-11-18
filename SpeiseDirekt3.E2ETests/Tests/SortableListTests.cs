@@ -282,7 +282,7 @@ public class SortableListTests : BackOfficeTestBase
         });
 
         var state = await Context.StorageStateAsync();
-        await using var phoneContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var phoneContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, StorageState = state,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, DeviceScaleFactor = 2, IsMobile = true, HasTouch = true

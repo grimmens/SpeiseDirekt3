@@ -87,7 +87,7 @@ public class GuestMenuLayoutTests : BackOfficeTestBase
     {
         var demo = await SeedDemoAsync();
         // Reduced motion: no slide-in animation (with JS disabled Playwright's stability check stalls on CSS animations)
-        await using var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, JavaScriptEnabled = false, ViewportSize = new ViewportSize { Width = 390, Height = 844 },
             ReducedMotion = ReducedMotion.Reduce
