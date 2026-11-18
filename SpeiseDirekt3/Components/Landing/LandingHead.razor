@@ -2,7 +2,9 @@
 @* <title> and <head> meta of the landing page in the request's language: description, canonical link and Open Graph /
    Twitter tags, og:locale de_DE / en_US and the language's og-<lang>.png. One URL serves both languages (the language
    comes from Accept-Language), so the canonical is that one URL and there is no hreflang. Absolute URLs use the origin
-   the visitor's browser sees (GuestFormat.PublicOrigin: the request after UseForwardedHeaders). *@
+   the visitor's browser sees (GuestFormat.PublicOrigin: the request after UseForwardedHeaders).
+   JSON-LD (AP13): a schema.org SoftwareApplication — name, description, category, "Web", url, language, image — and
+   deliberately no price (offers) and no rating: product truth. *@
 @{
     var origin = GuestFormat.PublicOrigin(HttpContext?.Request);
     var url = GuestFormat.Absolute(origin, "/");
@@ -32,9 +34,33 @@
         <meta property="og:image:alt" content="@T["Head_ImageAlt"]" />
     }
     <meta name="twitter:card" content="summary_large_image" />
+    <script type="application/ld+json">@((MarkupString)StructuredData(url, image, description))</script>
 </HeadContent>
 
 @code {
     /// <summary>The request (static SSR).</summary>
     [CascadingParameter] public HttpContext? HttpContext { get; set; }
+
+    /// <summary>
+    /// The page as a schema.org <c>SoftwareApplication</c> (JSON, HTML-safe: System.Text.Json escapes &lt; &gt; &amp;, so the
+    /// value cannot close the script element). No <c>offers</c> and no <c>aggregateRating</c>.
+    /// </summary>
+    public static string StructuredData(string? url, string? image, string description)
+    {
+        var data = new Dictionary<string, object?>
+        {
+            ["@context"] = "https://schema.org",
+            ["@type"] = "SoftwareApplication",
+            ["name"] = "Speise-Direkt",
+            ["description"] = description,
+            ["applicationCategory"] = "BusinessApplication",
+            ["operatingSystem"] = "Web",
+            ["inLanguage"] = AppCultures.HtmlLang
+        };
+        if (url is not null)
+            data["url"] = url;
+        if (image is not null)
+            data["image"] = image;
+        return System.Text.Json.JsonSerializer.Serialize(data);
+    }
 }

@@ -9,6 +9,7 @@ using OpenAI;
 using SpeiseDirekt3.Components;
 using SpeiseDirekt3.Components.Account;
 using SpeiseDirekt3.Components.Guest;
+using SpeiseDirekt3.Components.Landing;
 using SpeiseDirekt3.Localization;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
@@ -249,6 +250,8 @@ namespace SpeiseDirekt3
             app.MapControllers();
             // Item click tracking of the static guest pages (js/guest-menu.js)
             app.MapGuestEndpoints();
+            // robots.txt and sitemap.xml (Components/Landing/SeoEndpoints.cs)
+            app.MapSeoEndpoints();
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();

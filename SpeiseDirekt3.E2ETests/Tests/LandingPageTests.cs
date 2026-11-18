@@ -567,6 +567,75 @@ public class LandingPageTests : E2ETestBase
             .And.Contain("content=\"https://speisekarte.example/images/landing/og");
     }
 
+    // --- SEO (AP13): robots.txt, sitemap.xml, JSON-LD ---
+
+    [Fact]
+    public async Task RobotsTxt_AllowsTheLandingAndGuestPages_DisallowsBackOfficeAndAccount()
+    {
+        var response = await Page.APIRequest.GetAsync("/robots.txt", new()
+        {
+            Headers = new Dictionary<string, string> { ["X-Forwarded-Proto"] = "https", ["X-Forwarded-Host"] = "speisekarte.example" }
+        });
+        response.Status.Should().Be(200);
+        response.Headers["content-type"].Should().StartWith("text/plain");
+        var lines = (await response.TextAsync()).Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        lines.Should().Contain("User-agent: *").And.Contain("Allow: /");
+        foreach (var path in new[] { "/Account/", "/dashboard", "/menus", "/menu/edit", "/menu/preview/", "/qrcodes", "/analytics", "/restaurant", "/users" })
+            lines.Should().Contain($"Disallow: {path}");
+        // Guest pages stay crawlable: no rule matches /menu/{id} or /qr/{id}, nor the demo (it says noindex itself)
+        var disallowed = lines.Where(l => l.StartsWith("Disallow: ")).Select(l => l["Disallow: ".Length..]).ToArray();
+        foreach (var url in new[] { "/", $"/menu/{Guid.NewGuid()}", $"/qr/{Guid.NewGuid()}", "/demo" })
+            disallowed.Should().NotContain(p => url.StartsWith(p, StringComparison.Ordinal), url);
+        foreach (var url in new[] { "/dashboard", "/Account/Login", "/menu/edit/1", "/menu/preview/1", "/Categories/1", "/MenuItems/1", "/users/invite" })
+            disallowed.Should().Contain(p => url.StartsWith(p, StringComparison.Ordinal), url);
+        lines.Should().Contain("Sitemap: https://speisekarte.example/sitemap.xml");
+    }
+
+    [Fact]
+    public async Task SitemapXml_ListsOnlyTheLandingPage()
+    {
+        var response = await Page.APIRequest.GetAsync("/sitemap.xml", new()
+        {
+            Headers = new Dictionary<string, string> { ["X-Forwarded-Proto"] = "https", ["X-Forwarded-Host"] = "speisekarte.example" }
+        });
+        response.Status.Should().Be(200);
+        response.Headers["content-type"].Should().StartWith("application/xml");
+        var doc = System.Xml.Linq.XDocument.Parse(await response.TextAsync());
+        System.Xml.Linq.XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
+        doc.Root!.Name.Should().Be(ns + "urlset");
+        doc.Descendants(ns + "loc").Select(l => l.Value).Should().Equal("https://speisekarte.example/");
+
+        // Without a proxy: the server's own origin
+        var direct = System.Xml.Linq.XDocument.Parse(await (await Page.APIRequest.GetAsync("/sitemap.xml")).TextAsync());
+        direct.Descendants(ns + "loc").Select(l => l.Value).Should().Equal(App.ServerAddress + "/");
+    }
+
+    [Theory]
+    [MemberData(nameof(Languages))]
+    public async Task JsonLd_DescribesTheApp_WithoutPriceOrRating(string language)
+    {
+        var copy = CopyOf(language);
+        var (context, Page) = await NewContextAsync(copy.Locale);
+        await using var _ = context;
+        await OpenLandingAsync(Page);
+
+        var scripts = Page.Locator("script[type='application/ld+json']");
+        await Assertions.Expect(scripts).ToHaveCountAsync(1);
+        using var json = System.Text.Json.JsonDocument.Parse(await scripts.TextContentAsync() ?? "");
+        var root = json.RootElement;
+        root.GetProperty("@context").GetString().Should().Be("https://schema.org");
+        root.GetProperty("@type").GetString().Should().Be("SoftwareApplication");
+        root.GetProperty("name").GetString().Should().Be("Speise-Direkt");
+        root.GetProperty("operatingSystem").GetString().Should().Be("Web");
+        root.GetProperty("applicationCategory").GetString().Should().Be("BusinessApplication");
+        root.GetProperty("inLanguage").GetString().Should().Be(copy.Lang);
+        root.GetProperty("url").GetString().Should().Be(App.ServerAddress + "/");
+        root.GetProperty("description").GetString().Should().Be(await Page.Locator("meta[name='description']").GetAttributeAsync("content"));
+        root.GetProperty("image").GetString().Should().Contain($"/images/landing/og-{copy.Lang}");
+        foreach (var forbidden in new[] { "offers", "aggregateRating", "price", "review" })
+            root.TryGetProperty(forbidden, out var found).Should().BeFalse(forbidden);
+    }
+
     // --- Operator settings ---
 
     [Theory]
