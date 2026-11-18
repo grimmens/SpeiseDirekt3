@@ -69,9 +69,6 @@
   <data name="Hero_Lead" xml:space="preserve">
     <value>Gäste scannen den QR-Code am Tisch und öffnen Ihre Karte sofort im Browser – mit Fotos, Preisen und Allergenen, ganz ohne App. Was Sie ändern, sehen Ihre Gäste beim nächsten Aufruf.</value>
   </data>
-  <data name="Hero_SeeFeatures" xml:space="preserve">
-    <value>Funktionen ansehen</value>
-  </data>
   <data name="Hero_Note" xml:space="preserve">
     <value>Die Registrierung ist kostenlos.</value>
   </data>
@@ -437,5 +434,11 @@
   </data>
   <data name="Og_Text" xml:space="preserve">
     <value>Die digitale Speisekarte mit QR-Code – ohne App für Ihre Gäste.</value>
+  </data>
+  <data name="Hero_Demo" xml:space="preserve">
+    <value>Live-Demo ansehen</value>
+  </data>
+  <data name="Designs_TryLive" xml:space="preserve">
+    <value>Design „{0}“ live ausprobieren</value>
   </data>
 </root>

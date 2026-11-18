@@ -53,6 +53,15 @@ public sealed class GuestMenuModel
     /// <summary>Owner preview (<c>/menu/preview/{id}</c>).</summary>
     public bool IsPreview { get; init; }
 
+    /// <summary>
+    /// The live demo (<c>/demo</c>, <c>Components/Demo</c>): an in-memory menu of a made-up restaurant — a note above the
+    /// page says so, nothing is recorded, <c>noindex</c>.
+    /// </summary>
+    public bool IsDemo { get; init; }
+
+    /// <summary>Search engines must not index the page (<c>robots noindex</c>; no <c>hreflang</c> alternates): the owner preview and the demo.</summary>
+    public bool NoIndex => IsPreview || IsDemo;
+
     /// <summary>Item from <c>?item=</c>: the server renders its sheet open (deep link, no-JS click).</summary>
     public MenuItem? SelectedItem { get; init; }
 
@@ -87,8 +96,17 @@ public sealed class GuestMenuModel
     /// <summary>Name for page titles, Open Graph's site name and the share text: the restaurant, else the menu.</summary>
     public string SiteName => Profile?.Name ?? Menu.Name;
 
-    /// <summary>Public, canonical path of the menu (<c>/menu/{id}</c>) — also from <c>/qr/…</c> and the owner preview.</summary>
-    public string PublicPath => GuestFormat.PublicMenuPath(Menu.Id);
+    /// <summary>
+    /// Public, canonical path of the menu (<c>/menu/{id}</c>) — also from <c>/qr/…</c> and the owner preview; the demo
+    /// sets its own (<c>/demo</c>). Canonical link, <c>og:url</c> and the item share links use it.
+    /// </summary>
+    public string PublicPath
+    {
+        get => publicPath ?? GuestFormat.PublicMenuPath(Menu.Id);
+        init => publicPath = value;
+    }
+
+    private readonly string? publicPath;
 
     public IEnumerable<MenuItem> AllItems => Categories.SelectMany(c => c.Items);
 

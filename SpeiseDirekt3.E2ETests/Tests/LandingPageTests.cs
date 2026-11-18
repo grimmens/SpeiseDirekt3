@@ -21,21 +21,24 @@ public class LandingPageTests : E2ETestBase
     public sealed record Copy(
         string Locale, string Lang, string OgLocale, string Title, string Headline, string[] Nav, string FaqTitle,
         string CostQuestion, string CostAnswer, string AppQuestion, string MadeUp, string DemoData, string Legend,
-        string Register, string Login, string Imprint, string Privacy, string[] ForbiddenClaims);
+        string Register, string Login, string Imprint, string Privacy, string[] ForbiddenClaims,
+        string Demo = "", string DemoPath = "", string TryDark = "");
 
     private static readonly Copy German = new(
         "de-DE", "de", "de_DE", "Digitale Speisekarte mit QR-Code | Speise-Direkt", "Ihre Speisekarte, ein Scan entfernt.",
         ["Funktionen", "Designs", "So funktioniert’s", "FAQ"], "Häufige Fragen",
         "Was kostet Speise-Direkt?", "Die Registrierung ist kostenlos.", "Brauchen meine Gäste eine App?",
         "erfundene Restaurant", "Demodaten", "Design in der Vorschau", "Kostenlos registrieren", "Anmelden",
-        "Impressum", "Datenschutz", ["dauerhaft kostenlos", "für immer kostenlos", "Kunden", "Bewertungen von"]);
+        "Impressum", "Datenschutz", ["dauerhaft kostenlos", "für immer kostenlos", "Kunden", "Bewertungen von"],
+        "Live-Demo ansehen", "/demo", "Design „Dunkel“ live ausprobieren");
 
     private static readonly Copy English = new(
         "en-US", "en", "en_US", "Digital menu with QR code | Speise-Direkt", "Your menu, one scan away.",
         ["Features", "Designs", "How it works", "FAQ"], "Frequently asked questions",
         "What does Speise-Direkt cost?", "Registration is free.", "Do my guests need an app?",
         "made-up restaurant", "demo data", "Design in the preview", "Register for free", "Log in",
-        "Imprint", "Privacy", ["free forever", "forever free", "customers", "reviews from"]);
+        "Imprint", "Privacy", ["free forever", "forever free", "customers", "reviews from"],
+        "See the live demo", "/demo/en", "Try the Dark design live");
 
     public static TheoryData<string> Languages => new() { "de", "en" };
 
@@ -167,6 +170,15 @@ public class LandingPageTests : E2ETestBase
             () => { const h = document.querySelector('[data-lp-header]').getBoundingClientRect();
                     const t = document.getElementById('faq').getBoundingClientRect(); return Math.abs(t.top - h.bottom) < 24 || t.top >= h.bottom; }
             """);
+
+        // The hero's second button opens the live demo in the visitor's language (AP13)
+        await Assertions.Expect(Page.GetByTestId("hero-demo")).ToHaveAttributeAsync("href", copy.DemoPath);
+        await Assertions.Expect(Page.GetByTestId("hero-demo")).ToHaveTextAsync(copy.Demo);
+        await Page.GetByTestId("hero-demo").ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex(Regex.Escape(copy.DemoPath) + "$"));
+        await Page.Locator("html[data-guest-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
+        await Assertions.Expect(Page.GetByTestId("demo-note")).ToBeVisibleAsync();
+        await Page.GoBackAsync();
 
         // The hero's CTA opens the registration
         await Page.GetByTestId("hero-register").ClickAsync();
@@ -354,6 +366,17 @@ public class LandingPageTests : E2ETestBase
         await Page.Keyboard.PressAsync("ArrowRight");
         await ExpectShownAsync("classic");
         await Assertions.Expect(Page.GetByRole(AriaRole.Group, new() { Name = copy.Legend })).ToBeVisibleAsync();
+
+        // AP13: below the choices one link tries the chosen design in the live demo
+        var tryLive = Page.Locator("[data-testid='theme-demo-link']:visible");
+        await Assertions.Expect(tryLive).ToHaveCountAsync(1);
+        await Assertions.Expect(tryLive).ToHaveAttributeAsync("href", copy.DemoPath + "?theme=classic");
+        await Page.Locator("label[for='lp-theme-dark']").ClickAsync();
+        await Assertions.Expect(tryLive).ToHaveCountAsync(1);
+        await Assertions.Expect(tryLive).ToHaveTextAsync(copy.TryDark);
+        await tryLive.ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex(Regex.Escape(copy.DemoPath) + @"\?theme=dark$"));
+        await Assertions.Expect(Page.GetByTestId("menu-display")).ToHaveAttributeAsync("data-theme", "dark");
     }
 
     // --- Without JS, reduced motion ---

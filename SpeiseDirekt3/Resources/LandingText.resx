@@ -75,9 +75,6 @@
   <data name="Hero_Lead" xml:space="preserve">
     <value>Guests scan the QR code at the table and open your menu right away in the browser – with photos, prices and allergens, no app needed. What you change, your guests see the next time they open it.</value>
   </data>
-  <data name="Hero_SeeFeatures" xml:space="preserve">
-    <value>See the features</value>
-  </data>
   <data name="Hero_Note" xml:space="preserve">
     <value>Registration is free.</value>
   </data>
@@ -446,5 +443,11 @@
   </data>
   <data name="Og_Text" xml:space="preserve">
     <value>The digital menu with QR code – no app for your guests.</value>
+  </data>
+  <data name="Hero_Demo" xml:space="preserve">
+    <value>See the live demo</value>
+  </data>
+  <data name="Designs_TryLive" xml:space="preserve">
+    <value>Try the {0} design live</value>
   </data>
 </root>

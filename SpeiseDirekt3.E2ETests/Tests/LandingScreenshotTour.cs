@@ -1,3 +1,4 @@
+using FluentAssertions;
 using System.Globalization;
 using System.Text;
 using Microsoft.Playwright;
@@ -37,6 +38,9 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 public class LandingScreenshotTour : QrCalendarTestBase
 {
     public const string ImagesDirectoryEnvVar = "E2E_LANDING_IMAGES_DIR";
+
+    /// <summary>Where <see cref="Capture_demo_images"/> writes the live demo's photos (point it at <c>SpeiseDirekt3/wwwroot/images/demo</c>).</summary>
+    public const string DemoImagesDirectoryEnvVar = "E2E_DEMO_IMAGES_DIR";
 
     public LandingScreenshotTour(E2EFixture fixture) : base(fixture) { }
 
@@ -177,6 +181,45 @@ public class LandingScreenshotTour : QrCalendarTestBase
             report.AppendLine(CultureInfo.InvariantCulture, $"{Path.GetFileName(og)}\t{LandingImages.OpenGraphWidth}x{LandingImages.OpenGraphHeight}\t{new FileInfo(og).Length / 1024.0:0.0} KB");
         }
         await File.WriteAllTextAsync(Path.Combine(dir, "landing-images.txt"), report.ToString());
+    }
+
+    /// <summary>
+    /// The live demo's photos (<c>/demo</c>, <c>Components/Demo</c>): the same generated pictures the
+    /// <see cref="GuestDemoData"/> seed stores in the database — every dish photo (600 × 750), the cover (1200 × 600) and
+    /// the logo (320 × 320) — as WebP <c>{stem}.webp</c> into <c>E2E_DEMO_IMAGES_DIR</c>. Opt-in; needs no browser:
+    /// <code>
+    /// E2E_DEMO_IMAGES_DIR=$PWD/SpeiseDirekt3/wwwroot/images/demo \
+    ///   dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~Capture_demo_images
+    /// </code>
+    /// Then rebuild (fingerprinted URLs) and commit the files (<c>*.webp</c> is binary in .gitattributes).
+    /// </summary>
+    [Fact]
+    public async Task Capture_demo_images()
+    {
+        if (Environment.GetEnvironmentVariable(DemoImagesDirectoryEnvVar) is not { Length: > 0 } output) return; // opt-in only
+        System.IO.Directory.CreateDirectory(output);
+        var sizes = new Dictionary<string, Size>
+        {
+            [SpeiseDirekt3.Components.Demo.DemoMenuContent.CoverPhoto] = new(1200, 600),
+            [SpeiseDirekt3.Components.Demo.DemoMenuContent.LogoPhoto] = new(320, 320)
+        };
+        foreach (var (stem, image) in GuestDemoData.DemoPhotos())
+        {
+            using (image)
+            {
+                if (sizes.TryGetValue(stem, out var size))
+                    image.Mutate(x => x.Resize(new ResizeOptions { Size = size, Mode = ResizeMode.Stretch, Sampler = KnownResamplers.Lanczos3 }));
+                await image.SaveAsWebpAsync(Path.Combine(output, stem + ".webp"), new WebpEncoder
+                {
+                    FileFormat = WebpFileFormatType.Lossy,
+                    Quality = 78,
+                    Method = WebpEncodingMethod.BestQuality,
+                    SkipMetadata = true
+                });
+            }
+        }
+        SpeiseDirekt3.Components.Demo.DemoMenuContent.Photos
+            .Should().OnlyContain(stem => File.Exists(Path.Combine(output, stem + ".webp")), "every photo the demo names exists");
     }
 
     [Fact]

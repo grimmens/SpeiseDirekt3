@@ -58,6 +58,12 @@ public sealed class GuestText
     public string NoDishes { get; private init; } = "";
     public string Close { get; private init; } = "";
 
+    // --- Live demo (/demo) ----------------------------------------------------------------------------------------
+    /// <summary>The note above the demo menu: a made-up restaurant with sample data.</summary>
+    public string DemoNote { get; private init; } = "";
+    /// <summary>Its link to the landing page.</summary>
+    public string DemoLink { get; private init; } = "";
+
     // --- Top bar, restaurant ---------------------------------------------------------------------------------------
     public string RestaurantInfo { get; private init; } = "";
     public string SearchMenu { get; private init; } = "";
@@ -159,6 +165,8 @@ public sealed class GuestText
         MenuOfFormat = "Speisekarte von {0}",
         NoDishes = "Auf dieser Speisekarte stehen noch keine Gerichte.",
         Close = "Schließen",
+        DemoNote = "Demo: ein erfundenes Restaurant mit Beispieldaten.",
+        DemoLink = "Speise-Direkt kennenlernen",
         RestaurantInfo = "Informationen zum Restaurant",
         SearchMenu = "Speisekarte durchsuchen",
         InfoTitle = "Informationen",
@@ -242,6 +250,8 @@ public sealed class GuestText
         MenuOfFormat = "Menu of {0}",
         NoDishes = "There are no dishes on this menu yet.",
         Close = "Close",
+        DemoNote = "Demo: a made-up restaurant with sample data.",
+        DemoLink = "Discover Speise-Direkt",
         RestaurantInfo = "About the restaurant",
         SearchMenu = "Search the menu",
         InfoTitle = "Information",

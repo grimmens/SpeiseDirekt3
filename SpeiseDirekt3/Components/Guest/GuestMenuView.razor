@@ -11,7 +11,8 @@
 <GuestMenuHead Model="Model" />
 
 <div class="gm" data-theme="@Model.ThemeKey" data-guest-root data-testid="menu-display" data-menu-id="@Model.Menu.Id" lang="@Model.Language.Code"
-     data-track-clicks="@(Model.TrackClicks ? "true" : "false")" data-base-path="@Model.BasePath" data-preview="@(Model.IsPreview ? "true" : null)"
+     data-track-clicks="@(Model.TrackClicks ? "true" : "false")" data-base-path="@Model.BasePath" data-public-path="@Model.PublicPath"
+     data-preview="@(Model.IsPreview ? "true" : null)" data-demo="@(Model.IsDemo ? "true" : null)"
      data-preview-saved-name="@(Model.IsPreview ? Model.Menu.Name : null)"
      data-preview-themes="@(Model.IsPreview ? string.Join(' ', Enum.GetValues<DesignTheme>().Select(GuestMenuModel.ThemeKeyOf)) : null)"
      data-preview-restaurant="@(Model.IsPreview ? Model.Profile?.Name : null)"
@@ -19,6 +20,14 @@
      data-preview-item-open="@(Model.IsPreview && Model.SelectedItem is not null ? "true" : null)"
      data-guest-strings="@Model.Text.ScriptJson()">
     <a class="gm-skip" href="#gm-main">@Model.Text.SkipToMenu</a>
+    @if (Model.IsDemo)
+    {
+        @* The live demo (/demo): says that the restaurant is made up, links back to the landing page *@
+        <p class="gm-demo-bar" data-testid="demo-note">
+            <span>@Model.Text.DemoNote</span>
+            <a href="/" data-testid="demo-home-link">@Model.Text.DemoLink</a>
+        </p>
+    }
 
     <GuestTopBar Title="@Model.Menu.Name">
         @* Start: restaurant info (a link to the footer #gm-info without JS) and the language button (a link to the

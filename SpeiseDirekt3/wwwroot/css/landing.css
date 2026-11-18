@@ -1009,12 +1009,43 @@ html[data-landing-ready] .lp-header:not([data-scrolled]) { border-bottom-color: 
     .lp-designs:has(#lp-theme-dark:checked) .lp-theme-shot[data-theme="dark"] { display: block; }
 }
 
+/* "Try the … design live": the checked design's link into the demo (/demo?theme=…), like the screenshots */
+.lp-theme-demo { margin: 1.25rem 0 0; }
+
+.lp-theme-demo-link {
+    display: none;
+    align-items: center;
+    gap: .375rem;
+    min-height: 2.75rem;
+    color: rgb(var(--sd-brand-700));
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: .25em;
+}
+
+.lp-theme-demo-link:hover { color: rgb(var(--sd-brand-900)); text-decoration-thickness: 2px; }
+.lp-theme-demo-link .lp-icon { width: 1.125rem; height: 1.125rem; }
+.lp-theme-demo-link[data-theme="classic"] { display: inline-flex; }
+
+@supports selector(:has(*)) {
+    .lp-designs .lp-theme-demo-link[data-theme="classic"] { display: none; }
+
+    .lp-designs:has(#lp-theme-modern:checked) .lp-theme-demo-link[data-theme="modern"],
+    .lp-designs:has(#lp-theme-classic:checked) .lp-theme-demo-link[data-theme="classic"],
+    .lp-designs:has(#lp-theme-elegant:checked) .lp-theme-demo-link[data-theme="elegant"],
+    .lp-designs:has(#lp-theme-minimal:checked) .lp-theme-demo-link[data-theme="minimal"],
+    .lp-designs:has(#lp-theme-fancy:checked) .lp-theme-demo-link[data-theme="fancy"],
+    .lp-designs:has(#lp-theme-dark:checked) .lp-theme-demo-link[data-theme="dark"] { display: inline-flex; }
+}
+
 /* Below 1024 px the phone sits between the text and the choices, so a tap shows its result right above the finger */
 @media (max-width: 1023.98px) {
     .lp-designs-grid { gap: 0; }
     .lp-designs-copy { display: contents; }
     .lp-designs-visual { order: 1; margin: 2.5rem 0 2rem; }
     .lp-theme-picker { order: 2; margin-top: 0; }
+    .lp-theme-demo { order: 3; }
 }
 
 @media (min-width: 1024px) {

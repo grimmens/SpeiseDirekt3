@@ -23,13 +23,15 @@
         <div class="lp-container lp-hero-grid">
             <div class="lp-hero-copy">
                 <p class="lp-eyebrow"><span class="lp-eyebrow-dot" aria-hidden="true"></span>@T["Hero_Eyebrow"]</p>
-                <h1 id="lp-hero-title" class="lp-hero-title">@Highlight(T["Hero_Title"])</h1>
+                <h1 id="lp-hero-title" class="lp-hero-title">@HeadlineMarkup.Highlight(T["Hero_Title"], "lp-mark")</h1>
                 <p class="lp-lead">@T["Hero_Lead"]</p>
                 <div class="lp-actions">
                     <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-testid="hero-register">
                         @T["RegisterFree"] <LandingIcon Name="arrow-right" StrokeWidth="2" />
                     </a>
-                    <a class="lp-button lp-button--secondary lp-button--lg" href="#funktionen" data-testid="hero-features">@T["Hero_SeeFeatures"]</a>
+                    <a class="lp-button lp-button--secondary lp-button--lg" href="@DemoPath" data-testid="hero-demo">
+                        <LandingIcon Name="phone" StrokeWidth="2" /> @T["Hero_Demo"]
+                    </a>
                 </div>
                 <p class="lp-hero-note"><LandingIcon Name="check" StrokeWidth="2.25" /> @T["Hero_Note"]</p>
             </div>
@@ -122,6 +124,16 @@
                         }
                     </div>
                 </fieldset>
+                @* The chosen design live in the demo: one link per design, CSS shows the checked one's (without :has() the
+                   default's, like the screenshots) *@
+                <p class="lp-theme-demo" data-testid="theme-demo">
+                    @foreach (var theme in LandingImages.Themes)
+                    {
+                        <a class="lp-theme-demo-link" data-theme="@theme.Key" href="@($"{DemoPath}?theme={theme.Key}")" data-testid="theme-demo-link">
+                            @T["Designs_TryLive", T[theme.LabelKey].Value] <LandingIcon Name="arrow-right" StrokeWidth="2" />
+                        </a>
+                    }
+                </p>
             </div>
             <div class="lp-designs-visual" data-reveal>
                 <LandingPhone Class="lp-phone--themes" TestId="theme-phone">
@@ -333,33 +345,17 @@
 
     [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
 
+    /// <summary>The live demo (<c>/demo</c>, Components/Demo) in the visitor's language: German, else the English version.</summary>
+    public static string DemoPath => AppCultures.HtmlLang == "de"
+        ? SpeiseDirekt3.Components.Demo.DemoMenuContent.German.Path
+        : SpeiseDirekt3.Components.Demo.DemoMenuContent.English.Path;
+
     protected override void OnInitialized()
     {
         // Logged in: the back office starts at the dashboard (static SSR: NavigateTo answers with a redirect)
         if (HttpContext.User.Identity?.IsAuthenticated == true)
             Navigation.NavigateTo("/dashboard");
     }
-
-    /// <summary>
-    /// A headline whose part in [brackets] is highlighted (<c>lp-mark</c>), e.g. "Ihre Speisekarte, [ein Scan entfernt.]":
-    /// one resource string per sentence, the brackets only mark the styled part.
-    /// </summary>
-    private static RenderFragment Highlight(string text) => builder =>
-    {
-        var open = text.IndexOf('[');
-        var close = open < 0 ? -1 : text.IndexOf(']', open + 1);
-        if (close < 0)
-        {
-            builder.AddContent(0, text);
-            return;
-        }
-        builder.AddContent(1, text[..open]);
-        builder.OpenElement(2, "span");
-        builder.AddAttribute(3, "class", "lp-mark");
-        builder.AddContent(4, text[(open + 1)..close]);
-        builder.CloseElement();
-        builder.AddContent(5, text[(close + 1)..]);
-    };
 
     /// <summary>A feature's check list from LandingText keys.</summary>
     private RenderFragment Checks(params string[] keys) => __builder =>
