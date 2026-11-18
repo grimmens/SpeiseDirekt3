@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DefaultError" xml:space="preserve">
+    <value>Ein unbekannter Fehler ist aufgetreten.</value>
+  </data>
+  <data name="ConcurrencyFailure" xml:space="preserve">
+    <value>Die Daten wurden inzwischen geändert. Bitte versuchen Sie es noch einmal.</value>
+  </data>
+  <data name="PasswordMismatch" xml:space="preserve">
+    <value>Das Passwort ist nicht korrekt.</value>
+  </data>
+  <data name="InvalidToken" xml:space="preserve">
+    <value>Der Link oder Code ist ungültig oder abgelaufen.</value>
+  </data>
+  <data name="RecoveryCodeRedemptionFailed" xml:space="preserve">
+    <value>Der Wiederherstellungscode konnte nicht eingelöst werden.</value>
+  </data>
+  <data name="LoginAlreadyAssociated" xml:space="preserve">
+    <value>Mit dieser Anmeldung gibt es bereits ein Konto.</value>
+  </data>
+  <data name="InvalidUserName" xml:space="preserve">
+    <value>Die E-Mail-Adresse „{0}“ enthält Zeichen, die nicht verwendet werden können.</value>
+  </data>
+  <data name="InvalidEmail" xml:space="preserve">
+    <value>Die E-Mail-Adresse „{0}“ ist ungültig.</value>
+  </data>
+  <data name="DuplicateUserName" xml:space="preserve">
+    <value>Die E-Mail-Adresse „{0}“ ist bereits registriert.</value>
+  </data>
+  <data name="DuplicateEmail" xml:space="preserve">
+    <value>Die E-Mail-Adresse „{0}“ ist bereits registriert.</value>
+  </data>
+  <data name="InvalidRoleName" xml:space="preserve">
+    <value>Der Rollenname „{0}“ ist ungültig.</value>
+  </data>
+  <data name="DuplicateRoleName" xml:space="preserve">
+    <value>Der Rollenname „{0}“ ist bereits vergeben.</value>
+  </data>
+  <data name="UserAlreadyHasPassword" xml:space="preserve">
+    <value>Für dieses Konto ist bereits ein Passwort festgelegt.</value>
+  </data>
+  <data name="UserLockoutNotEnabled" xml:space="preserve">
+    <value>Für dieses Konto ist keine Sperre möglich.</value>
+  </data>
+  <data name="UserAlreadyInRole" xml:space="preserve">
+    <value>Das Konto hat die Rolle „{0}“ bereits.</value>
+  </data>
+  <data name="UserNotInRole" xml:space="preserve">
+    <value>Das Konto hat die Rolle „{0}“ nicht.</value>
+  </data>
+  <data name="PasswordTooShort" xml:space="preserve">
+    <value>Das Passwort muss mindestens {0} Zeichen lang sein.</value>
+  </data>
+  <data name="PasswordRequiresUniqueChars" xml:space="preserve">
+    <value>Das Passwort muss mindestens {0} verschiedene Zeichen enthalten.</value>
+  </data>
+  <data name="PasswordRequiresNonAlphanumeric" xml:space="preserve">
+    <value>Das Passwort muss mindestens ein Sonderzeichen enthalten (ein Zeichen, das weder Buchstabe noch Ziffer ist).</value>
+  </data>
+  <data name="PasswordRequiresDigit" xml:space="preserve">
+    <value>Das Passwort muss mindestens eine Ziffer (0–9) enthalten.</value>
+  </data>
+  <data name="PasswordRequiresLower" xml:space="preserve">
+    <value>Das Passwort muss mindestens einen Kleinbuchstaben (a–z) enthalten.</value>
+  </data>
+  <data name="PasswordRequiresUpper" xml:space="preserve">
+    <value>Das Passwort muss mindestens einen Großbuchstaben (A–Z) enthalten.</value>
+  </data>
+</root>

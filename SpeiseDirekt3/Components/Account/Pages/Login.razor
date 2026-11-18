@@ -9,8 +9,10 @@
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>Log in - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", T["Login_Title"]]</PageTitle>
 
 <!-- Login Page -->
 <div class="min-h-screen bg-gradient-to-br from-brand-50 to-brand-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
@@ -20,20 +22,20 @@
             <div class="flex justify-center mb-6">
                 <BrandLogo MarkOnly="true" Height="64" Class="h-16 w-16" />
             </div>
-            <h2 class="text-3xl font-bold text-gray-900 font-display">Welcome back</h2>
-            <p class="mt-2 text-gray-600">Sign in to your account</p>
+            <h2 class="text-3xl font-bold text-gray-900 font-display">@T["Login_Heading"]</h2>
+            <p class="mt-2 text-gray-600">@T["Login_Subtitle"]</p>
         </div>
 
         <!-- Login Form -->
         <div class="bg-white rounded-xl shadow-lg p-8">
-            <StatusMessage Message="@errorMessage" />
+            <StatusMessage Message="@errorMessage" IsError="true" />
             <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login" class="space-y-6">
                 <DataAnnotationsValidator />
                 <ValidationSummary class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert" />
 
                 <!-- Email Field -->
                 <div>
-                    <label for="Input.Email" class="block text-sm font-medium text-gray-700 mb-2">Email address</label>
+                    <label for="Input.Email" class="block text-sm font-medium text-gray-700 mb-2">@T["Field_EmailAddress"]</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -42,14 +44,14 @@
                         </div>
                         <InputText @bind-Value="Input.Email" id="Input.Email"
                                    class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
-                                   autocomplete="username" aria-required="true" placeholder="Enter your email" />
+                                   autocomplete="username" aria-required="true" placeholder="@T["Placeholder_Email"]" />
                     </div>
                     <ValidationMessage For="() => Input.Email" class="mt-1 text-sm text-red-600" />
                 </div>
 
                 <!-- Password Field -->
                 <div>
-                    <label for="Input.Password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                    <label for="Input.Password" class="block text-sm font-medium text-gray-700 mb-2">@T["Field_Password"]</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -58,7 +60,7 @@
                         </div>
                         <InputText type="password" @bind-Value="Input.Password" id="Input.Password"
                                    class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
-                                   autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
+                                   autocomplete="current-password" aria-required="true" placeholder="@T["Placeholder_Password"]" />
                     </div>
                     <ValidationMessage For="() => Input.Password" class="mt-1 text-sm text-red-600" />
                 </div>
@@ -68,7 +70,7 @@
                     <InputCheckbox @bind-Value="Input.RememberMe" id="Input.RememberMe"
                                    class="h-4 w-4 text-brand-600 focus:ring-brand-500 border-gray-300 rounded" />
                     <label for="Input.RememberMe" class="ml-2 block text-sm text-gray-700">
-                        Remember me
+                        @T["Login_RememberMe"]
                     </label>
                 </div>
 
@@ -76,7 +78,7 @@
                 <div>
                     <button type="submit" data-testid="login-submit"
                             class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors duration-200">
-                        Sign in
+                        @T["Login_Submit"]
                     </button>
                 </div>
 
@@ -84,32 +86,26 @@
                 <div class="space-y-3 text-center">
                     <div>
                         <a href="Account/ForgotPassword" class="text-sm text-brand-600 hover:text-brand-500 hover:underline">
-                            Forgot your password?
+                            @T["Login_ForgotPassword"]
                         </a>
                     </div>
                     <div>
                         <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))"
                            class="text-sm text-brand-600 hover:text-brand-500 hover:underline">
-                            Don't have an account? Register here
+                            @T["Login_NoAccount"]
                         </a>
                     </div>
                     <div>
                         <a href="Account/ResendEmailConfirmation" class="text-sm text-gray-600 hover:text-gray-500 hover:underline">
-                            Resend email confirmation
+                            @T["Login_ResendConfirmation"]
                         </a>
                     </div>
                 </div>
             </EditForm>
         </div>
 
-        <!-- External Login Section -->
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <div class="text-center mb-6">
-                <h3 class="text-lg font-medium text-gray-900">Or continue with</h3>
-                <div class="mt-2 border-t border-gray-200"></div>
-            </div>
-            <ExternalLoginPicker />
-        </div>
+        <!-- External Login Section (only when a provider is configured) -->
+        <ExternalLoginPicker Heading="@T["External_LoginHeading"]" />
     </div>
 </div>
 
@@ -157,21 +153,20 @@
         }
         else
         {
-            errorMessage = "Error: Invalid login attempt.";
+            errorMessage = T["Status_InvalidLogin"];
         }
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailRequired))]
+        [EmailAddress(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailInvalid))]
         public string Email { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_PasswordRequired))]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 
-        [Display(Name = "Remember me?")]
         public bool RememberMe { get; set; }
     }
 }

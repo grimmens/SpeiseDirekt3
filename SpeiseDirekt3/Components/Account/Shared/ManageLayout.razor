@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @layout SpeiseDirekt3.Components.Layout.MainLayout
+@inject IStringLocalizer<AccountText> T
 
 <!-- Account Management Layout -->
 <!-- Header Section -->
@@ -15,8 +16,8 @@
                 </div>
             </div>
             <div class="ml-4">
-                <h1 class="text-3xl font-bold text-gray-900 font-display">Account Management</h1>
-                <p class="mt-1 text-gray-600">Manage your account settings and preferences</p>
+                <h1 class="text-3xl font-bold text-gray-900 font-display">@T["Manage_Heading"]</h1>
+                <p class="mt-1 text-gray-600">@T["Manage_Subtitle"]</p>
             </div>
         </div>
     </div>
@@ -28,8 +29,8 @@
     <div class="lg:col-span-3">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Settings</h3>
-                <p class="mt-1 text-sm text-gray-600">Manage your account preferences</p>
+                <h3 class="text-lg font-medium text-gray-900">@T["Manage_NavHeading"]</h3>
+                <p class="mt-1 text-sm text-gray-600">@T["Manage_NavSubtitle"]</p>
             </div>
             <div class="p-2">
                 <ManageNavMenu />

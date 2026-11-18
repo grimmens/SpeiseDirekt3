@@ -11,11 +11,12 @@
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IStringLocalizer<AccountText> T
 
-<PageTitle>Resend email confirmation</PageTitle>
+<PageTitle>@T["Resend_Title"]</PageTitle>
 
-<h1>Resend email confirmation</h1>
-<h2>Enter your email.</h2>
+<h1>@T["Resend_Title"]</h1>
+<h2>@T["Resend_Intro"]</h2>
 <hr />
 <StatusMessage Message="@message" />
 <div class="row">
@@ -25,10 +26,10 @@
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
                 <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" aria-required="true" placeholder="name@example.com" />
-                <label for="Input.Email" class="form-label">Email</label>
+                <label for="Input.Email" class="form-label">@T["Field_Email"]</label>
                 <ValidationMessage For="() => Input.Email" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Resend</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">@T["Resend_Submit"]</button>
         </EditForm>
     </div>
 </div>
@@ -44,7 +45,7 @@
         var user = await UserManager.FindByEmailAsync(Input.Email!);
         if (user is null)
         {
-            message = "Verification email sent. Please check your email.";
+            message = T["Status_VerificationSent"];
             return;
         }
 
@@ -56,13 +57,13 @@
             new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
         await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
 
-        message = "Verification email sent. Please check your email.";
+        message = T["Status_VerificationSent"];
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailRequired))]
+        [EmailAddress(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailInvalid))]
         public string Email { get; set; } = "";
     }
 }

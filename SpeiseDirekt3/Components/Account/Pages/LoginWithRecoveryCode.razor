@@ -8,15 +8,15 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWithRecoveryCode> Logger
+@inject IStringLocalizer<AccountText> T
 
-<PageTitle>Recovery code verification</PageTitle>
+<PageTitle>@T["RecoveryLogin_Title"]</PageTitle>
 
-<h1>Recovery code verification</h1>
+<h1>@T["RecoveryLogin_Title"]</h1>
 <hr />
-<StatusMessage Message="@message" />
+<StatusMessage Message="@message" IsError="true" />
 <p>
-    You have requested to log in with a recovery code. This login will not be remembered until you provide
-    an authenticator app code at log in or disable 2FA and log in again.
+    @T["RecoveryLogin_Text"]
 </p>
 <div class="row">
     <div class="col-md-4">
@@ -24,11 +24,11 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="RecoveryCode" />
-                <label for="Input.RecoveryCode" class="form-label">Recovery Code</label>
+                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="@T["Field_RecoveryCode"]" />
+                <label for="Input.RecoveryCode" class="form-label">@T["Field_RecoveryCode"]</label>
                 <ValidationMessage For="() => Input.RecoveryCode" class="text-danger" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">@T["RecoveryLogin_Submit"]</button>
         </EditForm>
     </div>
 </div>
@@ -71,15 +71,14 @@
         else
         {
             Logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", userId);
-            message = "Error: Invalid recovery code entered.";
+            message = T["Status_InvalidRecoveryCode"];
         }
     }
 
     private sealed class InputModel
     {
-        [Required]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_RecoveryCodeRequired))]
         [DataType(DataType.Text)]
-        [Display(Name = "Recovery Code")]
         public string RecoveryCode { get; set; } = "";
     }
 }

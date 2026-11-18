@@ -86,6 +86,23 @@ public class ResourceCompletenessTests
         common.Should().ContainKey("Role_Owner");
     }
 
+    /// <summary>Every message Identity can produce is overridden by the localized describer and has its IdentityText key.</summary>
+    [Fact]
+    public void IdentityErrorDescriber_CoversEveryIdentityError()
+    {
+        var identity = Entries(typeof(SpeiseDirekt3.IdentityText), CultureInfo.InvariantCulture);
+        var describer = typeof(SpeiseDirekt3.Components.Account.LocalizedIdentityErrorDescriber);
+        var messages = typeof(Microsoft.AspNetCore.Identity.IdentityErrorDescriber)
+            .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+            .Where(m => m.IsVirtual && m.ReturnType == typeof(Microsoft.AspNetCore.Identity.IdentityError));
+        foreach (var message in messages)
+        {
+            describer.GetMethod(message.Name, message.GetParameters().Select(p => p.ParameterType).ToArray())!.DeclaringType
+                .Should().Be(describer, $"{message.Name} is localized");
+            identity.Should().ContainKey(message.Name);
+        }
+    }
+
     // --- Keys used in code ---
 
     /// <summary>The repository root (the folder with SpeiseDirekt3.sln), found from the test binaries upwards.</summary>

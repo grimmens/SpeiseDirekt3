@@ -1,37 +1,41 @@
-﻿@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 @using SpeiseDirekt.Data
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityRedirectManager RedirectManager
+@inject IStringLocalizer<AccountText> T
 
-@if (externalLogins.Length == 0)
+@* The external login providers (Google, …) of the login and registration pages, as a card under the form with
+   Heading. Renders nothing while no provider is configured (today: none) — the scaffold's developer note about
+   setting up providers is not for visitors. *@
+@if (externalLogins.Length > 0)
 {
-    <div>
-        <p>
-            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-            about setting up this ASP.NET application to support logging in via external services</a>.
-        </p>
-    </div>
-}
-else
-{
-    <form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
-        <div>
-            <AntiforgeryToken />
-            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <p>
-                @foreach (var provider in externalLogins)
-                {
-                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                }
-            </p>
+    <div class="bg-white rounded-xl shadow-lg p-8" data-testid="external-logins">
+        <div class="text-center mb-6">
+            <h3 class="text-lg font-medium text-gray-900">@Heading</h3>
+            <div class="mt-2 border-t border-gray-200"></div>
         </div>
-    </form>
+        <form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
+            <div>
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+                <p>
+                    @foreach (var provider in externalLogins)
+                    {
+                        <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="@T["External_ButtonTitle", provider.DisplayName ?? provider.Name]">@provider.DisplayName</button>
+                    }
+                </p>
+            </div>
+        </form>
+    </div>
 }
 
 @code {
     private AuthenticationScheme[] externalLogins = [];
+
+    /// <summary>The card's heading ("Or continue with" / "Or register with").</summary>
+    [Parameter, EditorRequired] public string Heading { get; set; } = "";
 
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }

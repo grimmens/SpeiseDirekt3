@@ -160,7 +160,9 @@ namespace SpeiseDirekt3
             builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders()
+                // Identity's error messages in the request's language (Resources/IdentityText.resx)
+                .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
 
             builder.Services.AddControllers();
 

@@ -15,18 +15,17 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
+@inject IStringLocalizer<AccountText> T
 
-<PageTitle>Register</PageTitle>
+<PageTitle>@T["ExternalLogin_Title"]</PageTitle>
 
-<StatusMessage Message="@message" />
-<h1>Register</h1>
-<h2>Associate your @ProviderDisplayName account.</h2>
+<StatusMessage Message="@message" IsError="true" />
+<h1>@T["ExternalLogin_Title"]</h1>
+<h2>@T["ExternalLogin_Associate", ProviderDisplayName ?? ""]</h2>
 <hr />
 
-<div  class="alert alert-info">
-    You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
+<div class="alert alert-info">
+    @T["ExternalLogin_Info", ProviderDisplayName ?? ""]
 </div>
 
 <div class="row">
@@ -35,11 +34,11 @@
             <DataAnnotationsValidator />
             <ValidationSummary class="text-danger" role="alert" />
             <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
-                <label for="Input.Email" class="form-label">Email</label>
+                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="@T["Placeholder_Email"]" />
+                <label for="Input.Email" class="form-label">@T["Field_Email"]</label>
                 <ValidationMessage For="() => Input.Email" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
+            <button type="submit" class="w-100 btn btn-lg btn-primary">@T["ExternalLogin_Submit"]</button>
         </EditForm>
     </div>
 </div>
@@ -71,13 +70,13 @@
     {
         if (RemoteError is not null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", $"Error from external provider: {RemoteError}", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", T["Status_ExternalProviderError", RemoteError], HttpContext, isError: true);
         }
 
         var info = await SignInManager.GetExternalLoginInfoAsync();
         if (info is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", T["Status_ExternalLoginInfoError"], HttpContext, isError: true);
         }
 
         externalLoginInfo = info;
@@ -100,7 +99,7 @@
     {
         if (externalLoginInfo is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", T["Status_ExternalLoginInfoError"], HttpContext, isError: true);
         }
 
         // Sign in the user with this external login provider if the user already has a login.
@@ -134,7 +133,7 @@
     {
         if (externalLoginInfo is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information during confirmation.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", T["Status_ExternalLoginInfoError"], HttpContext, isError: true);
         }
 
         var emailStore = GetEmailStore();
@@ -171,7 +170,7 @@
             }
         }
 
-        message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
+        message = string.Join(" ", result.Errors.Select(error => error.Description));
     }
 
     private ApplicationUser CreateUser()
@@ -198,8 +197,8 @@
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailRequired))]
+        [EmailAddress(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailInvalid))]
         public string Email { get; set; } = "";
     }
 }

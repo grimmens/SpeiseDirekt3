@@ -13,8 +13,9 @@
 @inject UrlEncoder UrlEncoder
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<EnableAuthenticator> Logger
+@inject IStringLocalizer<AccountText> T
 
-<PageTitle>Configure authenticator app</PageTitle>
+<PageTitle>@T["EnableApp_Title"]</PageTitle>
 
 @if (recoveryCodes is not null)
 {
@@ -22,42 +23,40 @@
 }
 else
 {
-    <StatusMessage Message="@message" />
-    <h3>Configure authenticator app</h3>
+    <StatusMessage Message="@message" IsError="true" />
+    <h3>@T["EnableApp_Title"]</h3>
     <div>
-        <p>To use an authenticator app go through the following steps:</p>
+        <p>@T["EnableApp_Intro"]</p>
         <ol class="list">
             <li>
-                <p>
-                    Download a two-factor authenticator app like Microsoft Authenticator for
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825072">Android</a> and
-                    <a href="https://go.microsoft.com/fwlink/?Linkid=825073">iOS</a> or
-                    Google Authenticator for
-                    <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&amp;hl=en">Android</a> and
-                    <a href="https://itunes.apple.com/us/app/google-authenticator/id388497605?mt=8">iOS</a>.
-                </p>
+                <p>@T["EnableApp_Step1"]</p>
+                @* Product names: the same in every language *@
+                <ul>
+                    <li><a href="https://go.microsoft.com/fwlink/?Linkid=825072">Microsoft Authenticator (Android)</a></li>
+                    <li><a href="https://go.microsoft.com/fwlink/?Linkid=825073">Microsoft Authenticator (iOS)</a></li>
+                    <li><a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2">Google Authenticator (Android)</a></li>
+                    <li><a href="https://apps.apple.com/app/google-authenticator/id388497605">Google Authenticator (iOS)</a></li>
+                </ul>
             </li>
             <li>
-                <p>Scan the QR Code or enter this key <kbd>@sharedKey</kbd> into your two factor authenticator app. Spaces and casing do not matter.</p>
+                <p>@T["EnableApp_Step2"]</p>
+                <p><kbd>@sharedKey</kbd></p>
                 <div>
-                    <img src="data:image/png;base64,@qrCodeBase64" alt="QR Code" style="max-width: 200px;" />
+                    <img src="data:image/png;base64,@qrCodeBase64" alt="@T["EnableApp_QrAlt"]" style="max-width: 200px;" />
                 </div>
             </li>
             <li>
-                <p>
-                    Once you have scanned the QR code or input the key above, your two factor authentication app will provide you
-                    with a unique code. Enter the code in the confirmation box below.
-                </p>
+                <p>@T["EnableApp_Step3"]</p>
                 <div class="row">
                     <div class="col-xl-6">
                         <EditForm Model="Input" FormName="send-code" OnValidSubmit="OnValidSubmitAsync" method="post">
                             <DataAnnotationsValidator />
                             <div class="form-floating mb-3">
-                                <InputText @bind-Value="Input.Code" id="Input.Code" class="form-control" autocomplete="off" placeholder="Enter the code" />
-                                <label for="Input.Code" class="control-label form-label">Verification Code</label>
+                                <InputText @bind-Value="Input.Code" id="Input.Code" class="form-control" autocomplete="off" placeholder="@T["Placeholder_Code"]" />
+                                <label for="Input.Code" class="control-label form-label">@T["Field_VerificationCode"]</label>
                                 <ValidationMessage For="() => Input.Code" class="text-danger" />
                             </div>
-                            <button type="submit" class="w-100 btn btn-lg btn-primary">Verify</button>
+                            <button type="submit" class="w-100 btn btn-lg btn-primary">@T["EnableApp_Verify"]</button>
                             <ValidationSummary class="text-danger" role="alert" />
                         </EditForm>
                     </div>
@@ -100,7 +99,7 @@ else
 
         if (!is2faTokenValid)
         {
-            message = "Error: Verification code is invalid.";
+            message = T["Status_VerificationCodeInvalid"];
             return;
         }
 
@@ -108,7 +107,7 @@ else
         var userId = await UserManager.GetUserIdAsync(user);
         Logger.LogInformation("User with ID '{UserId}' has enabled 2FA with an authenticator app.", userId);
 
-        message = "Your authenticator app has been verified.";
+        message = T["Status_AuthenticatorVerified"];
 
         if (await UserManager.CountRecoveryCodesAsync(user) == 0)
         {
@@ -171,10 +170,9 @@ else
 
     private sealed class InputModel
     {
-        [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_CodeRequired))]
+        [StringLength(7, MinimumLength = 6, ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_CodeLength))]
         [DataType(DataType.Text)]
-        [Display(Name = "Verification Code")]
         public string Code { get; set; } = "";
     }
 }

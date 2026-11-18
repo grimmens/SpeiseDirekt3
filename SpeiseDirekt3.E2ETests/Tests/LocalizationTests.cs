@@ -189,6 +189,97 @@ public class LocalizationTests : BackOfficeTestBase
         await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", "de");
     }
 
+    // --- Account pages, validation and Identity messages ---
+
+    [Fact]
+    public async Task AccountPages_InGerman_WithGermanValidationAndIdentityMessages()
+    {
+        var (context, page) = await NewContextAsync(German);
+        await using var _ = context;
+
+        // Login: texts, DataAnnotations messages, a failed login
+        await page.GotoAsync("/Account/Login");
+        await Assertions.Expect(page).ToHaveTitleAsync("Anmelden - Speise-Direkt");
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Willkommen zurück" })).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByTestId("login-submit")).ToHaveTextAsync("Anmelden");
+        await Assertions.Expect(page.GetByText("Passwort vergessen?")).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByText("There are no external authentication services")).ToHaveCountAsync(0);
+        await page.GetByTestId("login-submit").ClickAsync();
+        await Assertions.Expect(page.Locator(".validation-message").First).ToHaveTextAsync("Bitte geben Sie Ihre E-Mail-Adresse ein.");
+        await Assertions.Expect(page.GetByText("Bitte geben Sie Ihr Passwort ein.").First).ToBeVisibleAsync();
+        await page.Locator("#Input\\.Email").FillAsync("kein-mail");
+        await page.GetByTestId("login-submit").ClickAsync();
+        await Assertions.Expect(page.GetByText("Bitte geben Sie eine gültige E-Mail-Adresse ein.").First).ToBeVisibleAsync();
+        await page.Locator("#Input\\.Email").FillAsync(UniqueEmail("nobody"));
+        await page.Locator("#Input\\.Password").FillAsync(Password);
+        await page.GetByTestId("login-submit").ClickAsync();
+        await Assertions.Expect(page.GetByTestId("status-message")).ToContainTextAsync("Die Anmeldung ist fehlgeschlagen.");
+        await Assertions.Expect(page.GetByTestId("status-message")).ToHaveClassAsync(new Regex("alert-danger"));
+
+        // Register: password rules, a weak password (Identity), passwords that differ (DataAnnotations)
+        await page.GotoAsync("/Account/Register");
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Konto erstellen" })).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator("#password-rules")).ToHaveTextAsync("Mindestens 6 Zeichen, mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen.");
+        var email = UniqueEmail("de");
+        await page.Locator("#Input\\.Email").FillAsync(email);
+        await page.Locator("#Input\\.Password").FillAsync("abcdefgh");
+        await page.Locator("#Input\\.ConfirmPassword").FillAsync("abcdefgh");
+        await page.GetByTestId("register-submit").ClickAsync();
+        var status = page.GetByTestId("status-message");
+        await Assertions.Expect(status).ToContainTextAsync("Das Passwort muss mindestens eine Ziffer (0–9) enthalten.");
+        await Assertions.Expect(status).ToContainTextAsync("mindestens einen Großbuchstaben (A–Z)");
+        await Assertions.Expect(status).ToContainTextAsync("mindestens ein Sonderzeichen");
+        await page.Locator("#Input\\.Password").FillAsync(Password);
+        await page.Locator("#Input\\.ConfirmPassword").FillAsync(Password + "x");
+        await page.GetByTestId("register-submit").ClickAsync();
+        await Assertions.Expect(page.GetByText("Die beiden Passwörter stimmen nicht überein.").First).ToBeVisibleAsync();
+
+        // Registered once, the same address again is refused in German
+        await RegisterAsync(page, email);
+        await LogoutAsync(page);
+        await page.GotoAsync("/Account/Register");
+        await page.Locator("#Input\\.Email").FillAsync(email);
+        await page.Locator("#Input\\.Password").FillAsync(Password);
+        await page.Locator("#Input\\.ConfirmPassword").FillAsync(Password);
+        await page.GetByTestId("register-submit").ClickAsync();
+        await Assertions.Expect(page.GetByTestId("status-message")).ToHaveTextAsync($"Die E-Mail-Adresse „{email}“ ist bereits registriert.");
+
+        // Account settings: German pages, a wrong current password (Identity), then the green status after a change
+        await LoginAsync(page, email);
+        await page.GotoAsync("/Account/Manage");
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Kontoverwaltung" })).ToBeVisibleAsync();
+        await Assertions.Expect(page.Locator(".manage-nav a")).ToHaveTextAsync(["Profil", "E-Mail-Adresse", "Passwort", "Zwei-Faktor-Authentifizierung", "Persönliche Daten"]);
+        await page.GotoAsync("/Account/Manage/ChangePassword");
+        await page.Locator("#Input\\.OldPassword").FillAsync("Falsch-Passw0rd!");
+        await page.Locator("#Input\\.NewPassword").FillAsync(Password + "2");
+        await page.Locator("#Input\\.ConfirmPassword").FillAsync(Password + "2");
+        await page.GetByRole(AriaRole.Button, new() { Name = "Passwort ändern" }).ClickAsync();
+        await Assertions.Expect(page.GetByTestId("status-message")).ToHaveTextAsync("Das Passwort ist nicht korrekt.");
+        await page.Locator("#Input\\.OldPassword").FillAsync(Password);
+        await page.Locator("#Input\\.NewPassword").FillAsync(Password + "2");
+        await page.Locator("#Input\\.ConfirmPassword").FillAsync(Password + "2");
+        await page.GetByRole(AriaRole.Button, new() { Name = "Passwort ändern" }).ClickAsync();
+        await Assertions.Expect(page.GetByTestId("status-message")).ToHaveTextAsync("Ihr Passwort wurde geändert.");
+        await Assertions.Expect(page.GetByTestId("status-message")).ToHaveClassAsync(new Regex("alert-success"));
+        await page.GotoAsync("/Account/Manage/TwoFactorAuthentication");
+        await Assertions.Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Zwei-Faktor-Authentifizierung (2FA)" })).ToBeVisibleAsync();
+        await Assertions.Expect(page.GetByRole(AriaRole.Link, new() { Name = "Authenticator-App hinzufügen" })).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task AccountPages_InEnglish_WithEnglishIdentityMessages()
+    {
+        await Page.GotoAsync("/Account/Register");
+        await Page.Locator("#Input\\.Email").FillAsync(UniqueEmail("en"));
+        await Page.Locator("#Input\\.Password").FillAsync("abcdefgh");
+        await Page.Locator("#Input\\.ConfirmPassword").FillAsync("abcdefgh");
+        await Page.GetByTestId("register-submit").ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("status-message")).ToContainTextAsync("Passwords must have at least one digit ('0'-'9').");
+        await Page.GotoAsync("/Account/Login");
+        await Page.GetByTestId("login-submit").ClickAsync();
+        await Assertions.Expect(Page.Locator(".validation-message").First).ToHaveTextAsync("Please enter your e-mail address.");
+    }
+
     // --- Guest pages keep the menu's language ---
 
     [Fact]
