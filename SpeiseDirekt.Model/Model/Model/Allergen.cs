@@ -6,9 +6,9 @@ namespace SpeiseDirekt.Model
     public class Allergen : IAppUserEntity
     {
         public Guid Id { get; set; }
-        [Required, StringLength(5)]
+        [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Allergen_CodeRequired)), StringLength(5, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Allergen_CodeTooLong))]
         public string Code { get; set; } = string.Empty;
-        [Required, StringLength(100)]
+        [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Name_Required)), StringLength(100, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Allergen_NameTooLong))]
         public string Name { get; set; } = string.Empty;
         public ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
         [ForeignKey(nameof(Menu))]

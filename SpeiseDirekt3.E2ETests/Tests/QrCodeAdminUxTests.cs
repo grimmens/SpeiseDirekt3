@@ -197,7 +197,7 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
 
         // No entry at all
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Es muss zumindest einen Kalender-Eintrag geben.").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("There must be at least one calendar entry.").First).ToBeVisibleAsync();
 
         // An entry without a menu cannot be added any more: the panel asks for one and Escape discards it
         await Page.GetByTestId("calendar-add-entry").ClickAsync();
@@ -209,7 +209,7 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
         await Assertions.Expect(EntryRows).ToHaveCountAsync(0);
 
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Es muss zumindest einen Kalender-Eintrag geben.").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("There must be at least one calendar entry.").First).ToBeVisibleAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcode/edit$"));
     }
 
@@ -255,7 +255,7 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
         await AddEntryViaPanelAsync("Überschneidung", "2026-12-07", weekly: "Monday");
         await Assertions.Expect(Page.GetByTestId("calendar-conflicts")).ToBeVisibleAsync();
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Die wöchentlichen Einträge am Montag überschneiden sich").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("The weekly entries on Monday overlap").First).ToBeVisibleAsync();
 
         // On different weekdays they do not
         await EntryRow("Every Monday from Mon, Dec 7, 2026").GetByRole(AriaRole.Button, new() { Name = "Edit" }).ClickAsync();
@@ -274,7 +274,7 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
         await AddEntryViaPanelAsync("Überschneidung", "2026-11-12");
         await Assertions.Expect(Page.GetByTestId("calendar-conflicts")).ToBeVisibleAsync();
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Die Datumsperioden überschneiden sich").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("The date ranges overlap").First).ToBeVisibleAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcode/edit$"));
     }
 

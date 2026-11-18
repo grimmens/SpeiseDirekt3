@@ -369,7 +369,7 @@ public class QrCalendarEditorTests : QrCalendarTestBase
 
         // "Save" is refused with the model's message, nothing is written
         await Button("Save Changes").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Die Datumsperioden überschneiden sich").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("The date ranges overlap").First).ToBeVisibleAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"/qrcode/edit/{s.QrId}$"));
         (await LoadQrAsync(s.OwnerId, s.QrId)).CalendarEntries.Should().HaveCount(3);
 
@@ -378,7 +378,7 @@ public class QrCalendarEditorTests : QrCalendarTestBase
         await Assertions.Expect(EntryRow("Every day from Sun, Dec 27, 2026 to Mon, Dec 28, 2026")).ToHaveCountAsync(1);
         await Assertions.Expect(Alert).ToHaveCountAsync(0);
         await Assertions.Expect(CalendarOf(Page).Locator(".sd-cal-conflict")).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByText("Die Datumsperioden überschneiden sich")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByText("The date ranges overlap")).ToHaveCountAsync(0);
 
         await Button("Save Changes").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));

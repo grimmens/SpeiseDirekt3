@@ -8,11 +8,11 @@ namespace SpeiseDirekt.Model
     {
         public Guid Id { get; set; }
 
-        [Required]
-        [StringLength(100)]
+        [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Name_Required))]
+        [StringLength(100, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Combo_NameTooLong))]
         public string Name { get; set; } = string.Empty;
 
-        [StringLength(500)]
+        [StringLength(500, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Combo_DescriptionTooLong))]
         public string Description { get; set; } = string.Empty;
 
         [Required]

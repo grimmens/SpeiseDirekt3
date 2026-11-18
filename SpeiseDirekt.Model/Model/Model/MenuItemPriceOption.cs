@@ -36,12 +36,12 @@ namespace SpeiseDirekt.Model
 
         public PriceOptionKind Kind { get; set; }
 
-        [Required(AllowEmptyStrings = false, ErrorMessage = "Name is required.")]
-        [StringLength(NameMaxLength, ErrorMessage = "The name can have at most 60 characters.")]
+        [Required(AllowEmptyStrings = false, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Name_RequiredShort))]
+        [StringLength(NameMaxLength, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.PriceOption_NameTooLong))]
         public string Name { get; set; } = string.Empty;
 
         [Precision(18, 2)]
-        [Range(0d, 1_000_000d, ErrorMessage = "The price must be 0 or more.")]
+        [Range(0d, 1_000_000d, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.PriceOption_PriceRange))]
         public decimal Price { get; set; }
 
         /// <summary>Position among the options of the same <see cref="Kind"/> (ascending).</summary>

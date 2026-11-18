@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Menu_NotFound" xml:space="preserve">
+    <value>The menu does not exist.</value>
+  </data>
+  <data name="Translation_AlreadyInLanguage" xml:space="preserve">
+    <value>This menu is already in {0}.</value>
+  </data>
+  <data name="Translation_VersionExists" xml:space="preserve">
+    <value>The {0} version already exists: "{1}".</value>
+  </data>
+  <data name="Translation_LinkSelf" xml:space="preserve">
+    <value>A menu cannot be linked to itself.</value>
+  </data>
+  <data name="Translation_AlreadyVersion" xml:space="preserve">
+    <value>"{0}" is already a version of this menu.</value>
+  </data>
+  <data name="Translation_LinkedElsewhere" xml:space="preserve">
+    <value>"{0}" is linked to other menus. Unlink it there first.</value>
+  </data>
+  <data name="Translation_SameLanguage" xml:space="preserve">
+    <value>"{0}" is in {1} like this menu.</value>
+  </data>
+  <data name="Translation_LanguageTaken" xml:space="preserve">
+    <value>This menu already has a {0} version: "{1}". Unlink it first or pick another language.</value>
+  </data>
+  <data name="Name_Required" xml:space="preserve">
+    <value>The Name field is required.</value>
+  </data>
+  <data name="Name_RequiredShort" xml:space="preserve">
+    <value>Name is required.</value>
+  </data>
+  <data name="Menu_DescriptionRequired" xml:space="preserve">
+    <value>The Description field is required.</value>
+  </data>
+  <data name="Allergen_CodeRequired" xml:space="preserve">
+    <value>The Code field is required.</value>
+  </data>
+  <data name="Allergen_CodeTooLong" xml:space="preserve">
+    <value>The code can have at most 5 characters.</value>
+  </data>
+  <data name="Allergen_NameTooLong" xml:space="preserve">
+    <value>The name can have at most 100 characters.</value>
+  </data>
+  <data name="Combo_NameTooLong" xml:space="preserve">
+    <value>The name can have at most 100 characters.</value>
+  </data>
+  <data name="Combo_DescriptionTooLong" xml:space="preserve">
+    <value>The description can have at most 500 characters.</value>
+  </data>
+  <data name="QrCode_TitleRequired" xml:space="preserve">
+    <value>The Title field is required.</value>
+  </data>
+  <data name="QrCode_TitleTooLong" xml:space="preserve">
+    <value>The title can have at most 100 characters.</value>
+  </data>
+  <data name="Category_DescriptionTooLong" xml:space="preserve">
+    <value>The subtitle can have at most 200 characters.</value>
+  </data>
+  <data name="PriceOption_NameTooLong" xml:space="preserve">
+    <value>The name can have at most 60 characters.</value>
+  </data>
+  <data name="PriceOption_PriceRange" xml:space="preserve">
+    <value>The price must be 0 or more.</value>
+  </data>
+  <data name="Restaurant_NameTooLong" xml:space="preserve">
+    <value>The name can have at most 100 characters.</value>
+  </data>
+  <data name="Restaurant_DescriptionTooLong" xml:space="preserve">
+    <value>The description can have at most 1000 characters.</value>
+  </data>
+  <data name="Restaurant_PhoneTooLong" xml:space="preserve">
+    <value>The phone number can have at most 40 characters.</value>
+  </data>
+  <data name="Restaurant_EmailTooLong" xml:space="preserve">
+    <value>The e-mail address can have at most 200 characters.</value>
+  </data>
+  <data name="Restaurant_UrlTooLong" xml:space="preserve">
+    <value>The web address can have at most 500 characters.</value>
+  </data>
+  <data name="Restaurant_AddressTooLong" xml:space="preserve">
+    <value>The address can have at most 500 characters.</value>
+  </data>
+  <data name="Restaurant_OpeningHoursTooLong" xml:space="preserve">
+    <value>The opening hours can have at most 1000 characters.</value>
+  </data>
+  <data name="Restaurant_ImagePathTooLong" xml:space="preserve">
+    <value>The image path can have at most 200 characters.</value>
+  </data>
+  <data name="HttpUrl_Invalid" xml:space="preserve">
+    <value>Enter a full web address starting with https:// (or http://).</value>
+  </data>
+  <data name="Email_Invalid" xml:space="preserve">
+    <value>Enter a valid e-mail address.</value>
+  </data>
+  <data name="QrCode_TimeTableRequired" xml:space="preserve">
+    <value>There must be at least one time table entry.</value>
+  </data>
+  <data name="QrCode_TimeTableMenuRequired" xml:space="preserve">
+    <value>Every time table entry needs a menu.</value>
+  </data>
+  <data name="QrCode_TimeTableOverlap" xml:space="preserve">
+    <value>The time windows overlap: {0}–{1} and {2}–{3}.</value>
+  </data>
+  <data name="QrCode_CalendarRequired" xml:space="preserve">
+    <value>There must be at least one calendar entry.</value>
+  </data>
+  <data name="QrCode_CalendarMenuRequired" xml:space="preserve">
+    <value>Every calendar entry needs a menu.</value>
+  </data>
+  <data name="QrCode_CalendarEndBeforeStart" xml:space="preserve">
+    <value>The end date must be on or after the start date.</value>
+  </data>
+  <data name="QrCode_CalendarOverlap" xml:space="preserve">
+    <value>The date ranges overlap: {0}–{1} and {2}–{3}.</value>
+  </data>
+  <data name="QrCode_WeeklyOverlap" xml:space="preserve">
+    <value>The weekly entries on {0} overlap: from {1} to {2} and from {3}.</value>
+  </data>
+  <data name="QrCode_WeeklyOverlapOpen" xml:space="preserve">
+    <value>The weekly entries on {0} overlap: from {1} and from {2}.</value>
+  </data>
+  <data name="QrCode_MenuRequired" xml:space="preserve">
+    <value>Choose a menu, or add time table or calendar entries.</value>
+  </data>
+</root>

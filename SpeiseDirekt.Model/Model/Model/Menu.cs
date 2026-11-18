@@ -6,10 +6,10 @@ namespace SpeiseDirekt.Model
     {
         public Guid Id { get; set; }
 
-        [Required]
+        [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Name_Required))]
         public string Name { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Menu_DescriptionRequired))]
         public string Description { get; set; } = string.Empty;
 
         public DesignTheme Theme { get; set; } = DesignTheme.Modern;
