@@ -277,6 +277,14 @@ html.sd-drawer-open {
     border-radius: var(--sd-radius-lg);
 }
 
+/* 1024–1279 px: the German labels ("Speisekarten", "Statistik") are wider than the English ones — tighter links and a
+   shorter name in the user button keep the navigation clear of the user menu */
+@media (min-width: 1024px) and (max-width: 1279px) {
+    .sd-topnav-link { padding: 0 .5rem; }
+    .sd-topnav-link[aria-current="page"]::after { left: .5rem; right: .5rem; }
+    .sd-user-button .sd-user-name { max-width: 7rem; }
+}
+
 /* Anonymous visitors (Identity pages) */
 .sd-anon-nav {
     display: flex;
@@ -316,6 +324,18 @@ html.sd-drawer-open {
 .sd-anon-cta:hover {
     background: rgb(var(--sd-accent-300));
     color: rgb(var(--sd-brand-950));
+}
+
+/* Narrow phones: the German "Anmelden" / "Registrieren" are longer than "Log in" / "Register" — a smaller logo and
+   tighter buttons keep the anonymous bar within 360 px */
+@media (max-width: 419px) {
+    .sd-topbar-inner:has(.sd-anon-nav) .sd-brand img { height: 1.625rem; }
+    .sd-anon-nav { gap: .25rem; }
+    .sd-anon-link,
+    .sd-anon-cta {
+        padding-inline: .625rem;
+        font-size: .875rem;
+    }
 }
 
 /* --- User menu (from 1024 px) --- */

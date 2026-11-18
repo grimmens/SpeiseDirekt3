@@ -148,7 +148,7 @@
     <value>Zu dieser E-Mail-Adresse gibt es kein Konto.</value>
   </data>
   <data name="Status_VerificationSent" xml:space="preserve">
-    <value>Die Bestätigungs-E-Mail ist unterwegs. Bitte sehen Sie in Ihr Postfach.</value>
+    <value>Die Bestätigungs-E-Mail ist unterwegs. Bitte prüfen Sie Ihr Postfach.</value>
   </data>
   <data name="Status_InvalidAuthenticatorCode" xml:space="preserve">
     <value>Der Code aus der Authenticator-App ist ungültig.</value>
@@ -160,7 +160,7 @@
     <value>Ihre E-Mail-Adresse ist unverändert.</value>
   </data>
   <data name="Status_EmailChangeLinkSent" xml:space="preserve">
-    <value>Wir haben Ihnen einen Link zur Bestätigung der neuen E-Mail-Adresse gesendet. Bitte sehen Sie in Ihr Postfach.</value>
+    <value>Wir haben Ihnen einen Link zur Bestätigung der neuen E-Mail-Adresse gesendet. Bitte prüfen Sie Ihr Postfach.</value>
   </data>
   <data name="Status_PhoneNotSaved" xml:space="preserve">
     <value>Die Telefonnummer konnte nicht gespeichert werden.</value>
@@ -298,7 +298,7 @@
     <value>Passwort vergessen</value>
   </data>
   <data name="ForgotConfirm_Text" xml:space="preserve">
-    <value>Bitte sehen Sie in Ihr Postfach, um Ihr Passwort zurückzusetzen.</value>
+    <value>Bitte prüfen Sie Ihr Postfach, um Ihr Passwort zurückzusetzen.</value>
   </data>
   <data name="Reset_Title" xml:space="preserve">
     <value>Passwort zurücksetzen</value>
@@ -361,7 +361,7 @@
     <value>Konto bestätigen</value>
   </data>
   <data name="RegisterConfirm_CheckEmail" xml:space="preserve">
-    <value>Bitte sehen Sie in Ihr Postfach, um Ihr Konto zu bestätigen.</value>
+    <value>Bitte prüfen Sie Ihr Postfach, um Ihr Konto zu bestätigen.</value>
   </data>
   <data name="Resend_Title" xml:space="preserve">
     <value>Bestätigungs-E-Mail erneut senden</value>

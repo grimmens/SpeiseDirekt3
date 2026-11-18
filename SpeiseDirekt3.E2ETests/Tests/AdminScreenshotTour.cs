@@ -324,6 +324,133 @@ public class AdminScreenshotTour : QrCalendarTestBase
     }
 
     /// <summary>Tailwind's CDN build compiles classes after load; give it a moment and wait for fonts.</summary>
+    /// <summary>
+    /// The parts AP12a localized, for a language review (<c>E2E_LOCALE=de-DE</c>): the dashboard (first run and with a
+    /// tenant), the open user menu and phone drawer, a menu's context bar with the switcher open, the confirmation, and the
+    /// account pages — login and registration with validation and Identity messages, the account settings — at 1280 and
+    /// 390 px, into <c>$E2E_SCREENSHOT_DIR/shell-account</c>.
+    /// </summary>
+    [Fact]
+    public async Task Capture_shell_dashboard_and_account_pages()
+    {
+        var dir = Directory;
+        if (dir is null) return; // opt-in only
+        var target = Path.Combine(dir, "shell-account");
+        System.IO.Directory.CreateDirectory(target);
+
+        var email = await RegisterNewOwnerAsync();
+        Guid ownerId;
+        await using (var db = App.CreateDbContext(Guid.Empty))
+            ownerId = Guid.Parse((await db.Users.SingleAsync(u => u.Email == email)).Id);
+        var seeded = await SeedTenantAsync(ownerId);
+        var state = await Context.StorageStateAsync();
+
+        foreach (var (prefix, width, height, scale) in new[] { ("desktop", 1280, 900, 1), ("phone", 390, 844, 2) })
+        {
+            var phone = prefix == "phone";
+            await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
+            {
+                BaseURL = App.ServerAddress, Locale = ContextLocale, StorageState = state, ReducedMotion = ReducedMotion.Reduce,
+                ViewportSize = new ViewportSize { Width = width, Height = height }, DeviceScaleFactor = scale, IsMobile = phone, HasTouch = phone
+            });
+            context.SetDefaultTimeout(15_000);
+            var page = await context.NewPageAsync();
+            async Task Shot(string name, bool fullPage = true)
+            {
+                await SettleAsync(page);
+                await page.ScreenshotAsync(new() { Path = Path.Combine(target, $"{prefix}-{name}.png"), FullPage = fullPage });
+            }
+
+            await GotoInteractiveAsync(page, "/dashboard");
+            await Shot("dashboard");
+            if (phone)
+            {
+                await page.GetByTestId("nav-drawer-button").ClickAsync();
+                await Assertions.Expect(page.GetByTestId("nav-drawer")).ToBeVisibleAsync();
+                await Shot("drawer", fullPage: false);
+                await page.Keyboard.PressAsync("Escape");
+            }
+            else
+            {
+                await page.GetByTestId("user-menu-button").ClickAsync();
+                await Shot("user-menu", fullPage: false);
+                await page.Keyboard.PressAsync("Escape");
+            }
+
+            await GotoInteractiveAsync(page, $"/Categories/{seeded.MenuId}");
+            await page.GetByTestId("menu-switcher-button").ClickAsync();
+            await Shot("context-switcher", fullPage: false);
+            await page.Keyboard.PressAsync("Escape");
+            await page.GetByTestId("category-row").First.GetByTestId("sort-handle").FocusAsync();
+            await page.Keyboard.PressAsync("ArrowUp");
+            await Shot("context-bar", fullPage: false);
+
+            foreach (var (name, url) in new[]
+                     {
+                         ("account-manage", "/Account/Manage"), ("account-email", "/Account/Manage/Email"),
+                         ("account-password", "/Account/Manage/ChangePassword"), ("account-2fa", "/Account/Manage/TwoFactorAuthentication"),
+                         ("account-authenticator", "/Account/Manage/EnableAuthenticator"), ("account-personal-data", "/Account/Manage/PersonalData"),
+                         ("account-delete", "/Account/Manage/DeletePersonalData")
+                     })
+            {
+                await page.GotoAsync(url);
+                await Shot(name);
+            }
+            await page.GotoAsync("/Account/Manage/ChangePassword");
+            await page.Locator("#Input\\.OldPassword").FillAsync("Falsch-Passw0rd!");
+            await page.Locator("#Input\\.NewPassword").FillAsync("abc");
+            await page.Locator("#Input\\.ConfirmPassword").FillAsync("abd");
+            await page.Locator("main form button[type=submit]").Last.ClickAsync();
+            await Shot("account-password-errors");
+
+            // Anonymous: login and registration with their messages, the small pages
+            await using var anonymous = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
+            {
+                BaseURL = App.ServerAddress, Locale = ContextLocale,
+                ViewportSize = new ViewportSize { Width = width, Height = height }, DeviceScaleFactor = scale, IsMobile = phone, HasTouch = phone
+            });
+            var anon = await anonymous.NewPageAsync();
+            async Task AnonShot(string name)
+            {
+                await SettleAsync(anon);
+                await anon.ScreenshotAsync(new() { Path = Path.Combine(target, $"{prefix}-{name}.png"), FullPage = true });
+            }
+            await anon.GotoAsync("/Account/Login");
+            await AnonShot("login");
+            await anon.GetByTestId("login-submit").ClickAsync();
+            await AnonShot("login-validation");
+            await anon.Locator("#Input\\.Email").FillAsync(email);
+            await anon.Locator("#Input\\.Password").FillAsync("Falsch-Passw0rd!");
+            await anon.GetByTestId("login-submit").ClickAsync();
+            await AnonShot("login-failed");
+            await anon.GotoAsync("/Account/Register");
+            await anon.Locator("#Input\\.Email").FillAsync(email);
+            await anon.Locator("#Input\\.Password").FillAsync("abcdefgh");
+            await anon.Locator("#Input\\.ConfirmPassword").FillAsync("abcdefgh");
+            await anon.GetByTestId("register-submit").ClickAsync();
+            await AnonShot("register-identity-errors");
+            foreach (var (name, url) in new[]
+                     {
+                         ("forgot-password", "/Account/ForgotPassword"), ("reset-password", "/Account/ResetPassword?code=YWJj"),
+                         ("lockout", "/Account/Lockout"), ("access-denied", "/Account/AccessDenied"),
+                         ("resend-confirmation", "/Account/ResendEmailConfirmation"), ("invalid-reset", "/Account/InvalidPasswordReset")
+                     })
+            {
+                await anon.GotoAsync(url);
+                await AnonShot(name);
+            }
+        }
+
+        // First run: an empty tenant's dashboard
+        var (emptyContext, emptyPage) = await NewContextAsync();
+        await using (emptyContext)
+        {
+            await RegisterAsync(emptyPage, UniqueEmail("empty"));
+            await SettleAsync(emptyPage);
+            await emptyPage.ScreenshotAsync(new() { Path = Path.Combine(target, "desktop-dashboard-empty.png"), FullPage = true });
+        }
+    }
+
     private static async Task SettleAsync(IPage page)
     {
         try { await page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 5_000 }); } catch (TimeoutException) { }

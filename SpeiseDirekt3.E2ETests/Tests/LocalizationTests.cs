@@ -147,6 +147,50 @@ public class LocalizationTests : BackOfficeTestBase
         }
     }
 
+    /// <summary>German is longer: the chrome still fits from 360 px — no sideways scrolling, the top navigation and the
+    /// user menu side by side from 1024 px, the anonymous header within the bar.</summary>
+    [Fact]
+    public async Task GermanShell_FitsFrom360Px()
+    {
+        var owner = await OwnerIdAsync(await RegisterNewOwnerAsync());
+        var menuId = Guid.NewGuid();
+        await App.SeedAsync(owner, db =>
+        {
+            db.Menus.Add(new Menu { Id = menuId, Name = "Gasthaus Zur Alten Post", Description = "", Theme = DesignTheme.Modern, Language = MenuLanguage.German });
+            return Task.CompletedTask;
+        });
+        foreach (var width in new[] { 360, 390, 768, 1024, 1280 })
+        {
+            await using var context = await SignedInContextAsync(German, width);
+            var page = await context.NewPageAsync();
+            foreach (var url in new[] { "/dashboard", $"/menudetail/{menuId}" })
+            {
+                await GotoInteractiveAsync(page, url);
+                (await page.EvaluateAsync<int>("() => document.documentElement.scrollWidth - innerWidth"))
+                    .Should().BeLessThanOrEqualTo(0, $"{url} fits at {width} px");
+            }
+            if (width >= 1024)
+            {
+                var gap = await page.EvaluateAsync<double>("""
+                    () => document.querySelector('[data-testid=user-menu-button]').getBoundingClientRect().left
+                        - Math.max(...[...document.querySelectorAll('[data-testid=top-nav] a')].map(a => a.getBoundingClientRect().right))
+                    """);
+                gap.Should().BeGreaterThan(0, $"the navigation and the user menu do not overlap at {width} px");
+            }
+
+            var (anonymous, anonymousPage) = await NewContextAsync(German);
+            await using (anonymous)
+            {
+                await anonymousPage.SetViewportSizeAsync(width, 800);
+                await anonymousPage.GotoAsync("/Account/Login");
+                (await anonymousPage.EvaluateAsync<int>("() => document.documentElement.scrollWidth - innerWidth"))
+                    .Should().BeLessThanOrEqualTo(0, $"the login page fits at {width} px");
+                var right = await anonymousPage.EvaluateAsync<double>("() => document.querySelector('.sd-anon-cta').getBoundingClientRect().right");
+                right.Should().BeLessThanOrEqualTo(width - 8, $"the register button keeps a gutter at {width} px");
+            }
+        }
+    }
+
     /// <summary>
     /// The Interactive Server circuit takes the culture of the request that opened it and keeps it: client-side
     /// navigations (no page load) render the context bar, and a drag handle's announcement, in German.
