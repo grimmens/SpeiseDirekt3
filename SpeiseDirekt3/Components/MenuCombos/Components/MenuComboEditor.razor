@@ -4,6 +4,8 @@
 @using SpeiseDirekt3.Components.Shared
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject IStringLocalizer<CombosText> T
+@inject IStringLocalizer<CommonText> C
 
 @* The combo editor: a quiet side panel (native <dialog>, js/modal-dialog.js) — from the right from 1024 px, a bottom
    sheet on phones, centred in between. White, neutral title, no dark band. Escape, the backdrop, "×" and "Cancel"
@@ -19,11 +21,11 @@
                         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Combos.Path" /></svg>
                     </span>
                     <div class="min-w-0">
-                        <h2 id="combo-editor-title" class="sd-dialog-title">@(Input.Id == Guid.Empty ? "Add New Combo" : "Edit Combo")</h2>
-                        <p class="m-0 mt-0.5 text-sm text-gray-600">Offered to guests in the details of the trigger item.</p>
+                        <h2 id="combo-editor-title" class="sd-dialog-title">@(Input.Id == Guid.Empty ? T["Editor_TitleNew"] : T["Editor_TitleEdit"])</h2>
+                        <p class="m-0 mt-0.5 text-sm text-gray-600">@T["Editor_Intro"]</p>
                     </div>
                 </div>
-                <button type="button" class="sd-row-action sd-dialog-close" aria-label="Close" @onclick="Cancel">
+                <button type="button" class="sd-row-action sd-dialog-close" aria-label="@C["Close"]" @onclick="Cancel">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -33,33 +35,33 @@
             <div class="sd-dialog-body space-y-5 text-gray-900">
                 <!-- Name -->
                 <div>
-                    <label for="ComboName" class="block text-sm font-semibold text-gray-800 mb-1">Name <span class="text-red-700" aria-hidden="true">*</span></label>
-                    <InputText @bind-Value="Input.Name" id="ComboName" class="sd-input" placeholder="e.g. Burger Combo" autofocus />
+                    <label for="ComboName" class="block text-sm font-semibold text-gray-800 mb-1">@T["Editor_Name"] <span class="text-red-700" aria-hidden="true">*</span></label>
+                    <InputText @bind-Value="Input.Name" id="ComboName" class="sd-input" placeholder="@T["Editor_NamePlaceholder"]" autofocus />
                     <ValidationMessage For="() => Input.Name" class="sd-field-error" />
                 </div>
 
                 <!-- Description -->
                 <div>
-                    <label for="ComboDesc" class="block text-sm font-semibold text-gray-800 mb-1">Description <span class="font-normal text-gray-500">(optional)</span></label>
-                    <InputText @bind-Value="Input.Description" id="ComboDesc" class="sd-input" placeholder="e.g. Burger with drink and side" />
+                    <label for="ComboDesc" class="block text-sm font-semibold text-gray-800 mb-1">@T["Editor_Description"] <span class="font-normal text-gray-500">@C["OptionalSuffix"]</span></label>
+                    <InputText @bind-Value="Input.Description" id="ComboDesc" class="sd-input" placeholder="@T["Editor_DescriptionPlaceholder"]" />
                 </div>
 
                 <!-- Combo Price -->
                 <div class="max-w-[14rem]">
-                    <label for="ComboPrice" class="block text-sm font-semibold text-gray-800 mb-1">Combo Price (€) <span class="text-red-700" aria-hidden="true">*</span></label>
+                    <label for="ComboPrice" class="block text-sm font-semibold text-gray-800 mb-1">@T["Editor_Price"] <span class="text-red-700" aria-hidden="true">*</span></label>
                     <PriceInput @bind-Value="Input.ComboPrice" id="ComboPrice" class="sd-input tabular-nums" />
                     <ValidationMessage For="() => Input.ComboPrice" class="sd-field-error" />
                 </div>
 
                 <!-- Trigger Menu Item -->
                 <div>
-                    <label for="TriggerItem" class="block text-sm font-semibold text-gray-800 mb-1">Trigger Item <span class="text-red-700" aria-hidden="true">*</span></label>
-                    <p class="mt-0 mb-1.5 text-xs text-gray-600">The item that triggers this combo offer when ordered.</p>
+                    <label for="TriggerItem" class="block text-sm font-semibold text-gray-800 mb-1">@T["TriggerItem"] <span class="text-red-700" aria-hidden="true">*</span></label>
+                    <p class="mt-0 mb-1.5 text-xs text-gray-600">@T["Editor_TriggerHelp"]</p>
                     <InputSelect @bind-Value="Input.TriggerMenuItemId" id="TriggerItem" class="sd-input">
-                        <option value="@Guid.Empty">-- Select trigger item --</option>
+                        <option value="@Guid.Empty">@T["Editor_TriggerChoose"]</option>
                         @foreach (var item in AvailableMenuItems)
                         {
-                            <option value="@item.Id">@item.Name (@PriceFormat.Euro(item.Price))</option>
+                            <option value="@item.Id">@T["Editor_ItemOption", item.Name, UiFormat.Price(item.Price)]</option>
                         }
                     </InputSelect>
                     <ValidationMessage For="() => Input.TriggerMenuItemId" class="sd-field-error" />
@@ -67,35 +69,35 @@
 
                 <!-- Included Items -->
                 <div>
-                    <label class="block text-sm font-semibold text-gray-800 mb-1">Included Items <span class="text-red-700" aria-hidden="true">*</span></label>
-                    <p class="mt-0 mb-1.5 text-xs text-gray-600">Search and select the items included in this combo.</p>
+                    <label class="block text-sm font-semibold text-gray-800 mb-1">@T["Editor_Included"] <span class="text-red-700" aria-hidden="true">*</span></label>
+                    <p class="mt-0 mb-1.5 text-xs text-gray-600">@T["Editor_IncludedHelp"]</p>
                     <MultiSelectComboBox TItem="MenuItem"
                                          Items="AvailableMenuItems"
                                          SelectedItems="selectedMenuItems"
                                          SelectedItemsChanged="OnSelectedItemsChanged"
                                          SearchSelector="item => item.Name"
-                                         Placeholder="Search menu items...">
+                                         Placeholder="@T["Editor_SearchPlaceholder"]">
                         <ItemTemplate Context="mi">
                             @mi.Name
                         </ItemTemplate>
                         <SuggestionTemplate Context="mi">
                             <div class="flex justify-between items-center w-full">
                                 <span>@mi.Name</span>
-                                <span class="text-xs text-gray-500 ml-2">@PriceFormat.Euro(mi.Price)</span>
+                                <span class="text-xs text-gray-500 ml-2">@UiFormat.Price(mi.Price)</span>
                             </div>
                         </SuggestionTemplate>
                     </MultiSelectComboBox>
                     @if (showItemsError)
                     {
-                        <p class="sd-field-error">Select at least one included item.</p>
+                        <p class="sd-field-error">@T["Editor_IncludedRequired"]</p>
                     }
                 </div>
             </div>
 
             <div class="sd-dialog-actions">
-                <button type="button" class="sd-btn sd-btn--secondary" @onclick="Cancel">Cancel</button>
+                <button type="button" class="sd-btn sd-btn--secondary" @onclick="Cancel">@C["Cancel"]</button>
                 <button type="submit" class="sd-btn sd-btn--primary">
-                    @(Input.Id == Guid.Empty ? "Create Combo" : "Save Changes")
+                    @(Input.Id == Guid.Empty ? T["Editor_Create"] : T["Editor_SaveChanges"])
                 </button>
             </div>
         </EditForm>
@@ -171,7 +173,7 @@
         if (Input.TriggerMenuItemId == Guid.Empty)
         {
             var messages = new ValidationMessageStore(editContext);
-            messages.Add(() => Input.TriggerMenuItemId, "Please select a trigger item.");
+            messages.Add(() => Input.TriggerMenuItemId, T["Editor_TriggerRequired"]);
             editContext.NotifyValidationStateChanged();
             return;
         }

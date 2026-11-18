@@ -130,7 +130,7 @@ public class ComboEditorTests : BackOfficeTestBase
         await editor.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
         await Assertions.Expect(editor).ToBeHiddenAsync();
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Burger Menü" })).ToBeVisibleAsync();
-        await Assertions.Expect(Page.GetByText("€ 6.00")).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("€6.00")).ToBeVisibleAsync();
 
         // Escape as well
         await Button("Edit", exact: true).ClickAsync();

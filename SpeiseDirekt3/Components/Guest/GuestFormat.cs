@@ -6,7 +6,7 @@ namespace SpeiseDirekt3.Components.Guest;
 /// <summary>
 /// Formatting for the guest view, in one place: image URLs, anchors, item links, public paths and origin. Prices are
 /// formatted by <see cref="GuestText"/> (<c>€ 9,90</c> on German menus, <c>€9.90</c> on all others), independent of the
-/// server culture (the back office uses <see cref="SpeiseDirekt.Infrastructure.PriceFormat"/> with <c>€ 9.90</c>).
+/// server culture and of the browser (the back office uses <see cref="SpeiseDirekt3.Localization.UiFormat"/>, AP12).
 /// </summary>
 public static class GuestFormat
 {

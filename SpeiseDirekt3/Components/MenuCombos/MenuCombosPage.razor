@@ -10,12 +10,14 @@
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
 @attribute [Authorize]
+@inject IStringLocalizer<CombosText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>Combos - @menu?.Name</PageTitle>
+<PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
 
 @* "Menus › menu" is in the menu context bar (Layout/MenuContextBar) *@
-<PageHeader Title="Combos" Icon="PageIcons.Combos" Tone="TileTone.Accent">
-    <Description>Create combo offers that customers see when ordering specific items.</Description>
+<PageHeader Title="@T["Title"]" Icon="PageIcons.Combos" Tone="TileTone.Accent">
+    <Description>@T["Description"]</Description>
     <Actions>
         @if (canCreate)
         {
@@ -23,7 +25,7 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
-                New Combo
+                @T["New"]
             </button>
         }
     </Actions>
@@ -35,7 +37,7 @@
     {
         <div class="flex items-center justify-center py-12">
             <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600"></div>
-            <span class="ml-3 text-gray-600">Loading...</span>
+            <span class="ml-3 text-gray-600">@C["Loading"]</span>
         </div>
     }
     else if (!combos.Any())
@@ -45,8 +47,8 @@
                 <span class="sd-empty-icon" aria-hidden="true">
                     <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Combos.Path" /></svg>
                 </span>
-                <h3 class="sd-empty-title">No combos yet</h3>
-                <p class="sd-empty-text">Create a combo to offer customers bundled deals when they order specific items.</p>
+                <h3 class="sd-empty-title">@T["EmptyTitle"]</h3>
+                <p class="sd-empty-text">@T["EmptyText"]</p>
                 @if (canCreate)
                 {
                     <div class="mt-4">
@@ -54,7 +56,7 @@
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                             </svg>
-                            New Combo
+                            @T["New"]
                         </button>
                     </div>
                 }
@@ -77,14 +79,14 @@
                             }
                         </div>
                         <span class="inline-flex items-center flex-shrink-0 whitespace-nowrap px-2.5 py-0.5 rounded-full text-sm font-bold bg-green-100 text-green-800 tabular-nums">
-                            @PriceFormat.Euro(combo.ComboPrice)
+                            @UiFormat.Price(combo.ComboPrice)
                         </span>
                     </div>
 
                     <div class="p-[1rem] sm:p-5 flex-1">
                         <!-- Trigger Item -->
                         <div class="mb-3">
-                            <p class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Trigger Item</p>
+                            <p class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">@T["TriggerItem"]</p>
                             <div class="flex items-center gap-2">
                                 <span class="inline-flex p-1 bg-accent-100 text-accent-800 rounded" aria-hidden="true">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,7 +99,7 @@
 
                         <!-- Included Items -->
                         <div>
-                            <p class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">Includes (@combo.Items.Count items)</p>
+                            <p class="text-xs font-bold text-gray-600 uppercase tracking-wide mb-1">@T.Plural(combo.Items.Count, "Includes")</p>
                             <div class="flex flex-wrap gap-1">
                                 @foreach (var comboItem in combo.Items)
                                 {
@@ -119,12 +121,12 @@
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
-                                    Edit
+                                    @C["Edit"]
                                 </button>
                             }
                             @if (canDelete)
                             {
-                                <button type="button" class="sd-row-action sd-row-action--danger" title="Delete" aria-label="@($"Delete combo {combo.Name}")"
+                                <button type="button" class="sd-row-action sd-row-action--danger" title="@C["Delete"]" aria-label="@T["DeleteLabel", combo.Name]"
                                         @onclick="() => DeleteCombo(combo)">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -237,7 +239,11 @@
     {
         if (!canDelete) return;
 
-        var confirm = await NotificationService.ShowConfirmation(("Delete", $"Delete combo \"{combo.Name}\"?"));
+        var confirm = await NotificationService.ShowConfirmation(new ConfirmationRequest(T["Delete_Title"], T["Delete_Message", combo.Name])
+        {
+            ConfirmText = C["Delete"],
+            Destructive = true
+        });
         if (confirm)
         {
             Context.MenuCombos.Remove(combo);

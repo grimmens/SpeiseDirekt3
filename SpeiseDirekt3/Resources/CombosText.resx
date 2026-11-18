@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Combos</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Combo offers that guests see in the details of the trigger item.</value>
+  </data>
+  <data name="New" xml:space="preserve">
+    <value>New Combo</value>
+  </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>No combos yet</value>
+  </data>
+  <data name="EmptyText" xml:space="preserve">
+    <value>Create a combo to offer guests a bundle with a special price in the details of an item.</value>
+  </data>
+  <data name="TriggerItem" xml:space="preserve">
+    <value>Trigger Item</value>
+  </data>
+  <data name="Includes_One" xml:space="preserve">
+    <value>Includes (1 item)</value>
+  </data>
+  <data name="Includes_Other" xml:space="preserve">
+    <value>Includes ({0} items)</value>
+  </data>
+  <data name="DeleteLabel" xml:space="preserve">
+    <value>Delete combo {0}</value>
+    <comment>aria-label, {0} = combo name</comment>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Delete combo</value>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>Delete combo "{0}"?</value>
+  </data>
+  <data name="Editor_TitleNew" xml:space="preserve">
+    <value>Add New Combo</value>
+  </data>
+  <data name="Editor_TitleEdit" xml:space="preserve">
+    <value>Edit Combo</value>
+  </data>
+  <data name="Editor_Intro" xml:space="preserve">
+    <value>Offered to guests in the details of the trigger item.</value>
+  </data>
+  <data name="Editor_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Editor_NamePlaceholder" xml:space="preserve">
+    <value>e.g. Burger Combo</value>
+  </data>
+  <data name="Editor_Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Editor_DescriptionPlaceholder" xml:space="preserve">
+    <value>e.g. Burger with drink and side</value>
+  </data>
+  <data name="Editor_Price" xml:space="preserve">
+    <value>Combo Price (€)</value>
+  </data>
+  <data name="Editor_TriggerHelp" xml:space="preserve">
+    <value>The item whose details show this combo offer to guests.</value>
+  </data>
+  <data name="Editor_TriggerChoose" xml:space="preserve">
+    <value>-- Select trigger item --</value>
+  </data>
+  <data name="Editor_ItemOption" xml:space="preserve">
+    <value>{0} ({1})</value>
+    <comment>{0} = item name, {1} = price</comment>
+  </data>
+  <data name="Editor_Included" xml:space="preserve">
+    <value>Included Items</value>
+  </data>
+  <data name="Editor_IncludedHelp" xml:space="preserve">
+    <value>Search and select the items included in this combo.</value>
+  </data>
+  <data name="Editor_SearchPlaceholder" xml:space="preserve">
+    <value>Search menu items...</value>
+  </data>
+  <data name="Editor_IncludedRequired" xml:space="preserve">
+    <value>Select at least one included item.</value>
+  </data>
+  <data name="Editor_TriggerRequired" xml:space="preserve">
+    <value>Please select a trigger item.</value>
+  </data>
+  <data name="Editor_Create" xml:space="preserve">
+    <value>Create Combo</value>
+  </data>
+  <data name="Editor_SaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
+</root>
