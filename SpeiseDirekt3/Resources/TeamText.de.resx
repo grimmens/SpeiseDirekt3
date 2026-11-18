@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Teamverwaltung</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Verwalten Sie Ihre Mitarbeitenden und ihre Berechtigungen</value>
+  </data>
+  <data name="Invite" xml:space="preserve">
+    <value>Teammitglied einladen</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Team wird geladen …</value>
+  </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>Noch keine Teammitglieder</value>
+  </data>
+  <data name="EmptyText" xml:space="preserve">
+    <value>Laden Sie Ihr erstes Teammitglied ein, um loszulegen.</value>
+  </data>
+  <data name="RoleLegend" xml:space="preserve">
+    <value>Rollen und ihre Standardberechtigungen</value>
+  </data>
+  <data name="Column_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Column_Email" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="Column_Role" xml:space="preserve">
+    <value>Rolle</value>
+  </data>
+  <data name="Column_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Column_Joined" xml:space="preserve">
+    <value>Hinzugefügt am</value>
+  </data>
+  <data name="Column_Actions" xml:space="preserve">
+    <value>Aktionen</value>
+  </data>
+  <data name="Status_Active" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="Status_Inactive" xml:space="preserve">
+    <value>Inaktiv</value>
+  </data>
+  <data name="EditLabel" xml:space="preserve">
+    <value>{0} bearbeiten</value>
+    <comment>aria-label, {0} = the team member's name</comment>
+  </data>
+  <data name="Summary_None" xml:space="preserve">
+    <value>{0}: standardmäßig keine Berechtigungen</value>
+    <comment>{0} = role</comment>
+  </data>
+  <data name="Summary_Heading" xml:space="preserve">
+    <value>{0} standardmäßig:</value>
+    <comment>{0} = role; the lines follow</comment>
+  </data>
+  <data name="Summary_Line" xml:space="preserve">
+    <value>{0}: {1}</value>
+    <comment>{0} = area, {1} = actions</comment>
+  </data>
+  <data name="Area_Menus" xml:space="preserve">
+    <value>Speisekarten</value>
+  </data>
+  <data name="Area_Categories" xml:space="preserve">
+    <value>Kategorien</value>
+  </data>
+  <data name="Area_MenuItems" xml:space="preserve">
+    <value>Gerichte</value>
+  </data>
+  <data name="Area_Allergens" xml:space="preserve">
+    <value>Allergene</value>
+  </data>
+  <data name="Area_Combos" xml:space="preserve">
+    <value>Kombi-Angebote</value>
+  </data>
+  <data name="Area_QrCodes" xml:space="preserve">
+    <value>QR-Codes</value>
+  </data>
+  <data name="Area_Analytics" xml:space="preserve">
+    <value>Statistik</value>
+  </data>
+  <data name="Area_Team" xml:space="preserve">
+    <value>Team</value>
+  </data>
+  <data name="Area_Delivery" xml:space="preserve">
+    <value>Lieferung</value>
+  </data>
+  <data name="Area_Subscription" xml:space="preserve">
+    <value>Abonnement</value>
+  </data>
+  <data name="Action_View" xml:space="preserve">
+    <value>ansehen</value>
+  </data>
+  <data name="Action_Create" xml:space="preserve">
+    <value>anlegen</value>
+  </data>
+  <data name="Action_Edit" xml:space="preserve">
+    <value>bearbeiten</value>
+  </data>
+  <data name="Action_Delete" xml:space="preserve">
+    <value>löschen</value>
+  </data>
+  <data name="Action_Invite" xml:space="preserve">
+    <value>einladen</value>
+  </data>
+  <data name="Action_Remove" xml:space="preserve">
+    <value>entfernen</value>
+  </data>
+  <data name="Action_Manage" xml:space="preserve">
+    <value>verwalten</value>
+  </data>
+  <data name="Perm_View" xml:space="preserve">
+    <value>Ansehen</value>
+  </data>
+  <data name="Perm_Create" xml:space="preserve">
+    <value>Anlegen</value>
+  </data>
+  <data name="Perm_Edit" xml:space="preserve">
+    <value>Bearbeiten</value>
+  </data>
+  <data name="Perm_Delete" xml:space="preserve">
+    <value>Löschen</value>
+  </data>
+  <data name="Perm_Manage" xml:space="preserve">
+    <value>Verwalten</value>
+  </data>
+  <data name="Invite_Title" xml:space="preserve">
+    <value>Neues Teammitglied einladen</value>
+  </data>
+  <data name="Invite_Email" xml:space="preserve">
+    <value>E-Mail-Adresse</value>
+  </data>
+  <data name="Invite_EmailPlaceholder" xml:space="preserve">
+    <value>name@example.com</value>
+  </data>
+  <data name="Invite_DisplayName" xml:space="preserve">
+    <value>Anzeigename</value>
+  </data>
+  <data name="Invite_DisplayNamePlaceholder" xml:space="preserve">
+    <value>Erika Mustermann</value>
+  </data>
+  <data name="Invite_Password" xml:space="preserve">
+    <value>Vorläufiges Passwort</value>
+  </data>
+  <data name="Invite_PasswordPlaceholder" xml:space="preserve">
+    <value>Mindestens 8 Zeichen</value>
+  </data>
+  <data name="Invite_Role" xml:space="preserve">
+    <value>Rolle</value>
+  </data>
+  <data name="Invite_Creating" xml:space="preserve">
+    <value>Wird angelegt …</value>
+  </data>
+  <data name="Invite_Create" xml:space="preserve">
+    <value>Konto anlegen</value>
+  </data>
+  <data name="Invite_LimitReached" xml:space="preserve">
+    <value>Die Höchstzahl an Teammitgliedern ({0}) ist erreicht. Für weitere Teammitglieder brauchen Sie einen anderen Tarif.</value>
+    <comment>{0} = the limit</comment>
+  </data>
+  <data name="Valid_EmailRequired" xml:space="preserve">
+    <value>Bitte geben Sie die E-Mail-Adresse ein.</value>
+  </data>
+  <data name="Valid_EmailInvalid" xml:space="preserve">
+    <value>Bitte geben Sie eine gültige E-Mail-Adresse ein.</value>
+  </data>
+  <data name="Valid_DisplayNameRequired" xml:space="preserve">
+    <value>Bitte geben Sie einen Anzeigenamen ein.</value>
+  </data>
+  <data name="Valid_DisplayNameTooLong" xml:space="preserve">
+    <value>Der Anzeigename darf höchstens 100 Zeichen lang sein.</value>
+  </data>
+  <data name="Valid_PasswordRequired" xml:space="preserve">
+    <value>Bitte geben Sie ein vorläufiges Passwort ein.</value>
+  </data>
+  <data name="Valid_PasswordTooShort" xml:space="preserve">
+    <value>Das Passwort muss mindestens 8 Zeichen lang sein.</value>
+  </data>
+  <data name="Edit_PageTitle" xml:space="preserve">
+    <value>Teammitglied bearbeiten</value>
+  </data>
+  <data name="Edit_Crumb" xml:space="preserve">
+    <value>{0} bearbeiten</value>
+    <comment>{0} = the team member's name</comment>
+  </data>
+  <data name="Edit_CrumbUnnamed" xml:space="preserve">
+    <value>Teammitglied bearbeiten</value>
+  </data>
+  <data name="Edit_Details" xml:space="preserve">
+    <value>Angaben zum Teammitglied</value>
+  </data>
+  <data name="Edit_Role" xml:space="preserve">
+    <value>Rolle</value>
+  </data>
+  <data name="Edit_Overrides" xml:space="preserve">
+    <value>Abweichende Berechtigungen</value>
+  </data>
+  <data name="Edit_Reset" xml:space="preserve">
+    <value>Auf Standard der Rolle zurücksetzen</value>
+  </data>
+  <data name="Edit_OverridesText" xml:space="preserve">
+    <value>Passen Sie die Berechtigungen abweichend vom Standard der Rolle an.</value>
+  </data>
+  <data name="Edit_Deactivate" xml:space="preserve">
+    <value>Deaktivieren</value>
+  </data>
+  <data name="Edit_Activate" xml:space="preserve">
+    <value>Aktivieren</value>
+  </data>
+  <data name="Edit_SaveChanges" xml:space="preserve">
+    <value>Änderungen speichern</value>
+  </data>
+  <data name="Deactivate_Title" xml:space="preserve">
+    <value>Teammitglied deaktivieren</value>
+  </data>
+  <data name="Deactivate_Message" xml:space="preserve">
+    <value>{0} deaktivieren?</value>
+    <comment>{0} = name</comment>
+  </data>
+  <data name="Activate_Title" xml:space="preserve">
+    <value>Teammitglied aktivieren</value>
+  </data>
+  <data name="Activate_Message" xml:space="preserve">
+    <value>{0} aktivieren?</value>
+    <comment>{0} = name</comment>
+  </data>
+  <data name="RoleDesc_GeneralManager" xml:space="preserve">
+    <value>Voller Zugriff auf alles</value>
+  </data>
+  <data name="RoleDesc_Manager" xml:space="preserve">
+    <value>Speisekarten, Kategorien und Gerichte verwalten</value>
+  </data>
+  <data name="RoleDesc_Cashier" xml:space="preserve">
+    <value>Speisekarten ansehen, eingeschränkt bearbeiten</value>
+  </data>
+  <data name="RoleDesc_Employee" xml:space="preserve">
+    <value>Nur ansehen</value>
+  </data>
+  <data name="RoleDesc_Driver" xml:space="preserve">
+    <value>Zugriff auf die Lieferungen</value>
+  </data>
+  <data name="Perm_Invite" xml:space="preserve">
+    <value>Einladen</value>
+  </data>
+  <data name="Perm_Remove" xml:space="preserve">
+    <value>Entfernen</value>
+  </data>
+</root>
