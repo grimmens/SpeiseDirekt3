@@ -14,8 +14,5 @@ namespace SpeiseDirekt.ServiceImplementation
             }
             return false;
         }
-
-        public Task<bool> ShowConfirmation((string title, string message) tuple) =>
-            ShowConfirmation(new ConfirmationRequest(tuple.title, tuple.message));
     }
 }

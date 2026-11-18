@@ -6,11 +6,9 @@
 
 @* The one confirmation of the back office (INotificationService.ShowConfirmation(ConfirmationRequest)), rendered once
    by MainLayout. A quiet native <dialog> (js/modal-dialog.js): white, neutral title, the message, "Cancel" (focused
-   first) and a button named after the action (ConfirmationRequest.ConfirmText) — red when Destructive. The caller
-   brings every text localized; the old (title, message) tuple form guesses the button from an English title
-   (Delete…, Deactivate, Discard…, Remove…, Unlink… = red and named like the title; Activate… named like the title;
-   else "OK"). Escape, a backdrop click and "Cancel" answer false. Test ids/ids: #confirmationModal, #confirmBtn,
-   #cancelBtn, confirmation-message. *@
+   first) and a button named after the action (ConfirmationRequest.ConfirmText; without one the title of a destructive
+   action, else "OK") — red when Destructive. The caller brings every text localized. Escape, a backdrop click and
+   "Cancel" answer false. Test ids/ids: #confirmationModal, #confirmBtn, #cancelBtn, confirmation-message. *@
 <dialog @ref="dialog" id="confirmationModal" class="sd-dialog" aria-labelledby="confirmation-title" aria-describedby="confirmation-message" data-testid="confirmation">
     <div class="sd-dialog-head">
         <h2 id="confirmation-title" class="sd-dialog-title">@title</h2>
@@ -26,7 +24,7 @@
     private string title = "";
     private string message = "";
     private string? confirmText;
-    private bool? destructive;
+    private bool destructive;
     private bool isModalVisible;
     private bool openPending;
     private TaskCompletionSource<bool> tcs = new();
@@ -35,17 +33,13 @@
     private IJSObjectReference? handle;
     private DotNetObjectReference<ConfirmationModal>? selfRef;
 
-    private static readonly string[] DestructiveVerbs = ["Delete", "Deactivate", "Discard", "Remove", "Unlink"];
-
-    /// <summary>Red confirm button: as the caller said, else guessed from an English title's verb (legacy tuple form).</summary>
-    private bool IsDestructive => destructive ?? DestructiveVerbs.Any(v => title.StartsWith(v, StringComparison.OrdinalIgnoreCase));
+    private bool IsDestructive => destructive;
 
     /// <summary>
     /// The confirm button names the action ("Delete menu", "Discard changes"): the caller's text, else the title of a
-    /// destructive or an "Activate…" action, else "OK" for a plain question.
+    /// destructive action, else "OK" for a plain question.
     /// </summary>
-    private string ConfirmText => confirmText
-        ?? (IsDestructive || title.StartsWith("Activate", StringComparison.OrdinalIgnoreCase) ? title : C["Ok"]);
+    private string ConfirmText => confirmText ?? (IsDestructive ? title : C["Ok"]);
 
     protected override void OnInitialized()
     {
