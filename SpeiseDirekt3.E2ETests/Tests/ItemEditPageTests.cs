@@ -3,7 +3,10 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Playwright;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt3.E2ETests.Infrastructure;
 
@@ -237,5 +240,58 @@ public class ItemEditPageTests : BackOfficeTestBase
         await GotoInteractiveAsync(employee, $"/MenuItems/Category/{startersId}/new");
         await Assertions.Expect(employee).ToHaveURLAsync(new Regex($"/MenuItems/Category/{startersId}$", RegexOptions.IgnoreCase));
         await Assertions.Expect(employee.GetByTestId("item-edit-form")).ToHaveCountAsync(0);
+    }
+
+    private static FilePayload Png(string name, byte r, byte g, byte b)
+    {
+        using var image = new Image<Rgba32>(320, 240, new Rgba32(r, g, b));
+        using var stream = new MemoryStream();
+        image.SaveAsPng(stream);
+        return new FilePayload { Name = name, MimeType = "image/png", Buffer = stream.ToArray() };
+    }
+
+    [Fact]
+    public async Task Photo_IsUploadedWithSave_AndAPhotoUploadedThenCancelledIsDeletedAgain()
+    {
+        var (ownerId, _, startersId, _, soupId) = await SeedAsync();
+        await GotoInteractiveAsync($"/MenuItems/item/{soupId}/edit");
+        var preview = Page.GetByTestId("item-photo-preview").Locator("img");
+        await Assertions.Expect(Page.GetByTestId("item-photo-preview")).ToContainTextAsync("No photo yet");
+
+        // Upload and save: the item points at the new image
+        await Page.Locator("#MenuItem\\.Image").SetInputFilesAsync(Png("suppe.png", 200, 60, 40));
+        await Assertions.Expect(preview).ToHaveAttributeAsync("src", new Regex("^/image/"));
+        await Assertions.Expect(Page.GetByTestId("item-dirty-state")).ToHaveTextAsync("Unsaved changes");
+        await SaveItemAndReturnAsync();
+        string stored;
+        await using (var db = App.CreateDbContext(ownerId))
+            stored = (await db.MenuItems.SingleAsync(i => i.Id == soupId)).ImagePath!;
+        stored.Should().StartWith("image/");
+        await Assertions.Expect(ItemRows.Filter(new() { HasText = "Tomatensuppe" }).Locator("img")).ToHaveAttributeAsync("src", "/" + stored);
+
+        // Replace, then cancel: the replacement is deleted, the stored photo stays
+        await OpenItemEditorAsync("Tomatensuppe");
+        await Assertions.Expect(preview).ToHaveAttributeAsync("src", "/" + stored);
+        await Page.Locator("#MenuItem\\.Image").SetInputFilesAsync(Png("neu.png", 20, 120, 60));
+        await Assertions.Expect(preview).Not.ToHaveAttributeAsync("src", "/" + stored);
+        var replacement = (await preview.GetAttributeAsync("src"))!.TrimStart('/');
+        await Page.GetByTestId("item-savebar").GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"/MenuItems/Category/{startersId}\\?highlight=", RegexOptions.IgnoreCase));
+        await using (var db = App.CreateDbContext(ownerId))
+        {
+            (await db.MenuItems.SingleAsync(i => i.Id == soupId)).ImagePath.Should().Be(stored);
+            ImagePaths.TryGetImageId(replacement, out var replacementId).Should().BeTrue();
+            ImagePaths.TryGetImageId(stored, out var storedId).Should().BeTrue();
+            (await db.Images.AnyAsync(i => i.Id == replacementId)).Should().BeFalse("a photo uploaded and then cancelled is deleted again");
+            (await db.Images.AnyAsync(i => i.Id == storedId)).Should().BeTrue();
+        }
+
+        // Remove and save: the item has no photo any more
+        await OpenItemEditorAsync("Tomatensuppe");
+        await Page.GetByRole(AriaRole.Button, new() { Name = "Remove photo" }).ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("item-photo-preview")).ToContainTextAsync("No photo yet");
+        await SaveItemAndReturnAsync();
+        await using (var db = App.CreateDbContext(ownerId))
+            (await db.MenuItems.SingleAsync(i => i.Id == soupId)).ImagePath.Should().BeNull();
     }
 }

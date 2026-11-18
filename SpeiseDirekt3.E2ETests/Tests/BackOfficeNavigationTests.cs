@@ -176,10 +176,10 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
         await Assertions.Expect(SwitcherButton).ToHaveAttributeAsync("aria-expanded", "false");
         (await FocusedTestIdAsync()).Should().Be("menu-switcher-button");
 
-        // A click outside closes it too
+        // A click outside closes it too (the page header's corner: the open list hangs over the title since AP11's icon tile)
         await SwitcherButton.ClickAsync();
         await Assertions.Expect(Switcher).ToBeVisibleAsync();
-        await Page.Locator("main h1").ClickAsync();
+        await Page.GetByTestId("page-header").ClickAsync(new() { Position = new() { X = 6, Y = 6 } });
         await Assertions.Expect(Switcher).ToBeHiddenAsync();
 
         // Switching keeps the tab
