@@ -201,7 +201,7 @@
     /// <summary>FullCalendar's other texts; <c>$0</c> is FullCalendar's placeholder (a count, a button text).</summary>
     private sealed record JsTexts(
         string AllDay, string MoreLink, string MoreHintOne, string MoreHintOther, IReadOnlyDictionary<string, string> ButtonHints,
-        string ViewHint, string CloseHint);
+        string ViewHint, string CloseHint, string TimeHint, string EventHint);
 
     private IReadOnlyDictionary<string, string> DefaultButtonText() => new Dictionary<string, string>
     {
@@ -215,7 +215,7 @@
         {
             ["prev"] = S["Calendar_PrevHint"], ["next"] = S["Calendar_NextHint"], ["today"] = S["Calendar_TodayHint"]
         },
-        Placeholder(S["Calendar_ViewHint"]), C["Close"]);
+        Placeholder(S["Calendar_ViewHint"]), C["Close"], S["Calendar_TimeHint"], S["Calendar_EventHint"]);
 
     /// <summary>A resource's <c>{0}</c> as FullCalendar's <c>$0</c>.</summary>
     private static string Placeholder(string text) => text.Replace("{0}", "$0", StringComparison.Ordinal);

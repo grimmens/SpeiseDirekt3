@@ -241,4 +241,12 @@
     <value>{0} view</value>
     <comment>{0} = the view's button text</comment>
   </data>
+  <data name="Calendar_TimeHint" xml:space="preserve">
+    <value>Time</value>
+    <comment>column header of the list view (screen readers)</comment>
+  </data>
+  <data name="Calendar_EventHint" xml:space="preserve">
+    <value>Event</value>
+    <comment>column header of the list view (screen readers)</comment>
+  </data>
 </root>

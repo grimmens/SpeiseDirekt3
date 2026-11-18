@@ -100,7 +100,7 @@
                 <div class="space-y-4">
                     @foreach (var area in PermissionCatalog.Areas)
                     {
-                        <fieldset class="m-0 p-0 border-0 min-w-0">
+                        <fieldset class="p-0 border-0 min-w-0">
                             <legend class="float-none w-auto p-0 text-sm font-semibold text-gray-700 mb-2">@T[area.NameKey]</legend>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 @foreach (var entry in area.Entries)

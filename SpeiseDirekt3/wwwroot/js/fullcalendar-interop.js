@@ -103,7 +103,9 @@ function toOptions(o) {
         moreLinkHint: t ? n => (n === 1 ? t.moreHintOne : fill(t.moreHintOther, n)) : null,
         buttonHints: t?.buttonHints,
         viewHint: t?.viewHint,
-        closeHint: t?.closeHint
+        closeHint: t?.closeHint,
+        timeHint: t?.timeHint,
+        eventHint: t?.eventHint
     });
 }
 

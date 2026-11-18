@@ -205,6 +205,7 @@ function renderStackedChart(ctx, series, label, title, timeRange) {
                 y: {
                     stacked: true,
                     beginAtZero: true,
+                    ticks: { precision: 0 }, // counts: no "0,5" ticks
                     title: { display: true, text: t.axisCount }
                 }
             }
