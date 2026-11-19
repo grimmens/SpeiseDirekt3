@@ -287,7 +287,8 @@
         var requiredPerm = IsNew ? Permission.QrCodesCreate : Permission.QrCodesEdit;
         if (!await PermissionService.HasPermissionAsync(requiredPerm))
         {
-            // An existing code can still be viewed with QrCodesView (e.g. a cashier); creating needs QrCodesCreate
+            // An existing code can still be viewed with QrCodesView (read-only; no role has that since AP14 — owner and
+            // manager may edit); creating needs QrCodesCreate
             if (IsNew || !await PermissionService.HasPermissionAsync(Permission.QrCodesView))
             {
                 NavManager.NavigateTo("/qrcodes");
