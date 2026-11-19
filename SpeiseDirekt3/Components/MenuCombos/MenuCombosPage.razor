@@ -155,6 +155,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenuCombosView, NavManager)) return;
         canCreate = await PermissionService.HasPermissionAsync(Permission.MenuCombosCreate);
         canEdit = await PermissionService.HasPermissionAsync(Permission.MenuCombosEdit);
         canDelete = await PermissionService.HasPermissionAsync(Permission.MenuCombosDelete);

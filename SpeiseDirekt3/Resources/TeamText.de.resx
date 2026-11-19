@@ -15,9 +15,6 @@
   <data name="Title" xml:space="preserve">
     <value>Teamverwaltung</value>
   </data>
-  <data name="Description" xml:space="preserve">
-    <value>Verwalten Sie Ihre Mitarbeitenden und ihre Berechtigungen</value>
-  </data>
   <data name="Invite" xml:space="preserve">
     <value>Teammitglied einladen</value>
   </data>
@@ -25,13 +22,10 @@
     <value>Team wird geladen …</value>
   </data>
   <data name="EmptyTitle" xml:space="preserve">
-    <value>Noch keine Teammitglieder</value>
+    <value>Noch keine Manager</value>
   </data>
   <data name="EmptyText" xml:space="preserve">
-    <value>Laden Sie Ihr erstes Teammitglied ein, um loszulegen.</value>
-  </data>
-  <data name="RoleLegend" xml:space="preserve">
-    <value>Rollen und ihre Standardberechtigungen</value>
+    <value>Laden Sie einen Manager ein, der Ihre Speisekarten mit Ihnen pflegt.</value>
   </data>
   <data name="Column_Name" xml:space="preserve">
     <value>Name</value>
@@ -61,84 +55,6 @@
     <value>{0} bearbeiten</value>
     <comment>aria-label, {0} = the team member's name</comment>
   </data>
-  <data name="Summary_None" xml:space="preserve">
-    <value>{0}: standardmäßig keine Berechtigungen</value>
-    <comment>{0} = role</comment>
-  </data>
-  <data name="Summary_Heading" xml:space="preserve">
-    <value>{0} standardmäßig:</value>
-    <comment>{0} = role; the lines follow</comment>
-  </data>
-  <data name="Summary_Line" xml:space="preserve">
-    <value>{0}: {1}</value>
-    <comment>{0} = area, {1} = actions</comment>
-  </data>
-  <data name="Area_Menus" xml:space="preserve">
-    <value>Speisekarten</value>
-  </data>
-  <data name="Area_Categories" xml:space="preserve">
-    <value>Kategorien</value>
-  </data>
-  <data name="Area_MenuItems" xml:space="preserve">
-    <value>Gerichte</value>
-  </data>
-  <data name="Area_Allergens" xml:space="preserve">
-    <value>Allergene</value>
-  </data>
-  <data name="Area_Combos" xml:space="preserve">
-    <value>Kombi-Angebote</value>
-  </data>
-  <data name="Area_QrCodes" xml:space="preserve">
-    <value>QR-Codes</value>
-  </data>
-  <data name="Area_Analytics" xml:space="preserve">
-    <value>Statistik</value>
-  </data>
-  <data name="Area_Team" xml:space="preserve">
-    <value>Team</value>
-  </data>
-  <data name="Area_Delivery" xml:space="preserve">
-    <value>Lieferung</value>
-  </data>
-  <data name="Area_Subscription" xml:space="preserve">
-    <value>Abonnement</value>
-  </data>
-  <data name="Action_View" xml:space="preserve">
-    <value>ansehen</value>
-  </data>
-  <data name="Action_Create" xml:space="preserve">
-    <value>anlegen</value>
-  </data>
-  <data name="Action_Edit" xml:space="preserve">
-    <value>bearbeiten</value>
-  </data>
-  <data name="Action_Delete" xml:space="preserve">
-    <value>löschen</value>
-  </data>
-  <data name="Action_Invite" xml:space="preserve">
-    <value>einladen</value>
-  </data>
-  <data name="Action_Remove" xml:space="preserve">
-    <value>entfernen</value>
-  </data>
-  <data name="Action_Manage" xml:space="preserve">
-    <value>verwalten</value>
-  </data>
-  <data name="Perm_View" xml:space="preserve">
-    <value>Ansehen</value>
-  </data>
-  <data name="Perm_Create" xml:space="preserve">
-    <value>Anlegen</value>
-  </data>
-  <data name="Perm_Edit" xml:space="preserve">
-    <value>Bearbeiten</value>
-  </data>
-  <data name="Perm_Delete" xml:space="preserve">
-    <value>Löschen</value>
-  </data>
-  <data name="Perm_Manage" xml:space="preserve">
-    <value>Verwalten</value>
-  </data>
   <data name="Invite_Title" xml:space="preserve">
     <value>Neues Teammitglied einladen</value>
   </data>
@@ -159,9 +75,6 @@
   </data>
   <data name="Invite_PasswordPlaceholder" xml:space="preserve">
     <value>Mindestens 8 Zeichen</value>
-  </data>
-  <data name="Invite_Role" xml:space="preserve">
-    <value>Rolle</value>
   </data>
   <data name="Invite_Creating" xml:space="preserve">
     <value>Wird angelegt …</value>
@@ -204,18 +117,6 @@
   <data name="Edit_Details" xml:space="preserve">
     <value>Angaben zum Teammitglied</value>
   </data>
-  <data name="Edit_Role" xml:space="preserve">
-    <value>Rolle</value>
-  </data>
-  <data name="Edit_Overrides" xml:space="preserve">
-    <value>Abweichende Berechtigungen</value>
-  </data>
-  <data name="Edit_Reset" xml:space="preserve">
-    <value>Auf Standard der Rolle zurücksetzen</value>
-  </data>
-  <data name="Edit_OverridesText" xml:space="preserve">
-    <value>Passen Sie die Berechtigungen abweichend vom Standard der Rolle an.</value>
-  </data>
   <data name="Edit_Deactivate" xml:space="preserve">
     <value>Deaktivieren</value>
   </data>
@@ -239,28 +140,43 @@
     <value>{0} aktivieren?</value>
     <comment>{0} = name</comment>
   </data>
-  <data name="RoleDesc_GeneralManager" xml:space="preserve">
-    <value>Voller Zugriff auf alles</value>
-  </data>
-  <data name="RoleDesc_Manager" xml:space="preserve">
-    <value>Speisekarten, Kategorien und Gerichte verwalten</value>
-  </data>
-  <data name="RoleDesc_Cashier" xml:space="preserve">
-    <value>Speisekarten ansehen, eingeschränkt bearbeiten</value>
-  </data>
-  <data name="RoleDesc_Employee" xml:space="preserve">
-    <value>Nur ansehen</value>
-  </data>
-  <data name="RoleDesc_Driver" xml:space="preserve">
-    <value>Zugriff auf die Lieferungen</value>
-  </data>
-  <data name="Perm_Invite" xml:space="preserve">
-    <value>Einladen</value>
-  </data>
-  <data name="Perm_Remove" xml:space="preserve">
-    <value>Entfernen</value>
-  </data>
   <data name="JoinedOn" xml:space="preserve">
     <value>Hinzugefügt am {0}</value>
+  </data>
+  <data name="RolesNote" xml:space="preserve">
+    <value>Manager können Speisekarten, Gerichte, QR-Codes und das Restaurantprofil bearbeiten und die Statistik sehen. Das Team verwaltet nur der Besitzer.</value>
+  </data>
+  <data name="You" xml:space="preserve">
+    <value>Sie</value>
+  </data>
+  <data name="Invite_RoleIs" xml:space="preserve">
+    <value>Rolle: {0}</value>
+  </data>
+  <data name="Edit_NotFound" xml:space="preserve">
+    <value>Teammitglied nicht gefunden.</value>
+  </data>
+  <data name="BackToTeam" xml:space="preserve">
+    <value>Zurück zum Team</value>
+  </data>
+  <data name="Edit_Access" xml:space="preserve">
+    <value>Zugang</value>
+  </data>
+  <data name="Edit_ActiveText" xml:space="preserve">
+    <value>Dieses Teammitglied kann sich anmelden und an Ihren Speisekarten, QR-Codes und dem Restaurantprofil arbeiten.</value>
+  </data>
+  <data name="Edit_InactiveText" xml:space="preserve">
+    <value>Dieses Teammitglied ist deaktiviert und hat keinen Zugriff mehr. Sie können es jederzeit wieder aktivieren.</value>
+  </data>
+  <data name="Edit_RemoveText" xml:space="preserve">
+    <value>Beim Entfernen wird der Zugang des Teammitglieds gelöscht. Um wieder mitzuarbeiten, braucht es eine neue Einladung.</value>
+  </data>
+  <data name="Edit_Remove" xml:space="preserve">
+    <value>Entfernen</value>
+  </data>
+  <data name="Remove_Title" xml:space="preserve">
+    <value>Teammitglied entfernen</value>
+  </data>
+  <data name="Remove_Message" xml:space="preserve">
+    <value>{0} aus dem Team entfernen? Der Zugang wird gelöscht. Das lässt sich nicht rückgängig machen.</value>
   </data>
 </root>

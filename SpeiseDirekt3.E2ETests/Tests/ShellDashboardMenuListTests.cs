@@ -119,7 +119,7 @@ public class ShellDashboardMenuListTests : BackOfficeTestBase
                 db.TenantUsers.Add(new TenantUser
                 {
                     Id = Guid.NewGuid(), ApplicationUserId = userId, TenantOwnerId = ownerId.ToString(),
-                    Role = TenantRole.Employee, DisplayName = name, IsActive = active
+                    Role = TenantRole.Manager, DisplayName = name, IsActive = active
                 });
             }
             return Task.CompletedTask;

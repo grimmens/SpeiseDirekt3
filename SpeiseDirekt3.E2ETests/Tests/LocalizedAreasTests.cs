@@ -165,7 +165,10 @@ public class LocalizedAreasTests : QrCalendarTestBase
 
         await GotoInteractiveAsync("/users/invite");
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Neues Teammitglied einladen" })).ToBeVisibleAsync();
-        await Assertions.Expect(Page.Locator("#Invite\\.Role option")).ToHaveTextAsync(["Geschäftsführung", "Leitung", "Kasse", "Mitarbeitende", "Fahrdienst"]);
+        // AP14: no role picker — the new member is a manager, one sentence says what that means
+        await Assertions.Expect(Page.Locator("select")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByTestId("invite-role")).ToContainTextAsync("Rolle: Manager");
+        await Assertions.Expect(Page.GetByTestId("invite-role")).ToContainTextAsync("Das Team verwaltet nur der Besitzer.");
         await Page.GetByLabel("E-Mail-Adresse").FillAsync("keine-adresse");
         await Page.GetByRole(AriaRole.Button, new() { Name = "Konto anlegen", Exact = true }).ClickAsync();
         await Assertions.Expect(Page.GetByText("Bitte geben Sie eine gültige E-Mail-Adresse ein.")).ToBeVisibleAsync();

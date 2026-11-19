@@ -11,8 +11,8 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// <summary>
 /// Back-office usability package P4: the allergen quick-fill (14 EU allergens with the Austrian letter codes),
 /// usage counts and the delete confirmation on <c>/allergens/{menuId}</c>, the phone-sized preview on the menu
-/// settings page, the analytics layout (summary tiles first, one "Sessions" series) and the role tooltips on
-/// <c>/users</c>.
+/// settings page, the analytics layout (summary tiles first, one "Sessions" series) and the team as cards on a phone
+/// (<c>/users</c>; the team pages themselves: <see cref="TeamPagesTests"/>).
 /// </summary>
 public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
 {
@@ -76,26 +76,6 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
         });
         return (menuId, categoryId);
     }
-
-    /// <summary>A sub-account of the tenant (the role legend on /users only shows once there is one).</summary>
-    private Task SeedSubAccountAsync(Guid ownerId, string displayName, TenantRole role) =>
-        App.SeedAsync(ownerId, db =>
-        {
-            var subId = Guid.NewGuid().ToString();
-            var email = UniqueEmail("team");
-            db.Users.Add(new ApplicationUser
-            {
-                Id = subId, UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email,
-                NormalizedEmail = email.ToUpperInvariant(), EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(),
-                TenantOwnerId = ownerId.ToString()
-            });
-            db.TenantUsers.Add(new TenantUser
-            {
-                Id = Guid.NewGuid(), ApplicationUserId = subId, TenantOwnerId = ownerId.ToString(),
-                Role = role, DisplayName = displayName, IsActive = true
-            });
-            return Task.CompletedTask;
-        });
 
     private async Task<List<(string Code, string Name)>> AllergensInDbAsync(Guid ownerId, Guid menuId)
     {
@@ -199,30 +179,35 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
         (await AllergensInDbAsync(ownerId, menuId)).Should().HaveCount(14);
     }
 
+    /// <summary>
+    /// AP14: there is no read-only role any more — a manager (invited by the owner) gets the quick-fill and the add form
+    /// like the owner, and fills the owner's menu.
+    /// </summary>
     [Fact]
-    public async Task QuickFill_IsNotOfferedWithoutCreatePermission()
+    public async Task QuickFill_IsOfferedToAManager_AndFillsTheOwnersMenu()
     {
-        await RegisterNewOwnerAsync();
-        var menuId = await CreateMenuViaUiAsync("Nur lesen");
+        var ownerId = await OwnerIdAsync(await RegisterNewOwnerAsync());
+        var menuId = await CreateMenuViaUiAsync("Team füllt");
         await CreateAllergenViaUiAsync(menuId, "A", "Gluten");
 
-        var employeeEmail = UniqueEmail("employee");
+        var managerEmail = UniqueEmail("manager");
         await GotoInteractiveAsync("/users/invite");
-        await Page.GetByPlaceholder("employee@example.com").FillAsync(employeeEmail);
-        await Page.GetByPlaceholder("John Doe").FillAsync("Erika Lesend");
+        await Page.GetByPlaceholder("employee@example.com").FillAsync(managerEmail);
+        await Page.GetByPlaceholder("John Doe").FillAsync("Erika Managerin");
         await Page.GetByPlaceholder("Min. 8 characters").FillAsync(Password);
-        await Page.Locator("select").SelectOptionAsync(new SelectOptionValue { Label = "Employee" });
         await Button("Create Account").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/users$"));
 
-        var (employeeContext, employee) = await NewContextAsync();
-        await using var _ = employeeContext;
-        await LoginAsync(employee, employeeEmail);
-        await GotoInteractiveAsync(employee, $"/allergens/{menuId}");
+        var (managerContext, manager) = await NewContextAsync();
+        await using var _ = managerContext;
+        await LoginAsync(manager, managerEmail);
+        await GotoInteractiveAsync(manager, $"/allergens/{menuId}");
 
-        await Assertions.Expect(employee.Locator("table td", new() { HasTextString = "Gluten" })).ToBeVisibleAsync();
-        await Assertions.Expect(employee.GetByTestId("eu-quick-fill")).ToHaveCountAsync(0);
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Add Allergen" })).ToHaveCountAsync(0);
+        await Assertions.Expect(manager.Locator("table td", new() { HasTextString = "Gluten" })).ToBeVisibleAsync();
+        await Assertions.Expect(manager.GetByRole(AriaRole.Button, new() { Name = "Add Allergen" })).ToBeVisibleAsync();
+        await manager.GetByTestId("eu-quick-fill").ClickAsync();
+        await Assertions.Expect(manager.GetByTestId("eu-quick-fill-notice")).ToBeVisibleAsync();
+        (await AllergensInDbAsync(ownerId, menuId)).Should().HaveCount(14);
     }
 
     // --- Allergen list: links, usage, delete ---
@@ -397,48 +382,33 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
         await Assertions.Expect(Button("Last 30 Days")).ToBeVisibleAsync();
     }
 
-    // --- Users: role legend ---
-
-    [Fact]
-    public async Task UsersRoleChips_ExplainTheRolesDefaultPermissions()
-    {
-        var ownerId = await RegisterOwnerAsync();
-        await SeedSubAccountAsync(ownerId, "Max Kellner", TenantRole.Employee);
-
-        await GotoInteractiveAsync("/users");
-        var legend = Page.GetByTestId("role-legend");
-        await Assertions.Expect(legend).ToBeVisibleAsync();
-
-        async Task<string> TitleOf(TenantRole role) => (await legend.Locator($"[data-role={role}]").GetAttributeAsync("title"))!;
-
-        var employee = await TitleOf(TenantRole.Employee);
-        employee.Should().Contain("Allergens: view").And.NotContain("Allergens: view, create").And.NotContain("Analytics");
-        (await TitleOf(TenantRole.Manager)).Should().Contain("Team: view, invite, edit").And.NotContain("remove");
-        (await TitleOf(TenantRole.Cashier)).Should().Contain("Menu items: view, edit");
-        (await TitleOf(TenantRole.Driver)).Should().Contain("Delivery: view, manage").And.NotContain("Allergens");
-        (await TitleOf(TenantRole.GeneralManager)).Should().Contain("Subscription: manage");
-    }
+    // --- Users on a phone ---
 
     /// <summary>
     /// AP13: on a phone the team is a list of cards (name, e-mail, role, status, joined, Edit) instead of a table that
-    /// scrolled sideways; from 1024 px the table.
+    /// scrolled sideways; from 1024 px the table. AP14: the owner's card comes first, the managers follow.
     /// </summary>
     [Fact]
     public async Task UsersPage_OnAPhone_ShowsCards_WithoutSidewaysScrolling()
     {
         var ownerId = await RegisterOwnerAsync();
-        await SeedSubAccountAsync(ownerId, "Max Kellner", TenantRole.Employee);
-        await SeedSubAccountAsync(ownerId, "Anna Langername-Mitbindestrich", TenantRole.GeneralManager);
+        await SeedTeamMemberAsync(ownerId, "Max Kellner");
+        await SeedTeamMemberAsync(ownerId, "Anna Langername-Mitbindestrich");
 
         await Page.SetViewportSizeAsync(390, 844);
         await GotoInteractiveAsync("/users");
         var cards = Page.GetByTestId("user-card");
         await Assertions.Expect(cards).ToHaveCountAsync(2);
         await Assertions.Expect(Page.GetByTestId("users-table")).ToBeHiddenAsync();
+        var ownerCard = Page.GetByTestId("owner-card");
+        await Assertions.Expect(ownerCard).ToBeVisibleAsync();
+        await Assertions.Expect(ownerCard).ToContainTextAsync("Owner");
+        (await Page.EvaluateAsync<bool>("() => { const o = document.querySelector('[data-testid=owner-card]'); return o === o.parentElement.firstElementChild; }"))
+            .Should().BeTrue("the owner comes first");
         var max = cards.Filter(new() { HasTextString = "Max Kellner" });
-        await Assertions.Expect(max).ToContainTextAsync("Employee");
+        await Assertions.Expect(max).ToContainTextAsync("Manager");
         await Assertions.Expect(max).ToContainTextAsync("Active");
-        await Assertions.Expect(max.GetByRole(AriaRole.Button, new() { Name = "Edit Max Kellner" })).ToBeVisibleAsync();
+        await Assertions.Expect(max.GetByRole(AriaRole.Link, new() { Name = "Edit Max Kellner" })).ToBeVisibleAsync();
         var wide = await Page.EvaluateAsync<string[]>("""
             () => [...document.querySelectorAll('body *')]
                 .filter(e => e.getBoundingClientRect().right > window.innerWidth + 1)
@@ -446,7 +416,7 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
             """);
         wide.Should().BeEmpty("nothing on the page is wider than the phone");
 
-        await max.GetByRole(AriaRole.Button, new() { Name = "Edit Max Kellner" }).ClickAsync();
+        await max.GetByRole(AriaRole.Link, new() { Name = "Edit Max Kellner" }).ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/users/edit/"));
 
         await Page.SetViewportSizeAsync(1280, 900);
@@ -486,7 +456,7 @@ public class AllergensSettingsAnalyticsTests : BackOfficeTestBase
             }
         });
 
-        await SeedSubAccountAsync(ownerId, "Max Kellner", TenantRole.Employee);
+        await SeedTeamMemberAsync(ownerId, "Max Kellner");
 
         async Task Shot(IPage page, string name, bool fullPage = true)
         {

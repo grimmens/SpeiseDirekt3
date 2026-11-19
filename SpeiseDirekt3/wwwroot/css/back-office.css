@@ -158,13 +158,6 @@
 }
 
 /* A count next to a title: the accent, quietly (accent-800 on accent-100: 6.1:1) */
-/* A row of chips that wraps (the team's role legend) — local, so it never depends on the Tailwind CDN */
-.sd-chip-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem;
-}
-
 .sd-count {
     display: inline-flex;
     align-items: center;

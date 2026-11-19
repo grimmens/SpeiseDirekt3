@@ -2,6 +2,7 @@
 @using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject SpeiseDirekt.ServiceInterface.IPermissionService PermissionService
 @inject IStringLocalizer<ShellText> T
 @inject IStringLocalizer<CommonText> C
 
@@ -26,7 +27,7 @@
         </a>
         @if (user is not null)
         {
-            <NavMenu Variant="bar" />
+            <NavMenu Variant="bar" Permissions="user.Permissions" />
             <UserMenu User="user" />
         }
         else
@@ -85,25 +86,25 @@
         if (principal.Identity?.IsAuthenticated != true) return;
 
         var email = principal.Identity.Name ?? "";
+        // Owner, manager (an active team member) or none: the role's name and the navigation's entries
+        var role = await PermissionService.GetCurrentRoleAsync();
+        var permissions = await PermissionService.GetCurrentPermissionsAsync();
+        var roleName = role is { } r ? RoleName(r) : null;
         var tenantOwnerId = principal.FindFirstValue("TenantOwnerId");
         if (string.IsNullOrEmpty(tenantOwnerId))
         {
-            user = new ShellUser(email, null, C["Role_Owner"]);
+            user = new ShellUser(email, null, roleName, permissions);
             return;
         }
 
-        // Sub-account: show the name the owner gave it (falls back to the e-mail) and its role
-        user = new ShellUser(email, null, null);
+        // Sub-account: show the name the owner gave it (falls back to the e-mail)
         var userId = principal.FindFirstValue(ClaimTypes.NameIdentifier);
         await using var db = await DbFactory.CreateDbContextAsync();
-        var tenantUser = await db.TenantUsers.AsNoTracking()
+        var displayName = await db.TenantUsers.AsNoTracking()
             .Where(tu => tu.ApplicationUserId == userId && tu.TenantOwnerId == tenantOwnerId)
-            .Select(tu => new { tu.DisplayName, tu.Role })
+            .Select(tu => tu.DisplayName)
             .FirstOrDefaultAsync();
-        if (tenantUser is null) return;
-        user = new ShellUser(email,
-            string.IsNullOrWhiteSpace(tenantUser.DisplayName) ? null : tenantUser.DisplayName,
-            RoleName(tenantUser.Role));
+        user = new ShellUser(email, string.IsNullOrWhiteSpace(displayName) ? null : displayName, roleName, permissions);
     }
 
     /// <summary>The role's display name (CommonText Role_*, shared with the team pages).</summary>

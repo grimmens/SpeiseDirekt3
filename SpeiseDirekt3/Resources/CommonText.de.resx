@@ -58,22 +58,10 @@
     <value>Vorschau</value>
   </data>
   <data name="Role_Owner" xml:space="preserve">
-    <value>Inhaber</value>
-  </data>
-  <data name="Role_GeneralManager" xml:space="preserve">
-    <value>Geschäftsführung</value>
+    <value>Besitzer</value>
   </data>
   <data name="Role_Manager" xml:space="preserve">
-    <value>Leitung</value>
-  </data>
-  <data name="Role_Cashier" xml:space="preserve">
-    <value>Kasse</value>
-  </data>
-  <data name="Role_Employee" xml:space="preserve">
-    <value>Mitarbeitende</value>
-  </data>
-  <data name="Role_Driver" xml:space="preserve">
-    <value>Fahrdienst</value>
+    <value>Manager</value>
   </data>
   <data name="OptionalSuffix" xml:space="preserve">
     <value>(optional)</value>

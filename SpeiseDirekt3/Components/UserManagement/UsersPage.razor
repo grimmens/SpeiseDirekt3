@@ -12,35 +12,103 @@
 @inject IStringLocalizer<TeamText> T
 @inject IStringLocalizer<CommonText> C
 
+@* The team (AP14: two roles): the owner first — the account that registered, never edited here — then the managers
+   the owner invited. Only the owner may open it (UsersView); a manager gets the access-denied page. *@
 <PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
 
 <PageHeader Title="@T["Title"]" Icon="PageIcons.Team" Tone="TileTone.Accent" Class="mb-6">
-    <Description>@T["Description"]</Description>
+    <Description><span data-testid="team-roles-note">@T["RolesNote"]</span></Description>
     <Actions>
         @if (canCreate)
         {
-            <button type="button" class="sd-btn sd-btn--primary" @onclick="InviteUser">
+            <a href="/users/invite" class="sd-btn sd-btn--primary" data-testid="invite-link">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
                 @T["Invite"]
-            </button>
+            </a>
         }
     </Actions>
 </PageHeader>
 
-<!-- Content -->
-<div>
-    @if (users == null)
+@if (owner is null)
+{
+    <div class="flex items-center justify-center py-12" role="status">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" aria-hidden="true"></div>
+        <span class="ml-3 text-gray-600">@T["Loading"]</span>
+    </div>
+}
+else
+{
+    <!-- The team: a table from 1024 px, cards below (no sideways scrolling on phones) -->
+    <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" data-testid="users-table">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="sd-thead">
+                <tr>
+                    <th class="px-6 py-3 text-left">@T["Column_Name"]</th>
+                    <th class="px-6 py-3 text-left">@T["Column_Role"]</th>
+                    <th class="px-6 py-3 text-left">@T["Column_Status"]</th>
+                    <th class="px-6 py-3 text-left">@T["Column_Joined"]</th>
+                    <th class="px-6 py-3 text-right"><span class="sr-only">@T["Column_Actions"]</span></th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                <tr data-testid="owner-row">
+                    <td class="px-6 py-4">@OwnerName()</td>
+                    <td class="px-6 py-4 whitespace-nowrap">@RoleBadge(TenantRole.Owner)</td>
+                    <td class="px-6 py-4 whitespace-nowrap">@StatusBadge(true)</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">—</td>
+                    <td class="px-6 py-4"></td>
+                </tr>
+                @foreach (var member in members)
+                {
+                    <tr class="hover:bg-gray-50 transition-colors" data-testid="user-row">
+                        <td class="px-6 py-4">@MemberName(member)</td>
+                        <td class="px-6 py-4 whitespace-nowrap">@RoleBadge(TenantRole.Manager)</td>
+                        <td class="px-6 py-4 whitespace-nowrap">@StatusBadge(member.IsActive)</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">@UiFormat.Date(DateOnly.FromDateTime(member.CreatedAt))</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right">
+                            @if (canEdit)
+                            {
+                                @EditLink(member)
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <ul class="lg:hidden grid gap-3 sm:grid-cols-2 list-none p-0 m-0" data-testid="user-cards">
+        <li class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem]" data-testid="owner-card">
+            @OwnerName()
+            <div class="mt-3 flex flex-wrap items-center gap-2">
+                @RoleBadge(TenantRole.Owner)
+                @StatusBadge(true)
+            </div>
+        </li>
+        @foreach (var member in members)
+        {
+            <li class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem]" data-testid="user-card">
+                <div class="flex items-start justify-between gap-3">
+                    @MemberName(member)
+                    @if (canEdit)
+                    {
+                        @EditLink(member)
+                    }
+                </div>
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                    @RoleBadge(TenantRole.Manager)
+                    @StatusBadge(member.IsActive)
+                    <span class="text-xs text-gray-600">@T["JoinedOn", UiFormat.Date(DateOnly.FromDateTime(member.CreatedAt))]</span>
+                </div>
+            </li>
+        }
+    </ul>
+
+    @if (members.Count == 0)
     {
-        <div class="flex items-center justify-center py-12">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" aria-hidden="true"></div>
-            <span class="ml-3 text-gray-600">@T["Loading"]</span>
-        </div>
-    }
-    else if (!users.Any())
-    {
-        <div class="sd-empty bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="sd-empty bg-white rounded-xl shadow-sm border border-gray-200 mt-6" data-testid="team-empty">
             <span class="sd-empty-icon" aria-hidden="true">
                 <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Team.Path" /></svg>
             </span>
@@ -48,135 +116,79 @@
             <p class="sd-empty-text">@T["EmptyText"]</p>
         </div>
     }
-    else
-    {
-        <!-- Role Legend -->
-        <div class="sd-chip-row mb-6" data-testid="role-legend" role="list" aria-label="@T["RoleLegend"]">
-            @foreach (var role in Enum.GetValues<TenantRole>())
-            {
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium cursor-help @GetRoleBadgeClass(role)"
-                      title="@PermissionCatalog.RoleSummary(T, RoleName(role), role)" data-role="@role" role="listitem">
-                    @RoleName(role)
-                </span>
-            }
-        </div>
-
-        <!-- Users: a table from 1024 px, cards below (no sideways scrolling on phones) -->
-        <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" data-testid="users-table">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="sd-thead">
-                    <tr>
-                        <th class="px-6 py-3 text-left">@T["Column_Name"]</th>
-                        <th class="px-6 py-3 text-left">@T["Column_Email"]</th>
-                        <th class="px-6 py-3 text-left">@T["Column_Role"]</th>
-                        <th class="px-6 py-3 text-left">@T["Column_Status"]</th>
-                        <th class="px-6 py-3 text-left">@T["Column_Joined"]</th>
-                        @if (canEdit)
-                        {
-                            <th class="px-6 py-3 text-right">@T["Column_Actions"]</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach (var user in users)
-                    {
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 text-sm font-medium text-gray-900">@(user.DisplayName ?? "—")</td>
-                            <td class="px-6 py-4 text-sm text-gray-600 break-all">@(user.ApplicationUser?.Email ?? "—")</td>
-                            <td class="px-6 py-4 whitespace-nowrap">@RoleBadge(user.Role)</td>
-                            <td class="px-6 py-4 whitespace-nowrap">@StatusBadge(user.IsActive)</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">@UiFormat.Date(DateOnly.FromDateTime(user.CreatedAt))</td>
-                            @if (canEdit)
-                            {
-                                <td class="px-6 py-4 whitespace-nowrap text-right">@EditButton(user)</td>
-                            }
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <ul class="lg:hidden grid gap-3 sm:grid-cols-2 list-none p-0 m-0" data-testid="user-cards">
-            @foreach (var user in users)
-            {
-                <li class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem]" data-testid="user-card">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="min-w-0">
-                            <p class="m-0 font-semibold text-gray-900">@(user.DisplayName ?? "—")</p>
-                            <p class="m-0 mt-0.5 text-sm text-gray-600 break-all">@(user.ApplicationUser?.Email ?? "—")</p>
-                        </div>
-                        @if (canEdit)
-                        {
-                            @EditButton(user)
-                        }
-                    </div>
-                    <div class="mt-3 flex flex-wrap items-center gap-2">
-                        @RoleBadge(user.Role)
-                        @StatusBadge(user.IsActive)
-                        <span class="text-xs text-gray-600">@T["JoinedOn", UiFormat.Date(DateOnly.FromDateTime(user.CreatedAt))]</span>
-                    </div>
-                </li>
-            }
-        </ul>
-    }
-</div>
+}
 
 @code {
-    private List<TenantUser>? users;
+    /// <summary>The owner's e-mail (the owner has no display name); null while loading.</summary>
+    private string? owner;
+    private bool ownerIsViewing;
+    private List<TenantUser> members = [];
     private bool canCreate;
     private bool canEdit;
 
     protected override async Task OnInitializedAsync()
     {
+        // The team is the owner's: a manager (or an inactive member) gets the access-denied page
+        if (!await PermissionService.RequireAsync(Permission.UsersView, NavManager)) return;
         canCreate = await PermissionService.HasPermissionAsync(Permission.UsersCreate);
         canEdit = await PermissionService.HasPermissionAsync(Permission.UsersEdit);
 
         var tenantOwnerId = UserIdProvider.GetUserId();
-        users = await DbContext.TenantUsers
+        ownerIsViewing = UserIdProvider.GetActualUserId() == tenantOwnerId;
+        members = await DbContext.TenantUsers
             .Include(tu => tu.ApplicationUser)
             .Where(tu => tu.TenantOwnerId == tenantOwnerId)
             .OrderBy(tu => tu.DisplayName)
             .ToListAsync();
+        owner = await DbContext.Users.AsNoTracking()
+            .Where(u => u.Id == tenantOwnerId)
+            .Select(u => u.Email)
+            .FirstOrDefaultAsync() ?? "—";
     }
 
-    private void InviteUser() => NavManager.NavigateTo("/users/invite");
-    private void EditUser(Guid id) => NavManager.NavigateTo($"/users/edit/{id}");
+    private RenderFragment OwnerName() => __builder =>
+    {
+        @* The owner has no display name: the e-mail is the name (it breaks anywhere, "You" wraps below on a phone) *@
+        <div class="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p class="m-0 min-w-0 font-semibold text-gray-900 break-all">@owner</p>
+            @if (ownerIsViewing)
+            {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700" data-testid="owner-you">@T["You"]</span>
+            }
+        </div>
+    };
 
-    private string RoleName(TenantRole role) => C[$"Role_{role}"];
+    private RenderFragment MemberName(TenantUser member) => __builder =>
+    {
+        <div class="min-w-0">
+            <p class="m-0 font-semibold text-gray-900 break-words">@(member.DisplayName ?? "—")</p>
+            <p class="m-0 mt-0.5 text-sm text-gray-600 break-all">@(member.ApplicationUser?.Email ?? "—")</p>
+        </div>
+    };
 
     private RenderFragment RoleBadge(TenantRole role) => __builder =>
     {
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @GetRoleBadgeClass(role)">@RoleName(role)</span>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium @(role == TenantRole.Owner ? "bg-accent-100 text-accent-800" : "bg-brand-100 text-brand-800")"
+              data-testid="role-badge" data-role="@role">@C[$"Role_{role}"]</span>
     };
 
     private RenderFragment StatusBadge(bool active) => __builder =>
     {
         if (active)
         {
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">@T["Status_Active"]</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800" data-testid="status-badge">@T["Status_Active"]</span>
         }
         else
         {
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">@T["Status_Inactive"]</span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" data-testid="status-badge">@T["Status_Inactive"]</span>
         }
     };
 
-    private RenderFragment EditButton(TenantUser user) => __builder =>
+    private RenderFragment EditLink(TenantUser member) => __builder =>
     {
-        <button type="button" class="sd-btn sd-btn--secondary sd-btn--small"
-                aria-label="@T["EditLabel", user.DisplayName ?? user.ApplicationUser?.Email ?? ""]"
-                @onclick="() => EditUser(user.Id)">
+        <a href="/users/edit/@member.Id" class="sd-btn sd-btn--secondary sd-btn--small flex-shrink-0"
+           aria-label="@T["EditLabel", member.DisplayName ?? member.ApplicationUser?.Email ?? ""]">
             @C["Edit"]
-        </button>
-    };
-
-    private static string GetRoleBadgeClass(TenantRole role) => role switch
-    {
-        TenantRole.GeneralManager => "bg-purple-100 text-purple-800",
-        TenantRole.Manager => "bg-brand-100 text-brand-800",
-        TenantRole.Cashier => "bg-green-100 text-green-800",
-        TenantRole.Employee => "bg-gray-100 text-gray-800",
-        TenantRole.Driver => "bg-amber-100 text-amber-800",
-        _ => "bg-gray-100 text-gray-800"
+        </a>
     };
 }

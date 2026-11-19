@@ -8,6 +8,7 @@
 @using SpeiseDirekt.ServiceInterface
 @attribute [Authorize]
 @inject IStringLocalizer<ItemsText> T
+@inject IPermissionService PermissionService
 @inject IStringLocalizer<CommonText> C
 
 <PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
@@ -47,6 +48,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenuItemsView, NavigationManager)) return;
         Category = await Context.Categories
             .Include(c => c.Menu)
             .FirstOrDefaultAsync(c => c.Id == CategoryId);

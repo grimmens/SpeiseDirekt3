@@ -254,10 +254,10 @@
     <value>Example view with demo data.</value>
   </data>
   <data name="Card_Team_Title" xml:space="preserve">
-    <value>Team and roles</value>
+    <value>Team accounts</value>
   </data>
   <data name="Card_Team_Text" xml:space="preserve">
-    <value>Invite your staff. Roles and permissions decide who may edit menus, QR codes or the team.</value>
+    <value>You as the owner, your team as managers: they look after menus, dishes and QR codes with their own login – only you manage the team.</value>
   </data>
   <data name="Card_Allergens_Title" xml:space="preserve">
     <value>14 EU allergens</value>
@@ -384,7 +384,7 @@
     <value>Can several people manage the menu?</value>
   </data>
   <data name="Faq_Team_A" xml:space="preserve">
-    <value>Yes. You invite staff with their own login and use roles and permissions to decide who may see and change what.</value>
+    <value>Yes. You invite your team as managers, each with their own login: they can edit menus, dishes, QR codes and the restaurant profile and see the analytics. Only you as the owner manage the team.</value>
   </data>
   <data name="Faq_Print_Q" xml:space="preserve">
     <value>How does the QR code get onto the table?</value>

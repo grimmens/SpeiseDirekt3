@@ -226,6 +226,37 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         return email;
     }
 
+    /// <summary>A team member as <see cref="SeedTeamMemberAsync"/> created it.</summary>
+    protected sealed record TeamMember(string Email, string AccountId, Guid TenantUserId);
+
+    /// <summary>
+    /// Seeds a team member of <paramref name="ownerId"/> (a manager — AP14 knows no other role): an Identity user with
+    /// <see cref="Password"/> and its <c>TenantUser</c> row, active or not. Sign in with <see cref="LoginAsync"/>.
+    /// </summary>
+    protected async Task<TeamMember> SeedTeamMemberAsync(Guid ownerId, string displayName = "Max Kellner", bool active = true, string? email = null)
+    {
+        email ??= UniqueEmail("team");
+        var account = new SpeiseDirekt.Data.ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(), UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email,
+            NormalizedEmail = email.ToUpperInvariant(), EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(),
+            TenantOwnerId = ownerId.ToString()
+        };
+        account.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<SpeiseDirekt.Data.ApplicationUser>().HashPassword(account, Password);
+        var member = new SpeiseDirekt.Model.TenantUser
+        {
+            Id = Guid.NewGuid(), ApplicationUserId = account.Id, TenantOwnerId = ownerId.ToString(),
+            Role = SpeiseDirekt.Model.TenantRole.Manager, DisplayName = displayName, IsActive = active
+        };
+        await App.SeedAsync(ownerId, db =>
+        {
+            db.Users.Add(account);
+            db.TenantUsers.Add(member);
+            return Task.CompletedTask;
+        });
+        return new TeamMember(email, account.Id, member.Id);
+    }
+
     /// <summary>The tenant (owner) id of the account <paramref name="email"/>.</summary>
     protected async Task<Guid> OwnerIdAsync(string email)
     {

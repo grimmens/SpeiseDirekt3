@@ -62,20 +62,8 @@
     <value>Owner</value>
     <comment>Role of the tenant owner (user menu, team pages)</comment>
   </data>
-  <data name="Role_GeneralManager" xml:space="preserve">
-    <value>General manager</value>
-  </data>
   <data name="Role_Manager" xml:space="preserve">
     <value>Manager</value>
-  </data>
-  <data name="Role_Cashier" xml:space="preserve">
-    <value>Cashier</value>
-  </data>
-  <data name="Role_Employee" xml:space="preserve">
-    <value>Employee</value>
-  </data>
-  <data name="Role_Driver" xml:space="preserve">
-    <value>Driver</value>
   </data>
   <data name="OptionalSuffix" xml:space="preserve">
     <value>(optional)</value>

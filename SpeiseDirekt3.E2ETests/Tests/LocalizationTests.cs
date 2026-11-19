@@ -125,7 +125,7 @@ public class LocalizationTests : BackOfficeTestBase
             await page.GetByTestId("user-menu-button").ClickAsync();
             await Assertions.Expect(page.GetByTestId("account-settings-link")).ToHaveTextAsync(settings);
             await Assertions.Expect(page.GetByTestId("user-menu").GetByTestId("logout-button")).ToHaveTextAsync(logout);
-            await Assertions.Expect(page.GetByTestId("user-role")).ToHaveTextAsync(locale.StartsWith("de") ? "Inhaber" : "Owner");
+            await Assertions.Expect(page.GetByTestId("user-role")).ToHaveTextAsync(locale.StartsWith("de") ? "Besitzer" : "Owner");
         }
 
         // The phone drawer and the anonymous header

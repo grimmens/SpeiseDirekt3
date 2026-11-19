@@ -9,6 +9,7 @@
 @using SpeiseDirekt.ServiceInterface
 @attribute [Authorize]
 @inject IStringLocalizer<CategoriesText> T
+@inject NavigationManager NavManager
 @inject IStringLocalizer<CommonText> C
 @inject IStringLocalizer<ShellText> S
 
@@ -222,6 +223,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.CategoriesView, NavManager)) return;
         canCreate = await PermissionService.HasPermissionAsync(Permission.CategoriesCreate);
         canEdit = await PermissionService.HasPermissionAsync(Permission.CategoriesEdit);
         canDelete = await PermissionService.HasPermissionAsync(Permission.CategoriesDelete);

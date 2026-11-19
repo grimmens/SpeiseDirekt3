@@ -63,6 +63,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenuItemsView, Navigation)) return;
         menu = Guid.TryParse(MenuId, out var menuId) ? await Context.Menus.FindAsync(menuId) : null;
 
         if (menu == null)

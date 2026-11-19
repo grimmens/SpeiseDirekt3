@@ -262,14 +262,13 @@ public abstract class QrCalendarTestBase : BackOfficeTestBase
 
     // --- Accounts ---
 
-    /// <summary>Invites a sub-account via <c>/users/invite</c> (as the owner in <see cref="E2ETestBase.Page"/>).</summary>
-    protected async Task InviteAsync(string email, string displayName, string role)
+    /// <summary>Invites a team member (a manager) via <c>/users/invite</c> (as the owner in <see cref="E2ETestBase.Page"/>).</summary>
+    protected async Task InviteAsync(string email, string displayName)
     {
         await GotoInteractiveAsync("/users/invite");
         await Page.GetByPlaceholder("employee@example.com").FillAsync(email);
         await Page.GetByPlaceholder("John Doe").FillAsync(displayName);
         await Page.GetByPlaceholder("Min. 8 characters").FillAsync(Password);
-        await Page.Locator("select").SelectOptionAsync(new SelectOptionValue { Label = role });
         await Button("Create Account").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/users$"));
     }

@@ -320,41 +320,28 @@ public class SortableListTests : BackOfficeTestBase
         await Assertions.Expect(cards.Nth(1)).ToContainTextAsync("Tomatensuppe");
     }
 
+    /// <summary>
+    /// AP14: every team member is a manager with the edit permissions, so a manager gets the handles and the sort script
+    /// like the owner (the list without handles is left for an account without edit rights, which no role is now).
+    /// </summary>
     [Fact]
-    public async Task WithoutEditPermission_ThereAreNoHandles_AndNoSortScript()
+    public async Task AManager_GetsTheHandles_AndTheSortScript()
     {
-        var (ownerId, menuId, soupsId) = await SeedAsync("Lesen Menü");
-        var employeeEmail = UniqueEmail("employee");
-        await App.SeedAsync(ownerId, db =>
-        {
-            var sub = new SpeiseDirekt.Data.ApplicationUser
-            {
-                Id = Guid.NewGuid().ToString(), UserName = employeeEmail, NormalizedUserName = employeeEmail.ToUpperInvariant(),
-                Email = employeeEmail, NormalizedEmail = employeeEmail.ToUpperInvariant(), EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString(), TenantOwnerId = ownerId.ToString()
-            };
-            sub.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<SpeiseDirekt.Data.ApplicationUser>().HashPassword(sub, Password);
-            db.Users.Add(sub);
-            db.TenantUsers.Add(new TenantUser
-            {
-                Id = Guid.NewGuid(), ApplicationUserId = sub.Id, TenantOwnerId = ownerId.ToString(),
-                Role = TenantRole.Employee, DisplayName = "Eva", IsActive = true
-            });
-            return Task.CompletedTask;
-        });
-        var (employeeContext, employee) = await NewContextAsync();
-        await using var _ = employeeContext;
+        var (ownerId, menuId, soupsId) = await SeedAsync("Team Menü");
+        var member = await SeedTeamMemberAsync(ownerId, "Eva");
+        var (managerContext, manager) = await NewContextAsync();
+        await using var _ = managerContext;
         var scripts = new List<string>();
-        employee.Request += (_, r) => { lock (scripts) scripts.Add(new Uri(r.Url).AbsolutePath); };
-        await LoginAsync(employee, employeeEmail);
+        manager.Request += (_, r) => { lock (scripts) scripts.Add(new Uri(r.Url).AbsolutePath); };
+        await LoginAsync(manager, member.Email);
 
-        await GotoInteractiveAsync(employee, $"/Categories/{menuId}");
-        await Assertions.Expect(employee.GetByTestId("category-row")).ToHaveCountAsync(3);
-        await Assertions.Expect(employee.GetByTestId("sort-handle")).ToHaveCountAsync(0);
-        await GotoInteractiveAsync(employee, $"/MenuItems/Category/{soupsId}");
-        await Assertions.Expect(employee.GetByTestId("menu-item-row")).ToHaveCountAsync(3);
-        await Assertions.Expect(employee.GetByTestId("sort-handle")).ToHaveCountAsync(0);
-        await employee.WaitForLoadStateAsync(LoadState.NetworkIdle);
-        scripts.Should().NotContain(p => p.Contains("sortable-list"), "nothing can be sorted without the edit permission");
+        await GotoInteractiveAsync(manager, $"/Categories/{menuId}");
+        await Assertions.Expect(manager.GetByTestId("category-row")).ToHaveCountAsync(3);
+        await Assertions.Expect(manager.GetByTestId("sort-handle")).ToHaveCountAsync(3);
+        await GotoInteractiveAsync(manager, $"/MenuItems/Category/{soupsId}");
+        await Assertions.Expect(manager.GetByTestId("menu-item-row")).ToHaveCountAsync(3);
+        await Assertions.Expect(manager.GetByTestId("menu-item-row").GetByTestId("sort-handle")).ToHaveCountAsync(3);
+        await manager.WaitForLoadStateAsync(LoadState.NetworkIdle);
+        lock (scripts) scripts.Should().Contain(p => p.Contains("sortable-list"), "a manager may sort");
     }
 }

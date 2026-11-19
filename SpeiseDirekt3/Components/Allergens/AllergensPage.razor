@@ -8,6 +8,7 @@
 @using SpeiseDirekt.ServiceInterface
 @attribute [Authorize]
 @inject IStringLocalizer<AllergensText> T
+@inject NavigationManager NavManager
 @inject IStringLocalizer<CommonText> C
 
 <PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
@@ -240,6 +241,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.AllergensView, NavManager)) return;
         canCreate = await PermissionService.HasPermissionAsync(Permission.AllergensCreate);
         canEdit = await PermissionService.HasPermissionAsync(Permission.AllergensEdit);
         canDelete = await PermissionService.HasPermissionAsync(Permission.AllergensDelete);

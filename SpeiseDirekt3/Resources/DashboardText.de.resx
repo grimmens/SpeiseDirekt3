@@ -52,7 +52,7 @@
     <value>Teammitglieder</value>
   </data>
   <data name="Stat_TeamHint" xml:space="preserve">
-    <value>Aktive Unterkonten</value>
+    <value>Aktive Manager</value>
   </data>
   <data name="Checklist_Title" xml:space="preserve">
     <value>Erste Schritte</value>

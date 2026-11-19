@@ -167,41 +167,43 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         }
     }
 
+    /// <summary>
+    /// AP14: a manager edits the owner's profile (no read-only role any more); a deactivated member is denied the page.
+    /// </summary>
     [Fact]
-    public async Task Profile_IsReadOnly_ForAnEmployee_AndCannotBeSaved()
+    public async Task Profile_IsEditedByAManager_ForTheOwner_ADeactivatedMemberIsDenied()
     {
         var ownerEmail = await RegisterNewOwnerAsync();
         var ownerId = await OwnerIdAsync(ownerEmail);
-        var employeeEmail = UniqueEmail("employee");
         await App.SeedAsync(ownerId, db =>
         {
             db.RestaurantProfiles.Add(new RestaurantProfile { Id = Guid.NewGuid(), Name = "Lokal des Chefs", Phone = "0123" });
-            var sub = new ApplicationUser
-            {
-                Id = Guid.NewGuid().ToString(), UserName = employeeEmail, NormalizedUserName = employeeEmail.ToUpperInvariant(),
-                Email = employeeEmail, NormalizedEmail = employeeEmail.ToUpperInvariant(), EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString(), TenantOwnerId = ownerId.ToString()
-            };
-            sub.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(sub, Password);
-            db.Users.Add(sub);
-            db.TenantUsers.Add(new TenantUser
-            {
-                Id = Guid.NewGuid(), ApplicationUserId = sub.Id, TenantOwnerId = ownerId.ToString(),
-                Role = TenantRole.Employee, DisplayName = "Eva", IsActive = true
-            });
             return Task.CompletedTask;
         });
+        var member = await SeedTeamMemberAsync(ownerId, "Eva");
 
         await LogoutAsync(Page);
-        await LoginAsync(Page, employeeEmail);
+        await LoginAsync(Page, member.Email);
         await GotoInteractiveAsync("/restaurant");
 
-        // The owner's profile, read-only: no save button, disabled fields
+        // The owner's profile, editable
         await Assertions.Expect(Page.Locator("#Restaurant\\.Name")).ToHaveValueAsync("Lokal des Chefs");
-        await Assertions.Expect(Page.Locator("#Restaurant\\.Name")).ToBeDisabledAsync();
-        await Assertions.Expect(Page.Locator("#Restaurant\\.Logo")).ToBeDisabledAsync();
-        await Assertions.Expect(Page.GetByTestId("profile-read-only")).ToBeVisibleAsync();
-        await Assertions.Expect(SaveProfile).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.Locator("#Restaurant\\.Name")).ToBeEnabledAsync();
+        await Assertions.Expect(Page.Locator("#Restaurant\\.Logo")).ToBeEnabledAsync();
+        await Assertions.Expect(Page.GetByTestId("profile-read-only")).ToHaveCountAsync(0);
+        await Page.Locator("#Restaurant\\.Phone").FillAsync("+43 1 234 56 78");
+        await SaveProfile.ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("profile-saved")).ToBeVisibleAsync();
+        await using (var db = App.CreateDbContext(ownerId))
+        {
+            var profile = await db.RestaurantProfiles.SingleAsync();
+            profile.Name.Should().Be("Lokal des Chefs");
+            profile.Phone.Should().Be("+43 1 234 56 78");
+        }
+
+        await App.SeedAsync(ownerId, async db => (await db.TenantUsers.SingleAsync(tu => tu.Id == member.TenantUserId)).IsActive = false);
+        await Page.GotoAsync("/restaurant");
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/Account/AccessDenied$"));
     }
 
     // --- Category subtitle ---

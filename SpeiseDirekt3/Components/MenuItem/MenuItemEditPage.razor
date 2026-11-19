@@ -295,6 +295,8 @@
         // The same page instance may be reused for another item (e.g. /new → /edit through the history): start clean
         Context.ChangeTracker.Clear();
         (leaving, saving, isUploading, saveError, imageUploadError) = (false, false, false, null, null);
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenuItemsView, Navigation)) return;
         canEdit = await PermissionService.HasPermissionAsync(Permission.MenuItemsEdit);
         canCreate = await PermissionService.HasPermissionAsync(Permission.MenuItemsCreate);
 

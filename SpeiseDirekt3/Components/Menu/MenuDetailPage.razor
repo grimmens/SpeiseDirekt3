@@ -223,6 +223,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenusView, NavManager)) return;
         canEdit = await PermissionService.HasPermissionAsync(Permission.MenusEdit);
         canDelete = await PermissionService.HasPermissionAsync(Permission.MenusDelete);
         menu = await DbContext.Menus.FirstOrDefaultAsync(m => m.Id == MenuId);

@@ -30,7 +30,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
     private static string? Directory => Environment.GetEnvironmentVariable(DirectoryEnvVar) is { Length: > 0 } d ? d : null;
 
     private sealed record Seeded(Guid MenuId, Guid CategoryId, Guid EmptyMenuId, Guid TimeTableQrId, Guid CalendarQrId, Guid TenantUserId,
-        Guid DrinksCategoryId, Guid HolidayQrId, int HolidayYear);
+        Guid DrinksCategoryId, Guid HolidayQrId, int HolidayYear, string ManagerEmail);
 
     [Fact]
     public async Task Capture_every_back_office_page()
@@ -194,6 +194,90 @@ public class AdminScreenshotTour : QrCalendarTestBase
             }
         }
         await File.WriteAllLinesAsync(Path.Combine(root, "overflow.txt"), findings.Count == 0 ? ["none"] : findings);
+    }
+
+    /// <summary>
+    /// AP14, the team (owner and managers): as the owner the team list, the invitation, a member's page and the removal
+    /// confirmation; as the manager "Max Kellner" the dashboard with its navigation (top bar and user menu from 1024 px,
+    /// the drawer below) and the access-denied page of <c>/users</c>. At 1280 and 390 px into
+    /// <c>$E2E_SCREENSHOT_DIR/team/{width}-{name}.png</c> (+ <c>.txt</c> with the page's texts); per language with
+    /// <c>E2E_LOCALE</c>.
+    /// </summary>
+    [Fact]
+    public async Task Capture_team_pages()
+    {
+        var dir = Directory;
+        if (dir is null) return; // opt-in only
+        var root = Path.Combine(dir, "team");
+        System.IO.Directory.CreateDirectory(root);
+
+        var email = await RegisterNewOwnerAsync();
+        var ownerId = await OwnerIdAsync(email);
+        var s = await SeedTenantAsync(ownerId);
+        var ownerState = await Context.StorageStateAsync();
+
+        foreach (var (width, height) in new[] { (1280, 900), (390, 844) })
+        {
+            BrowserNewContextOptions Options(string? state) => new()
+            {
+                BaseURL = App.ServerAddress,
+                Locale = ContextLocale,
+                StorageState = state,
+                ViewportSize = new ViewportSize { Width = width, Height = height },
+                DeviceScaleFactor = width < 768 ? 2 : 1,
+                IsMobile = width < 768,
+                HasTouch = width < 1024
+            };
+            async Task Shot(IPage page, string name, bool fullPage = true)
+            {
+                await SettleAsync(page);
+                var file = Path.Combine(root, $"{width}-{name}");
+                await page.ScreenshotAsync(new() { Path = file + ".png", FullPage = fullPage });
+                await File.WriteAllTextAsync(file + ".txt", await PageTextsAsync(page));
+            }
+
+            // The owner
+            await using (var ownerContext = await Fixture.NewBrowserContextAsync(Options(ownerState)))
+            {
+                ownerContext.SetDefaultTimeout(15_000);
+                var owner = await ownerContext.NewPageAsync();
+                await GotoInteractiveAsync(owner, "/users");
+                await Shot(owner, "owner-list");
+                await GotoInteractiveAsync(owner, "/users/invite");
+                await Shot(owner, "owner-invite");
+                await GotoInteractiveAsync(owner, $"/users/edit/{s.TenantUserId}");
+                await Shot(owner, "owner-edit");
+                await owner.GetByTestId("member-remove").ClickAsync();
+                await Assertions.Expect(owner.GetByTestId("confirmation")).ToBeVisibleAsync();
+                await Shot(owner, "owner-remove-confirm", fullPage: false);
+                await owner.Locator("#cancelBtn").ClickAsync();
+                await GotoInteractiveAsync(owner, "/dashboard");
+                await Shot(owner, "owner-dashboard");
+            }
+
+            // The manager
+            await using (var managerContext = await Fixture.NewBrowserContextAsync(Options(null)))
+            {
+                managerContext.SetDefaultTimeout(15_000);
+                var manager = await managerContext.NewPageAsync();
+                await LoginAsync(manager, s.ManagerEmail);
+                await GotoInteractiveAsync(manager, "/dashboard");
+                await Shot(manager, "manager-dashboard");
+                if (width >= 1024)
+                {
+                    await manager.GetByTestId("user-menu-button").ClickAsync();
+                    await Shot(manager, "manager-user-menu", fullPage: false);
+                }
+                else
+                {
+                    await manager.GetByTestId("nav-drawer-button").ClickAsync();
+                    await Assertions.Expect(manager.GetByTestId("nav-drawer")).ToBeVisibleAsync();
+                    await Shot(manager, "manager-drawer", fullPage: false);
+                }
+                await manager.GotoAsync("/users");
+                await Shot(manager, "manager-users-denied");
+            }
+        }
     }
 
     /// <summary>
@@ -570,6 +654,14 @@ public class AdminScreenshotTour : QrCalendarTestBase
         var lastFriday = new DateOnly(holidayYear + 1, 1, 31);
         while (lastFriday.DayOfWeek != DayOfWeek.Friday) lastFriday = lastFriday.AddDays(-1);
         var tenantUserId = Guid.NewGuid();
+        // The team (AP14: managers): "Max Kellner" (active, signs in with the tests' password) and "Anna Berger" (inactive).
+        // The facts of this class share one database: a later tenant gets numbered addresses.
+        string managerEmail;
+        await using (var check = App.CreateDbContext(ownerId))
+        {
+            var taken = await check.Users.CountAsync(u => u.Email!.StartsWith("kellner") && u.Email.EndsWith("@gasthaus.test"));
+            managerEmail = taken == 0 ? "kellner@gasthaus.test" : $"kellner{taken + 1}@gasthaus.test";
+        }
         Guid firstCategoryId = Guid.Empty;
         Guid drinksCategoryId = Guid.Empty;
 
@@ -717,19 +809,27 @@ public class AdminScreenshotTour : QrCalendarTestBase
                 }
             });
 
-            // --- A sub-account
-            var subId = Guid.NewGuid().ToString();
-            db.Users.Add(new ApplicationUser
+            // --- The team: two managers, one of them deactivated
+            foreach (var (id, email, name, active) in new[]
+                     {
+                         (tenantUserId, managerEmail, "Max Kellner", true),
+                         (Guid.NewGuid(), managerEmail.Replace("kellner", "berger"), "Anna Berger", false)
+                     })
             {
-                Id = subId, UserName = "kellner@gasthaus.test", NormalizedUserName = "KELLNER@GASTHAUS.TEST",
-                Email = "kellner@gasthaus.test", NormalizedEmail = "KELLNER@GASTHAUS.TEST", EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString(), TenantOwnerId = ownerId.ToString()
-            });
-            db.TenantUsers.Add(new TenantUser
-            {
-                Id = tenantUserId, ApplicationUserId = subId, TenantOwnerId = ownerId.ToString(),
-                Role = TenantRole.Employee, DisplayName = "Max Kellner", IsActive = true
-            });
+                var account = new ApplicationUser
+                {
+                    Id = Guid.NewGuid().ToString(), UserName = email, NormalizedUserName = email.ToUpperInvariant(),
+                    Email = email, NormalizedEmail = email.ToUpperInvariant(), EmailConfirmed = true,
+                    SecurityStamp = Guid.NewGuid().ToString(), TenantOwnerId = ownerId.ToString()
+                };
+                account.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<ApplicationUser>().HashPassword(account, Password);
+                db.Users.Add(account);
+                db.TenantUsers.Add(new TenantUser
+                {
+                    Id = id, ApplicationUserId = account.Id, TenantOwnerId = ownerId.ToString(),
+                    Role = TenantRole.Manager, DisplayName = name, IsActive = active
+                });
+            }
 
             // --- Two weeks of views and clicks for the analytics page
             var rnd = new Random(42);
@@ -750,7 +850,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
         });
 
         return new Seeded(menuId, firstCategoryId, emptyMenuId, timeTableQrId, calendarQrId, tenantUserId, drinksCategoryId,
-            holidayQrId, holidayYear);
+            holidayQrId, holidayYear, managerEmail);
     }
 
     /// <summary>A diagonal two-colour gradient as PNG (stand-in for a photo in the screenshots).</summary>

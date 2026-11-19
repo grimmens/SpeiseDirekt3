@@ -10,6 +10,7 @@
 @inject IUserIdProvider UserIdProvider
 @inject IAuthorizationService AuthorizationService
 @inject TimeProvider TimeProvider
+@inject NavigationManager NavManager
 @inject IStringLocalizer<DashboardText> T
 @inject IStringLocalizer<CommonText> C
 
@@ -59,7 +60,8 @@
     </PageHeader>
 
     <!-- Stat tiles -->
-    <div class="grid grid-cols-2 @(d.CanViewAnalytics ? "lg:grid-cols-4" : "lg:grid-cols-3") gap-4 mb-8">
+    @* Menus and QR codes always; analytics and the team only for whoever may open them (a manager has no team tile) *@
+    <div class="grid grid-cols-2 @(d.StatTiles switch { 4 => "lg:grid-cols-4", 3 => "lg:grid-cols-3", _ => "" }) gap-4 mb-8">
         <a href="menus" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-menus">
             <div class="flex items-center gap-3">
                 <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-100 text-brand-700">
@@ -106,6 +108,8 @@
                 <div class="mt-2 text-xs text-gray-500">@T["Stat_ViewsHint"]</div>
             </a>
         }
+        @if (d.CanViewTeam)
+        {
         <a href="users" class="group bg-white rounded-xl border border-gray-200 shadow-sm p-3.5 sm:p-6 hover:shadow-md hover:border-brand-300 transition-all duration-200" data-testid="stat-team">
             <div class="flex items-center gap-3">
                 <span class="hidden sm:flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-accent-100 text-accent-800">
@@ -120,6 +124,7 @@
             </div>
             <div class="mt-2 text-xs text-gray-500">@T["Stat_TeamHint"]</div>
         </a>
+        }
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -278,6 +283,9 @@
         public bool CanCreateMenu { get; init; }
         public bool CanCreateQrCode { get; init; }
         public bool CanViewAnalytics { get; init; }
+        /// <summary>The owner: the team tile links to /users, which a manager may not open.</summary>
+        public bool CanViewTeam { get; init; }
+        public int StatTiles => 2 + (CanViewAnalytics ? 1 : 0) + (CanViewTeam ? 1 : 0);
         public required List<MenuSummary> Menus { get; init; }
         public required List<ChecklistStep> Steps { get; init; }
         /// <summary>Shown to users who can build the menu, until every step is done.</summary>
@@ -294,12 +302,15 @@
         if (AuthState is null) return;
         var user = (await AuthState).User;
         if (user.Identity?.IsAuthenticated != true) return;
+        // An inactive or removed team member sees nothing of the tenant
+        if (!await PermissionService.RequireAsync(Permission.MenusView, NavManager)) return;
 
         var canCreateMenu = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
         // Same rule as the "Create New QR Code" button on /qrcodes (free tier limit) plus the edit page's permission
         var canCreateQrCode = await PermissionService.HasPermissionAsync(Permission.QrCodesCreate)
             && (await AuthorizationService.AuthorizeAsync(user, PolicyNames.PaidTenant)).Succeeded;
         var canViewAnalytics = await PermissionService.HasPermissionAsync(Permission.AnalyticsView);
+        var canViewTeam = await PermissionService.HasPermissionAsync(Permission.UsersView);
 
         // A handful of counts; the tenant query filters scope menus, categories, items and QR codes
         var menus = await DbContext.Menus
@@ -312,7 +323,7 @@
         var qrCodeCount = await DbContext.QRCodes.CountAsync();
 
         var tenantId = UserIdProvider.GetUserId();
-        var teamCount = await DbContext.TenantUsers.CountAsync(tu => tu.TenantOwnerId == tenantId && tu.IsActive);
+        var teamCount = canViewTeam ? await DbContext.TenantUsers.CountAsync(tu => tu.TenantOwnerId == tenantId && tu.IsActive) : 0;
 
         // Analytics rows are not tenant-scoped themselves; they count through the tenant's menus
         var viewsLast7Days = 0;
@@ -338,6 +349,7 @@
             CanCreateMenu = canCreateMenu,
             CanCreateQrCode = canCreateQrCode,
             CanViewAnalytics = canViewAnalytics,
+            CanViewTeam = canViewTeam,
             Menus = menus,
             SuggestRestaurantProfile = suggestProfile,
             Steps = BuildChecklist(menus, menuCount, itemCount, qrCodeCount, scanned, canCreateMenu, canCreateQrCode)

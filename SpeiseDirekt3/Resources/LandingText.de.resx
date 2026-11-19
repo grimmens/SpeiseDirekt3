@@ -247,10 +247,10 @@
     <value>Beispielansicht mit Demodaten.</value>
   </data>
   <data name="Card_Team_Title" xml:space="preserve">
-    <value>Team und Rollen</value>
+    <value>Teamzugänge</value>
   </data>
   <data name="Card_Team_Text" xml:space="preserve">
-    <value>Laden Sie Mitarbeitende ein. Rollen und Berechtigungen legen fest, wer Karten, QR-Codes oder das Team bearbeiten darf.</value>
+    <value>Sie als Besitzer, Ihr Team als Manager: Manager pflegen Karten, Gerichte und QR-Codes mit eigenem Zugang – das Team verwalten nur Sie.</value>
   </data>
   <data name="Card_Allergens_Title" xml:space="preserve">
     <value>14 EU-Allergene</value>
@@ -376,7 +376,7 @@
     <value>Können mehrere Personen die Karte pflegen?</value>
   </data>
   <data name="Faq_Team_A" xml:space="preserve">
-    <value>Ja. Sie laden Mitarbeitende mit eigenem Zugang ein und legen über Rollen und Berechtigungen fest, wer was sehen und ändern darf.</value>
+    <value>Ja. Sie laden Ihr Team als Manager mit eigenem Zugang ein: Manager können Speisekarten, Gerichte, QR-Codes und das Restaurantprofil bearbeiten und die Statistik sehen. Das Team verwalten nur Sie als Besitzer.</value>
   </data>
   <data name="Faq_Print_Q" xml:space="preserve">
     <value>Wie kommt der QR-Code auf den Tisch?</value>

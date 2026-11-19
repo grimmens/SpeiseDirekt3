@@ -204,42 +204,37 @@ public class ItemEditPageTests : BackOfficeTestBase
         await Assertions.Expect(Page.GetByTestId("item-not-found")).ToContainTextAsync("Item not found");
     }
 
+    /// <summary>
+    /// AP14: no role sees an item read-only any more — a manager edits the owner's item like the owner and opens the page
+    /// of a new one; a deactivated member is denied the page.
+    /// </summary>
     [Fact]
-    public async Task Employee_SeesTheItemReadOnly_AndCannotOpenANewOne()
+    public async Task Manager_EditsTheItem_AndOpensANewOne_ADeactivatedMemberIsDenied()
     {
         var (ownerId, _, startersId, _, soupId) = await SeedAsync();
-        var employeeEmail = UniqueEmail("employee");
-        await App.SeedAsync(ownerId, db =>
-        {
-            var sub = new ApplicationUser
-            {
-                Id = Guid.NewGuid().ToString(), UserName = employeeEmail, NormalizedUserName = employeeEmail.ToUpperInvariant(),
-                Email = employeeEmail, NormalizedEmail = employeeEmail.ToUpperInvariant(), EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString(), TenantOwnerId = ownerId.ToString()
-            };
-            sub.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(sub, Password);
-            db.Users.Add(sub);
-            db.TenantUsers.Add(new TenantUser
-            {
-                Id = Guid.NewGuid(), ApplicationUserId = sub.Id, TenantOwnerId = ownerId.ToString(),
-                Role = TenantRole.Employee, DisplayName = "Eva", IsActive = true
-            });
-            return Task.CompletedTask;
-        });
-        var (employeeContext, employee) = await NewContextAsync();
-        await using var _ = employeeContext;
-        await LoginAsync(employee, employeeEmail);
+        var member = await SeedTeamMemberAsync(ownerId, "Eva");
+        var (managerContext, manager) = await NewContextAsync();
+        await using var _ = managerContext;
+        await LoginAsync(manager, member.Email);
 
-        await GotoInteractiveAsync(employee, $"/MenuItems/item/{soupId}/edit");
-        await Assertions.Expect(employee.GetByTestId("item-read-only")).ToBeVisibleAsync();
-        await Assertions.Expect(employee.Locator("#MenuItem\\.Name")).ToBeDisabledAsync();
-        await Assertions.Expect(employee.Locator("#MenuItem\\.IsVegan")).ToBeDisabledAsync();
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Save", Exact = true })).ToHaveCountAsync(0);
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Add variant" })).ToHaveCountAsync(0);
+        await GotoInteractiveAsync(manager, $"/MenuItems/item/{soupId}/edit");
+        await Assertions.Expect(manager.GetByTestId("item-read-only")).ToHaveCountAsync(0);
+        await Assertions.Expect(manager.Locator("#MenuItem\\.Name")).ToBeEnabledAsync();
+        await Assertions.Expect(manager.Locator("#MenuItem\\.IsVegan")).ToBeEnabledAsync();
+        await manager.Locator("#MenuItem\\.IsVegan").CheckAsync();
+        await manager.GetByTestId("item-edit-form").GetByRole(AriaRole.Button, new() { Name = "Save", Exact = true }).ClickAsync();
+        await Assertions.Expect(manager).ToHaveURLAsync(new Regex("/MenuItems/Category/[0-9a-fA-F-]+\\?highlight=", RegexOptions.IgnoreCase));
+        await using (var db = App.CreateDbContext(ownerId))
+            (await db.MenuItems.SingleAsync(i => i.Id == soupId)).IsVegan.Should().BeTrue();
 
-        await GotoInteractiveAsync(employee, $"/MenuItems/Category/{startersId}/new");
-        await Assertions.Expect(employee).ToHaveURLAsync(new Regex($"/MenuItems/Category/{startersId}$", RegexOptions.IgnoreCase));
-        await Assertions.Expect(employee.GetByTestId("item-edit-form")).ToHaveCountAsync(0);
+        await GotoInteractiveAsync(manager, $"/MenuItems/Category/{startersId}/new");
+        await Assertions.Expect(manager).ToHaveURLAsync(new Regex($"/MenuItems/Category/{startersId}/new$", RegexOptions.IgnoreCase));
+        await Assertions.Expect(manager.GetByTestId("item-edit-form")).ToBeVisibleAsync();
+        await Assertions.Expect(manager.GetByRole(AriaRole.Button, new() { Name = "Add variant" })).ToBeVisibleAsync();
+
+        await App.SeedAsync(ownerId, async db => (await db.TenantUsers.SingleAsync(tu => tu.Id == member.TenantUserId)).IsActive = false);
+        await manager.GotoAsync($"/MenuItems/item/{soupId}/edit");
+        await Assertions.Expect(manager).ToHaveURLAsync(new Regex("/Account/AccessDenied$"));
     }
 
     /// <summary>

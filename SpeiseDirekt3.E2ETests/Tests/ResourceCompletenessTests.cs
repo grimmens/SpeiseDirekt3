@@ -76,19 +76,23 @@ public class ResourceCompletenessTests
         }
     }
 
-    /// <summary>Keys built from an enum at run time: every <c>TenantRole</c> has its display name (<c>CommonText.Role_*</c>).</summary>
+    /// <summary>
+    /// Keys built from an enum at run time: every <c>TenantRole</c> has its display name (<c>CommonText.Role_*</c>) —
+    /// since AP14 exactly the owner and the manager, and no name of a removed role is left.
+    /// </summary>
     [Fact]
     public void EveryRole_HasADisplayName()
     {
         var common = Entries(typeof(SpeiseDirekt3.CommonText), CultureInfo.InvariantCulture);
         foreach (var role in Enum.GetNames<SpeiseDirekt.Model.TenantRole>())
             common.Should().ContainKey($"Role_{role}");
-        common.Should().ContainKey("Role_Owner");
+        common.Keys.Where(k => k.StartsWith("Role_")).Should().BeEquivalentTo("Role_Owner", "Role_Manager");
+        Entries(typeof(SpeiseDirekt3.CommonText), German)["Role_Owner"].Should().Be("Besitzer");
     }
 
     /// <summary>
-    /// Keys the back-office areas build at run time (AP12b): design names, label names, time ranges, QR code modes, role
-    /// descriptions and the permission catalog of the team pages.
+    /// Keys the back-office areas build at run time (AP12b): design names, label names, time ranges and QR code modes
+    /// (the team pages' role descriptions and permission catalog are gone with AP14).
     /// </summary>
     [Fact]
     public void AreaKeysBuiltAtRunTime_Exist()
@@ -107,16 +111,6 @@ public class ResourceCompletenessTests
 
         var qrCodes = Entries(typeof(SpeiseDirekt3.QrCodesText), CultureInfo.InvariantCulture);
         qrCodes.Should().ContainKeys("Mode_Direct", "Mode_Schedule", "Mode_Calendar");
-
-        var team = Entries(typeof(SpeiseDirekt3.TeamText), CultureInfo.InvariantCulture);
-        foreach (var role in Enum.GetNames<SpeiseDirekt.Model.TenantRole>())
-            team.Should().ContainKey($"RoleDesc_{role}");
-        foreach (var area in SpeiseDirekt3.Components.UserManagement.PermissionCatalog.Areas)
-        {
-            team.Should().ContainKey(area.NameKey);
-            foreach (var entry in area.Entries)
-                team.Should().ContainKeys(entry.ActionKey, entry.LabelKey);
-        }
     }
 
     /// <summary>Every message Identity can produce is overridden by the localized describer and has its IdentityText key.</summary>
