@@ -48,11 +48,4 @@ public static class PolicyNames
     public const string CanCreateUsers = "CanCreateUsers";
     public const string CanEditUsers = "CanEditUsers";
     public const string CanDeleteUsers = "CanDeleteUsers";
-
-    // Subscription
-    public const string CanManageSubscription = "CanManageSubscription";
-
-    // Delivery
-    public const string CanViewDelivery = "CanViewDelivery";
-    public const string CanManageDelivery = "CanManageDelivery";
 }

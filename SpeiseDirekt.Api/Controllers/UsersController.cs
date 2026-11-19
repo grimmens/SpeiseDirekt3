@@ -10,6 +10,10 @@ using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.Api.Controllers;
 
+/// <summary>
+/// The team of the tenant (AP14: the owner and managers). Only the owner may use these endpoints (the <c>Users*</c>
+/// permissions); every member created here is a manager.
+/// </summary>
 [Route("api/[controller]")]
 [ApiController]
 [Authorize]
@@ -85,13 +89,13 @@ public class UsersController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(result.Errors.Select(e => e.Description));
 
-        // Create TenantUser record
+        // Create TenantUser record: every member is a manager
         var tenantUser = new TenantUser
         {
             Id = Guid.NewGuid(),
             ApplicationUserId = appUser.Id,
             TenantOwnerId = tenantOwnerId,
-            Role = dto.Role,
+            Role = TenantRole.Manager,
             DisplayName = dto.DisplayName,
             IsActive = true
         };
@@ -113,10 +117,17 @@ public class UsersController : ControllerBase
         if (tenantUser is null)
             return NotFound();
 
-        tenantUser.Role = dto.Role;
+        if (dto.DisplayName is not null)
+        {
+            var displayName = dto.DisplayName.Trim();
+            if (displayName.Length == 0)
+            {
+                ModelState.AddModelError(nameof(dto.DisplayName), "The display name must not be empty.");
+                return ValidationProblem(ModelState);
+            }
+            tenantUser.DisplayName = displayName;
+        }
         tenantUser.IsActive = dto.IsActive;
-        if (dto.CustomPermissions.HasValue)
-            tenantUser.Permissions = dto.CustomPermissions.Value;
 
         await _db.SaveChangesAsync();
 

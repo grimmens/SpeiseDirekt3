@@ -28,7 +28,7 @@ public static class PermissionPolicyExtensions
 
         // Pattern: {Area}{Action} -> Can{Action}{Area}
         // e.g. MenusView -> CanViewMenus, CategoriesCreate -> CanCreateCategories
-        var actions = new[] { "View", "Create", "Edit", "Delete", "Manage" };
+        var actions = new[] { "View", "Create", "Edit", "Delete" };
 
         foreach (var action in actions)
         {
