@@ -1,0 +1,34 @@
+@page "/demo"
+@page "/demo/en"
+@* The live demo (AP13): the real guest menu (GuestMenuView, static SSR, the guest document) of the made-up restaurant
+   "Trattoria Lago", built in memory from DemoMenuContent — no database, no tenant, no QR code, nothing recorded
+   (TrackClicks = false, no MenuView), noindex. German at /demo, the English version at /demo/en (linked as language
+   versions); the guest UI follows the menu's language like on every guest page. ?item=<id> opens an item (deep link,
+   works without JS), ?theme=<key> shows another of the six designs (the landing page's design section links there).
+   Photos: static WebP files in wwwroot/images/demo (fingerprinted URLs). *@
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [GuestPage]
+@layout GuestLayout
+@using Microsoft.AspNetCore.Http
+
+<GuestMenuView Model="model" />
+
+@code {
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    /// <summary>?item=&lt;id&gt;: render that item's sheet open.</summary>
+    [SupplyParameterFromQuery(Name = "item")] public string? Item { get; set; }
+
+    /// <summary>?theme=&lt;key&gt;: one of the six designs (case-insensitive), default Modern.</summary>
+    [SupplyParameterFromQuery(Name = "theme")] public string? Theme { get; set; }
+
+    private GuestMenuModel model = default!;
+
+    protected override void OnInitialized()
+    {
+        var version = DemoMenu.ForPath(HttpContext.Request.Path.Value ?? "/demo") ?? DemoMenuContent.German;
+        var theme = Enum.TryParse<DesignTheme>(Theme, ignoreCase: true, out var t) && Enum.IsDefined(t) ? t : DesignTheme.Modern;
+        model = DemoMenu.Build(version, path => Assets.Absolute(path), Item, theme);
+        HttpContext.Response.Headers["X-Robots-Tag"] = "noindex";
+    }
+}

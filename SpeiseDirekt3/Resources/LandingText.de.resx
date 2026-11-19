@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Head_Title" xml:space="preserve">
+    <value>Digitale Speisekarte mit QR-Code | Speise-Direkt</value>
+  </data>
+  <data name="Head_Description" xml:space="preserve">
+    <value>Die digitale Speisekarte hinter Ihrem QR-Code: ohne App für Gäste, mit Fotos, Allergenen, sechs Designs und Sprachversionen. Die Registrierung ist kostenlos.</value>
+  </data>
+  <data name="Head_ImageAlt" xml:space="preserve">
+    <value>Speise-Direkt: die Speisekarte der „Trattoria Lago“ auf einem Handy</value>
+  </data>
+  <data name="SkipToContent" xml:space="preserve">
+    <value>Zum Inhalt springen</value>
+  </data>
+  <data name="BrandHome" xml:space="preserve">
+    <value>Speise-Direkt, Startseite</value>
+  </data>
+  <data name="NavLabel" xml:space="preserve">
+    <value>Hauptnavigation</value>
+  </data>
+  <data name="SectionsLabel" xml:space="preserve">
+    <value>Abschnitte</value>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="RegisterFree" xml:space="preserve">
+    <value>Kostenlos registrieren</value>
+  </data>
+  <data name="RegisterShort" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="MenuButton" xml:space="preserve">
+    <value>Menü</value>
+  </data>
+  <data name="MenuClose" xml:space="preserve">
+    <value>Menü schließen</value>
+  </data>
+  <data name="Section_Features" xml:space="preserve">
+    <value>Funktionen</value>
+  </data>
+  <data name="Section_Designs" xml:space="preserve">
+    <value>Designs</value>
+  </data>
+  <data name="Section_HowItWorks" xml:space="preserve">
+    <value>So funktioniert’s</value>
+  </data>
+  <data name="Section_Faq" xml:space="preserve">
+    <value>FAQ</value>
+  </data>
+  <data name="Hero_Eyebrow" xml:space="preserve">
+    <value>Digitale Speisekarte mit QR-Code</value>
+  </data>
+  <data name="Hero_Title" xml:space="preserve">
+    <value>Ihre Speisekarte, [ein Scan entfernt.]</value>
+  </data>
+  <data name="Hero_Lead" xml:space="preserve">
+    <value>Gäste scannen den QR-Code am Tisch und öffnen Ihre Karte sofort im Browser – mit Fotos, Preisen und Allergenen, ganz ohne App. Was Sie ändern, sehen Ihre Gäste beim nächsten Aufruf.</value>
+  </data>
+  <data name="Hero_Note" xml:space="preserve">
+    <value>Die Registrierung ist kostenlos.</value>
+  </data>
+  <data name="Float_ScanTitle" xml:space="preserve">
+    <value>Scannen und lesen</value>
+  </data>
+  <data name="Float_ScanText" xml:space="preserve">
+    <value>Im Browser, ohne App</value>
+  </data>
+  <data name="Float_LiveTitle" xml:space="preserve">
+    <value>Preis geändert</value>
+  </data>
+  <data name="Float_LiveText" xml:space="preserve">
+    <value>Sofort für alle Gäste</value>
+  </data>
+  <data name="Proof_Label" xml:space="preserve">
+    <value>Auf einen Blick</value>
+  </data>
+  <data name="Proof_NoApp" xml:space="preserve">
+    <value>Keine App für Gäste</value>
+  </data>
+  <data name="Proof_Live" xml:space="preserve">
+    <value>Änderungen sofort live</value>
+  </data>
+  <data name="Proof_Allergens" xml:space="preserve">
+    <value>14 EU-Allergene</value>
+  </data>
+  <data name="Proof_Languages" xml:space="preserve">
+    <value>Mehrere Sprachen</value>
+  </data>
+  <data name="Proof_Designs" xml:space="preserve">
+    <value>Sechs Designs</value>
+  </data>
+  <data name="Features_Eyebrow" xml:space="preserve">
+    <value>Funktionen</value>
+  </data>
+  <data name="Features_Title" xml:space="preserve">
+    <value>Für Gäste gemacht. Für Sie leicht gepflegt.</value>
+  </data>
+  <data name="Features_Intro" xml:space="preserve">
+    <value>Speise-Direkt verbindet eine schnelle Speisekarte fürs Handy mit einem Verwaltungsbereich, in dem Sie Gerichte, Preise, Fotos und QR-Codes selbst pflegen.</value>
+  </data>
+  <data name="Guests_Kicker" xml:space="preserve">
+    <value>Für Ihre Gäste</value>
+  </data>
+  <data name="Guests_Title" xml:space="preserve">
+    <value>Finden, was schmeckt</value>
+  </data>
+  <data name="Guests_Text" xml:space="preserve">
+    <value>Ihre Gäste blättern durch Kategorien mit Fotos, suchen nach Gerichten und blenden aus, was sie nicht essen möchten. Was gefällt, kommt auf die Merkliste – bestellt wird wie gewohnt beim Service.</value>
+  </data>
+  <data name="Guests_Check1" xml:space="preserve">
+    <value>Suche über Namen, Beschreibungen und Kennzeichnungen</value>
+  </data>
+  <data name="Guests_Check2" xml:space="preserve">
+    <value>Filter nach vegan, vegetarisch, scharf, halal und mehr – oder ohne bestimmte Allergene</value>
+  </data>
+  <data name="Guests_Check3" xml:space="preserve">
+    <value>Merkliste mit Mengen und Summe, gespeichert nur auf dem Handy des Gastes</value>
+  </data>
+  <data name="Guests_Check4" xml:space="preserve">
+    <value>Gerichte per Link teilen</value>
+  </data>
+  <data name="Guests_Check5" xml:space="preserve">
+    <value>Sprachversionen, zwischen denen Gäste mit einem Tipp wechseln</value>
+  </data>
+  <data name="Profile_Kicker" xml:space="preserve">
+    <value>Restaurantprofil</value>
+  </data>
+  <data name="Profile_Title" xml:space="preserve">
+    <value>Alles über Ihr Haus, direkt in der Karte</value>
+  </data>
+  <data name="Profile_Text" xml:space="preserve">
+    <value>Titelbild und Logo geben Ihrer Karte ein Gesicht. Öffnungszeiten, Adresse, Telefon und Website stehen einen Tipp entfernt – dazu Ihre Links zu Instagram, Facebook und zu Ihren Bewertungen.</value>
+  </data>
+  <data name="Profile_Check1" xml:space="preserve">
+    <value>Titelbild, Logo und eine kurze Beschreibung</value>
+  </data>
+  <data name="Profile_Check2" xml:space="preserve">
+    <value>Adresse mit Kartenlink, Anruf und E-Mail mit einem Tipp</value>
+  </data>
+  <data name="Profile_Check3" xml:space="preserve">
+    <value>Kategorien mit Untertiteln, Gerichte mit Fotos</value>
+  </data>
+  <data name="Designs_Eyebrow" xml:space="preserve">
+    <value>Sechs Designs</value>
+  </data>
+  <data name="Designs_Title" xml:space="preserve">
+    <value>Ein Design, das zu Ihrem Haus passt</value>
+  </data>
+  <data name="Designs_Intro" xml:space="preserve">
+    <value>Modern oder klassisch, hell oder dunkel: Wählen Sie eines von sechs Designs. Farben und Schriften wechseln mit einem Klick – Ihre Gerichte, Preise und Fotos bleiben, wie sie sind.</value>
+  </data>
+  <data name="Designs_Legend" xml:space="preserve">
+    <value>Design in der Vorschau</value>
+  </data>
+  <data name="Theme_modern" xml:space="preserve">
+    <value>Modern</value>
+  </data>
+  <data name="Theme_classic" xml:space="preserve">
+    <value>Klassisch</value>
+  </data>
+  <data name="Theme_elegant" xml:space="preserve">
+    <value>Elegant</value>
+  </data>
+  <data name="Theme_minimal" xml:space="preserve">
+    <value>Minimal</value>
+  </data>
+  <data name="Theme_fancy" xml:space="preserve">
+    <value>Verspielt</value>
+  </data>
+  <data name="Theme_dark" xml:space="preserve">
+    <value>Dunkel</value>
+  </data>
+  <data name="Theme_Alt" xml:space="preserve">
+    <value>Die Speisekarte „Trattoria Lago“ im Design {0} auf einem Handy</value>
+  </data>
+  <data name="Admin_Eyebrow" xml:space="preserve">
+    <value>Verwaltung</value>
+  </data>
+  <data name="Admin_Title" xml:space="preserve">
+    <value>Schnell gepflegt, auch mitten im Betrieb</value>
+  </data>
+  <data name="Admin_Intro" xml:space="preserve">
+    <value>Neues Tagesgericht, geänderter Preis, die Karte für die Feiertage: Sie ändern es im Verwaltungsbereich, Ihre Gäste sehen es beim nächsten Aufruf. Der QR-Code auf dem Tisch bleibt derselbe.</value>
+  </data>
+  <data name="Schedule_Kicker" xml:space="preserve">
+    <value>QR-Codes mit Zeitplan und Kalender</value>
+  </data>
+  <data name="Schedule_Title" xml:space="preserve">
+    <value>Ein Code, immer die richtige Karte</value>
+  </data>
+  <data name="Schedule_Text" xml:space="preserve">
+    <value>Ein QR-Code kann je nach Uhrzeit oder Datum eine andere Karte zeigen: mittags automatisch die Mittagskarte, an den Feiertagen das Weihnachtsmenü, jeden Freitag die Fischkarte. Den Kalender planen Sie mit wenigen Klicks.</value>
+  </data>
+  <data name="Schedule_Check1" xml:space="preserve">
+    <value>Direkt, nach Zeitplan oder nach Kalender</value>
+  </data>
+  <data name="Schedule_Check2" xml:space="preserve">
+    <value>Einzelne Tage, Zeiträume und feste Wochentage</value>
+  </data>
+  <data name="Schedule_Check3" xml:space="preserve">
+    <value>Jeder QR-Code als PNG zum Herunterladen und Drucken</value>
+  </data>
+  <data name="Preview_Kicker" xml:space="preserve">
+    <value>Live-Vorschau</value>
+  </data>
+  <data name="Preview_Title" xml:space="preserve">
+    <value>Sehen, was Ihre Gäste sehen – vor dem Speichern</value>
+  </data>
+  <data name="Preview_Text" xml:space="preserve">
+    <value>Neben dem Editor zeigt ein Handy-Rahmen Ihre Karte so, wie Gäste sie sehen. Name, Beschreibung und Design ändern sich darin schon beim Tippen; gespeichert wird erst, wenn Sie es sagen.</value>
+  </data>
+  <data name="Preview_Check1" xml:space="preserve">
+    <value>Kategorien und Gerichte in Ihrer Reihenfolge</value>
+  </data>
+  <data name="Preview_Check2" xml:space="preserve">
+    <value>Preise mit Varianten und Extras</value>
+  </data>
+  <data name="Preview_Check3" xml:space="preserve">
+    <value>Die Vorschau Ihrer Karte jederzeit im eigenen Tab</value>
+  </data>
+  <data name="More_Eyebrow" xml:space="preserve">
+    <value>Im Detail</value>
+  </data>
+  <data name="More_Title" xml:space="preserve">
+    <value>Durchdacht bis zum letzten Gericht</value>
+  </data>
+  <data name="Card_Analytics_Title" xml:space="preserve">
+    <value>Statistik</value>
+  </data>
+  <data name="Card_Analytics_Text" xml:space="preserve">
+    <value>Wie oft wird Ihre Karte geöffnet, welche Gerichte werden angetippt, wie viele Besuche gab es? Die Zahlen sehen Sie im Verlauf.</value>
+  </data>
+  <data name="Card_Analytics_Note" xml:space="preserve">
+    <value>Beispielansicht mit Demodaten.</value>
+  </data>
+  <data name="Card_Team_Title" xml:space="preserve">
+    <value>Teamzugänge</value>
+  </data>
+  <data name="Card_Team_Text" xml:space="preserve">
+    <value>Sie als Besitzer, Ihr Team als Manager: Manager pflegen Karten, Gerichte und QR-Codes mit eigenem Zugang – das Team verwalten nur Sie.</value>
+  </data>
+  <data name="Card_Allergens_Title" xml:space="preserve">
+    <value>14 EU-Allergene</value>
+  </data>
+  <data name="Card_Allergens_Text" xml:space="preserve">
+    <value>Mit einem Klick angelegt, beim Gericht angezeigt – und als Filter für Gäste, die etwas nicht vertragen.</value>
+  </data>
+  <data name="Card_Labels_Title" xml:space="preserve">
+    <value>Kennzeichnungen</value>
+  </data>
+  <data name="Card_Labels_Text" xml:space="preserve">
+    <value>Vegan, vegetarisch, scharf, halal, alkoholfrei, neu und beliebt: auf einen Blick erkennbar.</value>
+  </data>
+  <data name="Card_Variants_Title" xml:space="preserve">
+    <value>Varianten und Extras</value>
+  </data>
+  <data name="Card_Variants_Text" xml:space="preserve">
+    <value>0,25 l oder 0,5 l, dazu Aufpreise wie „+ Rucola“: Größen und Extras stehen übersichtlich beim Gericht.</value>
+  </data>
+  <data name="Card_Combos_Title" xml:space="preserve">
+    <value>Kombi-Angebote</value>
+  </data>
+  <data name="Card_Combos_Text" xml:space="preserve">
+    <value>Stellen Sie Kombinationen zusammen, etwa Hauptgericht mit Dessert und Getränk zum Kombipreis.</value>
+  </data>
+  <data name="Card_Languages_Title" xml:space="preserve">
+    <value>Sprachversionen</value>
+  </data>
+  <data name="Card_Languages_Text" xml:space="preserve">
+    <value>Legen Sie eine Kopie Ihrer Karte in einer anderen Sprache an und übersetzen Sie sie selbst. Gäste wechseln mit einem Tipp.</value>
+  </data>
+  <data name="Card_Photos_Title" xml:space="preserve">
+    <value>Fotos zu jedem Gericht</value>
+  </data>
+  <data name="Card_Photos_Text" xml:space="preserve">
+    <value>Laden Sie Fotos hoch; Gäste sehen sie in der Karte und groß im Detail. Gerichte ohne Foto stehen als schlichte Textkarte daneben.</value>
+  </data>
+  <data name="Card_Fast_Title" xml:space="preserve">
+    <value>Schlank und schnell</value>
+  </data>
+  <data name="Card_Fast_Text" xml:space="preserve">
+    <value>Die Karte für Ihre Gäste ist eine schlanke Webseite und lädt nichts von fremden Servern.</value>
+  </data>
+  <data name="Steps_Eyebrow" xml:space="preserve">
+    <value>So funktioniert’s</value>
+  </data>
+  <data name="Steps_Title" xml:space="preserve">
+    <value>In drei Schritten zur digitalen Speisekarte</value>
+  </data>
+  <data name="Step1_Title" xml:space="preserve">
+    <value>Kostenlos registrieren</value>
+  </data>
+  <data name="Step1_Text" xml:space="preserve">
+    <value>E-Mail-Adresse und Passwort genügen – schon sind Sie im Verwaltungsbereich.</value>
+  </data>
+  <data name="Step2_Title" xml:space="preserve">
+    <value>Speisekarte anlegen</value>
+  </data>
+  <data name="Step2_Text" xml:space="preserve">
+    <value>Kategorien und Gerichte mit Preisen, Fotos und Allergenen eintragen, ein Design wählen. Die Vorschau zeigt das Ergebnis.</value>
+  </data>
+  <data name="Step3_Title" xml:space="preserve">
+    <value>QR-Code auf den Tisch</value>
+  </data>
+  <data name="Step3_Text" xml:space="preserve">
+    <value>QR-Code erstellen, als PNG herunterladen, ausdrucken und aufstellen. Fertig.</value>
+  </data>
+  <data name="Steps_Cta" xml:space="preserve">
+    <value>Jetzt kostenlos registrieren</value>
+  </data>
+  <data name="Faq_Eyebrow" xml:space="preserve">
+    <value>FAQ</value>
+  </data>
+  <data name="Faq_Title" xml:space="preserve">
+    <value>Häufige Fragen</value>
+  </data>
+  <data name="Faq_Intro" xml:space="preserve">
+    <value>Kurz und ehrlich beantwortet. Ihre Frage ist nicht dabei? Registrieren Sie sich und probieren Sie es aus.</value>
+  </data>
+  <data name="Faq_App_Q" xml:space="preserve">
+    <value>Brauchen meine Gäste eine App?</value>
+  </data>
+  <data name="Faq_App_A" xml:space="preserve">
+    <value>Nein. Der QR-Code öffnet Ihre Speisekarte direkt im Browser des Handys. Es gibt nichts zu installieren und kein Konto anzulegen.</value>
+  </data>
+  <data name="Faq_Cost_Q" xml:space="preserve">
+    <value>Was kostet Speise-Direkt?</value>
+  </data>
+  <data name="Faq_Cost_A" xml:space="preserve">
+    <value>Die Registrierung ist kostenlos.</value>
+  </data>
+  <data name="Faq_SameCode_Q" xml:space="preserve">
+    <value>Bleibt der QR-Code gleich, wenn ich die Karte ändere?</value>
+  </data>
+  <data name="Faq_SameCode_A" xml:space="preserve">
+    <value>Ja. Der QR-Code führt zu Ihrer Karte, nicht zu einem bestimmten Stand. Gerichte, Preise und Fotos ändern Sie im Verwaltungsbereich; Ihre Gäste sehen die Änderung beim nächsten Aufruf.</value>
+  </data>
+  <data name="Faq_Schedule_Q" xml:space="preserve">
+    <value>Kann ein QR-Code je nach Uhrzeit eine andere Karte zeigen?</value>
+  </data>
+  <data name="Faq_Schedule_A" xml:space="preserve">
+    <value>Ja. Mit einem Zeitplan zeigt derselbe QR-Code zum Beispiel mittags die Mittagskarte und abends die Abendkarte. Im Kalender legen Sie einzelne Tage, Zeiträume oder feste Wochentage fest – etwa das Weihnachtsmenü oder den Fischfreitag.</value>
+  </data>
+  <data name="Faq_Allergens_Q" xml:space="preserve">
+    <value>Wie zeige ich Allergene an?</value>
+  </data>
+  <data name="Faq_Allergens_A" xml:space="preserve">
+    <value>Die 14 EU-Allergene legen Sie mit einem Klick an und ordnen sie Ihren Gerichten zu. Gäste sehen sie beim Gericht und können Gerichte mit bestimmten Allergenen ausblenden.</value>
+  </data>
+  <data name="Faq_Languages_Q" xml:space="preserve">
+    <value>Gibt es die Karte in mehreren Sprachen?</value>
+  </data>
+  <data name="Faq_Languages_A" xml:space="preserve">
+    <value>Ja, als Sprachversionen: Sie legen eine Kopie Ihrer Karte in einer anderen Sprache an, übersetzen die Texte selbst und verknüpfen beide. Gäste wechseln die Sprache mit einem Tipp. Eine automatische Übersetzung gibt es nicht.</value>
+  </data>
+  <data name="Faq_Ordering_Q" xml:space="preserve">
+    <value>Können Gäste über die Karte bestellen oder bezahlen?</value>
+  </data>
+  <data name="Faq_Ordering_A" xml:space="preserve">
+    <value>Nein, Speise-Direkt ist eine Speisekarte, kein Bestellsystem. Gäste können Gerichte auf einer Merkliste sammeln, die nur auf ihrem Handy gespeichert wird, und bestellen dann wie gewohnt beim Service.</value>
+  </data>
+  <data name="Faq_Team_Q" xml:space="preserve">
+    <value>Können mehrere Personen die Karte pflegen?</value>
+  </data>
+  <data name="Faq_Team_A" xml:space="preserve">
+    <value>Ja. Sie laden Ihr Team als Manager mit eigenem Zugang ein: Manager können Speisekarten, Gerichte, QR-Codes und das Restaurantprofil bearbeiten und die Statistik sehen. Das Team verwalten nur Sie als Besitzer.</value>
+  </data>
+  <data name="Faq_Print_Q" xml:space="preserve">
+    <value>Wie kommt der QR-Code auf den Tisch?</value>
+  </data>
+  <data name="Faq_Print_A" xml:space="preserve">
+    <value>Sie laden jeden QR-Code als PNG herunter und drucken ihn selbst – für Tischaufsteller, Aufkleber oder das Schaufenster.</value>
+  </data>
+  <data name="Cta_Title" xml:space="preserve">
+    <value>Bereit für Ihre digitale Speisekarte?</value>
+  </data>
+  <data name="Cta_Text" xml:space="preserve">
+    <value>Registrieren Sie sich und legen Sie Ihre erste Karte an. Die Registrierung ist kostenlos.</value>
+  </data>
+  <data name="Footer_Text" xml:space="preserve">
+    <value>Die digitale Speisekarte mit QR-Code – schnell für Ihre Gäste, einfach für Sie.</value>
+  </data>
+  <data name="Footer_Account" xml:space="preserve">
+    <value>Konto</value>
+  </data>
+  <data name="Footer_Legal" xml:space="preserve">
+    <value>Rechtliches</value>
+  </data>
+  <data name="Footer_Imprint" xml:space="preserve">
+    <value>Impressum</value>
+  </data>
+  <data name="Footer_Privacy" xml:space="preserve">
+    <value>Datenschutz</value>
+  </data>
+  <data name="Footer_DemoNote" xml:space="preserve">
+    <value>Alle Beispiele zeigen das erfundene Restaurant „Trattoria Lago“ mit Demodaten.</value>
+  </data>
+  <data name="Image_Hero" xml:space="preserve">
+    <value>Die digitale Speisekarte der „Trattoria Lago“ auf einem Handy: Titelbild, Logo, Kategorien und Gerichte mit Fotos</value>
+  </data>
+  <data name="Image_GuestItem" xml:space="preserve">
+    <value>Ein Gericht im Detail: Foto, Kennzeichnungen, Extras mit Aufpreis und Allergene</value>
+  </data>
+  <data name="Image_GuestFilter" xml:space="preserve">
+    <value>Der Filter der Speisekarte: Ernährung, Hinweise und Allergene, die ausgeblendet werden</value>
+  </data>
+  <data name="Image_GuestInfo" xml:space="preserve">
+    <value>Das Restaurantprofil in der Speisekarte: Öffnungszeiten, Adresse, Telefon, Website und Links</value>
+  </data>
+  <data name="Image_Calendar" xml:space="preserve">
+    <value>Der Kalender eines QR-Codes im Dezember: Fischfreitag jede Woche, Weihnachtsmenü vom 24. bis 26., Silvester am 31.</value>
+  </data>
+  <data name="Image_Editor" xml:space="preserve">
+    <value>Der Editor einer Speisekarte mit der Live-Vorschau im Handy-Rahmen</value>
+  </data>
+  <data name="Image_Analytics" xml:space="preserve">
+    <value>Die Statistik: Aufrufe, angetippte Gerichte und Besuche als Zahlen und im Verlauf</value>
+  </data>
+  <data name="Og_Headline" xml:space="preserve">
+    <value>Ihre Speisekarte, [ein Scan entfernt.]</value>
+  </data>
+  <data name="Og_Text" xml:space="preserve">
+    <value>Die digitale Speisekarte mit QR-Code – ohne App für Ihre Gäste.</value>
+  </data>
+  <data name="Hero_Demo" xml:space="preserve">
+    <value>Live-Demo ansehen</value>
+  </data>
+  <data name="Designs_TryLive" xml:space="preserve">
+    <value>Design „{0}“ live ausprobieren</value>
+  </data>
+</root>

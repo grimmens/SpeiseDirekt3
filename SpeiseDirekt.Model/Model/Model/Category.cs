@@ -6,11 +6,11 @@ namespace SpeiseDirekt.Model
     public class Category : IAppUserEntity
     {
         public Guid Id { get; set; }
-        [Required(AllowEmptyStrings = false, ErrorMessage = "Name is required.")]
+        [Required(AllowEmptyStrings = false, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Name_RequiredShort))]
         public string Name { get; set; } = string.Empty;
 
         /// <summary>Optional subtitle shown under the category name, e.g. "Mezze" or "served until 22:00".</summary>
-        [StringLength(DescriptionMaxLength, ErrorMessage = "The subtitle can have at most 200 characters.")]
+        [StringLength(DescriptionMaxLength, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Category_DescriptionTooLong))]
         public string? Description { get; set; }
 
         public const int DescriptionMaxLength = 200;

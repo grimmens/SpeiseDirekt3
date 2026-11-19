@@ -1,3 +1,4 @@
+using System.Globalization;
 using SpeiseDirekt.Model;
 
 namespace SpeiseDirekt.Infrastructure;
@@ -13,6 +14,12 @@ public sealed record MenuLanguageInfo(
 {
     /// <summary>Upper-case code for compact buttons ("DE", "EN").</summary>
     public string ShortCode => Code.ToUpperInvariant();
+
+    /// <summary>
+    /// The name in the back office's language (AP12, <see cref="CultureInfo.CurrentUICulture"/>): <see cref="GermanName"/>
+    /// in German, else <see cref="EnglishName"/>. Not for guest pages: their language is the menu's (<c>GuestText</c>).
+    /// </summary>
+    public string DisplayName => CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "de" ? GermanName : EnglishName;
 }
 
 /// <summary>

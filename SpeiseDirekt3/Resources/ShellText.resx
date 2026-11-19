@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SkipToContent" xml:space="preserve">
+    <value>Skip to content</value>
+  </data>
+  <data name="OpenNavigation" xml:space="preserve">
+    <value>Open navigation</value>
+    <comment>The menu button below 1024 px (aria-label)</comment>
+  </data>
+  <data name="CloseNavigation" xml:space="preserve">
+    <value>Close navigation</value>
+  </data>
+  <data name="DrawerLabel" xml:space="preserve">
+    <value>Navigation</value>
+    <comment>aria-label of the phone drawer (&lt;dialog&gt;)</comment>
+  </data>
+  <data name="BrandToDashboard" xml:space="preserve">
+    <value>Speise-Direkt, dashboard</value>
+    <comment>aria-label of the logo link of a signed-in user</comment>
+  </data>
+  <data name="BrandToHome" xml:space="preserve">
+    <value>Speise-Direkt, home</value>
+    <comment>aria-label of the logo link of an anonymous visitor (the landing page)</comment>
+  </data>
+  <data name="AccountNavLabel" xml:space="preserve">
+    <value>Account</value>
+    <comment>aria-label of the anonymous header's links</comment>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Log in</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>Register</value>
+  </data>
+  <data name="LogOut" xml:space="preserve">
+    <value>Log out</value>
+  </data>
+  <data name="AccountSettings" xml:space="preserve">
+    <value>Account settings</value>
+  </data>
+  <data name="UserMenuHint" xml:space="preserve">
+    <value>, account menu</value>
+    <comment>Screen-reader suffix of the user menu button, after the name and role</comment>
+  </data>
+  <data name="MainNavLabel" xml:space="preserve">
+    <value>Main</value>
+    <comment>aria-label of the primary navigation</comment>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Nav_Menus" xml:space="preserve">
+    <value>Menus</value>
+  </data>
+  <data name="Nav_QrCodes" xml:space="preserve">
+    <value>QR Codes</value>
+  </data>
+  <data name="Nav_Analytics" xml:space="preserve">
+    <value>Analytics</value>
+  </data>
+  <data name="Nav_Restaurant" xml:space="preserve">
+    <value>Restaurant</value>
+  </data>
+  <data name="Nav_Team" xml:space="preserve">
+    <value>Team</value>
+  </data>
+  <data name="Context_BreadcrumbLabel" xml:space="preserve">
+    <value>Breadcrumb</value>
+    <comment>aria-label of the context bar's "Menus › &lt;menu&gt;" trail</comment>
+  </data>
+  <data name="Context_SwitchMenuHint" xml:space="preserve">
+    <value>, switch menu</value>
+    <comment>Screen-reader suffix of the menu name button</comment>
+  </data>
+  <data name="Context_SwitchMenu" xml:space="preserve">
+    <value>Switch menu</value>
+    <comment>Heading of the menu switcher dropdown</comment>
+  </data>
+  <data name="Context_AllMenus" xml:space="preserve">
+    <value>All menus</value>
+  </data>
+  <data name="Context_PreviewTitle" xml:space="preserve">
+    <value>See the menu as your guests do (new tab)</value>
+    <comment>title of the context bar's preview link</comment>
+  </data>
+  <data name="Context_TabsLabel" xml:space="preserve">
+    <value>Menu: {0}</value>
+    <comment>aria-label of the tab strip: {0} = the menu's name</comment>
+  </data>
+  <data name="Tab_Overview" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="Tab_Categories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Tab_Items" xml:space="preserve">
+    <value>Items</value>
+  </data>
+  <data name="Tab_Allergens" xml:space="preserve">
+    <value>Allergens</value>
+  </data>
+  <data name="Tab_Combos" xml:space="preserve">
+    <value>Combos</value>
+  </data>
+  <data name="Tab_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Error_Unhandled" xml:space="preserve">
+    <value>An unhandled error has occurred.</value>
+    <comment>The error bar shown by blazor.web.js</comment>
+  </data>
+  <data name="Error_Reload" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="Error_Dismiss" xml:space="preserve">
+    <value>Dismiss</value>
+  </data>
+  <data name="Sort_Help" xml:space="preserve">
+    <value>Drag to change the order, or press the up and down arrow keys.</value>
+    <comment>Description of every drag handle (#sd-sort-help)</comment>
+  </data>
+  <data name="Sort_Handle" xml:space="preserve">
+    <value>Reorder {0}</value>
+    <comment>aria-label of a drag handle: {0} = the row's name</comment>
+  </data>
+  <data name="Sort_HandleTitle" xml:space="preserve">
+    <value>Drag to reorder (or use the arrow keys)</value>
+  </data>
+  <data name="Sort_Moved" xml:space="preserve">
+    <value>Moved {0} to position {1} of {2}.</value>
+    <comment>Live-region announcement: {0} = name, {1} = new position, {2} = number of rows</comment>
+  </data>
+  <data name="Sort_AlreadyFirst" xml:space="preserve">
+    <value>{0} is already first.</value>
+  </data>
+  <data name="Sort_AlreadyLast" xml:space="preserve">
+    <value>{0} is already last.</value>
+  </data>
+  <data name="Sort_Failed" xml:space="preserve">
+    <value>{0} could not be moved. The previous order is shown again.</value>
+  </data>
+  <data name="Combo_TypeToSearch" xml:space="preserve">
+    <value>Type to search…</value>
+    <comment>Default placeholder of Shared/MultiSelectComboBox</comment>
+  </data>
+  <data name="Combo_NoMatches" xml:space="preserve">
+    <value>No matches found</value>
+  </data>
+  <data name="Combo_Remove" xml:space="preserve">
+    <value>Remove {0}</value>
+    <comment>aria-label of a selected chip's remove button: {0} = the chip's text</comment>
+  </data>
+  <data name="Info_More" xml:space="preserve">
+    <value>More information</value>
+    <comment>aria-label of the info popover button (HelperComp/InfoPopoverComp)</comment>
+  </data>
+  <data name="Pagination_Label" xml:space="preserve">
+    <value>Page navigation</value>
+  </data>
+  <data name="Pagination_Previous" xml:space="preserve">
+    <value>Previous page</value>
+  </data>
+  <data name="Pagination_Next" xml:space="preserve">
+    <value>Next page</value>
+  </data>
+  <data name="Pagination_Page" xml:space="preserve">
+    <value>Page {0}</value>
+    <comment>aria-label of a page number link: {0} = the number</comment>
+  </data>
+  <data name="ErrorPage_Title" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="ErrorPage_Heading" xml:space="preserve">
+    <value>Error.</value>
+  </data>
+  <data name="ErrorPage_Text" xml:space="preserve">
+    <value>An error occurred while processing your request.</value>
+  </data>
+  <data name="ErrorPage_RequestId" xml:space="preserve">
+    <value>Request ID:</value>
+  </data>
+  <data name="Calendar_LoadError" xml:space="preserve">
+    <value>The calendar could not be loaded. Reload the page to try again.</value>
+  </data>
+  <data name="Calendar_Loading" xml:space="preserve">
+    <value>Loading calendar…</value>
+  </data>
+  <data name="Calendar_Today" xml:space="preserve">
+    <value>Today</value>
+  </data>
+  <data name="Calendar_Month" xml:space="preserve">
+    <value>Month</value>
+  </data>
+  <data name="Calendar_List" xml:space="preserve">
+    <value>List</value>
+  </data>
+  <data name="Calendar_Week" xml:space="preserve">
+    <value>Week</value>
+  </data>
+  <data name="Calendar_Year" xml:space="preserve">
+    <value>Year</value>
+  </data>
+  <data name="Calendar_NoEvents" xml:space="preserve">
+    <value>Nothing this month</value>
+  </data>
+  <data name="Calendar_AllDay" xml:space="preserve">
+    <value>all-day</value>
+  </data>
+  <data name="Calendar_MoreLink" xml:space="preserve">
+    <value>+{0} more</value>
+    <comment>{0} = hidden entries of a day</comment>
+  </data>
+  <data name="Calendar_MoreHint_One" xml:space="preserve">
+    <value>Show 1 more entry</value>
+  </data>
+  <data name="Calendar_MoreHint_Other" xml:space="preserve">
+    <value>Show {0} more entries</value>
+  </data>
+  <data name="Calendar_PrevHint" xml:space="preserve">
+    <value>Previous month</value>
+  </data>
+  <data name="Calendar_NextHint" xml:space="preserve">
+    <value>Next month</value>
+  </data>
+  <data name="Calendar_TodayHint" xml:space="preserve">
+    <value>This month</value>
+  </data>
+  <data name="Calendar_ViewHint" xml:space="preserve">
+    <value>{0} view</value>
+    <comment>{0} = the view's button text</comment>
+  </data>
+  <data name="Calendar_TimeHint" xml:space="preserve">
+    <value>Time</value>
+    <comment>column header of the list view (screen readers)</comment>
+  </data>
+  <data name="Calendar_EventHint" xml:space="preserve">
+    <value>Event</value>
+    <comment>column header of the list view (screen readers)</comment>
+  </data>
+</root>

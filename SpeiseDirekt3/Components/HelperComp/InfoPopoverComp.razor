@@ -1,9 +1,11 @@
 ﻿@inject IJSRuntime JS
+@inject IStringLocalizer<ShellText> T
 
 <span @ref="_iconRef"
       class="text-muted ms-1 d-inline-flex align-middle"
       role="button"
       tabindex="0"
+      aria-label="@T["Info_More"]"
       @onclick="ShowPopover"
       @onclick:preventDefault
       data-bs-toggle="popover"

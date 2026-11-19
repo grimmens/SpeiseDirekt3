@@ -85,6 +85,21 @@ public class MenusControllerTests : BaseIntegrationTest
     }
 
     [Fact]
+    public async Task Create_WithoutDescription_Returns201_WithEmptyDescription()
+    {
+        // The description is optional (AP13): omitted or null is stored as ""
+        var content = new StringContent(
+            JsonSerializer.Serialize(new { Name = "Late Night" }, JsonOptions), Encoding.UTF8, "application/json");
+
+        var response = await Client.PostAsync("/api/menus", content);
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var created = await response.Content.ReadFromJsonAsync<Menu>(JsonOptions);
+        created!.Name.Should().Be("Late Night");
+        created.Description.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Create_InvalidDto_Returns400()
     {
         var dto = new { Name = "", Description = "" };

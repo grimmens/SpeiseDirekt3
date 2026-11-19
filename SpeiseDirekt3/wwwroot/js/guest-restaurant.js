@@ -12,7 +12,8 @@
  *   1. navigator.share({ title, text, url }) — a cancelled share (AbortError) is not an error;
  *   2. otherwise the clipboard: "Link kopiert" / "Link copied" (ctx.t('shareCopied')) in [data-share-status] (role="status");
  *   3. otherwise the link in the read-only field [data-share-fallback], selected for copying by hand.
- * The url is always the public page /menu/{menuId}?item={itemId} — also from /qr/… and from the owner preview.
+ * The url is always the public page (the root's data-public-path: /menu/{menuId}, the demo's /demo) with ?item={itemId}
+ * — also from /qr/… and from the owner preview.
  * No tracking request for sharing.
  */
 
@@ -28,9 +29,13 @@ export function initRestaurant(ctx) {
     });
 }
 
-/** Public, canonical link of an item: /menu/{menuId}?item={itemId} on this origin. */
-export function publicItemUrl(menuId, itemId) {
-    const url = new URL(`/menu/${encodeURIComponent(menuId)}`, location.origin);
+/**
+ * Public, canonical link of an item on this origin: {publicPath}?item={itemId}, where publicPath is the root's
+ * data-public-path (/menu/{menuId}; the demo: /demo), else /menu/{menuId}.
+ */
+export function publicItemUrl(menuId, itemId, publicPath) {
+    const path = publicPath && publicPath.startsWith('/') ? publicPath : `/menu/${encodeURIComponent(menuId)}`;
+    const url = new URL(path, location.origin);
     url.searchParams.set('item', itemId);
     return url.href;
 }
@@ -40,7 +45,7 @@ async function shareItem(ctx, button) {
     const itemId = detail?.dataset.itemId;
     if (!itemId || !ctx.menuId) return;
 
-    const url = publicItemUrl(ctx.menuId, itemId);
+    const url = publicItemUrl(ctx.menuId, itemId, ctx.root.dataset.publicPath);
     const title = button.dataset.shareTitle || document.title;
     const site = document.querySelector('meta[property="og:site_name"]')?.content;
     const text = site && site !== title ? `${title} – ${site}` : title;

@@ -1,18 +1,23 @@
 ﻿@page "/Error"
 @using System.Diagnostics
+@inject IStringLocalizer<ShellText> T
+@inject IWebHostEnvironment Environment
 
-<PageTitle>Error</PageTitle>
+<PageTitle>@T["ErrorPage_Title"]</PageTitle>
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+<h1 class="text-danger">@T["ErrorPage_Heading"]</h1>
+<h2 class="text-danger">@T["ErrorPage_Text"]</h2>
 
 @if (ShowRequestId)
 {
     <p>
-        <strong>Request ID:</strong> <code>@RequestId</code>
+        <strong>@T["ErrorPage_RequestId"]</strong> <code>@RequestId</code>
     </p>
 }
 
+@* A hint for developers (English only): never shown in production *@
+@if (!Environment.IsProduction())
+{
 <h3>Development Mode</h3>
 <p>
     Swapping to <strong>Development</strong> environment will display more detailed information about the error that occurred.
@@ -23,6 +28,7 @@
     For local debugging, enable the <strong>Development</strong> environment by setting the <strong>ASPNETCORE_ENVIRONMENT</strong> environment variable to <strong>Development</strong>
     and restarting the app.
 </p>
+}
 
 @code{
     [CascadingParameter]

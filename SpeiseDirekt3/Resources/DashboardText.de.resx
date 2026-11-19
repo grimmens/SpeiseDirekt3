@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Welcome" xml:space="preserve">
+    <value>Willkommen zurück</value>
+  </data>
+  <data name="Action_CreateMenu" xml:space="preserve">
+    <value>Speisekarte anlegen</value>
+  </data>
+  <data name="Action_CreateQrCode" xml:space="preserve">
+    <value>QR-Code erstellen</value>
+  </data>
+  <data name="Action_Analytics" xml:space="preserve">
+    <value>Statistik</value>
+  </data>
+  <data name="Stat_Menus" xml:space="preserve">
+    <value>Speisekarten</value>
+  </data>
+  <data name="Stat_ItemsInTotal_One" xml:space="preserve">
+    <value>1 Gericht insgesamt</value>
+  </data>
+  <data name="Stat_ItemsInTotal_Other" xml:space="preserve">
+    <value>{0} Gerichte insgesamt</value>
+  </data>
+  <data name="Stat_QrCodes" xml:space="preserve">
+    <value>QR-Codes</value>
+  </data>
+  <data name="Stat_QrCodesHint" xml:space="preserve">
+    <value>Für Tische und Schaufenster</value>
+  </data>
+  <data name="Stat_Views" xml:space="preserve">
+    <value>Kartenaufrufe</value>
+  </data>
+  <data name="Stat_ViewsHint" xml:space="preserve">
+    <value>Letzte 7 Tage</value>
+  </data>
+  <data name="Stat_Team" xml:space="preserve">
+    <value>Teammitglieder</value>
+  </data>
+  <data name="Stat_TeamHint" xml:space="preserve">
+    <value>Aktive Manager</value>
+  </data>
+  <data name="Checklist_Title" xml:space="preserve">
+    <value>Erste Schritte</value>
+  </data>
+  <data name="Checklist_Intro" xml:space="preserve">
+    <value>Vier Schritte, bis Ihre Gäste Ihre Speisekarte am Tisch scannen können.</value>
+  </data>
+  <data name="Checklist_Progress" xml:space="preserve">
+    <value>{0} von {1} erledigt</value>
+  </data>
+  <data name="Checklist_DonePrefix" xml:space="preserve">
+    <value>Erledigt:</value>
+  </data>
+  <data name="Step1_Title" xml:space="preserve">
+    <value>Speisekarte anlegen</value>
+  </data>
+  <data name="Step1_Text" xml:space="preserve">
+    <value>Geben Sie ihr einen Namen und wählen Sie ein Design und die Sprache Ihrer Gerichte.</value>
+  </data>
+  <data name="Step1_Action" xml:space="preserve">
+    <value>Speisekarte anlegen</value>
+  </data>
+  <data name="Step2_Title" xml:space="preserve">
+    <value>Kategorien und Gerichte anlegen</value>
+  </data>
+  <data name="Step2_Text" xml:space="preserve">
+    <value>Gliedern Sie die Karte in Kategorien wie Vorspeisen und Hauptgerichte und tragen Sie dann Gerichte mit Preisen und Allergenen ein.</value>
+  </data>
+  <data name="Step2_AddItems" xml:space="preserve">
+    <value>Gerichte anlegen</value>
+  </data>
+  <data name="Step2_AddCategories" xml:space="preserve">
+    <value>Kategorien anlegen</value>
+  </data>
+  <data name="Step3_Title" xml:space="preserve">
+    <value>QR-Code erstellen</value>
+  </data>
+  <data name="Step3_Text" xml:space="preserve">
+    <value>Ein QR-Code öffnet Ihre Speisekarte auf dem Handy des Gastes. Er kann je nach Uhrzeit auch eine andere Karte zeigen.</value>
+  </data>
+  <data name="Step3_Action" xml:space="preserve">
+    <value>QR-Code erstellen</value>
+  </data>
+  <data name="Step4_Title" xml:space="preserve">
+    <value>Ausdrucken und auf die Tische stellen</value>
+  </data>
+  <data name="Step4_Text" xml:space="preserve">
+    <value>Laden Sie den QR-Code auf der Seite „QR-Codes“ herunter und drucken Sie ihn aus. Dieser Schritt hakt sich selbst ab, sobald der erste Gast einen Code scannt.</value>
+  </data>
+  <data name="Step4_Action" xml:space="preserve">
+    <value>Zu den QR-Codes</value>
+  </data>
+  <data name="Blocker_CreateMenuFirst" xml:space="preserve">
+    <value>Legen Sie zuerst eine Speisekarte an.</value>
+  </data>
+  <data name="Blocker_CreateQrCodeFirst" xml:space="preserve">
+    <value>Erstellen Sie zuerst einen QR-Code.</value>
+  </data>
+  <data name="Profile_Title" xml:space="preserve">
+    <value>Restaurantprofil anlegen</value>
+  </data>
+  <data name="Profile_Text" xml:space="preserve">
+    <value>Logo, Titelbild, Öffnungszeiten und Kontaktdaten für den Kopf Ihrer Speisekarten.</value>
+  </data>
+  <data name="Profile_Action" xml:space="preserve">
+    <value>Profil anlegen</value>
+  </data>
+  <data name="Menus_Title" xml:space="preserve">
+    <value>Ihre Speisekarten</value>
+  </data>
+  <data name="Menus_All" xml:space="preserve">
+    <value>Alle Speisekarten</value>
+  </data>
+  <data name="Menus_None" xml:space="preserve">
+    <value>Noch keine Speisekarten.</value>
+  </data>
+  <data name="Menus_CreateFirst" xml:space="preserve">
+    <value>Erste Speisekarte anlegen</value>
+  </data>
+  <data name="Menus_More" xml:space="preserve">
+    <value>und {0} weitere</value>
+  </data>
+  <data name="Categories_One" xml:space="preserve">
+    <value>1 Kategorie</value>
+  </data>
+  <data name="Categories_Other" xml:space="preserve">
+    <value>{0} Kategorien</value>
+  </data>
+  <data name="Items_One" xml:space="preserve">
+    <value>1 Gericht</value>
+  </data>
+  <data name="Items_Other" xml:space="preserve">
+    <value>{0} Gerichte</value>
+  </data>
+</root>

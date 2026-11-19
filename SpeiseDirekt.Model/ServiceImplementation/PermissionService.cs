@@ -7,11 +7,16 @@ using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.ServiceImplementation;
 
+/// <summary>
+/// The signed-in account's role and permissions (AP14: they follow the role only). Read from the database, not from
+/// claims, so a member who was deactivated or removed loses every permission at once: the owner (an account without
+/// <c>TenantOwnerId</c>) has all, an active <see cref="TenantUser"/> is a manager, anything else has none.
+/// Resolved once per instance (the service is transient: every component gets its own).
+/// </summary>
 public class PermissionService : IPermissionService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ApplicationDbContext _db;
-    private Permission? _cachedPermissions;
     private TenantRole? _cachedRole;
     private bool _resolved;
 
@@ -21,26 +26,14 @@ public class PermissionService : IPermissionService
         _db = db;
     }
 
-    public bool IsOwner()
-    {
-        var user = _httpContextAccessor.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true) return false;
-
-        var tenantOwnerId = user.FindFirstValue("TenantOwnerId");
-        return string.IsNullOrEmpty(tenantOwnerId);
-    }
-
     public async Task<TenantRole?> GetCurrentRoleAsync()
     {
         await EnsureResolvedAsync();
         return _cachedRole;
     }
 
-    public async Task<Permission> GetCurrentPermissionsAsync()
-    {
-        await EnsureResolvedAsync();
-        return _cachedPermissions ?? Permission.None;
-    }
+    public async Task<Permission> GetCurrentPermissionsAsync() =>
+        PermissionDefaults.For(await GetCurrentRoleAsync());
 
     public async Task<bool> HasPermissionAsync(Permission permission)
     {
@@ -59,33 +52,23 @@ public class PermissionService : IPermissionService
         var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
         if (string.IsNullOrEmpty(userId)) return;
 
-        var tenantOwnerId = user.FindFirstValue("TenantOwnerId");
-
-        if (string.IsNullOrEmpty(tenantOwnerId))
-        {
-            // This user IS the owner — full permissions
-            _cachedRole = TenantRole.GeneralManager;
-            _cachedPermissions = (Permission)~0L;
-            return;
-        }
-
-        // Sub-account: look up TenantUser record
-        var tenantUser = await _db.TenantUsers
+        var account = await _db.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(tu => tu.ApplicationUserId == userId && tu.TenantOwnerId == tenantOwnerId);
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.TenantOwnerId })
+            .FirstOrDefaultAsync();
+        if (account is null) return; // removed in the meantime
 
-        if (tenantUser == null || !tenantUser.IsActive)
+        if (string.IsNullOrEmpty(account.TenantOwnerId))
         {
-            _cachedRole = null;
-            _cachedPermissions = Permission.None;
+            _cachedRole = TenantRole.Owner;
             return;
         }
 
-        _cachedRole = tenantUser.Role;
-
-        // Use custom permissions if set, otherwise use role defaults
-        _cachedPermissions = tenantUser.Permissions != Permission.None
-            ? tenantUser.Permissions
-            : PermissionDefaults.GetDefaultPermissions(tenantUser.Role);
+        // A team member: a manager while its TenantUser row is active (the row's Role is not read)
+        var active = await _db.TenantUsers
+            .AsNoTracking()
+            .AnyAsync(tu => tu.ApplicationUserId == userId && tu.TenantOwnerId == account.TenantOwnerId && tu.IsActive);
+        _cachedRole = active ? TenantRole.Manager : null;
     }
 }

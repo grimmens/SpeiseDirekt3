@@ -19,6 +19,101 @@ public abstract class BackOfficeTestBase : E2ETestBase
     protected ILocator Button(string name, bool exact = false) =>
         Page.GetByRole(AriaRole.Button, new() { Name = name, Exact = exact });
 
+    protected ILocator Link(string name, bool exact = false) =>
+        Page.GetByRole(AriaRole.Link, new() { Name = name, Exact = exact });
+
+    /// <summary>The item edit page's form (<c>/MenuItems/Category/{id}/new</c>, <c>/MenuItems/item/{id}/edit</c>).</summary>
+    protected ILocator ItemEditor => Page.GetByTestId("item-edit-form");
+
+    /// <summary>The sticky save bar's "Save" on the item edit page.</summary>
+    protected ILocator SaveItemButton => ItemEditor.GetByRole(AriaRole.Button, new() { Name = "Save", Exact = true });
+
+    /// <summary>Opens the edit page of an item from the item list ("Edit {name}" link) and waits for its form.</summary>
+    protected async Task OpenItemEditorAsync(string itemName)
+    {
+        await Link($"Edit {itemName}", exact: true).ClickAsync();
+        await Assertions.Expect(ItemEditor).ToBeVisibleAsync();
+    }
+
+    /// <summary>Saves the item edit page and waits for the item list it returns to.</summary>
+    protected async Task SaveItemAndReturnAsync()
+    {
+        await SaveItemButton.ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/MenuItems/Category/[0-9a-fA-F-]+\\?highlight=", RegexOptions.IgnoreCase));
+        await Assertions.Expect(Page.GetByTestId("menu-items")).ToBeVisibleAsync();
+    }
+
+    // --- Drag and drop (Shared/Sortable/SortableList, js/sortable-list.js) ---
+
+    /// <summary>The grip handle of a sortable row.</summary>
+    protected static ILocator HandleOf(ILocator row) => row.GetByTestId("sort-handle");
+
+    /// <summary>
+    /// Where the pointer has to go so that the dragged row's centre ends up just past the target row's middle (the
+    /// handle need not sit at the row's centre, e.g. in the phone cards).
+    /// </summary>
+    private static async Task<(float X, float StartY, float EndY)> DragPathAsync(ILocator row, ILocator target)
+    {
+        var handle = HandleOf(row);
+        await handle.ScrollIntoViewIfNeededAsync();
+        var h = (await handle.BoundingBoxAsync())!;
+        var r = (await row.BoundingBoxAsync())!;
+        var t = (await target.BoundingBoxAsync())!;
+        var down = t.Y > r.Y;
+        var wantedCentre = down ? t.Y + t.Height * 0.8f : t.Y + t.Height * 0.2f;
+        var startY = h.Y + h.Height / 2;
+        return (h.X + h.Width / 2, startY, startY + (wantedCentre - (r.Y + r.Height / 2)));
+    }
+
+    /// <summary>Drags <paramref name="row"/> by its handle with the mouse onto <paramref name="target"/>'s slot.</summary>
+    protected static async Task DragRowAsync(IPage page, ILocator row, ILocator target)
+    {
+        var (x, startY, endY) = await DragPathAsync(row, target);
+        await page.Mouse.MoveAsync(x, startY);
+        await page.Mouse.DownAsync();
+        await page.Mouse.MoveAsync(x, startY + Math.Sign(endY - startY) * 6, new() { Steps = 2 });
+        await page.Mouse.MoveAsync(x, endY, new() { Steps = 14 });
+        await page.Mouse.UpAsync();
+    }
+
+    protected Task DragRowAsync(ILocator row, ILocator target) => DragRowAsync(Page, row, target);
+
+    /// <summary>
+    /// A real touch drag (Chromium's DevTools protocol: touchStart, touchMove…, touchEnd), as a finger on a phone
+    /// produces it; the page needs a context with <c>HasTouch</c>.
+    /// </summary>
+    protected static async Task TouchDragAsync(IPage page, float x, float startY, float endY, int steps = 12)
+    {
+        var cdp = await page.Context.NewCDPSessionAsync(page);
+        object Touch(string type, float y) => new Dictionary<string, object>
+        {
+            ["type"] = type,
+            ["touchPoints"] = type == "touchEnd" ? Array.Empty<object>() : new object[] { new Dictionary<string, object> { ["x"] = x, ["y"] = y } }
+        };
+        await cdp.SendAsync("Input.dispatchTouchEvent", (Dictionary<string, object>)Touch("touchStart", startY));
+        for (var i = 1; i <= steps; i++)
+        {
+            await cdp.SendAsync("Input.dispatchTouchEvent", (Dictionary<string, object>)Touch("touchMove", startY + (endY - startY) * i / steps));
+            await page.WaitForTimeoutAsync(16);
+        }
+        await cdp.SendAsync("Input.dispatchTouchEvent", (Dictionary<string, object>)Touch("touchEnd", endY));
+        await cdp.DetachAsync();
+    }
+
+    /// <summary>Drags <paramref name="row"/> by its handle with a finger onto <paramref name="target"/>'s slot.</summary>
+    protected static async Task TouchDragRowAsync(IPage page, ILocator row, ILocator target)
+    {
+        var (x, startY, endY) = await DragPathAsync(row, target);
+        await TouchDragAsync(page, x, startY, endY);
+    }
+
+    /// <summary>The live region the sortable lists announce their moves in (Layout/MainLayout).</summary>
+    protected static ILocator Announcer(IPage page) => page.GetByTestId("sd-announcer");
+
+    /// <summary>The allergen checkbox with this code on the item edit page.</summary>
+    protected ILocator AllergenCheckbox(string code) =>
+        ItemEditor.Locator($"label[data-allergen-code='{code}'] input[type=checkbox]");
+
     /// <summary>Creates a menu via <c>/menu/edit</c> and returns its id (read from the link on <c>/menus</c>).</summary>
     protected async Task<Guid> CreateMenuViaUiAsync(string name, string description = "Created by E2E test")
     {
@@ -33,7 +128,7 @@ public abstract class BackOfficeTestBase : E2ETestBase
         return ExtractGuid((await link.GetAttributeAsync("href"))!);
     }
 
-    /// <summary>The menu card on <c>/menus</c> (the sidebar tree links to the same URL, but without an <c>h3</c>).</summary>
+    /// <summary>The menu card on <c>/menus</c> (other links to the menu, e.g. the menu switcher's, have no <c>h3</c>).</summary>
     protected static ILocator MenuCardLink(IPage page, string menuName) =>
         page.Locator("a[href^='menudetail/']", new() { Has = page.Locator("h3", new() { HasTextString = menuName }) });
 
@@ -43,7 +138,7 @@ public abstract class BackOfficeTestBase : E2ETestBase
         await GotoInteractiveAsync($"/Categories/{menuId}");
         await Page.Locator("#Input\\.Name").FillAsync(name);
         await Button("Add Category").ClickAsync();
-        await Assertions.Expect(Page.Locator("table a", new() { HasTextString = name })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByTestId("category-row").Locator("a", new() { HasTextString = name })).ToBeVisibleAsync();
     }
 
     /// <summary>Creates an allergen via <c>/allergens/{menuId}</c> (expects success).</summary>
@@ -63,8 +158,9 @@ public abstract class BackOfficeTestBase : E2ETestBase
     }
 
     /// <summary>
-    /// Creates a menu item in the menu's first category via <c>/MenuItems/{menuId}</c> and the item editor.
-    /// <paramref name="allergenCodes"/> are ticked in the editor's allergen list.
+    /// Creates a menu item in the menu's first category via <c>/MenuItems/{menuId}</c> and the item edit page
+    /// ("New Menu Entry"); returns on the list it goes back to. <paramref name="allergenCodes"/> are ticked in the
+    /// page's allergen list.
     /// </summary>
     protected Task CreateMenuItemViaUiAsync(
         Guid menuId, string name, string description, decimal price, params string[] allergenCodes) =>
@@ -83,23 +179,20 @@ public abstract class BackOfficeTestBase : E2ETestBase
         await GotoInteractiveAsync($"/MenuItems/{menuId}");
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/MenuItems/Category/", RegexOptions.IgnoreCase));
 
-        await Button("New Menu Entry").ClickAsync();
-        var editor = Page.Locator("#menuItemEditModal");
-        await Assertions.Expect(editor).ToBeVisibleAsync();
+        await Link("New Menu Entry").ClickAsync();
+        await Assertions.Expect(ItemEditor).ToBeVisibleAsync();
 
-        await editor.Locator("#MenuItem\\.Name").FillAsync(name);
-        await editor.Locator("#MenuItem\\.Description").FillAsync(description);
-        await editor.Locator("#MenuItem\\.Price").FillAsync(price.ToString(CultureInfo.InvariantCulture));
+        await ItemEditor.Locator("#MenuItem\\.Name").FillAsync(name);
+        await ItemEditor.Locator("#MenuItem\\.Description").FillAsync(description);
+        await ItemEditor.Locator("#MenuItem\\.Price").FillAsync(price.ToString(CultureInfo.InvariantCulture));
         foreach (var code in allergenCodes)
-            await editor.Locator("label", new() { HasTextRegex = new Regex($"^\\s*{Regex.Escape(code)} - ") })
-                .Locator("input[type=checkbox]").CheckAsync();
+            await AllergenCheckbox(code).CheckAsync();
 
-        await editor.Locator("#MenuItem\\.IsVegan").SetCheckedAsync(labels.Vegan);
-        await editor.Locator("#MenuItem\\.IsVegetarian").SetCheckedAsync(labels.Vegetarian);
-        await editor.Locator("#MenuItem\\.IsSpicy").SetCheckedAsync(labels.Spicy);
+        await ItemEditor.Locator("#MenuItem\\.IsVegan").SetCheckedAsync(labels.Vegan);
+        await ItemEditor.Locator("#MenuItem\\.IsVegetarian").SetCheckedAsync(labels.Vegetarian);
+        await ItemEditor.Locator("#MenuItem\\.IsSpicy").SetCheckedAsync(labels.Spicy);
 
-        await editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
-        await Assertions.Expect(editor).ToBeHiddenAsync();
+        await SaveItemAndReturnAsync();
         await Assertions.Expect(Page.Locator("td", new() { HasTextString = name }).First).ToBeVisibleAsync();
     }
 

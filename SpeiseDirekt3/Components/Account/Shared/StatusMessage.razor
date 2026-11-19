@@ -1,16 +1,25 @@
-﻿@if (!string.IsNullOrEmpty(DisplayMessage))
+@* A status message of the account pages: green, or red for an error. The message comes from the page (Message +
+   IsError) or, after a redirect, from the status cookie (IdentityRedirectManager.RedirectToWithStatus), which carries
+   whether it is an error. Texts are localized by the page that made them (AccountText). *@
+@if (!string.IsNullOrEmpty(DisplayMessage))
 {
-    var statusMessageClass = DisplayMessage.StartsWith("Error") ? "danger" : "success";
-    <div class="alert alert-@statusMessageClass" role="alert">
+    var error = Message is not null ? IsError : cookieIsError;
+    @* Both class sets: Bootstrap's alert in the back office (Account/Manage), au-alert on the anonymous pages (css/auth.css) *@
+    <div class="alert alert-@(error ? "danger" : "success") au-alert au-alert--@(error ? "error" : "success")" role="@(error ? "alert" : "status")" data-testid="status-message">
         @DisplayMessage
     </div>
 }
 
 @code {
     private string? messageFromCookie;
+    private bool cookieIsError;
 
     [Parameter]
     public string? Message { get; set; }
+
+    /// <summary><see cref="Message"/> is an error (shown in red).</summary>
+    [Parameter]
+    public bool IsError { get; set; }
 
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
@@ -19,10 +28,11 @@
 
     protected override void OnInitialized()
     {
-        messageFromCookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
+        var cookie = HttpContext.Request.Cookies[IdentityRedirectManager.StatusCookieName];
 
-        if (messageFromCookie is not null)
+        if (cookie is not null)
         {
+            (messageFromCookie, cookieIsError) = IdentityRedirectManager.ReadStatus(cookie);
             HttpContext.Response.Cookies.Delete(IdentityRedirectManager.StatusCookieName);
         }
     }

@@ -1,0 +1,710 @@
+@page "/MenuItems/Category/{CategoryId:guid}/new"
+@page "/MenuItems/item/{ItemId:guid}/edit"
+@using System.Text
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Components.Shared.Sortable
+@using SpeiseDirekt.Data
+@using SpeiseDirekt.Infrastructure
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@attribute [Authorize]
+@inject ApplicationDbContext Context
+@inject IImageUploadService ImageUploadService
+@inject IPermissionService PermissionService
+@inject INotificationService NotificationService
+@inject NavigationManager Navigation
+@inject IStringLocalizer<ItemsText> T
+@inject IStringLocalizer<CommonText> C
+@inject IStringLocalizer<ShellText> S
+
+@* The item editor as its own page (AP11, instead of the big modal): calm sections Basics · Photo · Price & options ·
+   Labels · Allergens and a sticky save bar. Save and Cancel return to the category's list, which scrolls to the item
+   and highlights it (?highlight=). The page has its own DbContext, so leaving it never writes unsaved edits; leaving
+   with unsaved changes asks first (NavigationLock; the browser asks on reload/close). New items: category preselected,
+   appended at the end. Without MenuItemsEdit an existing item opens read-only; a new item needs MenuItemsCreate. *@
+
+<PageTitle>@C["PageTitle", PageTitleText]</PageTitle>
+
+<NavigationLock OnBeforeInternalNavigation="OnBeforeInternalNavigationAsync" ConfirmExternalNavigation="@(IsDirty && !leaving)" />
+
+<div class="max-w-6xl mx-auto" data-testid="item-edit-page">
+    @if (state == PageState.Loading)
+    {
+        <p class="text-sm text-gray-500" role="status">@C["Loading"]</p>
+    }
+    else if (state == PageState.NotFound)
+    {
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+            <div class="sd-empty" data-testid="item-not-found">
+                <span class="sd-empty-icon" aria-hidden="true">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Items.Path" /></svg>
+                </span>
+                <h1 class="sd-empty-title">@T["Edit_NotFoundTitle"]</h1>
+                <p class="sd-empty-text mb-4">@T["Edit_NotFoundText"]</p>
+                <a href="/menus" class="sd-btn sd-btn--secondary">@T["BackToMenus"]</a>
+            </div>
+        </div>
+    }
+    else if (Input is not null && category is not null)
+    {
+        <nav class="mb-3" aria-label="@S["Context_BreadcrumbLabel"]" data-testid="item-edit-breadcrumb">
+            <ol class="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-sm list-none m-0 p-0">
+                <li><a href="@($"/MenuItems/Category/{category.Id}")" class="font-medium text-brand-700 hover:underline" data-testid="item-edit-back">@T["Edit_Breadcrumb", category.Name]</a></li>
+                <li aria-hidden="true" class="text-gray-400">›</li>
+                <li class="text-gray-600" aria-current="page">@(IsNew ? T["Edit_PageTitleNew"] : storedName)</li>
+            </ol>
+        </nav>
+
+        <PageHeader Eyebrow="@(IsNew ? T["Edit_EyebrowNew"] : (ReadOnly ? T["Edit_EyebrowView"] : T["Edit_EyebrowEdit"]))" Title="@HeaderTitle"
+                    Icon="@(IsNew ? PageIcons.Add : PageIcons.Edit)" Tone="TileTone.Accent">
+            <Description>
+                @UiMarkup.Strong(IsNew ? T["Edit_DescriptionNew"] : T["Edit_DescriptionEdit"], category.Name)
+            </Description>
+        </PageHeader>
+
+        @if (ReadOnly)
+        {
+            <div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-[1rem] py-[0.75rem] text-sm text-amber-900" role="status" data-testid="item-read-only">
+                @T["Edit_ReadOnly"]
+            </div>
+        }
+        @if (saveError is not null)
+        {
+            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-[1rem] py-[0.75rem] text-sm text-red-800" role="alert" data-testid="item-save-error">@saveError</div>
+        }
+
+        <EditForm EditContext="editContext" OnSubmit="SaveAsync" data-testid="item-edit-form">
+            <DataAnnotationsValidator />
+            <fieldset disabled="@ReadOnly" class="m-0 p-0 border-0 min-w-0">
+                <legend class="sr-only">@HeaderTitle</legend>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+                    <!-- Basics -->
+                    <section class="sd-form-section lg:col-span-2" aria-labelledby="item-basics-title" data-testid="item-section-basics">
+                        @SectionHead("item-basics-title", T["Section_Basics"], T["Section_BasicsText"], PageIcons.Basics)
+                        <div class="sd-form-section-body">
+                            <div>
+                                <label for="MenuItem.Name" class="block text-sm font-semibold text-gray-800 mb-1">@T["Field_Name"] <span class="text-red-700" aria-hidden="true">*</span></label>
+                                <InputText @bind-Value="Input.Name" id="MenuItem.Name" class="sd-input" autocomplete="off" />
+                                <ValidationMessage For="() => Input.Name" class="sd-field-error" />
+                            </div>
+                            <div>
+                                <label for="MenuItem.Description" class="block text-sm font-semibold text-gray-800 mb-1">@T["Field_Description"] <span class="font-normal text-gray-500">@C["OptionalSuffix"]</span></label>
+                                <InputTextArea @bind-Value="Input.Description" id="MenuItem.Description" rows="3" class="sd-input resize-y" />
+                                <ValidationMessage For="() => Input.Description" class="sd-field-error" />
+                            </div>
+                            <div>
+                                <label for="MenuItem.CategoryId" class="block text-sm font-semibold text-gray-800 mb-1">@T["Field_Category"]</label>
+                                <InputSelect @bind-Value="Input.CategoryId" id="MenuItem.CategoryId" class="sd-input">
+                                    @foreach (var cat in categories)
+                                    {
+                                        <option value="@cat.Id">@cat.Name</option>
+                                    }
+                                </InputSelect>
+                                @if (!IsNew && Input.CategoryId != storedCategoryId)
+                                {
+                                    <p class="mt-1 mb-0 text-xs text-gray-600">@T["Field_CategoryMoved"]</p>
+                                }
+                                <ValidationMessage For="() => Input.CategoryId" class="sd-field-error" />
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Photo (right column from 1024 px) -->
+                    <section class="sd-form-section lg:col-start-3 lg:row-start-1 lg:row-span-4 lg:sticky lg:top-24" aria-labelledby="item-photo-title" data-testid="item-section-photo">
+                        @SectionHead("item-photo-title", T["Section_Photo"], T["Section_PhotoText"], PageIcons.Photo)
+                        <div class="sd-form-section-body">
+                            <div class="relative overflow-hidden rounded-lg border border-gray-200 bg-gray-50 aspect-[4/3]" data-testid="item-photo-preview">
+                                @if (!string.IsNullOrEmpty(Input.ImagePath))
+                                {
+                                    <img src="@ImageUploadService.GetImageUrl(Input.ImagePath)" alt="@T["Photo_Alt"]" class="absolute inset-0 w-full h-full object-cover" />
+                                }
+                                else
+                                {
+                                    <div class="absolute inset-0 flex flex-col items-center justify-center gap-1 text-gray-500">
+                                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Photo.Path" /></svg>
+                                        <span class="text-sm">@T["Photo_None"]</span>
+                                    </div>
+                                }
+                            </div>
+                            @if (!ReadOnly)
+                            {
+                                <div>
+                                    <label for="MenuItem.Image" class="block text-sm font-semibold text-gray-800 mb-1">@(string.IsNullOrEmpty(Input.ImagePath) ? T["Photo_Upload"] : T["Photo_Replace"])</label>
+                                    <InputFile id="MenuItem.Image" OnChange="HandleImageUpload" accept="image/*"
+                                               class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100" />
+                                    <p class="mt-1 mb-0 text-xs text-gray-500">@T["Photo_Formats"]</p>
+                                    @if (imageUploadError != null)
+                                    {
+                                        <p class="sd-field-error" role="alert">@imageUploadError</p>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(Input.ImagePath))
+                                {
+                                    <button type="button" class="sd-btn sd-btn--secondary sd-btn--small self-start" @onclick="RemoveImage" disabled="@isUploading">@T["Photo_Remove"]</button>
+                                }
+                            }
+                        </div>
+                    </section>
+
+                    <!-- Price & options -->
+                    <section class="sd-form-section lg:col-span-2" aria-labelledby="item-price-title" data-testid="item-section-price">
+                        @SectionHead("item-price-title", T["Section_Price"], T["Section_PriceText"], PageIcons.Price)
+                        <div class="sd-form-section-body">
+                            <div class="max-w-[14rem]">
+                                <label for="MenuItem.Price" class="block text-sm font-semibold text-gray-800 mb-1">@T["Field_Price"] <span class="text-red-700" aria-hidden="true">*</span></label>
+                                <PriceInput @bind-Value="Input.Price" id="MenuItem.Price" readonly="@HasVariants"
+                                            aria-describedby="@(HasVariants ? "MenuItem.PriceHint" : null)" class="sd-input tabular-nums" />
+                                <ValidationMessage For="() => Input.Price" class="sd-field-error" />
+                            </div>
+                            @if (HasVariants)
+                            {
+                                <p id="MenuItem.PriceHint" class="-mt-3 mb-0 text-xs text-gray-600" data-testid="price-follows-variants">
+                                    @T["Price_FollowsVariants", UiFormat.Price(Input.Price)]
+                                </p>
+                            }
+                            @OptionSection(PriceOptionKind.Variant)
+                            @OptionSection(PriceOptionKind.Extra)
+                        </div>
+                    </section>
+
+                    <!-- Labels (one list for back office and guests: ItemLabels) -->
+                    <section class="sd-form-section lg:col-span-2" aria-labelledby="item-labels-title" data-testid="item-section-labels">
+                        @SectionHead("item-labels-title", T["Section_Labels"], T["Section_LabelsText"], PageIcons.Tag)
+                        <div class="sd-form-section-body" data-testid="item-label-options">
+                            @foreach (var group in LabelGroups)
+                            {
+                                <fieldset class="m-0 p-0 border-0 min-w-0">
+                                    <legend class="float-none w-auto mb-2 p-0 text-xs font-bold uppercase tracking-wider text-gray-600">@T[group.TitleKey]</legend>
+                                    <div class="sd-check-grid">
+                                        @foreach (var label in group.Labels)
+                                        {
+                                            <label class="sd-check">
+                                                <input type="checkbox" id="@($"MenuItem.{label.PropertyName}")" checked="@label.Get(Input)"
+                                                       @onchange="e => label.Set(Input, e.Value is true)" />
+                                                <span>@T.LabelName(label)</span>
+                                            </label>
+                                        }
+                                    </div>
+                                </fieldset>
+                            }
+                        </div>
+                    </section>
+
+                    <!-- Allergens -->
+                    <section class="sd-form-section lg:col-span-2" aria-labelledby="item-allergens-title" data-testid="item-section-allergens">
+                        @SectionHead("item-allergens-title", T["Section_Allergens"], T["Section_AllergensText"], PageIcons.Allergens)
+                        <div class="sd-form-section-body">
+                            @if (allergens.Any())
+                            {
+                                <div class="sd-check-grid" data-testid="item-allergen-options">
+                                    @foreach (var allergen in allergens)
+                                    {
+                                        var isChecked = Input.Allergens.Any(a => a.Id == allergen.Id);
+                                        <label class="sd-check" data-allergen-code="@allergen.Code">
+                                            <input type="checkbox" checked="@isChecked" @onchange="e => ToggleAllergen(allergen, e.Value is true)" />
+                                            <span class="inline-flex items-center justify-center min-w-[1.75rem] px-1.5 py-0.5 rounded text-xs font-bold bg-brand-50 text-brand-800 border border-brand-200">@allergen.Code</span>
+                                            <span class="min-w-0 break-words">@allergen.Name</span>
+                                        </label>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="m-0 text-sm text-gray-600">
+                                    @T["Allergens_None"]
+                                    <a href="@($"/allergens/{category.MenuId}")" class="text-brand-700 hover:underline">@T["Allergens_Manage"]</a>
+                                </p>
+                            }
+                        </div>
+                    </section>
+                </div>
+            </fieldset>
+
+            <!-- Sticky save bar -->
+            <div class="sd-savebar" data-testid="item-savebar">
+                @if (ReadOnly)
+                {
+                    <span class="sd-savebar-status">@T["Savebar_ReadOnly"]</span>
+                    <button type="button" class="sd-btn sd-btn--secondary" @onclick="CancelAsync">@T["Savebar_BackToList"]</button>
+                }
+                else
+                {
+                    <span class="@(IsDirty ? "sd-savebar-status sd-savebar-status--dirty" : "sd-savebar-status")" data-testid="item-dirty-state" aria-live="polite">
+                        @(IsDirty ? T["Savebar_Unsaved"] : IsNew ? T["Edit_PageTitleNew"] : T["Savebar_NoChanges"])
+                    </span>
+                    <button type="button" class="sd-btn sd-btn--secondary" @onclick="CancelAsync" disabled="@saving">@C["Cancel"]</button>
+                    <button type="submit" class="sd-btn sd-btn--primary" disabled="@(isUploading || saving)">
+                        @if (isUploading || saving)
+                        {
+                            <svg class="animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>
+                        }
+                        @C["Save"]
+                    </button>
+                }
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid? CategoryId { get; set; }
+    [Parameter] public Guid? ItemId { get; set; }
+
+    private enum PageState { Loading, Ready, NotFound }
+    private PageState state = PageState.Loading;
+
+    private MenuItem? Input;
+    private Category? category;
+    private List<Category> categories = new();
+    private List<Allergen> allergens = new();
+    private EditContext editContext = new(new MenuItem());
+    private ValidationMessageStore? optionMessages;
+    private bool canEdit, canCreate;
+
+    private string storedName = "";
+    private Guid storedCategoryId;
+    private string? originalImagePath;   // the stored photo; a newly uploaded one is deleted again on cancel
+    private string initialSnapshot = "";
+
+    private bool isUploading, saving, leaving;
+    private string? imageUploadError, saveError;
+
+    private bool IsNew => ItemId is null;
+    private bool ReadOnly => IsNew ? !canCreate : !canEdit;
+    private bool HasVariants => Input?.HasVariants() == true;
+    private bool IsDirty => Input is not null && !ReadOnly && Snapshot() != initialSnapshot;
+    private string HeaderTitle => IsNew ? (string.IsNullOrWhiteSpace(Input?.Name) ? T["Edit_PageTitleNew"] : Input!.Name) : storedName;
+    private string PageTitleText => IsNew ? T["Edit_PageTitleNew"] : T["Edit_PageTitleEdit", storedName];
+
+    private sealed record LabelGroup(string TitleKey, IReadOnlyList<ItemLabel> Labels);
+
+    private static readonly IReadOnlyList<LabelGroup> LabelGroups = new[]
+    {
+        new LabelGroup(nameof(ItemsText.LabelGroup_Dietary), ItemLabels.OfKind(ItemLabelKind.Dietary)),
+        new LabelGroup(nameof(ItemsText.LabelGroup_Highlights), ItemLabels.OfKind(ItemLabelKind.Highlight))
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        state = PageState.Loading;
+        // The same page instance may be reused for another item (e.g. /new → /edit through the history): start clean
+        Context.ChangeTracker.Clear();
+        (leaving, saving, isUploading, saveError, imageUploadError) = (false, false, false, null, null);
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenuItemsView, Navigation)) return;
+        canEdit = await PermissionService.HasPermissionAsync(Permission.MenuItemsEdit);
+        canCreate = await PermissionService.HasPermissionAsync(Permission.MenuItemsCreate);
+
+        if (ItemId is { } itemId)
+        {
+            Input = await Context.MenuItems
+                .Include(m => m.Allergens)
+                .Include(m => m.PriceOptions)
+                .Include(m => m.Category)
+                .FirstOrDefaultAsync(m => m.Id == itemId);
+            category = Input?.Category;
+        }
+        else if (CategoryId is { } categoryId)
+        {
+            category = await Context.Categories.FirstOrDefaultAsync(c => c.Id == categoryId);
+            if (category is not null && !canCreate)
+            {
+                // Creating needs MenuItemsCreate: back to the list
+                leaving = true;
+                Navigation.NavigateTo($"/MenuItems/Category/{category.Id}", replace: true);
+                return;
+            }
+            Input = category is null ? null : new MenuItem { CategoryId = category.Id };
+        }
+
+        if (Input is null || category is null)
+        {
+            state = PageState.NotFound;
+            return;
+        }
+
+        categories = await Context.Categories
+            .Where(c => c.MenuId == category.MenuId)
+            .InDisplayOrder()
+            .ToListAsync();
+        allergens = await Context.Allergens
+            .Where(a => a.MenuId == category.MenuId)
+            .OrderBy(a => a.Code)
+            .ToListAsync();
+
+        // Prices with two decimals in the fields ("5.90", not "5.9": SQLite does not keep the scale; equal values, so
+        // nothing counts as changed)
+        Input.Price = TwoDecimals(Input.Price);
+        foreach (var option in Input.PriceOptions)
+            option.Price = TwoDecimals(option.Price);
+
+        storedName = Input.Name;
+        storedCategoryId = Input.CategoryId;
+        originalImagePath = Input.ImagePath;
+        editContext = new EditContext(Input);
+        optionMessages = new ValidationMessageStore(editContext);
+        optionKeys.Clear();
+        initialSnapshot = Snapshot();
+        state = PageState.Ready;
+    }
+
+    private static decimal TwoDecimals(decimal value) => decimal.Round(value, 2) + 0.00m;
+
+    /// <summary>Everything the page can change, as text: differs from the loaded state = unsaved changes.</summary>
+    private string Snapshot()
+    {
+        if (Input is null) return "";
+        var text = new StringBuilder()
+            .Append(Input.Name).Append('\u001f')
+            .Append(Input.Description).Append('\u001f')
+            .Append(Input.CategoryId).Append('\u001f')
+            .Append(Input.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)).Append('\u001f')
+            .Append(Input.ImagePath).Append('\u001f');
+        foreach (var label in ItemLabels.All)
+            text.Append(label.Get(Input) ? '1' : '0');
+        text.Append('\u001f');
+        foreach (var id in Input.Allergens.Select(a => a.Id).OrderBy(id => id))
+            text.Append(id).Append(',');
+        text.Append('\u001f');
+        foreach (var option in Input.PriceOptions.OrderBy(o => o.Kind).ThenBy(o => o.SortOrder))
+            text.Append(option.Kind).Append(':').Append(option.Name).Append(':')
+                .Append(option.Price.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)).Append(';');
+        return text.ToString();
+    }
+
+    private static RenderFragment SectionHead(string id, string title, string description, PageIcon icon) => __builder =>
+    {
+        <div class="sd-form-section-head">
+            <span class="sd-tile sd-tile--sm sd-tile--accent" aria-hidden="true">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@icon.Path" /></svg>
+            </span>
+            <div class="min-w-0">
+                <h2 id="@id" class="sd-form-section-title">@title</h2>
+                <p class="sd-form-section-desc">@description</p>
+            </div>
+        </div>
+    };
+
+    // --- Price variants and extras ---
+
+    /// <summary>Stable keys of the option rows (new options have no id yet), for the sortable list.</summary>
+    private readonly Dictionary<MenuItemPriceOption, string> optionKeys = new(ReferenceEqualityComparer.Instance);
+    private int nextOptionKey;
+
+    private string OptionKey(MenuItemPriceOption option)
+    {
+        if (!optionKeys.TryGetValue(option, out var key))
+            optionKeys[option] = key = $"o{++nextOptionKey}";
+        return key;
+    }
+
+    /// <summary>The kind as a machine word for ids ("variant", "extra"), never shown.</summary>
+    private static string KindId(PriceOptionKind kind) => kind == PriceOptionKind.Variant ? "variant" : "extra";
+
+    /// <summary>The row's name in announcements and labels: "variant 0,5 l" / "Variante 0,5 l", or its position.</summary>
+    private string OptionTitle(MenuItemPriceOption option, int position) =>
+        T[option.Kind == PriceOptionKind.Variant ? "Option_Variant" : "Option_Extra",
+          string.IsNullOrWhiteSpace(option.Name) ? position.ToString(System.Globalization.CultureInfo.CurrentCulture) : option.Name.Trim()];
+
+    /// <summary>Name inputs of the option rows, to focus a freshly added row.</summary>
+    private readonly Dictionary<MenuItemPriceOption, InputText> optionNameInputs = new(ReferenceEqualityComparer.Instance);
+    private MenuItemPriceOption? focusOption;
+
+    /// <summary>"Price variants" or "Extras": sortable rows with name, price and remove; an add button below.</summary>
+    private RenderFragment OptionSection(PriceOptionKind kind) => __builder =>
+    {
+        var options = Input!.OfKind(kind);
+        var isVariant = kind == PriceOptionKind.Variant;
+        var noun = KindId(kind);
+        <div class="pt-4 border-t border-gray-100 space-y-2" data-testid="@(isVariant ? "price-variants" : "price-extras")" role="group" aria-labelledby="@($"options-{noun}-heading")">
+            <div>
+                <h3 id="@($"options-{noun}-heading")" class="text-sm font-semibold text-gray-800 mb-0">
+                    @(isVariant ? T["Options_Variants"] : T["Options_Extras"]) <span class="font-normal text-gray-500">@C["OptionalSuffix"]</span>
+                </h3>
+                <p class="mt-0.5 mb-0 text-xs text-gray-600">
+                    @(isVariant ? T["Options_VariantsHelp"] : T["Options_ExtrasHelp"])
+                </p>
+            </div>
+            @if (options.Count > 0)
+            {
+                <SortableList TItem="MenuItemPriceOption" Element="ul" RowElement="li" Items="options" class="sd-option-list"
+                              KeyOf="OptionKey" NameOf="@(o => OptionTitle(o, IndexOf(o) + 1))"
+                              OnMove="@(ReadOnly || options.Count < 2 ? null : move => MoveOptionAsync(kind, move))"
+                              RowClass="sd-option-row" RowAttributes="@(_ => OptionRowAttributes(isVariant))">
+                    <ChildContent Context="row">
+                        @{ var option = row.Item; var position = row.Index + 1; var title = OptionTitle(option, position); }
+                        @row.Handle
+                        <div class="flex flex-1 flex-wrap items-start gap-2 min-w-0">
+                        <div class="min-w-[9rem] flex-1">
+                            <InputText @ref="optionNameInputs[option]" @bind-Value="option.Name" maxlength="@MenuItemPriceOption.NameMaxLength"
+                                       placeholder="@(isVariant ? T["Options_VariantPlaceholder"] : T["Options_ExtraPlaceholder"])" aria-label="@T[isVariant ? "Option_VariantName" : "Option_ExtraName", position]"
+                                       class="sd-input" />
+                            <ValidationMessage For="() => option.Name" class="sd-field-error" />
+                        </div>
+                        <div class="w-28 flex-shrink-0">
+                            <div class="relative">
+                                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-sm text-gray-500" aria-hidden="true">€</span>
+                                <PriceInput @bind-Value="option.Price" @bind-Value:after="OptionsChanged"
+                                            aria-label="@T[isVariant ? "Option_VariantPrice" : "Option_ExtraPrice", position]"
+                                            class="sd-input text-right tabular-nums" style="padding-left: 1.75rem" />
+                            </div>
+                            <ValidationMessage For="() => option.Price" class="sd-field-error" />
+                        </div>
+                        <button type="button" title="@C["Remove"]" aria-label="@T["Option_Remove", title]" class="sd-row-action sd-row-action--danger"
+                                @onclick="() => RemoveOption(option)">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                        </div>
+                    </ChildContent>
+                </SortableList>
+            }
+            @if (!ReadOnly)
+            {
+                <button type="button" @onclick="() => AddOption(kind)" class="sd-btn sd-btn--secondary sd-btn--small">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    @(isVariant ? T["Options_AddVariant"] : T["Options_AddExtra"])
+                </button>
+            }
+        </div>
+    };
+
+    private int IndexOf(MenuItemPriceOption option)
+    {
+        var siblings = Input!.OfKind(option.Kind);
+        for (var i = 0; i < siblings.Count; i++)
+            if (ReferenceEquals(siblings[i], option))
+                return i;
+        return -1;
+    }
+
+    private static IReadOnlyDictionary<string, object> OptionRowAttributes(bool isVariant) =>
+        new Dictionary<string, object> { ["data-testid"] = isVariant ? "variant-row" : "extra-row" };
+
+    private void AddOption(PriceOptionKind kind)
+    {
+        if (Input is null || ReadOnly) return;
+        var existing = Input.OfKind(kind);
+        var option = new MenuItemPriceOption
+        {
+            // Id stays empty: EF generates it and tracks the option as new
+            MenuItemId = Input.Id,
+            Kind = kind,
+            SortOrder = existing.Count == 0 ? 0 : existing.Max(o => o.SortOrder) + 1,
+            // A first variant starts at the current price, the next ones at the last variant's price
+            Price = kind == PriceOptionKind.Variant ? (existing.Count == 0 ? Input.Price : existing[^1].Price) : 0m
+        };
+        Input.PriceOptions.Add(option);
+        focusOption = option;
+        OptionsChanged();
+    }
+
+    private void RemoveOption(MenuItemPriceOption option)
+    {
+        if (Input is null || ReadOnly) return;
+        Input.PriceOptions.Remove(option);
+        optionNameInputs.Remove(option);
+        Input.Renumber(option.Kind);
+        OptionsChanged();
+    }
+
+    private Task<bool> MoveOptionAsync(PriceOptionKind kind, SortableMove move)
+    {
+        if (Input is null || ReadOnly) return Task.FromResult(false);
+        var siblings = Input.OfKind(kind).ToList();
+        var moved = DisplayOrder.Move(siblings, move.OldIndex, move.NewIndex - move.OldIndex, (o, i) => o.SortOrder = i);
+        StateHasChanged();
+        return Task.FromResult(moved);
+    }
+
+    /// <summary>Keeps the (read-only) base price equal to the lowest variant while the variants are edited.</summary>
+    private void OptionsChanged() => Input?.ApplyLowestVariantPrice();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusOption is { } option && optionNameInputs.TryGetValue(option, out var input) && input.Element is { } element)
+        {
+            focusOption = null;
+            await element.FocusAsync();
+        }
+    }
+
+    /// <summary>
+    /// The price options are not validated by the DataAnnotationsValidator (it only looks at the item itself): check
+    /// each one with its own attributes and show the messages next to the row.
+    /// </summary>
+    private bool ValidatePriceOptions()
+    {
+        optionMessages ??= new ValidationMessageStore(editContext);
+        optionMessages.Clear();
+        var valid = true;
+        foreach (var option in Input!.PriceOptions)
+        {
+            option.Name = option.Name?.Trim() ?? string.Empty;
+            var results = new List<System.ComponentModel.DataAnnotations.ValidationResult>();
+            if (System.ComponentModel.DataAnnotations.Validator.TryValidateObject(
+                    option, new System.ComponentModel.DataAnnotations.ValidationContext(option), results, validateAllProperties: true))
+                continue;
+            valid = false;
+            foreach (var result in results)
+                foreach (var member in result.MemberNames)
+                    optionMessages.Add(new FieldIdentifier(option, member), result.ErrorMessage ?? T["Error_InvalidValue"]);
+        }
+        editContext.NotifyValidationStateChanged();
+        return valid;
+    }
+
+    // --- Saving and leaving ---
+
+    private async Task SaveAsync()
+    {
+        if (Input is null || ReadOnly || saving || isUploading) return;
+        saveError = null;
+
+        // Stale messages of the option rows (last attempt) must not fail the item's own validation
+        optionMessages?.Clear();
+        var itemValid = editContext.Validate();
+        if (!ValidatePriceOptions() || !itemValid)
+            return;
+
+        Input.Name = Input.Name.Trim();
+        Input.Description = Input.Description?.Trim() ?? string.Empty;
+        Input.Renumber(PriceOptionKind.Variant);
+        Input.Renumber(PriceOptionKind.Extra);
+        Input.ApplyLowestVariantPrice();
+
+        saving = true;
+        try
+        {
+            if (IsNew)
+            {
+                // New items go to the end of their category
+                Input.SortOrder = await Context.NextMenuItemSortOrderAsync(Input.CategoryId);
+                Context.MenuItems.Add(Input);
+            }
+            else if (Input.CategoryId != storedCategoryId)
+            {
+                // Moved to another category: append it there
+                Input.SortOrder = await Context.NextMenuItemSortOrderAsync(Input.CategoryId);
+            }
+            await Context.SaveChangesAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error saving menu item: {ex}");
+            saveError = T["Error_SaveItem"];
+            saving = false;
+            return;
+        }
+
+        leaving = true;
+        Navigation.NavigateTo($"/MenuItems/Category/{Input.CategoryId}?highlight={Input.Id}");
+    }
+
+    /// <summary>Back to the list without saving; a photo uploaded meanwhile is deleted again.</summary>
+    private async Task CancelAsync()
+    {
+        await DiscardUploadAsync();
+        leaving = true;
+        var back = $"/MenuItems/Category/{storedCategoryId}";
+        Navigation.NavigateTo(IsNew ? back : $"{back}?highlight={Input?.Id}");
+    }
+
+    private async Task OnBeforeInternalNavigationAsync(LocationChangingContext context)
+    {
+        if (leaving || !IsDirty)
+            return;
+        context.PreventNavigation();
+        var message = string.IsNullOrWhiteSpace(Input?.Name) ? T["Leave_MessageUnnamed"] : T["Leave_Message", Input!.Name.Trim()];
+        if (!await NotificationService.ShowConfirmation(new ConfirmationRequest(T["Leave_Title"], message)
+            {
+                ConfirmText = T["Leave_Title"],
+                Destructive = true
+            }))
+            return;
+        await DiscardUploadAsync();
+        leaving = true;
+        Navigation.NavigateTo(context.TargetLocation);
+    }
+
+    private async Task DiscardUploadAsync()
+    {
+        if (Input is not null && !string.IsNullOrEmpty(Input.ImagePath) && Input.ImagePath != originalImagePath)
+        {
+            await ImageUploadService.DeleteImageAsync(Input.ImagePath);
+            Input.ImagePath = originalImagePath;
+        }
+    }
+
+    // --- Photo ---
+
+    private async Task HandleImageUpload(InputFileChangeEventArgs e)
+    {
+        if (Input is null || ReadOnly) return;
+        imageUploadError = null;
+        var file = e.File;
+        if (file == null) return;
+
+        if (!ImageUploadService.IsValidImageFile(file))
+        {
+            imageUploadError = T["Photo_Invalid"];
+            return;
+        }
+
+        isUploading = true;
+        StateHasChanged();
+        try
+        {
+            // A photo uploaded on this page and replaced again is not needed any more
+            if (!string.IsNullOrEmpty(Input.ImagePath) && Input.ImagePath != originalImagePath)
+                await ImageUploadService.DeleteImageAsync(Input.ImagePath);
+
+            var imagePath = await ImageUploadService.UploadImageAsync(file);
+            if (imagePath != null)
+                Input.ImagePath = imagePath;
+            else
+                imageUploadError = T["Photo_UploadFailed"];
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error uploading the photo: {ex}");
+            imageUploadError = T["Photo_UploadFailed"];
+        }
+        finally
+        {
+            isUploading = false;
+        }
+    }
+
+    private async Task RemoveImage()
+    {
+        if (Input is null || ReadOnly) return;
+        if (!string.IsNullOrEmpty(Input.ImagePath) && Input.ImagePath != originalImagePath)
+            await ImageUploadService.DeleteImageAsync(Input.ImagePath);
+        Input.ImagePath = null;
+    }
+
+    private void ToggleAllergen(Allergen allergen, bool isChecked)
+    {
+        if (Input is null || ReadOnly) return;
+        if (isChecked)
+        {
+            if (!Input.Allergens.Any(a => a.Id == allergen.Id))
+                Input.Allergens.Add(allergen);
+        }
+        else
+        {
+            var existing = Input.Allergens.FirstOrDefault(a => a.Id == allergen.Id);
+            if (existing != null)
+                Input.Allergens.Remove(existing);
+        }
+    }
+}

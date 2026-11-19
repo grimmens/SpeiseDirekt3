@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Head_Title" xml:space="preserve">
+    <value>Digital menu with QR code | Speise-Direkt</value>
+  </data>
+  <data name="Head_Description" xml:space="preserve">
+    <value>The digital menu behind your QR code: no app for guests, with photos, allergens, six designs and language versions. Registration is free.</value>
+    <comment>meta description and og:description, at most 160 characters</comment>
+  </data>
+  <data name="Head_ImageAlt" xml:space="preserve">
+    <value>Speise-Direkt: the menu of “Trattoria Lago” on a phone</value>
+    <comment>og:image:alt</comment>
+  </data>
+  <data name="SkipToContent" xml:space="preserve">
+    <value>Skip to content</value>
+  </data>
+  <data name="BrandHome" xml:space="preserve">
+    <value>Speise-Direkt, home</value>
+    <comment>aria-label of the logo link</comment>
+  </data>
+  <data name="NavLabel" xml:space="preserve">
+    <value>Main navigation</value>
+  </data>
+  <data name="SectionsLabel" xml:space="preserve">
+    <value>Sections</value>
+    <comment>aria-label of the section links in the phone menu</comment>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Log in</value>
+  </data>
+  <data name="RegisterFree" xml:space="preserve">
+    <value>Register for free</value>
+  </data>
+  <data name="RegisterShort" xml:space="preserve">
+    <value>Register</value>
+    <comment>The header's call to action below 640 px (the accessible name stays RegisterFree)</comment>
+  </data>
+  <data name="MenuButton" xml:space="preserve">
+    <value>Menu</value>
+    <comment>The phone menu button and the sheet's name</comment>
+  </data>
+  <data name="MenuClose" xml:space="preserve">
+    <value>Close menu</value>
+  </data>
+  <data name="Section_Features" xml:space="preserve">
+    <value>Features</value>
+  </data>
+  <data name="Section_Designs" xml:space="preserve">
+    <value>Designs</value>
+  </data>
+  <data name="Section_HowItWorks" xml:space="preserve">
+    <value>How it works</value>
+  </data>
+  <data name="Section_Faq" xml:space="preserve">
+    <value>FAQ</value>
+  </data>
+  <data name="Hero_Eyebrow" xml:space="preserve">
+    <value>Digital menu with QR code</value>
+  </data>
+  <data name="Hero_Title" xml:space="preserve">
+    <value>Your menu, [one scan away.]</value>
+  </data>
+  <data name="Hero_Lead" xml:space="preserve">
+    <value>Guests scan the QR code at the table and open your menu right away in the browser – with photos, prices and allergens, no app needed. What you change, your guests see the next time they open it.</value>
+  </data>
+  <data name="Hero_Note" xml:space="preserve">
+    <value>Registration is free.</value>
+  </data>
+  <data name="Float_ScanTitle" xml:space="preserve">
+    <value>Scan and read</value>
+  </data>
+  <data name="Float_ScanText" xml:space="preserve">
+    <value>In the browser, no app</value>
+  </data>
+  <data name="Float_LiveTitle" xml:space="preserve">
+    <value>Price changed</value>
+  </data>
+  <data name="Float_LiveText" xml:space="preserve">
+    <value>Live for every guest</value>
+  </data>
+  <data name="Proof_Label" xml:space="preserve">
+    <value>At a glance</value>
+  </data>
+  <data name="Proof_NoApp" xml:space="preserve">
+    <value>No app for guests</value>
+  </data>
+  <data name="Proof_Live" xml:space="preserve">
+    <value>Changes live at once</value>
+  </data>
+  <data name="Proof_Allergens" xml:space="preserve">
+    <value>14 EU allergens</value>
+  </data>
+  <data name="Proof_Languages" xml:space="preserve">
+    <value>Several languages</value>
+  </data>
+  <data name="Proof_Designs" xml:space="preserve">
+    <value>Six designs</value>
+  </data>
+  <data name="Features_Eyebrow" xml:space="preserve">
+    <value>Features</value>
+  </data>
+  <data name="Features_Title" xml:space="preserve">
+    <value>Made for guests. Easy for you to keep up to date.</value>
+  </data>
+  <data name="Features_Intro" xml:space="preserve">
+    <value>Speise-Direkt combines a fast menu for the phone with an admin area where you manage dishes, prices, photos and QR codes yourself.</value>
+  </data>
+  <data name="Guests_Kicker" xml:space="preserve">
+    <value>For your guests</value>
+  </data>
+  <data name="Guests_Title" xml:space="preserve">
+    <value>Find what tastes good</value>
+  </data>
+  <data name="Guests_Text" xml:space="preserve">
+    <value>Your guests browse categories with photos, search for dishes and hide what they don't want to eat. What they like goes on their favourites list – they order from the staff as usual.</value>
+  </data>
+  <data name="Guests_Check1" xml:space="preserve">
+    <value>Search across names, descriptions and labels</value>
+  </data>
+  <data name="Guests_Check2" xml:space="preserve">
+    <value>Filter by vegan, vegetarian, spicy, halal and more – or without certain allergens</value>
+  </data>
+  <data name="Guests_Check3" xml:space="preserve">
+    <value>A favourites list with quantities and a total, stored only on the guest's phone</value>
+  </data>
+  <data name="Guests_Check4" xml:space="preserve">
+    <value>Share dishes with a link</value>
+  </data>
+  <data name="Guests_Check5" xml:space="preserve">
+    <value>Language versions guests switch between with one tap</value>
+  </data>
+  <data name="Profile_Kicker" xml:space="preserve">
+    <value>Restaurant profile</value>
+  </data>
+  <data name="Profile_Title" xml:space="preserve">
+    <value>Everything about your restaurant, right in the menu</value>
+  </data>
+  <data name="Profile_Text" xml:space="preserve">
+    <value>A cover picture and your logo give your menu a face. Opening hours, address, phone and website are one tap away – plus your links to Instagram, Facebook and your reviews.</value>
+  </data>
+  <data name="Profile_Check1" xml:space="preserve">
+    <value>Cover picture, logo and a short description</value>
+  </data>
+  <data name="Profile_Check2" xml:space="preserve">
+    <value>Address with a map link, call and e-mail with one tap</value>
+  </data>
+  <data name="Profile_Check3" xml:space="preserve">
+    <value>Categories with subtitles, dishes with photos</value>
+  </data>
+  <data name="Designs_Eyebrow" xml:space="preserve">
+    <value>Six designs</value>
+  </data>
+  <data name="Designs_Title" xml:space="preserve">
+    <value>A design that suits your restaurant</value>
+  </data>
+  <data name="Designs_Intro" xml:space="preserve">
+    <value>Modern or classic, light or dark: choose one of six designs. Colours and fonts change with one click – your dishes, prices and photos stay as they are.</value>
+  </data>
+  <data name="Designs_Legend" xml:space="preserve">
+    <value>Design in the preview</value>
+  </data>
+  <data name="Theme_modern" xml:space="preserve">
+    <value>Modern</value>
+  </data>
+  <data name="Theme_classic" xml:space="preserve">
+    <value>Classic</value>
+  </data>
+  <data name="Theme_elegant" xml:space="preserve">
+    <value>Elegant</value>
+  </data>
+  <data name="Theme_minimal" xml:space="preserve">
+    <value>Minimal</value>
+  </data>
+  <data name="Theme_fancy" xml:space="preserve">
+    <value>Fancy</value>
+  </data>
+  <data name="Theme_dark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Theme_Alt" xml:space="preserve">
+    <value>The “Trattoria Lago” menu in the {0} design on a phone</value>
+    <comment>alt text of a design's screenshot: {0} = the design's name</comment>
+  </data>
+  <data name="Admin_Eyebrow" xml:space="preserve">
+    <value>Admin area</value>
+  </data>
+  <data name="Admin_Title" xml:space="preserve">
+    <value>Quick to update, even during service</value>
+  </data>
+  <data name="Admin_Intro" xml:space="preserve">
+    <value>A new daily special, a changed price, the menu for the holidays: you change it in the admin area, your guests see it the next time they open the menu. The QR code on the table stays the same.</value>
+  </data>
+  <data name="Schedule_Kicker" xml:space="preserve">
+    <value>QR codes with time table and calendar</value>
+  </data>
+  <data name="Schedule_Title" xml:space="preserve">
+    <value>One code, always the right menu</value>
+  </data>
+  <data name="Schedule_Text" xml:space="preserve">
+    <value>A QR code can show a different menu depending on the time or date: the lunch menu automatically at noon, the Christmas menu over the holidays, the fish menu every Friday. You plan the calendar with a few clicks.</value>
+  </data>
+  <data name="Schedule_Check1" xml:space="preserve">
+    <value>Direct, by time table or by calendar</value>
+  </data>
+  <data name="Schedule_Check2" xml:space="preserve">
+    <value>Single days, periods and fixed weekdays</value>
+  </data>
+  <data name="Schedule_Check3" xml:space="preserve">
+    <value>Every QR code as a PNG to download and print</value>
+  </data>
+  <data name="Preview_Kicker" xml:space="preserve">
+    <value>Live preview</value>
+  </data>
+  <data name="Preview_Title" xml:space="preserve">
+    <value>See what your guests see – before you save</value>
+  </data>
+  <data name="Preview_Text" xml:space="preserve">
+    <value>Next to the editor, a phone frame shows your menu as guests see it. Name, description and design change in it while you type; nothing is saved until you say so.</value>
+  </data>
+  <data name="Preview_Check1" xml:space="preserve">
+    <value>Categories and dishes in your order</value>
+  </data>
+  <data name="Preview_Check2" xml:space="preserve">
+    <value>Prices with variants and extras</value>
+  </data>
+  <data name="Preview_Check3" xml:space="preserve">
+    <value>The preview of your menu in its own tab at any time</value>
+  </data>
+  <data name="More_Eyebrow" xml:space="preserve">
+    <value>In detail</value>
+  </data>
+  <data name="More_Title" xml:space="preserve">
+    <value>Thought through down to the last dish</value>
+  </data>
+  <data name="Card_Analytics_Title" xml:space="preserve">
+    <value>Analytics</value>
+  </data>
+  <data name="Card_Analytics_Text" xml:space="preserve">
+    <value>How often is your menu opened, which dishes are tapped, how many visits were there? You see the numbers over time.</value>
+  </data>
+  <data name="Card_Analytics_Note" xml:space="preserve">
+    <value>Example view with demo data.</value>
+  </data>
+  <data name="Card_Team_Title" xml:space="preserve">
+    <value>Team accounts</value>
+  </data>
+  <data name="Card_Team_Text" xml:space="preserve">
+    <value>You as the owner, your team as managers: they look after menus, dishes and QR codes with their own login – only you manage the team.</value>
+  </data>
+  <data name="Card_Allergens_Title" xml:space="preserve">
+    <value>14 EU allergens</value>
+  </data>
+  <data name="Card_Allergens_Text" xml:space="preserve">
+    <value>Added with one click, shown with the dish – and a filter for guests who can't eat something.</value>
+  </data>
+  <data name="Card_Labels_Title" xml:space="preserve">
+    <value>Labels</value>
+  </data>
+  <data name="Card_Labels_Text" xml:space="preserve">
+    <value>Vegan, vegetarian, spicy, halal, alcohol-free, new and popular: recognisable at a glance.</value>
+  </data>
+  <data name="Card_Variants_Title" xml:space="preserve">
+    <value>Variants and extras</value>
+  </data>
+  <data name="Card_Variants_Text" xml:space="preserve">
+    <value>0.25 l or 0.5 l, plus surcharges such as “+ Rocket”: sizes and extras are listed clearly with the dish.</value>
+  </data>
+  <data name="Card_Combos_Title" xml:space="preserve">
+    <value>Combo offers</value>
+  </data>
+  <data name="Card_Combos_Text" xml:space="preserve">
+    <value>Put together combinations, such as a main course with dessert and a drink at a combo price.</value>
+  </data>
+  <data name="Card_Languages_Title" xml:space="preserve">
+    <value>Language versions</value>
+  </data>
+  <data name="Card_Languages_Text" xml:space="preserve">
+    <value>Create a copy of your menu in another language and translate it yourself. Guests switch with one tap.</value>
+  </data>
+  <data name="Card_Photos_Title" xml:space="preserve">
+    <value>Photos for every dish</value>
+  </data>
+  <data name="Card_Photos_Text" xml:space="preserve">
+    <value>Upload photos; guests see them in the menu and large in the detail view. Dishes without a photo appear as a simple text card.</value>
+  </data>
+  <data name="Card_Fast_Title" xml:space="preserve">
+    <value>Slim and fast</value>
+  </data>
+  <data name="Card_Fast_Text" xml:space="preserve">
+    <value>The menu for your guests is a slim web page and loads nothing from other servers.</value>
+  </data>
+  <data name="Steps_Eyebrow" xml:space="preserve">
+    <value>How it works</value>
+  </data>
+  <data name="Steps_Title" xml:space="preserve">
+    <value>Your digital menu in three steps</value>
+  </data>
+  <data name="Step1_Title" xml:space="preserve">
+    <value>Register for free</value>
+  </data>
+  <data name="Step1_Text" xml:space="preserve">
+    <value>An e-mail address and a password are all it takes – and you're in the admin area.</value>
+  </data>
+  <data name="Step2_Title" xml:space="preserve">
+    <value>Create your menu</value>
+  </data>
+  <data name="Step2_Text" xml:space="preserve">
+    <value>Enter categories and dishes with prices, photos and allergens, and pick a design. The preview shows the result.</value>
+  </data>
+  <data name="Step3_Title" xml:space="preserve">
+    <value>QR code on the table</value>
+  </data>
+  <data name="Step3_Text" xml:space="preserve">
+    <value>Create a QR code, download it as a PNG, print it and put it out. Done.</value>
+  </data>
+  <data name="Steps_Cta" xml:space="preserve">
+    <value>Register for free now</value>
+  </data>
+  <data name="Faq_Eyebrow" xml:space="preserve">
+    <value>FAQ</value>
+  </data>
+  <data name="Faq_Title" xml:space="preserve">
+    <value>Frequently asked questions</value>
+  </data>
+  <data name="Faq_Intro" xml:space="preserve">
+    <value>Short and honest answers. Your question isn't here? Register and try it out.</value>
+  </data>
+  <data name="Faq_App_Q" xml:space="preserve">
+    <value>Do my guests need an app?</value>
+  </data>
+  <data name="Faq_App_A" xml:space="preserve">
+    <value>No. The QR code opens your menu directly in the phone's browser. There is nothing to install and no account to create.</value>
+  </data>
+  <data name="Faq_Cost_Q" xml:space="preserve">
+    <value>What does Speise-Direkt cost?</value>
+  </data>
+  <data name="Faq_Cost_A" xml:space="preserve">
+    <value>Registration is free.</value>
+    <comment>Exactly this, nothing more (no prices are defined)</comment>
+  </data>
+  <data name="Faq_SameCode_Q" xml:space="preserve">
+    <value>Does the QR code stay the same when I change the menu?</value>
+  </data>
+  <data name="Faq_SameCode_A" xml:space="preserve">
+    <value>Yes. The QR code leads to your menu, not to a particular version of it. You change dishes, prices and photos in the admin area; your guests see the change the next time they open the menu.</value>
+  </data>
+  <data name="Faq_Schedule_Q" xml:space="preserve">
+    <value>Can a QR code show a different menu depending on the time?</value>
+  </data>
+  <data name="Faq_Schedule_A" xml:space="preserve">
+    <value>Yes. With a time table, the same QR code shows, for example, the lunch menu at noon and the evening menu at night. In the calendar you set single days, periods or fixed weekdays – such as the Christmas menu or fish Friday.</value>
+  </data>
+  <data name="Faq_Allergens_Q" xml:space="preserve">
+    <value>How do I show allergens?</value>
+  </data>
+  <data name="Faq_Allergens_A" xml:space="preserve">
+    <value>You add the 14 EU allergens with one click and assign them to your dishes. Guests see them with the dish and can hide dishes with certain allergens.</value>
+  </data>
+  <data name="Faq_Languages_Q" xml:space="preserve">
+    <value>Is the menu available in several languages?</value>
+  </data>
+  <data name="Faq_Languages_A" xml:space="preserve">
+    <value>Yes, as language versions: you create a copy of your menu in another language, translate the texts yourself and link both. Guests switch the language with one tap. There is no automatic translation.</value>
+  </data>
+  <data name="Faq_Ordering_Q" xml:space="preserve">
+    <value>Can guests order or pay through the menu?</value>
+  </data>
+  <data name="Faq_Ordering_A" xml:space="preserve">
+    <value>No, Speise-Direkt is a menu, not an ordering system. Guests can collect dishes on a favourites list that is stored only on their phone, and then order from the staff as usual.</value>
+  </data>
+  <data name="Faq_Team_Q" xml:space="preserve">
+    <value>Can several people manage the menu?</value>
+  </data>
+  <data name="Faq_Team_A" xml:space="preserve">
+    <value>Yes. You invite your team as managers, each with their own login: they can edit menus, dishes, QR codes and the restaurant profile and see the analytics. Only you as the owner manage the team.</value>
+  </data>
+  <data name="Faq_Print_Q" xml:space="preserve">
+    <value>How does the QR code get onto the table?</value>
+  </data>
+  <data name="Faq_Print_A" xml:space="preserve">
+    <value>You download every QR code as a PNG and print it yourself – for table stands, stickers or the shop window.</value>
+  </data>
+  <data name="Cta_Title" xml:space="preserve">
+    <value>Ready for your digital menu?</value>
+  </data>
+  <data name="Cta_Text" xml:space="preserve">
+    <value>Register and create your first menu. Registration is free.</value>
+  </data>
+  <data name="Footer_Text" xml:space="preserve">
+    <value>The digital menu with QR code – fast for your guests, easy for you.</value>
+  </data>
+  <data name="Footer_Account" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="Footer_Legal" xml:space="preserve">
+    <value>Legal</value>
+  </data>
+  <data name="Footer_Imprint" xml:space="preserve">
+    <value>Imprint</value>
+  </data>
+  <data name="Footer_Privacy" xml:space="preserve">
+    <value>Privacy</value>
+  </data>
+  <data name="Footer_DemoNote" xml:space="preserve">
+    <value>All examples show the made-up restaurant “Trattoria Lago” with demo data.</value>
+  </data>
+  <data name="Image_Hero" xml:space="preserve">
+    <value>The digital menu of “Trattoria Lago” on a phone: cover picture, logo, categories and dishes with photos</value>
+  </data>
+  <data name="Image_GuestItem" xml:space="preserve">
+    <value>A dish in detail: photo, labels, extras with surcharges and allergens</value>
+  </data>
+  <data name="Image_GuestFilter" xml:space="preserve">
+    <value>The menu's filter: diet, highlights and allergens to hide</value>
+  </data>
+  <data name="Image_GuestInfo" xml:space="preserve">
+    <value>The restaurant profile in the menu: opening hours, address, phone, website and links</value>
+  </data>
+  <data name="Image_Calendar" xml:space="preserve">
+    <value>A QR code's calendar in December: fish Friday every week, the Christmas menu from the 24th to the 26th, New Year's Eve on the 31st.</value>
+  </data>
+  <data name="Image_Editor" xml:space="preserve">
+    <value>A menu's editor with the live preview in a phone frame</value>
+  </data>
+  <data name="Image_Analytics" xml:space="preserve">
+    <value>Analytics: views, tapped dishes and visits as numbers and over time</value>
+  </data>
+  <data name="Og_Headline" xml:space="preserve">
+    <value>Your menu, [one scan away.]</value>
+    <comment>The headline on the Open Graph image (og-&lt;lang&gt;.png, made by LandingScreenshotTour); [brackets] = highlighted</comment>
+  </data>
+  <data name="Og_Text" xml:space="preserve">
+    <value>The digital menu with QR code – no app for your guests.</value>
+  </data>
+  <data name="Hero_Demo" xml:space="preserve">
+    <value>See the live demo</value>
+  </data>
+  <data name="Designs_TryLive" xml:space="preserve">
+    <value>Try the {0} design live</value>
+  </data>
+</root>

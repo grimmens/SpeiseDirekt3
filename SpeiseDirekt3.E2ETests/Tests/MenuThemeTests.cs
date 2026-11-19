@@ -93,7 +93,7 @@ public class MenuThemeTests : BackOfficeTestBase
         {
             var category = new Category { Id = Guid.NewGuid(), Name = "Hauptspeisen", MenuId = menuId };
             db.Menus.Add(new Menu { Id = menuId, Name = "Dunkle Karte", Description = "", Theme = DesignTheme.Dark, Language = MenuLanguage.German, Categories = new List<Category> { category } });
-            db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = "Mit Foto", Description = "", Price = 9m, CategoryId = category.Id, ImagePath = "favicon.png", SortOrder = 0 });
+            db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = "Mit Foto", Description = "", Price = 9m, CategoryId = category.Id, ImagePath = "apple-touch-icon.png", SortOrder = 0 });
             db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = "Ohne Foto", Description = "Nur Text", Price = 8m, CategoryId = category.Id, SortOrder = 1 });
             return Task.CompletedTask;
         });

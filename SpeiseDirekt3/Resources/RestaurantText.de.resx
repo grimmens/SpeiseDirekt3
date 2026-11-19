@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Restaurantprofil</value>
+  </data>
+  <data name="NotSaved" xml:space="preserve">
+    <value>Noch nicht gespeichert</value>
+  </data>
+  <data name="Intro" xml:space="preserve">
+    <value>Name, Bilder, Kontaktdaten und Öffnungszeiten Ihres Restaurants. Gäste sehen sie auf allen Ihren Speisekarten.</value>
+  </data>
+  <data name="ReadOnly" xml:space="preserve">
+    <value>Sie können das Profil ansehen. Zum Ändern brauchen Sie die Berechtigung, Speisekarten zu bearbeiten.</value>
+  </data>
+  <data name="Section_Restaurant" xml:space="preserve">
+    <value>Restaurant</value>
+  </data>
+  <data name="Field_Name" xml:space="preserve">
+    <value>Name *</value>
+  </data>
+  <data name="Field_NamePlaceholder" xml:space="preserve">
+    <value>z. B. Gasthaus Zur Post</value>
+  </data>
+  <data name="Field_Description" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
+  <data name="Field_DescriptionPlaceholder" xml:space="preserve">
+    <value>Ein paar Worte zu Ihrer Küche, z. B. wofür Ihre Gäste Sie kennen.</value>
+  </data>
+  <data name="Field_DescriptionHint" xml:space="preserve">
+    <value>Bis zu 1000 Zeichen.</value>
+  </data>
+  <data name="Section_Pictures" xml:space="preserve">
+    <value>Bilder</value>
+  </data>
+  <data name="Pictures_Formats" xml:space="preserve">
+    <value>JPG, PNG, GIF oder WEBP bis 5 MB.</value>
+  </data>
+  <data name="Cover" xml:space="preserve">
+    <value>Titelbild</value>
+  </data>
+  <data name="Cover_None" xml:space="preserve">
+    <value>Noch kein Titelbild</value>
+  </data>
+  <data name="Cover_Hint" xml:space="preserve">
+    <value>Ein breites Bild oben auf Ihren Speisekarten, z. B. der Gastraum oder ein typisches Gericht.</value>
+  </data>
+  <data name="Cover_Remove" xml:space="preserve">
+    <value>Titelbild entfernen</value>
+  </data>
+  <data name="Logo" xml:space="preserve">
+    <value>Logo</value>
+  </data>
+  <data name="Logo_None" xml:space="preserve">
+    <value>Kein Logo</value>
+  </data>
+  <data name="Logo_Hint" xml:space="preserve">
+    <value>Am besten quadratisch.</value>
+  </data>
+  <data name="Logo_Remove" xml:space="preserve">
+    <value>Logo entfernen</value>
+  </data>
+  <data name="Section_Contact" xml:space="preserve">
+    <value>Kontakt und Adresse</value>
+  </data>
+  <data name="Field_Phone" xml:space="preserve">
+    <value>Telefon</value>
+  </data>
+  <data name="Field_Email" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="Field_Website" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="Field_Address" xml:space="preserve">
+    <value>Adresse</value>
+  </data>
+  <data name="Section_Hours" xml:space="preserve">
+    <value>Öffnungszeiten</value>
+  </data>
+  <data name="Hours_Placeholder1" xml:space="preserve">
+    <value>Mo–Fr 11:00–22:00</value>
+    <comment>first line of the opening-hours example</comment>
+  </data>
+  <data name="Hours_Placeholder2" xml:space="preserve">
+    <value>Sa 10:00–23:00</value>
+    <comment>second line</comment>
+  </data>
+  <data name="Hours_Placeholder3" xml:space="preserve">
+    <value>So Ruhetag</value>
+    <comment>third line</comment>
+  </data>
+  <data name="Hours_Hint" xml:space="preserve">
+    <value>Freier Text, eine Zeile je Tag oder Gruppe von Tagen. Gäste sehen ihn genau so.</value>
+  </data>
+  <data name="Section_Links" xml:space="preserve">
+    <value>Social Media und Bewertungen</value>
+  </data>
+  <data name="Links_Hint" xml:space="preserve">
+    <value>Vollständige Adressen, die mit https:// beginnen.</value>
+  </data>
+  <data name="Field_Instagram" xml:space="preserve">
+    <value>Instagram</value>
+  </data>
+  <data name="Field_Facebook" xml:space="preserve">
+    <value>Facebook</value>
+  </data>
+  <data name="Field_Review" xml:space="preserve">
+    <value>Bewertungslink</value>
+  </data>
+  <data name="Field_ReviewHint" xml:space="preserve">
+    <value>Wo Gäste eine Bewertung hinterlassen können, z. B. Ihr Google-Bewertungslink.</value>
+  </data>
+  <data name="Saved" xml:space="preserve">
+    <value>Profil gespeichert. Gäste sehen es auf Ihren Speisekarten.</value>
+  </data>
+  <data name="Invalid" xml:space="preserve">
+    <value>Bitte prüfen Sie die markierten Felder.</value>
+  </data>
+  <data name="Uploading" xml:space="preserve">
+    <value>Wird hochgeladen …</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Profil speichern</value>
+  </data>
+  <data name="Error_CheckFields" xml:space="preserve">
+    <value>Bitte prüfen Sie die Felder.</value>
+  </data>
+  <data name="Error_Save" xml:space="preserve">
+    <value>Das Profil konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="Error_InvalidImage" xml:space="preserve">
+    <value>Bitte wählen Sie eine gültige Bilddatei (JPG, PNG, GIF, WEBP) unter 5 MB.</value>
+  </data>
+  <data name="Error_Upload" xml:space="preserve">
+    <value>Das Bild konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+</root>

@@ -127,22 +127,26 @@ public abstract class QrCalendarTestBase : BackOfficeTestBase
     protected static Task WaitForCalendarAsync(IPage page) =>
         Assertions.Expect(CalendarOf(page).Locator("[data-calendar-ready]")).ToHaveCountAsync(1);
 
-    /// <summary>Clicks prev/next until the calendar shows <paramref name="year"/>/<paramref name="month"/>.</summary>
+    /// <summary>
+    /// Clicks prev/next until the calendar shows <paramref name="year"/>/<paramref name="month"/>. The month shown is read
+    /// from the grid's first day of the month (<c>data-date</c>), not from the title, so it works in every language.
+    /// </summary>
     protected static async Task GotoMonthAsync(IPage page, int year, int month)
     {
         var calendar = CalendarOf(page);
-        var wanted = new DateTime(year, month, 1).ToString("MMMM yyyy", CultureInfo.InvariantCulture);
+        var wanted = new DateOnly(year, month, 1);
         for (var i = 0; i < 48; i++)
         {
             var title = (await calendar.Locator(".fc-toolbar-title").InnerTextAsync()).Trim();
-            if (title == wanted)
+            var firstDay = await calendar.Locator("td.fc-daygrid-day:not(.fc-day-other)").First.GetAttributeAsync("data-date");
+            var shown = DateOnly.ParseExact(firstDay!, "yyyy-MM-dd", CultureInfo.InvariantCulture);
+            if (shown.Year == year && shown.Month == month)
                 return;
-            var shown = DateTime.ParseExact(title, "MMMM yyyy", CultureInfo.InvariantCulture);
-            var button = shown < new DateTime(year, month, 1) ? ".fc-next-button" : ".fc-prev-button";
+            var button = shown < wanted ? ".fc-next-button" : ".fc-prev-button";
             await calendar.Locator(button).ClickAsync();
             await Assertions.Expect(calendar.Locator(".fc-toolbar-title")).Not.ToHaveTextAsync(title);
         }
-        throw new InvalidOperationException($"Calendar did not reach {wanted}.");
+        throw new InvalidOperationException($"Calendar did not reach {wanted:yyyy-MM}.");
     }
 
     protected Task GotoMonthAsync(int year, int month) => GotoMonthAsync(Page, year, month);
@@ -258,14 +262,13 @@ public abstract class QrCalendarTestBase : BackOfficeTestBase
 
     // --- Accounts ---
 
-    /// <summary>Invites a sub-account via <c>/users/invite</c> (as the owner in <see cref="E2ETestBase.Page"/>).</summary>
-    protected async Task InviteAsync(string email, string displayName, string role)
+    /// <summary>Invites a team member (a manager) via <c>/users/invite</c> (as the owner in <see cref="E2ETestBase.Page"/>).</summary>
+    protected async Task InviteAsync(string email, string displayName)
     {
         await GotoInteractiveAsync("/users/invite");
         await Page.GetByPlaceholder("employee@example.com").FillAsync(email);
         await Page.GetByPlaceholder("John Doe").FillAsync(displayName);
         await Page.GetByPlaceholder("Min. 8 characters").FillAsync(Password);
-        await Page.Locator("select").SelectOptionAsync(new SelectOptionValue { Label = role });
         await Button("Create Account").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/users$"));
     }

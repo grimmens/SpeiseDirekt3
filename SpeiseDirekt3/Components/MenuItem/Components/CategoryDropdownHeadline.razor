@@ -1,75 +1,77 @@
 ﻿@implements IDisposable
-<div class="animate-fade-in space-y-6">
+@inject IStringLocalizer<ItemsText> T
+<div>
     <!-- Header: category switcher -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6">
-        <p class="text-xs font-medium uppercase tracking-wide text-gray-500 mb-1">Menu items</p>
-        <div class="relative inline-block max-w-full"
-             @onmouseenter="ShowDropdown" 
-             @onmouseleave="HideDropdown"
-        >
-            
-            <!-- Category Headline with Dropdown Trigger -->
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 font-display mb-0">
-                <button type="button" class="inline-flex items-center max-w-full text-left cursor-pointer select-none"
-                        aria-haspopup="true" aria-expanded="@(isDropdownOpen ? "true" : "false")" title="Switch category"
-                        @onclick="ToggleDropdown">
-                    <span class="min-w-0 break-words">@Category?.Name</span>
-                    <svg class="ml-2 w-5 h-5 flex-shrink-0 text-gray-400 transition-transform duration-200 @(isDropdownOpen ? "rotate-180" : "")" 
-                         fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </button>
-            </h1>
-
-            <!-- Dropdown Menu -->
-            <div class="absolute top-full left-0 z-50 w-64 max-w-[80vw] bg-white border border-gray-200 rounded-lg shadow-lg mt-1 transition-all duration-200 ease-in-out @(isDropdownOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-4")"
-                 @onmouseenter="ShowDropdown" 
+    <PageHeader Eyebrow="@T["Header_Eyebrow"]" Icon="PageIcons.Items" Tone="TileTone.Accent">
+        <TitleContent>
+            <div class="relative inline-block max-w-full"
+                 @onmouseenter="ShowDropdown"
                  @onmouseleave="HideDropdown">
-                
-                <div class="py-2 max-h-64 overflow-y-auto">
-                    @if (Categories?.Any() == true)
-                    {
-                        @foreach (var cat in Categories)
+
+                <!-- Category Headline with Dropdown Trigger -->
+                <h1 class="sd-page-head-title">
+                    <button type="button" class="inline-flex items-center max-w-full text-left cursor-pointer select-none"
+                            aria-haspopup="true" aria-expanded="@(isDropdownOpen ? "true" : "false")" title="@T["Header_SwitchCategory"]"
+                            @onclick="ToggleDropdown">
+                        <span class="min-w-0 break-words">@Category?.Name</span>
+                        <svg class="ml-2 w-5 h-5 flex-shrink-0 text-gray-500 transition-transform duration-200 @(isDropdownOpen ? "rotate-180" : "")"
+                             fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                </h1>
+
+                <!-- Dropdown Menu -->
+                <div class="absolute top-full left-0 z-50 w-64 max-w-[80vw] bg-white border border-gray-200 rounded-lg shadow-lg mt-1 transition-all duration-200 ease-in-out @(isDropdownOpen ? "opacity-100 visible translate-y-0" : "opacity-0 invisible -translate-y-4")"
+                     @onmouseenter="ShowDropdown"
+                     @onmouseleave="HideDropdown">
+
+                    <div class="py-2 max-h-64 overflow-y-auto">
+                        @if (Categories?.Any() == true)
                         {
-                            <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors duration-150 flex items-center @(cat.Id == Category?.Id ? "bg-blue-50 text-blue-600 font-medium" : "")"
-                                    @onclick="() => OnCategorySelected(cat)"
-                                    @onclick:stopPropagation="true">
-                                
-                                @if (cat.Id == Category?.Id)
-                                {
-                                    <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                                }
-                                else
-                                {
-                                    <div class="w-2 h-2 mr-3"></div>
-                                }
-                                
-                                @cat.Name
-                            </button>
+                            @foreach (var cat in Categories)
+                            {
+                                <button class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-brand-50 hover:text-brand-700 transition-colors duration-150 flex items-center @(cat.Id == Category?.Id ? "bg-brand-50 text-brand-700 font-medium" : "")"
+                                        @onclick="() => OnCategorySelected(cat)"
+                                        @onclick:stopPropagation="true">
+
+                                    @if (cat.Id == Category?.Id)
+                                    {
+                                        <div class="w-2 h-2 bg-brand-500 rounded-full mr-3"></div>
+                                    }
+                                    else
+                                    {
+                                        <div class="w-2 h-2 mr-3"></div>
+                                    }
+
+                                    @cat.Name
+                                </button>
+                            }
                         }
-                    }
-                    else
-                    {
-                        <div class="px-4 py-2 text-sm text-gray-500 italic">
-                            No categories available
-                        </div>
-                    }
+                        else
+                        {
+                            <div class="px-4 py-2 text-sm text-gray-500 italic">
+                                @T["Header_NoCategories"]
+                            </div>
+                        }
+                    </div>
                 </div>
             </div>
-        </div>
-        <p class="mt-2 mb-0 text-sm text-gray-600">
-            Guests see the items in the order of this list.
-            <a href="@($"/Categories/{Category?.MenuId}")" class="text-blue-600 hover:underline whitespace-nowrap">Edit categories</a>
-        </p>
-    </div>
+        </TitleContent>
+        <Description>
+            @T["Header_Description"]
+            <a href="@($"/Categories/{Category?.MenuId}")" class="text-brand-700 hover:underline whitespace-nowrap">@T["Header_EditCategories"]</a>
+        </Description>
+    </PageHeader>
 
-    <MenuItemTable Category="Category" Categories="Categories" @key="Category" />
+    <MenuItemTable Category="Category" Categories="Categories" HighlightId="HighlightId" @key="Category" />
 </div>
 
 @code {
     // Your existing parameters
     [Parameter] public Category? Category { get; set; }
     [Parameter] public List<Category> Categories { get; set; } = new();
+    [Parameter] public Guid? HighlightId { get; set; }
     [Parameter] public EventCallback<Category?> CategoryChanged { get; set; }
 
     // Dropdown state

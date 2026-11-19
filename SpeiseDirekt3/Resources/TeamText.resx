@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Team Management</value>
+  </data>
+  <data name="Invite" xml:space="preserve">
+    <value>Invite team member</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading team…</value>
+  </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>No managers yet</value>
+  </data>
+  <data name="EmptyText" xml:space="preserve">
+    <value>Invite a manager who looks after your menus with you.</value>
+  </data>
+  <data name="Column_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Column_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Column_Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Column_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Column_Joined" xml:space="preserve">
+    <value>Joined</value>
+  </data>
+  <data name="Column_Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="Status_Active" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="Status_Inactive" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="EditLabel" xml:space="preserve">
+    <value>Edit {0}</value>
+    <comment>aria-label, {0} = the team member's name</comment>
+  </data>
+  <data name="Invite_Title" xml:space="preserve">
+    <value>Invite New Team Member</value>
+  </data>
+  <data name="Invite_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Invite_EmailPlaceholder" xml:space="preserve">
+    <value>employee@example.com</value>
+  </data>
+  <data name="Invite_DisplayName" xml:space="preserve">
+    <value>Display Name</value>
+  </data>
+  <data name="Invite_DisplayNamePlaceholder" xml:space="preserve">
+    <value>John Doe</value>
+  </data>
+  <data name="Invite_Password" xml:space="preserve">
+    <value>Temporary Password</value>
+  </data>
+  <data name="Invite_PasswordPlaceholder" xml:space="preserve">
+    <value>Min. 8 characters</value>
+  </data>
+  <data name="Invite_Creating" xml:space="preserve">
+    <value>Creating…</value>
+  </data>
+  <data name="Invite_Create" xml:space="preserve">
+    <value>Create Account</value>
+  </data>
+  <data name="Invite_LimitReached" xml:space="preserve">
+    <value>User limit reached ({0}). Upgrade your plan to add more users.</value>
+    <comment>{0} = the limit</comment>
+  </data>
+  <data name="Valid_EmailRequired" xml:space="preserve">
+    <value>Please enter the e-mail address.</value>
+  </data>
+  <data name="Valid_EmailInvalid" xml:space="preserve">
+    <value>Please enter a valid e-mail address.</value>
+  </data>
+  <data name="Valid_DisplayNameRequired" xml:space="preserve">
+    <value>Please enter a display name.</value>
+  </data>
+  <data name="Valid_DisplayNameTooLong" xml:space="preserve">
+    <value>The display name can have at most 100 characters.</value>
+  </data>
+  <data name="Valid_PasswordRequired" xml:space="preserve">
+    <value>Please enter a temporary password.</value>
+  </data>
+  <data name="Valid_PasswordTooShort" xml:space="preserve">
+    <value>The password must be at least 8 characters long.</value>
+  </data>
+  <data name="Edit_PageTitle" xml:space="preserve">
+    <value>Edit team member</value>
+  </data>
+  <data name="Edit_Crumb" xml:space="preserve">
+    <value>Edit {0}</value>
+    <comment>{0} = the team member's name</comment>
+  </data>
+  <data name="Edit_CrumbUnnamed" xml:space="preserve">
+    <value>Edit team member</value>
+  </data>
+  <data name="Edit_Details" xml:space="preserve">
+    <value>Team member details</value>
+  </data>
+  <data name="Edit_Deactivate" xml:space="preserve">
+    <value>Deactivate</value>
+  </data>
+  <data name="Edit_Activate" xml:space="preserve">
+    <value>Activate</value>
+  </data>
+  <data name="Edit_SaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
+  <data name="Deactivate_Title" xml:space="preserve">
+    <value>Deactivate team member</value>
+  </data>
+  <data name="Deactivate_Message" xml:space="preserve">
+    <value>Deactivate {0}?</value>
+    <comment>{0} = name</comment>
+  </data>
+  <data name="Activate_Title" xml:space="preserve">
+    <value>Activate team member</value>
+  </data>
+  <data name="Activate_Message" xml:space="preserve">
+    <value>Activate {0}?</value>
+    <comment>{0} = name</comment>
+  </data>
+  <data name="JoinedOn" xml:space="preserve">
+    <value>Joined {0}</value>
+  </data>
+  <data name="RolesNote" xml:space="preserve">
+    <value>Managers can edit menus, dishes, QR codes and the restaurant profile and see the analytics. Only the owner manages the team.</value>
+  </data>
+  <data name="You" xml:space="preserve">
+    <value>You</value>
+  </data>
+  <data name="Invite_RoleIs" xml:space="preserve">
+    <value>Role: {0}</value>
+  </data>
+  <data name="Edit_NotFound" xml:space="preserve">
+    <value>Team member not found.</value>
+  </data>
+  <data name="BackToTeam" xml:space="preserve">
+    <value>Back to the team</value>
+  </data>
+  <data name="Edit_Access" xml:space="preserve">
+    <value>Access</value>
+  </data>
+  <data name="Edit_ActiveText" xml:space="preserve">
+    <value>This team member can sign in and work on your menus, QR codes and restaurant profile.</value>
+  </data>
+  <data name="Edit_InactiveText" xml:space="preserve">
+    <value>This team member is deactivated and has no access any more. You can activate them again at any time.</value>
+  </data>
+  <data name="Edit_RemoveText" xml:space="preserve">
+    <value>Removing deletes the team member’s login. To work with you again, they need a new invitation.</value>
+  </data>
+  <data name="Edit_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Remove_Title" xml:space="preserve">
+    <value>Remove team member</value>
+  </data>
+  <data name="Remove_Message" xml:space="preserve">
+    <value>Remove {0} from the team? The login is deleted. This cannot be undone.</value>
+  </data>
+</root>

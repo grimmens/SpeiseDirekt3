@@ -8,30 +8,27 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWithRecoveryCode> Logger
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>Recovery code verification</PageTitle>
+<PageTitle>@C["PageTitle", T["RecoveryLogin_Title"]]</PageTitle>
 
-<h1>Recovery code verification</h1>
-<hr />
-<StatusMessage Message="@message" />
-<p>
-    You have requested to log in with a recovery code. This login will not be remembered until you provide
-    an authenticator app code at log in or disable 2FA and log in again.
-</p>
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post">
+<AuthCard Title="@T["RecoveryLogin_Title"]" Lead="@T["RecoveryLogin_Text"]" Icon="key">
+    <ChildContent>
+        <StatusMessage Message="@message" IsError="true" />
+        <EditForm Model="Input" FormName="login-with-recovery-code" OnValidSubmit="OnValidSubmitAsync" method="post" class="au-form">
             <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="form-control" autocomplete="off" placeholder="RecoveryCode" />
-                <label for="Input.RecoveryCode" class="form-label">Recovery Code</label>
-                <ValidationMessage For="() => Input.RecoveryCode" class="text-danger" />
+            <div class="au-field">
+                <label for="Input.RecoveryCode" class="au-label">@T["Field_RecoveryCode"]</label>
+                <InputText @bind-Value="Input.RecoveryCode" id="Input.RecoveryCode" class="au-input" autocomplete="off" placeholder="@T["Placeholder_Code"]" />
+                <ValidationMessage For="() => Input.RecoveryCode" class="validation-message" />
             </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
+            <button type="submit" class="au-button au-button--primary">@T["RecoveryLogin_Submit"]</button>
         </EditForm>
-    </div>
-</div>
+    </ChildContent>
+</AuthCard>
 
 @code {
     private string? message;
@@ -71,15 +68,14 @@
         else
         {
             Logger.LogWarning("Invalid recovery code entered for user with ID '{UserId}' ", userId);
-            message = "Error: Invalid recovery code entered.";
+            message = T["Status_InvalidRecoveryCode"];
         }
     }
 
     private sealed class InputModel
     {
-        [Required]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_RecoveryCodeRequired))]
         [DataType(DataType.Text)]
-        [Display(Name = "Recovery Code")]
         public string RecoveryCode { get; set; } = "";
     }
 }

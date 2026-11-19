@@ -3,6 +3,7 @@ using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
+using SpeiseDirekt3.Components.Demo;
 
 namespace SpeiseDirekt3.E2ETests.Infrastructure;
 
@@ -13,35 +14,33 @@ namespace SpeiseDirekt3.E2ETests.Infrastructure;
 /// has none yet, the restaurant profile "Trattoria Lago" with a cover and a logo. The photos are generated (plate
 /// on a table, lake view, emblem; no external files) and stored as <see cref="Image"/> rows like an upload
 /// (<c>image/{id}</c>).
+/// The German content is the app's live demo (<see cref="DemoMenuContent.German"/>, <c>/demo</c>), so the landing page's
+/// screenshots and the demo show the same menu; this class adds the photos' palettes and, for the tests, a phone number
+/// and social links on the profile (the live demo has none). <see cref="DemoPhotos"/> renders the same pictures for
+/// <c>wwwroot/images/demo</c> (<c>LandingScreenshotTour.Capture_demo_images</c>).
 /// </summary>
 public static class GuestDemoData
 {
     public const string MenuName = "Trattoria Lago";
-    public const string MenuDescription = "Italienische Küche am See · täglich 11:30–22:00";
+    public static readonly string MenuDescription = DemoMenuContent.German.MenuDescription;
 
     /// <summary>Name of the restaurant profile (= <see cref="MenuName"/>: the hero shows the name once).</summary>
     public const string RestaurantName = "Trattoria Lago";
-    public const string RestaurantDescription = "Familienbetrieb seit 1987: hausgemachte Pasta, Pizza aus dem Holzofen und Weine aus Österreich und Italien – mit Blick auf den See.";
+    public static readonly string RestaurantDescription = DemoMenuContent.German.Profile.Description;
     public const string RestaurantPhone = "+43 6232 1234";
-    public const string RestaurantEmail = "ciao@trattoria-lago.example";
-    public const string RestaurantAddress = "Seepromenade 12\n5310 Mondsee";
-    public const string RestaurantOpeningHours = "Mo–Fr 11:30–14:30, 17:30–22:00\nSa, So 11:30–22:00\nDienstag Ruhetag";
+    public static readonly string RestaurantEmail = DemoMenuContent.German.Profile.Email;
+    public static readonly string RestaurantAddress = DemoMenuContent.German.Profile.Address;
+    public static readonly string RestaurantOpeningHours = DemoMenuContent.German.Profile.OpeningHours;
 
     /// <summary>Categories in display order; <c>true</c> = the category has dish photos.</summary>
-    public static readonly (string Name, bool Photos)[] Categories =
-    {
-        ("Antipasti", true), ("Pasta & Risotto", true), ("Pizza", true), ("Dolci", true),
-        ("Alkoholfreie Getränke", false), ("Weine", false), ("Kaffee", false)
-    };
+    public static readonly (string Name, bool Photos)[] Categories = DemoMenuContent.German.Categories
+        .Select(c => (c.Name, DemoMenuContent.German.Dishes.Any(d => d.Category == c.Name && d.Photo is not null)))
+        .ToArray();
 
     /// <summary>Category subtitles (<c>Category.Description</c>); categories without an entry have none.</summary>
-    public static readonly IReadOnlyDictionary<string, string> Subtitles = new Dictionary<string, string>
-    {
-        ["Antipasti"] = "Zum Teilen für den ganzen Tisch",
-        ["Pasta & Risotto"] = "Hausgemachte Pasta, täglich frisch",
-        ["Pizza"] = "Aus dem Holzofen · auf Wunsch auch glutenfrei",
-        ["Weine"] = "Offene Weine aus Österreich und Italien"
-    };
+    public static readonly IReadOnlyDictionary<string, string> Subtitles = DemoMenuContent.German.Categories
+        .Where(c => c.Subtitle is not null)
+        .ToDictionary(c => c.Name, c => c.Subtitle!);
 
     /// <summary>Drinks with price variants (the card shows "ab € …").</summary>
     public const string LemonadeName = "Hausgemachte Limonade";
@@ -60,50 +59,57 @@ public static class GuestDemoData
 
     public sealed record Seeded(Guid MenuId, IReadOnlyDictionary<string, Guid> Items, IReadOnlyDictionary<string, Guid> CategoryIds);
 
-    private sealed record Dish(string Category, string Name, string Description, decimal Price, string[] Codes,
-        bool Vegan = false, bool Vegetarian = false, bool Spicy = false, Palette? Photo = null,
-        bool Popular = false, bool New = false, bool Halal = false, bool AlcoholFree = false,
-        (string Name, decimal Price)[]? Variants = null, (string Name, decimal Price)[]? Extras = null);
-
     private sealed record Palette(Rgba32 TableA, Rgba32 TableB, Rgba32 Food, Rgba32 Garnish);
 
     private static Rgba32 C(string hex) => Rgba32.ParseHex(hex);
 
     private static Palette P(string tableA, string tableB, string food, string garnish) => new(C(tableA), C(tableB), C(food), C(garnish));
 
-    private static readonly Dish[] Dishes =
+    /// <summary>The colours of each generated dish photo, by <see cref="DemoDish.Photo"/> (the demo's file stem).</summary>
+    private static readonly IReadOnlyDictionary<string, Palette> Palettes = new Dictionary<string, Palette>
     {
-        new("Antipasti", "Bruschetta Classica", "Geröstetes Landbrot mit Tomaten, Basilikum und Knoblauch", 7.90m, new[] { "A" }, Vegan: true, Photo: P("#e9dccb", "#cdb89c", "#c8452f", "#4e8a3a")),
-        new("Antipasti", "Vitello Tonnato", "Zartes Kalbfleisch mit Thunfischcreme und Kapern", 13.50m, new[] { "C", "D" }, Photo: P("#d9d4cc", "#b9b0a3", "#e8dcc0", "#6b7d3a")),
-        new("Antipasti", "Burrata", "Cremige Burrata auf Kirschtomaten mit Basilikumöl", 12.90m, new[] { "G" }, Vegetarian: true, Photo: P("#dfe6e9", "#b8c4c9", "#f4f1e8", "#c93a2e")),
-        new("Antipasti", "Carpaccio vom Rind", "Hauchdünnes Rinderfilet, Rucola, Parmesan, Zitrone", 14.50m, new[] { "G" }, Photo: P("#e7d9c9", "#c4ad94", "#b4313b", "#7aa13f"), New: true),
-        new("Pasta & Risotto", "Spaghetti Carbonara", "Guanciale, Eigelb, Pecorino, schwarzer Pfeffer", 14.90m, new[] { "A", "C", "G" }, Photo: P("#efe3d1", "#d1bb9c", "#f0c96a", "#8a6a3a"), Popular: true),
-        new("Pasta & Risotto", DishWithManyLabels, "Scharfe Tomatensauce mit Chili und Petersilie", 12.50m, new[] { "A" }, Vegan: true, Spicy: true, Photo: P("#e5ddd3", "#c6b7a6", "#d2472d", "#3f7d3a"), Popular: true, Halal: true),
-        new("Pasta & Risotto", DishWithoutPhoto, "Cremiges Risotto mit Steinpilzen und Parmesan", 16.90m, new[] { "G", "L" }, Vegetarian: true),
-        new("Pasta & Risotto", "Tagliatelle al Ragù", "Hausgemachte Bandnudeln mit Rinderragout", 15.40m, new[] { "A", "C", "L" }, Photo: P("#e8e0d5", "#c9bba8", "#9b3b23", "#d9c36a")),
-        new("Pizza", DishWithExtras, "Tomate, Fior di Latte, Basilikum", 10.50m, new[] { "A", "G" }, Vegetarian: true, Photo: P("#d8cfc4", "#a9998a", "#e0a548", "#c53a2a"), Popular: true,
-            Extras: new[] { ("+ Büffelmozzarella", 3.50m), ("+ Rucola", 1.50m), ("+ Prosciutto crudo", 3.90m) }),
-        new("Pizza", "Diavola", "Tomate, Mozzarella, scharfe Salami, Chili", 13.90m, new[] { "A", "G" }, Spicy: true, Photo: P("#dcd2c6", "#ab9b8a", "#d9862f", "#9d1f1f")),
-        new("Pizza", "Quattro Formaggi", "Mozzarella, Gorgonzola, Parmesan, Taleggio", 14.50m, new[] { "A", "G" }, Vegetarian: true, Photo: P("#e2dbd2", "#b3a596", "#ecd38c", "#c9a24a")),
-        new("Dolci", "Tiramisu", "Mascarpone, Espresso, Savoiardi, Kakao", 7.50m, new[] { "A", "C", "G" }, Vegetarian: true, Photo: P("#e6ddd4", "#c3b3a3", "#7a4b2e", "#e8d7b9"), Popular: true),
-        new("Dolci", "Panna Cotta", "Mit Beerenragout und frischer Minze", 6.90m, new[] { "G" }, Vegetarian: true, Photo: P("#e9e4ea", "#c4b9c6", "#f5efe2", "#a3243b")),
-        new("Alkoholfreie Getränke", "Mineralwasser 0,5 l", "Prickelnd oder still", 4.20m, Array.Empty<string>(), Vegan: true, AlcoholFree: true),
-        new("Alkoholfreie Getränke", LemonadeName, "Zitrone-Minze oder Holunder", 4.20m, Array.Empty<string>(), Vegan: true, New: true, AlcoholFree: true,
-            Variants: new[] { ("0,3 l", 4.20m), ("0,5 l", 5.90m) }),
-        new("Alkoholfreie Getränke", "Apfelsaft gespritzt 0,5 l", "", 4.50m, Array.Empty<string>(), Vegan: true, AlcoholFree: true),
-        new("Weine", WineWithVariantsName, "Weingut am Hang, Wachau", 4.80m, new[] { "O" }, Popular: true,
-            Variants: new[] { ("1/8 l", 4.80m), ("1/4 l", 9.20m), ("Flasche 0,75 l", 26.00m) }),
-        new("Weine", "Chianti Classico 1/8 l", "Toskana, DOCG", 6.20m, new[] { "O" }),
-        new("Weine", "Prosecco 0,1 l", "Extra Dry", 5.90m, new[] { "O" }),
-        new("Kaffee", "Espresso", "", 2.90m, Array.Empty<string>(), Vegan: true),
-        new("Kaffee", "Cappuccino", "Mit aufgeschäumter Milch", 4.20m, new[] { "G" }, Vegetarian: true)
+        ["bruschetta-classica"] = P("#e9dccb", "#cdb89c", "#c8452f", "#4e8a3a"),
+        ["vitello-tonnato"] = P("#d9d4cc", "#b9b0a3", "#e8dcc0", "#6b7d3a"),
+        ["burrata"] = P("#dfe6e9", "#b8c4c9", "#f4f1e8", "#c93a2e"),
+        ["carpaccio"] = P("#e7d9c9", "#c4ad94", "#b4313b", "#7aa13f"),
+        ["spaghetti-carbonara"] = P("#efe3d1", "#d1bb9c", "#f0c96a", "#8a6a3a"),
+        ["penne-arrabbiata"] = P("#e5ddd3", "#c6b7a6", "#d2472d", "#3f7d3a"),
+        ["tagliatelle-ragu"] = P("#e8e0d5", "#c9bba8", "#9b3b23", "#d9c36a"),
+        ["margherita"] = P("#d8cfc4", "#a9998a", "#e0a548", "#c53a2a"),
+        ["diavola"] = P("#dcd2c6", "#ab9b8a", "#d9862f", "#9d1f1f"),
+        ["quattro-formaggi"] = P("#e2dbd2", "#b3a596", "#ecd38c", "#c9a24a"),
+        ["tiramisu"] = P("#e6ddd4", "#c3b3a3", "#7a4b2e", "#e8d7b9"),
+        ["panna-cotta"] = P("#e9e4ea", "#c4b9c6", "#f5efe2", "#a3243b")
     };
 
-    private static readonly (string Code, string Name)[] Allergens =
+    /// <summary>The German demo dishes in menu order (<see cref="DemoMenuContent.German"/>).</summary>
+    private static IReadOnlyList<DemoDish> Dishes => DemoMenuContent.German.Dishes;
+
+    private static IReadOnlyList<(string Code, string Name)> Allergens => DemoMenuContent.German.Allergens;
+
+    /// <summary>
+    /// The seed of every dish photo: 1, 2, 3, … in menu order of the dishes with a photo — the same pictures for the
+    /// database seed (<see cref="SeedAsync"/>) and the demo's static files (<see cref="DemoPhotos"/>).
+    /// </summary>
+    private static IReadOnlyDictionary<string, int> PhotoSeeds => Dishes
+        .Where(d => d.Photo is not null)
+        .Select((d, i) => (d.Photo!, Seed: i + 1))
+        .ToDictionary(p => p.Item1, p => p.Seed);
+
+    /// <summary>
+    /// The demo's pictures as images (not encoded): every dish photo by its file stem, the cover and the logo — what
+    /// <c>LandingScreenshotTour.Capture_demo_images</c> writes to <c>wwwroot/images/demo/{stem}.webp</c>.
+    /// </summary>
+    public static IEnumerable<(string Stem, Image<Rgba32> Image)> DemoPhotos()
     {
-        ("A", "Glutenhaltiges Getreide"), ("C", "Eier"), ("D", "Fisch"), ("G", "Milch / Laktose"),
-        ("L", "Sellerie"), ("O", "Sulfite")
-    };
+        foreach (var (stem, seed) in PhotoSeeds)
+        {
+            var palette = Palettes[stem];
+            yield return (stem, PhotoImage(palette.TableA, palette.TableB, palette.Food, palette.Garnish, seed));
+        }
+        yield return (DemoMenuContent.CoverPhoto, CoverImage());
+        yield return (DemoMenuContent.LogoPhoto, LogoImage());
+    }
 
     /// <summary>
     /// Seeds the demo menu into the tenant <paramref name="ownerId"/> and returns its ids. With
@@ -137,7 +143,6 @@ public static class GuestDemoData
                 Language = MenuLanguage.German, Categories = categories
             });
 
-            var seed = 1;
             foreach (var (dish, index) in Dishes.Select((d, i) => (d, i)))
             {
                 var item = new MenuItem
@@ -151,11 +156,12 @@ public static class GuestDemoData
                 foreach (var (option, i) in (dish.Extras ?? []).Select((o, i) => (o, i)))
                     item.PriceOptions.Add(new MenuItemPriceOption { Id = Guid.NewGuid(), Kind = PriceOptionKind.Extra, Name = option.Name, Price = option.Price, SortOrder = i });
                 item.ApplyLowestVariantPrice();
-                foreach (var code in dish.Codes)
+                foreach (var code in dish.Allergens)
                     item.Allergens.Add(allergens[code]);
-                if (dish.Photo is { } palette)
+                if (dish.Photo is { } stem)
                 {
-                    var image = new SpeiseDirekt.Model.Image { Id = Guid.NewGuid(), MimeType = "image/jpeg", Content = Photo(palette, seed++) };
+                    var palette = Palettes[stem];
+                    var image = new SpeiseDirekt.Model.Image { Id = Guid.NewGuid(), MimeType = "image/jpeg", Content = Photo(palette, PhotoSeeds[stem]) };
                     db.Images.Add(image);
                     item.ImagePath = $"image/{image.Id}";
                 }
@@ -163,11 +169,12 @@ public static class GuestDemoData
                 items[dish.Name] = item.Id;
             }
 
+            var combo = DemoMenuContent.German.Combo;
             db.MenuCombos.Add(new MenuCombo
             {
-                Id = Guid.NewGuid(), Name = ComboName, Description = "Pizza Margherita, Tiramisu und Mineralwasser", ComboPrice = 19.90m,
-                MenuId = menuId, TriggerMenuItemId = items["Margherita"],
-                Items = { new MenuComboItem { MenuItemId = items["Tiramisu"] }, new MenuComboItem { MenuItemId = items["Mineralwasser 0,5 l"] } }
+                Id = Guid.NewGuid(), Name = combo.Name, Description = combo.Description, ComboPrice = combo.Price,
+                MenuId = menuId, TriggerMenuItemId = items[combo.Trigger],
+                Items = combo.Includes.Select(name => new MenuComboItem { MenuItemId = items[name] }).ToList()
             });
         });
 
@@ -178,7 +185,7 @@ public static class GuestDemoData
 
     /// <summary>Name of the English version (= the restaurant's name, like the German one: the hero shows it once).</summary>
     public const string EnglishMenuName = "Trattoria Lago";
-    public const string EnglishMenuDescription = "Italian cooking by the lake · daily 11:30–22:00";
+    public const string EnglishMenuDescription = "Italian cooking by the lake · since 1987";
     public const string EnglishLemonadeName = "Homemade lemonade";
 
     private sealed record EnglishDish(string Category, string Name, string Description, decimal Price, string[] Codes,
@@ -317,7 +324,7 @@ public static class GuestDemoData
             LogoImagePath = $"image/{logo.Id}",
             Phone = RestaurantPhone,
             Email = RestaurantEmail,
-            Website = "https://trattoria-lago.example",
+            Website = DemoMenuContent.German.Profile.Website,
             InstagramUrl = "https://instagram.com/trattoria.lago.example",
             FacebookUrl = "https://facebook.com/trattoria.lago.example",
             GoogleReviewUrl = "https://g.page/r/trattoria-lago-example/review",
@@ -334,6 +341,15 @@ public static class GuestDemoData
 
     public static byte[] Photo(Rgba32 tableA, Rgba32 tableB, Rgba32 food, Rgba32 garnish, int seed)
     {
+        using var img = PhotoImage(tableA, tableB, food, garnish, seed);
+        using var stream = new MemoryStream();
+        img.SaveAsJpeg(stream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 82 });
+        return stream.ToArray();
+    }
+
+    /// <summary>The dish photo of <see cref="Photo(Rgba32, Rgba32, Rgba32, Rgba32, int)"/> as an image (the caller disposes it).</summary>
+    public static Image<Rgba32> PhotoImage(Rgba32 tableA, Rgba32 tableB, Rgba32 food, Rgba32 garnish, int seed)
+    {
         const int w = 600, h = 750;
         var rnd = new Random(seed);
         double cx = w * (0.48 + rnd.NextDouble() * 0.04), cy = h * (0.52 + rnd.NextDouble() * 0.04);
@@ -349,7 +365,7 @@ public static class GuestDemoData
         }).ToArray();
         var plate = new Rgba32(246, 243, 236);
 
-        using var img = new Image<Rgba32>(w, h);
+        var img = new Image<Rgba32>(w, h);
         img.ProcessPixelRows(rows =>
         {
             for (var y = 0; y < h; y++)
@@ -405,10 +421,7 @@ public static class GuestDemoData
                 }
             }
         });
-
-        using var stream = new MemoryStream();
-        img.SaveAsJpeg(stream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 82 });
-        return stream.ToArray();
+        return img;
     }
 
     /// <summary>
@@ -417,6 +430,15 @@ public static class GuestDemoData
     /// guest view keeps when it crops the picture (2:1 on phones, 3:1 from 640 px).
     /// </summary>
     public static byte[] Cover(int seed = 3)
+    {
+        using var img = CoverImage(seed);
+        using var stream = new MemoryStream();
+        img.SaveAsJpeg(stream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 80 });
+        return stream.ToArray();
+    }
+
+    /// <summary>The cover of <see cref="Cover"/> as an image (the caller disposes it).</summary>
+    public static Image<Rgba32> CoverImage(int seed = 3)
     {
         const int w = 1600, h = 800;
         const double horizon = h * 0.56;
@@ -427,7 +449,7 @@ public static class GuestDemoData
         double Ridge(double x, double baseY, double amp, int s) =>
             baseY - amp * (0.55 * Noise(x / 260.0, 0.5, s) + 0.3 * Noise(x / 90.0, 1.5, s + 1) + 0.15 * Noise(x / 30.0, 2.5, s + 2));
 
-        using var img = new Image<Rgba32>(w, h);
+        var img = new Image<Rgba32>(w, h);
         img.ProcessPixelRows(rows =>
         {
             for (var y = 0; y < h; y++)
@@ -468,10 +490,7 @@ public static class GuestDemoData
                 }
             }
         });
-
-        using var stream = new MemoryStream();
-        img.SaveAsJpeg(stream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 80 });
-        return stream.ToArray();
+        return img;
     }
 
     /// <summary>
@@ -480,11 +499,20 @@ public static class GuestDemoData
     /// </summary>
     public static byte[] Logo()
     {
+        using var img = LogoImage();
+        using var stream = new MemoryStream();
+        img.SaveAsJpeg(stream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 88 });
+        return stream.ToArray();
+    }
+
+    /// <summary>The logo of <see cref="Logo"/> as an image (the caller disposes it).</summary>
+    public static Image<Rgba32> LogoImage()
+    {
         const int size = 400;
         const double c = size / 2.0;
         Rgba32 tile = C("#f6efe3"), badge = C("#1f4e46"), cream = C("#f3e6c9"), sun = C("#e7a83e");
 
-        using var img = new Image<Rgba32>(size, size);
+        var img = new Image<Rgba32>(size, size);
         img.ProcessPixelRows(rows =>
         {
             for (var y = 0; y < size; y++)
@@ -520,10 +548,7 @@ public static class GuestDemoData
                 }
             }
         });
-
-        using var stream = new MemoryStream();
-        img.SaveAsJpeg(stream, new SixLabors.ImageSharp.Formats.Jpeg.JpegEncoder { Quality = 88 });
-        return stream.ToArray();
+        return img;
     }
 
     private static (double R, double G, double B) Blend((double R, double G, double B) a, Rgba32 b, double t) =>

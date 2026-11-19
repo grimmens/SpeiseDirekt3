@@ -13,6 +13,8 @@
 @using SpeiseDirekt.ServiceInterface
 @inject ApplicationDbContext Db
 @inject IRestaurantProfileService Profiles
+@inject IPermissionService PermissionService
+@inject NavigationManager NavManager
 
 @if (model is null)
 {
@@ -36,6 +38,8 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenusView, NavManager)) return;
         if (!Guid.TryParse(Id, out var menuId))
             return;
 

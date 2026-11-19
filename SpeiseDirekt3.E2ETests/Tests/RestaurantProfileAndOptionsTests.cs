@@ -21,7 +21,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
 {
     public RestaurantProfileAndOptionsTests(E2EFixture fixture) : base(fixture) { }
 
-    private ILocator Editor => Page.Locator("#menuItemEditModal");
+    private ILocator Editor => ItemEditor;
     private ILocator ItemRows => Page.GetByTestId("menu-item-row");
     private ILocator SaveProfile => Page.GetByRole(AriaRole.Button, new() { Name = "Save profile" });
     private ILocator ExactButton(string name) => Page.GetByRole(AriaRole.Button, new() { Name = name, Exact = true });
@@ -41,6 +41,13 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         return stream.ToArray();
     }
 
+    /// <summary>
+    /// Waiting for an upload (circuit, ImageSharp resize, database): 2–5 s under parallel load measured in AP12b, past the
+    /// 5 s default in a busy run (the "Profile_IsSaved… under load" flake of AP12a), so uploads get the 15 s of the
+    /// context's action timeout. The assertions themselves are unchanged.
+    /// </summary>
+    private static readonly LocatorAssertionsToHaveAttributeOptions Upload = new() { Timeout = 15_000 };
+
     private static FilePayload PngFile(string name, byte r, byte g, byte b) =>
         new() { Name = name, MimeType = "image/png", Buffer = Png(r, g, b) };
 
@@ -52,9 +59,9 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         var email = await RegisterNewOwnerAsync();
         var ownerId = await OwnerIdAsync(email);
 
-        // Sidebar entry next to Menus / QR codes
-        await GotoInteractiveAsync("/");
-        await Page.GetByRole(AriaRole.Link, new() { Name = "Restaurant", Exact = true }).First.ClickAsync();
+        // Top navigation entry next to Menus / QR codes
+        await GotoInteractiveAsync("/dashboard");
+        await Page.GetByTestId("top-nav").GetByRole(AriaRole.Link, new() { Name = "Restaurant", Exact = true }).ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/restaurant$"));
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Restaurant profile" })).ToBeVisibleAsync();
         await Assertions.Expect(Page.GetByTestId("profile-not-saved")).ToBeVisibleAsync();
@@ -71,9 +78,9 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await Page.Locator("#Restaurant\\.GoogleReviewUrl").FillAsync("https://example.com/review");
 
         await Page.Locator("#Restaurant\\.Cover").SetInputFilesAsync(PngFile("cover.png", 200, 80, 40));
-        await Assertions.Expect(Page.GetByTestId("cover-preview").Locator("img")).ToHaveAttributeAsync("src", new Regex("^/image/"));
+        await Assertions.Expect(Page.GetByTestId("cover-preview").Locator("img")).ToHaveAttributeAsync("src", new Regex("^/image/"), Upload);
         await Page.Locator("#Restaurant\\.Logo").SetInputFilesAsync(PngFile("logo.png", 20, 60, 160));
-        await Assertions.Expect(Page.GetByTestId("logo-preview").Locator("img")).ToHaveAttributeAsync("src", new Regex("^/image/"));
+        await Assertions.Expect(Page.GetByTestId("logo-preview").Locator("img")).ToHaveAttributeAsync("src", new Regex("^/image/"), Upload);
 
         await SaveProfile.ClickAsync();
         await Assertions.Expect(Page.GetByTestId("profile-saved")).ToContainTextAsync("Profile saved");
@@ -101,7 +108,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
 
         // Replace the logo and remove the cover: after saving, both old pictures are gone from the database
         await Page.Locator("#Restaurant\\.Logo").SetInputFilesAsync(PngFile("logo2.png", 10, 140, 60));
-        await Assertions.Expect(Page.GetByTestId("logo-preview").Locator("img")).Not.ToHaveAttributeAsync("src", "/" + stored.LogoImagePath);
+        await Assertions.Expect(Page.GetByTestId("logo-preview").Locator("img")).Not.ToHaveAttributeAsync("src", "/" + stored.LogoImagePath, Upload);
         await Page.GetByRole(AriaRole.Button, new() { Name = "Remove cover image" }).ClickAsync();
         await Assertions.Expect(Page.GetByTestId("cover-preview")).ToContainTextAsync("No cover image yet");
         await SaveProfile.ClickAsync();
@@ -160,41 +167,43 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         }
     }
 
+    /// <summary>
+    /// AP14: a manager edits the owner's profile (no read-only role any more); a deactivated member is denied the page.
+    /// </summary>
     [Fact]
-    public async Task Profile_IsReadOnly_ForAnEmployee_AndCannotBeSaved()
+    public async Task Profile_IsEditedByAManager_ForTheOwner_ADeactivatedMemberIsDenied()
     {
         var ownerEmail = await RegisterNewOwnerAsync();
         var ownerId = await OwnerIdAsync(ownerEmail);
-        var employeeEmail = UniqueEmail("employee");
         await App.SeedAsync(ownerId, db =>
         {
             db.RestaurantProfiles.Add(new RestaurantProfile { Id = Guid.NewGuid(), Name = "Lokal des Chefs", Phone = "0123" });
-            var sub = new ApplicationUser
-            {
-                Id = Guid.NewGuid().ToString(), UserName = employeeEmail, NormalizedUserName = employeeEmail.ToUpperInvariant(),
-                Email = employeeEmail, NormalizedEmail = employeeEmail.ToUpperInvariant(), EmailConfirmed = true,
-                SecurityStamp = Guid.NewGuid().ToString(), TenantOwnerId = ownerId.ToString()
-            };
-            sub.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(sub, Password);
-            db.Users.Add(sub);
-            db.TenantUsers.Add(new TenantUser
-            {
-                Id = Guid.NewGuid(), ApplicationUserId = sub.Id, TenantOwnerId = ownerId.ToString(),
-                Role = TenantRole.Employee, DisplayName = "Eva", IsActive = true
-            });
             return Task.CompletedTask;
         });
+        var member = await SeedTeamMemberAsync(ownerId, "Eva");
 
         await LogoutAsync(Page);
-        await LoginAsync(Page, employeeEmail);
+        await LoginAsync(Page, member.Email);
         await GotoInteractiveAsync("/restaurant");
 
-        // The owner's profile, read-only: no save button, disabled fields
+        // The owner's profile, editable
         await Assertions.Expect(Page.Locator("#Restaurant\\.Name")).ToHaveValueAsync("Lokal des Chefs");
-        await Assertions.Expect(Page.Locator("#Restaurant\\.Name")).ToBeDisabledAsync();
-        await Assertions.Expect(Page.Locator("#Restaurant\\.Logo")).ToBeDisabledAsync();
-        await Assertions.Expect(Page.GetByTestId("profile-read-only")).ToBeVisibleAsync();
-        await Assertions.Expect(SaveProfile).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.Locator("#Restaurant\\.Name")).ToBeEnabledAsync();
+        await Assertions.Expect(Page.Locator("#Restaurant\\.Logo")).ToBeEnabledAsync();
+        await Assertions.Expect(Page.GetByTestId("profile-read-only")).ToHaveCountAsync(0);
+        await Page.Locator("#Restaurant\\.Phone").FillAsync("+43 1 234 56 78");
+        await SaveProfile.ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("profile-saved")).ToBeVisibleAsync();
+        await using (var db = App.CreateDbContext(ownerId))
+        {
+            var profile = await db.RestaurantProfiles.SingleAsync();
+            profile.Name.Should().Be("Lokal des Chefs");
+            profile.Phone.Should().Be("+43 1 234 56 78");
+        }
+
+        await App.SeedAsync(ownerId, async db => (await db.TenantUsers.SingleAsync(tu => tu.Id == member.TenantUserId)).IsActive = false);
+        await Page.GotoAsync("/restaurant");
+        await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/Account/AccessDenied$"));
     }
 
     // --- Category subtitle ---
@@ -214,16 +223,15 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         // The add form is empty again
         await Assertions.Expect(Page.Locator("#Input\\.Description")).ToHaveValueAsync("");
 
-        // Edit in the modal (Bootstrap modal: buttons found by text, see CategoryAndItemUxTests)
-        var modal = Page.Locator("#categoryEditModal");
+        // Edited in the row (AP11: inline instead of a modal)
+        var form = Page.GetByTestId("category-edit");
         async Task EditAsync(string subtitle, string button)
         {
-            await row.Locator("button", new() { HasTextString = "⋮" }).ClickAsync();
-            await Page.GetByRole(AriaRole.Menuitem, new() { Name = "Edit" }).ClickAsync();
-            await Assertions.Expect(modal).ToBeVisibleAsync();
-            await modal.Locator("#Category\\.Description").FillAsync(subtitle);
-            await modal.Locator("button", new() { HasTextString = button }).ClickAsync();
-            await Assertions.Expect(modal).ToBeHiddenAsync();
+            await row.GetByRole(AriaRole.Button, new() { Name = "Edit Mezze", Exact = true }).ClickAsync();
+            await Assertions.Expect(form).ToBeVisibleAsync();
+            await form.Locator("#Category\\.Description").FillAsync(subtitle);
+            await form.GetByRole(AriaRole.Button, new() { Name = button, Exact = true }).ClickAsync();
+            await Assertions.Expect(form).ToHaveCountAsync(0);
         }
 
         await EditAsync("Bis 22:00 Uhr", "Save");
@@ -251,7 +259,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await CreateCategoryViaUiAsync(menuId, "Mezze");
 
         await GotoInteractiveAsync($"/MenuItems/{menuId}");
-        await Button("New Menu Entry").ClickAsync();
+        await Link("New Menu Entry").ClickAsync();
         await Assertions.Expect(Editor).ToBeVisibleAsync();
         // Every label of the central list has a checkbox, in display order
         await Assertions.Expect(Editor.GetByTestId("item-label-options").Locator("input[type=checkbox]"))
@@ -260,8 +268,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await Editor.Locator("#MenuItem\\.Price").FillAsync("9.80");
         foreach (var property in new[] { "IsHalal", "IsAlcoholFree", "IsNew", "IsPopular", "IsVegan", "IsVegetarian" })
             await Editor.Locator($"#MenuItem\\.{property}").CheckAsync();
-        await Editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
-        await Assertions.Expect(Editor).ToBeHiddenAsync();
+        await SaveItemAndReturnAsync();
 
         // Chips in the order of ItemLabels; vegan hides vegetarian
         var row = ItemRows.Filter(new() { HasText = "Falafel" });
@@ -274,8 +281,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
                 .Should().Be((true, true, true, true, true, true, false));
         }
 
-        await ExactButton("Edit Falafel").ClickAsync();
-        await Assertions.Expect(Editor).ToBeVisibleAsync();
+        await OpenItemEditorAsync("Falafel");
         await Assertions.Expect(Editor.Locator("#MenuItem\\.IsHalal")).ToBeCheckedAsync();
         await Assertions.Expect(Editor.Locator("#MenuItem\\.IsVegetarian")).ToBeCheckedAsync();
         await Assertions.Expect(Editor.Locator("#MenuItem\\.IsSpicy")).Not.ToBeCheckedAsync();
@@ -291,7 +297,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await CreateCategoryViaUiAsync(menuId, "Getränke");
 
         await GotoInteractiveAsync($"/MenuItems/{menuId}");
-        await Button("New Menu Entry").ClickAsync();
+        await Link("New Menu Entry").ClickAsync();
         await Editor.Locator("#MenuItem\\.Name").FillAsync("Hausbier");
         await Editor.Locator("#MenuItem\\.Price").FillAsync("4.20");
 
@@ -311,20 +317,22 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         // The base price is read-only and follows the lowest variant
         await Assertions.Expect(basePrice).ToHaveValueAsync("3.40");
         await Assertions.Expect(basePrice).ToHaveAttributeAsync("readonly", "");
-        await Assertions.Expect(Editor.GetByTestId("price-follows-variants")).ToContainTextAsync("from € 3.40");
+        await Assertions.Expect(Editor.GetByTestId("price-follows-variants")).ToContainTextAsync("from €3.40");
 
-        // Smallest size first
-        await Editor.GetByRole(AriaRole.Button, new() { Name = "Move variant 0,25 l up" }).ClickAsync();
+        // Smallest size first: the variant's grip handle, keyboard path (↑); at the top it stays
+        await Editor.GetByRole(AriaRole.Button, new() { Name = "Reorder variant 0,25 l" }).FocusAsync();
+        await Page.Keyboard.PressAsync("ArrowUp");
         var variantNames = Editor.GetByTestId("variant-row").Locator("input[aria-label^='Name of']");
         await Assertions.Expect(variantNames.Nth(0)).ToHaveValueAsync("0,25 l");
         await Assertions.Expect(variantNames.Nth(1)).ToHaveValueAsync("0,5 l");
-        await Assertions.Expect(Editor.GetByRole(AriaRole.Button, new() { Name = "Move variant 0,25 l up" })).ToBeDisabledAsync();
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("variant 0,25 l is already first.");
+        await Assertions.Expect(variantNames.Nth(0)).ToHaveValueAsync("0,25 l");
 
-        await Editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
-        await Assertions.Expect(Editor).ToBeHiddenAsync();
+        await SaveItemAndReturnAsync();
 
         var row = ItemRows.Filter(new() { HasText = "Hausbier" });
-        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("from € 3.40");
+        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("from €3.40");
         await Assertions.Expect(row.GetByTestId("item-price-options")).ToHaveTextAsync("2 variants");
 
         var ownerId = await OwnerIdAsync(email);
@@ -337,7 +345,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         }
 
         // Change the cheaper variant's price, then remove it: the base price follows each time
-        await ExactButton("Edit Hausbier").ClickAsync();
+        await OpenItemEditorAsync("Hausbier");
         await Assertions.Expect(Editor.GetByLabel("Name of variant 1")).ToHaveValueAsync("0,25 l");
         await Editor.GetByLabel("Price of variant 1").FillAsync("6.10");
         await Editor.GetByLabel("Price of variant 1").PressAsync("Tab");
@@ -350,9 +358,8 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         // No variants left: the price is editable again
         await Assertions.Expect(basePrice).Not.ToHaveAttributeAsync("readonly", "");
         await basePrice.FillAsync("4.50");
-        await Editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
-        await Assertions.Expect(Editor).ToBeHiddenAsync();
-        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("€ 4.50");
+        await SaveItemAndReturnAsync();
+        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("€4.50");
         await Assertions.Expect(row.GetByTestId("item-price-options")).ToHaveCountAsync(0);
 
         await using (var db = App.CreateDbContext(ownerId))
@@ -372,19 +379,18 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await CreateCategoryViaUiAsync(menuId, "Getränke");
 
         await GotoInteractiveAsync($"/MenuItems/{menuId}");
-        await Button("New Menu Entry").ClickAsync();
+        await Link("New Menu Entry").ClickAsync();
         await Editor.Locator("#MenuItem\\.Name").FillAsync("Saft");
         await Editor.GetByRole(AriaRole.Button, new() { Name = "Add variant" }).ClickAsync();
         await Editor.GetByLabel("Price of variant 1").FillAsync("3.20");
-        await Editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
+        await SaveItemButton.ClickAsync();
 
         await Assertions.Expect(Editor).ToBeVisibleAsync();
         await Assertions.Expect(Editor.GetByTestId("variant-row").GetByText("Name is required.")).ToBeVisibleAsync();
 
         await Editor.GetByLabel("Name of variant 1").FillAsync("0,2 l");
-        await Editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
-        await Assertions.Expect(Editor).ToBeHiddenAsync();
-        await Assertions.Expect(ItemRows.Filter(new() { HasText = "Saft" }).GetByTestId("item-price")).ToHaveTextAsync("from € 3.20");
+        await SaveItemAndReturnAsync();
+        await Assertions.Expect(ItemRows.Filter(new() { HasText = "Saft" }).GetByTestId("item-price")).ToHaveTextAsync("from €3.20");
     }
 
     // --- Extras ---
@@ -397,8 +403,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await CreateCategoryViaUiAsync(menuId, "Salate");
         await CreateMenuItemViaUiAsync(menuId, "Fattoush", "Brotsalat", 11.90m);
 
-        await ExactButton("Edit Fattoush").ClickAsync();
-        await Assertions.Expect(Editor).ToBeVisibleAsync();
+        await OpenItemEditorAsync("Fattoush");
         await Editor.GetByRole(AriaRole.Button, new() { Name = "Add extra" }).ClickAsync();
         await Editor.GetByLabel("Name of extra 1").FillAsync("+ Halloumi");
         await Editor.GetByLabel("Price of extra 1").FillAsync("6.00");
@@ -409,25 +414,25 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         // Extras do not touch the base price
         await Assertions.Expect(Editor.Locator("#MenuItem\\.Price")).ToHaveValueAsync("11.90");
         await Assertions.Expect(Editor.Locator("#MenuItem\\.Price")).Not.ToHaveAttributeAsync("readonly", "");
-        await Editor.GetByRole(AriaRole.Button, new() { Name = "Save Menu Item" }).ClickAsync();
-        await Assertions.Expect(Editor).ToBeHiddenAsync();
+        await SaveItemAndReturnAsync();
 
         var row = ItemRows.Filter(new() { HasText = "Fattoush" });
-        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("€ 11.90");
+        await Assertions.Expect(row.GetByTestId("item-price")).ToHaveTextAsync("€11.90");
         await Assertions.Expect(row.GetByTestId("item-price-options")).ToHaveTextAsync("2 extras");
 
         // Unsaved changes are dropped by Cancel, also for a later save of something else (reordering)
-        await ExactButton("Edit Fattoush").ClickAsync();
+        await OpenItemEditorAsync("Fattoush");
         await Editor.GetByRole(AriaRole.Button, new() { Name = "Remove extra + Halloumi" }).ClickAsync();
         await Editor.GetByRole(AriaRole.Button, new() { Name = "Add variant" }).ClickAsync();
         await Editor.GetByLabel("Name of variant 1").FillAsync("Groß");
         await Editor.Locator("#MenuItem\\.Name").FillAsync("Nicht gespeichert");
         await Editor.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
-        await Assertions.Expect(Editor).ToBeHiddenAsync();
+        await Assertions.Expect(Editor).ToHaveCountAsync(0);
         await Assertions.Expect(row.GetByTestId("item-price-options")).ToHaveTextAsync("2 extras");
 
         await CreateMenuItemViaUiAsync(menuId, "Tabouleh", "Petersiliensalat", 9.50m);
-        await ExactButton("Move Tabouleh up").ClickAsync();
+        await ExactButton("Reorder Tabouleh").FocusAsync();
+        await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(ItemRows).ToContainTextAsync(new[] { "Tabouleh", "Fattoush" });
 
         await using var db = App.CreateDbContext(await OwnerIdAsync(email));
@@ -502,7 +507,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
     public async Task Dashboard_SuggestsTheProfile_AsAnOptionalStep_UntilOneExists()
     {
         var email = await RegisterNewOwnerAsync();
-        await GotoInteractiveAsync("/");
+        await GotoInteractiveAsync("/dashboard");
 
         // Not one of the four counted steps
         await Assertions.Expect(Page.GetByTestId("checklist-step")).ToHaveCountAsync(4);
@@ -516,7 +521,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
             db.RestaurantProfiles.Add(new RestaurantProfile { Id = Guid.NewGuid(), Name = "Schon da" });
             return Task.CompletedTask;
         });
-        await GotoInteractiveAsync("/");
+        await GotoInteractiveAsync("/dashboard");
         await Assertions.Expect(Page.GetByTestId("checklist-step")).ToHaveCountAsync(4);
         await Assertions.Expect(optional).ToHaveCountAsync(0);
     }

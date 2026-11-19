@@ -1,0 +1,208 @@
+@page "/users/edit/{UserId:guid}"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt.Infrastructure
+@using SpeiseDirekt.Model
+@using SpeiseDirekt.ServiceInterface
+@inject ApplicationDbContext DbContext
+@inject IUserIdProvider UserIdProvider
+@inject IPermissionService PermissionService
+@inject INotificationService NotificationService
+@inject NavigationManager NavManager
+@attribute [Authorize]
+@inject IStringLocalizer<TeamText> T
+@inject IStringLocalizer<CommonText> C
+@inject IStringLocalizer<ShellText> S
+
+@* A team member (always a manager, AP14): the display name, deactivate/activate and remove. Only the owner (UsersEdit);
+   the owner's own account is not a team member and has no page here. *@
+<PageTitle>@C["PageTitle", T["Edit_PageTitle"]]</PageTitle>
+
+<div class="max-w-3xl mx-auto">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-600 mb-6" aria-label="@S["Context_BreadcrumbLabel"]">
+        <ol class="flex space-x-2">
+            <li>
+                <a href="/users" class="text-brand-600 hover:underline">@S["Nav_Team"]</a>
+                <span class="mx-2" aria-hidden="true">/</span>
+            </li>
+            <li class="text-gray-800" aria-current="page">@HeadingText</li>
+        </ol>
+    </nav>
+
+    <PageHeader Title="@HeadingText" Icon="PageIcons.Team" Tone="TileTone.Accent" Class="mb-6" />
+
+    @if (state == PageState.Loading)
+    {
+        <div class="flex items-center justify-center py-12" role="status">
+            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" aria-hidden="true"></div>
+            <span class="sr-only">@C["Loading"]</span>
+        </div>
+    }
+    else if (state == PageState.NotFound || tenantUser is null)
+    {
+        <div class="sd-empty bg-white rounded-xl shadow-sm border border-gray-200" data-testid="member-not-found">
+            <h2 class="sd-empty-title">@T["Edit_NotFound"]</h2>
+            <p class="sd-empty-text"><a href="/users" class="text-brand-600 hover:underline">@T["BackToTeam"]</a></p>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-6">
+            <!-- Details: the display name can be changed -->
+            <EditForm Model="model" OnValidSubmit="Save" class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6" data-testid="member-form">
+                <DataAnnotationsValidator />
+                <h2 class="text-lg font-bold text-gray-900 mb-4">@T["Edit_Details"]</h2>
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div class="sd-field sm:col-span-2">
+                        <label for="Member.DisplayName" class="sd-label">@T["Invite_DisplayName"]</label>
+                        <InputText @bind-Value="model.DisplayName" id="Member.DisplayName" class="sd-input" autocomplete="off" />
+                        <ValidationMessage For="@(() => model.DisplayName)" />
+                    </div>
+                    <div class="text-sm">
+                        <span class="text-gray-500">@T["Column_Email"]</span>
+                        <p class="m-0 font-medium text-gray-900 break-all" data-testid="member-email">@(tenantUser.ApplicationUser?.Email ?? "—")</p>
+                    </div>
+                    <div class="text-sm">
+                        <span class="text-gray-500">@T["Column_Joined"]</span>
+                        <p class="m-0 font-medium text-gray-900">@UiFormat.Date(DateOnly.FromDateTime(tenantUser.CreatedAt))</p>
+                    </div>
+                    <div class="text-sm sm:col-span-2">
+                        <span class="text-gray-500">@T["Column_Role"]</span>
+                        <p class="m-0 mt-1">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800" data-testid="role-badge">@C["Role_Manager"]</span>
+                        </p>
+                        <p class="m-0 mt-1 text-gray-600">@T["RolesNote"]</p>
+                    </div>
+                </div>
+                @* Wraps on phones: the German labels do not fit one row at 360-390 px *@
+                <div class="flex flex-wrap justify-end gap-3 pt-6">
+                    <a href="/users" class="sd-btn sd-btn--secondary">@C["Cancel"]</a>
+                    <button type="submit" class="sd-btn sd-btn--primary" disabled="@busy">@T["Edit_SaveChanges"]</button>
+                </div>
+            </EditForm>
+
+            <!-- Access: deactivate/activate, remove -->
+            <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem] sm:p-6" data-testid="member-access" aria-labelledby="member-access-title">
+                <h2 id="member-access-title" class="text-lg font-bold text-gray-900 mb-4">@T["Edit_Access"]</h2>
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div class="min-w-0 flex-1 basis-64">
+                        <p class="m-0 mb-1">
+                            @if (tenantUser.IsActive)
+                            {
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800" data-testid="status-badge">@T["Status_Active"]</span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" data-testid="status-badge">@T["Status_Inactive"]</span>
+                            }
+                        </p>
+                        <p class="m-0 text-sm text-gray-600">@(tenantUser.IsActive ? T["Edit_ActiveText"] : T["Edit_InactiveText"])</p>
+                    </div>
+                    <button type="button" class="sd-btn sd-btn--secondary" disabled="@busy" @onclick="ToggleActive" data-testid="member-toggle-active">
+                        @(tenantUser.IsActive ? T["Edit_Deactivate"] : T["Edit_Activate"])
+                    </button>
+                </div>
+                <div class="flex flex-wrap items-start justify-between gap-3 mt-[1.25rem] pt-[1.25rem] border-t border-gray-200">
+                    <p class="m-0 text-sm text-gray-600 min-w-0 flex-1 basis-64">@T["Edit_RemoveText"]</p>
+                    <button type="button" class="sd-btn sd-btn--danger" disabled="@busy" @onclick="Remove" data-testid="member-remove">@T["Edit_Remove"]</button>
+                </div>
+            </section>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid UserId { get; set; }
+
+    private enum PageState { Loading, Loaded, NotFound }
+
+    private PageState state = PageState.Loading;
+    private TenantUser? tenantUser;
+    private MemberModel model = new();
+    private bool busy;
+
+    private sealed class MemberModel
+    {
+        [Required(ErrorMessageResourceType = typeof(TeamText), ErrorMessageResourceName = nameof(TeamText.Valid_DisplayNameRequired))]
+        [StringLength(100, ErrorMessageResourceType = typeof(TeamText), ErrorMessageResourceName = nameof(TeamText.Valid_DisplayNameTooLong))]
+        public string DisplayName { get; set; } = "";
+    }
+
+    /// <summary>"Max Kellner bearbeiten" (the saved name, not the one being typed).</summary>
+    private string HeadingText => tenantUser?.DisplayName is { Length: > 0 } name ? T["Edit_Crumb", name] : T["Edit_CrumbUnnamed"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Only the owner edits the team: a manager gets the access-denied page
+        if (!await PermissionService.RequireAsync(Permission.UsersEdit, NavManager)) return;
+
+        var tenantOwnerId = UserIdProvider.GetUserId();
+        tenantUser = await DbContext.TenantUsers
+            .Include(tu => tu.ApplicationUser)
+            .FirstOrDefaultAsync(tu => tu.Id == UserId && tu.TenantOwnerId == tenantOwnerId);
+        model.DisplayName = tenantUser?.DisplayName ?? "";
+        state = tenantUser is null ? PageState.NotFound : PageState.Loaded;
+    }
+
+    private async Task Save()
+    {
+        if (tenantUser is null || busy) return;
+        busy = true;
+        tenantUser.DisplayName = model.DisplayName.Trim();
+        await DbContext.SaveChangesAsync();
+        NavManager.NavigateTo("/users");
+    }
+
+    private async Task ToggleActive()
+    {
+        if (tenantUser is null || busy) return;
+
+        var deactivate = tenantUser.IsActive;
+        var name = tenantUser.DisplayName ?? "";
+        var confirm = await NotificationService.ShowConfirmation(deactivate
+            ? new ConfirmationRequest(T["Deactivate_Title"], T["Deactivate_Message", name])
+            {
+                ConfirmText = T["Edit_Deactivate"],
+                Destructive = true
+            }
+            : new ConfirmationRequest(T["Activate_Title"], T["Activate_Message", name])
+            {
+                ConfirmText = T["Edit_Activate"],
+                Destructive = false
+            });
+        if (!confirm) return;
+
+        // Only the status: a display name being typed is saved with "Save changes"
+        tenantUser.IsActive = !tenantUser.IsActive;
+        await DbContext.SaveChangesAsync();
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Removes the member from the team: its TenantUser row and its login (Identity user, with its claims, logins and
+    /// tokens by cascade) in one save. A removed member has no permissions at once and cannot sign in again.
+    /// </summary>
+    private async Task Remove()
+    {
+        if (tenantUser is null || busy) return;
+
+        var confirm = await NotificationService.ShowConfirmation(
+            new ConfirmationRequest(T["Remove_Title"], T["Remove_Message", tenantUser.DisplayName ?? tenantUser.ApplicationUser?.Email ?? ""])
+            {
+                ConfirmText = T["Edit_Remove"],
+                Destructive = true
+            });
+        if (!confirm) return;
+
+        busy = true;
+        var account = tenantUser.ApplicationUser;
+        DbContext.TenantUsers.Remove(tenantUser);
+        // Only a sub-account of this tenant (never the owner or another tenant's account)
+        if (account is not null && account.TenantOwnerId == tenantUser.TenantOwnerId)
+            DbContext.Users.Remove(account);
+        await DbContext.SaveChangesAsync();
+        NavManager.NavigateTo("/users");
+    }
+}

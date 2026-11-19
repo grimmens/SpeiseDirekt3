@@ -26,7 +26,7 @@ public class GuestSearchPhoneTests : E2ETestBase
 
     private async Task<(IBrowserContext Context, IPage Page)> TouchPhoneAsync(bool reducedMotion = false)
     {
-        var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, ViewportSize = new ViewportSize { Width = Width, Height = Height }, IsMobile = true, HasTouch = true,
             ReducedMotion = reducedMotion ? ReducedMotion.Reduce : ReducedMotion.NoPreference

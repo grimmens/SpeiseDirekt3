@@ -7,42 +7,35 @@
 @using SpeiseDirekt.Model
 @using SpeiseDirekt.ServiceInterface
 @attribute [Authorize]
+@inject IStringLocalizer<ItemsText> T
+@inject IPermissionService PermissionService
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>Menu Items</PageTitle>
+<PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
 
-<div class="max-w-6xl mx-auto space-y-6">
-    <!-- Tailwind Breadcrumb -->
-    <nav class="text-sm text-gray-600" aria-label="breadcrumb">
-        <ol class="flex flex-wrap gap-y-1 space-x-2">
-            <li>
-                <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
-                <span class="mx-2">/</span>
-            </li>
-            <li>
-                <a href="@($"/menudetail/{Menu?.Id}")" class="text-blue-600 hover:underline">@Menu?.Name</a>
-                <span class="mx-2">/</span>
-            </li>
-            <li class="text-gray-800">@Category?.Name</li>
-        </ol>
-    </nav>
-
+<div class="max-w-6xl mx-auto">
+    @* "Menus › menu" is in the menu context bar (Layout/MenuContextBar) *@
     @if (Category != null)
     {
         <CategoryDropdownHeadline Category="@Category"
         Categories="@(Categories ?? [])"
+        HighlightId="Highlight"
         CategoryChanged="OnCategoryChanged" />
     }
     else if (loaded)
     {
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-[1rem] sm:px-6 py-10 text-center">
-            <h1 class="text-lg font-semibold text-gray-900">Category not found</h1>
-            <p class="mt-1 text-sm text-gray-500">It may have been deleted. <a href="/menus" class="text-blue-600 hover:underline">Back to the menus</a></p>
+            <h1 class="text-lg font-semibold text-gray-900">@T["NotFound_CategoryTitle"]</h1>
+            <p class="mt-1 text-sm text-gray-500">@T["NotFound_CategoryText"] <a href="/menus" class="text-brand-600 hover:underline">@T["BackToMenus"]</a></p>
         </div>
     }
 </div>
 
 @code {
     [Parameter] public Guid CategoryId { get; set; }
+
+    /// <summary>The item to scroll to and highlight (the edit page returns here with ?highlight={itemId}).</summary>
+    [SupplyParameterFromQuery(Name = "highlight")] public Guid? Highlight { get; set; }
 
     [Inject] public ApplicationDbContext Context { get; set; }
     [Inject] public INotificationService NotificationService { get; set; }
@@ -55,6 +48,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenuItemsView, NavigationManager)) return;
         Category = await Context.Categories
             .Include(c => c.Menu)
             .FirstOrDefaultAsync(c => c.Id == CategoryId);

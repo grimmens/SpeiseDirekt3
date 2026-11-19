@@ -6,7 +6,7 @@ namespace SpeiseDirekt3.Components.Guest;
 /// <summary>
 /// Formatting for the guest view, in one place: image URLs, anchors, item links, public paths and origin. Prices are
 /// formatted by <see cref="GuestText"/> (<c>€ 9,90</c> on German menus, <c>€9.90</c> on all others), independent of the
-/// server culture (the back office uses <see cref="SpeiseDirekt.Infrastructure.PriceFormat"/> with <c>€ 9.90</c>).
+/// server culture and of the browser (the back office uses <see cref="SpeiseDirekt3.Localization.UiFormat"/>, AP12).
 /// </summary>
 public static class GuestFormat
 {
@@ -101,17 +101,16 @@ public static class GuestFormat
 
     /// <summary>
     /// Scheme and host of the page as the guest's browser sees it, for absolute URLs in meta tags (<c>og:url</c>,
-    /// <c>og:image</c>, canonical link): behind the reverse proxy the forwarded headers win over Kestrel's own
-    /// <c>http://localhost:…</c>. <c>null</c> without a request.
+    /// <c>og:image</c>, canonical link). Behind the reverse proxy <c>UseForwardedHeaders</c> (<c>Program.cs</c>, trusted
+    /// only from the loopback proxy) has already put the forwarded scheme and host into the request, instead of
+    /// Kestrel's own <c>http://localhost:…</c>. <c>null</c> without a request.
     /// </summary>
     public static string? PublicOrigin(Microsoft.AspNetCore.Http.HttpRequest? request)
     {
         if (request is null)
             return null;
-        static string? First(string? value) =>
-            value?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault();
-        var scheme = First(request.Headers["X-Forwarded-Proto"]) ?? request.Scheme;
-        var host = First(request.Headers["X-Forwarded-Host"]) ?? request.Host.Value;
+        var scheme = request.Scheme;
+        var host = request.Host.Value;
         if (string.IsNullOrEmpty(host) || (scheme != "http" && scheme != "https"))
             return null;
         return $"{scheme}://{host}";

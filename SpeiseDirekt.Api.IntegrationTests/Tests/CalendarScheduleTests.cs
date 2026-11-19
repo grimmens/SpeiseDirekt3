@@ -191,19 +191,28 @@ public class CalendarScheduleTests
         CalendarSchedule.Conflicts(null).Should().BeEmpty();
     }
 
-    [Fact]
-    public void Validate_RefusesExactlyWhatCollideReports()
+    /// <summary>The messages follow the current culture (AP12: the back office's language; the API's is the server's).</summary>
+    [Theory]
+    [InlineData("de", "Die Zeiträume überschneiden sich: 09.11.2026–12.11.2026 und 12.11.2026–12.11.2026.",
+        "Die wöchentlichen Einträge am Montag überschneiden sich: ab 09.11.2026 und ab 07.12.2026.")]
+    [InlineData("en", "The date ranges overlap: 11/9/2026–11/12/2026 and 11/12/2026–11/12/2026.",
+        "The weekly entries on Monday overlap: from 11/9/2026 and from 12/7/2026.")]
+    public void Validate_RefusesExactlyWhatCollideReports(string language, string rangeMessage, string weeklyMessage)
     {
+        var culture = System.Globalization.CultureInfo.GetCultureInfo(language);
+        System.Globalization.CultureInfo.CurrentCulture = culture;
+        System.Globalization.CultureInfo.CurrentUICulture = culture;
+
         static IEnumerable<string> Errors(params CalendarEntry[] entries)
         {
             var qr = new QRCode { Title = "T", IsCalendarBased = true, MenuId = MenuA, CalendarEntries = entries.ToList() };
-            return qr.Validate(new System.ComponentModel.DataAnnotations.ValidationContext(qr)).Select(r => r.ErrorMessage!);
+            return qr.Validate(new System.ComponentModel.DataAnnotations.ValidationContext(qr)).Select(r => r.ErrorMessage!).ToList();
         }
 
         Errors(Entry(D(2026, 11, 9), MenuA, until: D(2026, 11, 12)), Entry(D(2026, 11, 12), MenuB))
-            .Should().ContainSingle().Which.Should().Be("Die Datumsperioden überschneiden sich: 09.11.2026–12.11.2026 und 12.11.2026–12.11.2026.");
+            .Should().ContainSingle().Which.Should().Be(rangeMessage);
         Errors(Entry(D(2026, 11, 9), MenuA, weekly: DayOfWeek.Monday), Entry(D(2026, 12, 7), MenuB, weekly: DayOfWeek.Monday))
-            .Should().ContainSingle().Which.Should().StartWith("Die wöchentlichen Einträge am Montag überschneiden sich");
+            .Should().ContainSingle().Which.Should().Be(weeklyMessage);
         Errors(Entry(D(2026, 11, 6), MenuA, until: D(2027, 1, 29), weekly: DayOfWeek.Friday), Entry(D(2026, 12, 24), MenuB, until: D(2026, 12, 26)))
             .Should().BeEmpty();
         Errors(Entry(D(2026, 11, 9), MenuA, until: D(2026, 11, 12)), Entry(D(2026, 11, 13), MenuB))

@@ -80,6 +80,32 @@ html:not([data-guest-ready]) [data-js-only] { visibility: hidden; }
 }
 .gm-skip:focus { top: 8px; }
 
+/* --- Live demo note (/demo): Speise-Direkt's own petrol, the same in every theme; scrolls away above the sticky
+   top bar (white on #1b3d46 12.6:1, the link #fbbd62 on it 7.6:1) ---------------------------------------------- */
+.gm-demo-bar {
+    margin: 0;
+    padding: 4px 16px;
+    background: #1b3d46;
+    color: #fff;
+    font-family: var(--gm-font-ui);
+    font-size: 13px;
+    line-height: 1.45;
+    text-align: center;
+    text-wrap: balance;
+}
+.gm-demo-bar a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px; /* a touch target */
+    margin-left: 6px;
+    padding: 0 2px;
+    color: #fbbd62;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.gm-demo-bar a:focus-visible { outline: 2px solid #fbbd62; outline-offset: 2px; border-radius: 2px; }
+
 /* --- Icon buttons ------------------------------------------------------------ */
 .gm-icon { width: 20px; height: 20px; flex: none; }
 

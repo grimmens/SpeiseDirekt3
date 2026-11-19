@@ -11,6 +11,13 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
     /// <summary>Requests carrying this header are treated as anonymous (no authenticated user).</summary>
     public const string AnonymousHeader = "X-Test-Anonymous";
 
+    /// <summary>
+    /// Requests carrying this header are authenticated as the account with that id instead of the tenant owner
+    /// (<see cref="CustomWebApplicationFactory.TestUserId"/>), e.g. a team member: the app's claims transformation and
+    /// permission service then resolve its role from the database like in production.
+    /// </summary>
+    public const string UserHeader = "X-Test-User";
+
     public TestAuthHandler(
         IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
@@ -24,9 +31,12 @@ public class TestAuthHandler : AuthenticationHandler<AuthenticationSchemeOptions
         if (Request.Headers.ContainsKey(AnonymousHeader))
             return Task.FromResult(AuthenticateResult.NoResult());
 
+        var userId = Request.Headers.TryGetValue(UserHeader, out var header) && !string.IsNullOrEmpty(header)
+            ? header.ToString()
+            : CustomWebApplicationFactory.TestUserId;
         var claims = new[]
         {
-            new Claim(ClaimTypes.NameIdentifier, CustomWebApplicationFactory.TestUserId),
+            new Claim(ClaimTypes.NameIdentifier, userId),
             new Claim(ClaimTypes.Name, "testuser@test.com"),
             new Claim(ClaimTypes.Email, "testuser@test.com"),
         };

@@ -9,109 +9,57 @@
 @inject ILogger<Login> Logger
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>Log in - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", T["Login_Title"]]</PageTitle>
 
-<!-- Login Page -->
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <!-- Header -->
-        <div class="text-center">
-            <div class="flex justify-center mb-6">
-                <img src="/image/speise-direkt.jpg" alt="Speise-Direkt Logo" class="h-16 w-16 rounded-full shadow-lg" />
+<AuthCard Title="@T["Login_Heading"]" Lead="@T["Login_Subtitle"]" Icon="login">
+    <ChildContent>
+        <StatusMessage Message="@errorMessage" IsError="true" />
+        <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login" class="au-form">
+            <DataAnnotationsValidator />
+
+            <div class="au-field">
+                <label for="Input.Email" class="au-label">@T["Field_EmailAddress"]</label>
+                <div class="au-input-wrap">
+                    <LandingIcon Name="mail" Class="au-icon" />
+                    <InputText @bind-Value="Input.Email" id="Input.Email" class="au-input" inputmode="email"
+                               autocomplete="username" aria-required="true" placeholder="@T["Placeholder_Email"]" />
+                </div>
+                <ValidationMessage For="() => Input.Email" class="validation-message" />
             </div>
-            <h2 class="text-3xl font-bold text-gray-900 font-display">Welcome back</h2>
-            <p class="mt-2 text-gray-600">Sign in to your account</p>
-        </div>
 
-        <!-- Login Form -->
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <StatusMessage Message="@errorMessage" />
-            <EditForm Model="Input" method="post" OnValidSubmit="LoginUser" FormName="login" class="space-y-6">
-                <DataAnnotationsValidator />
-                <ValidationSummary class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert" />
-
-                <!-- Email Field -->
-                <div>
-                    <label for="Input.Email" class="block text-sm font-medium text-gray-700 mb-2">Email address</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path>
-                            </svg>
-                        </div>
-                        <InputText @bind-Value="Input.Email" id="Input.Email"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                   autocomplete="username" aria-required="true" placeholder="Enter your email" />
-                    </div>
-                    <ValidationMessage For="() => Input.Email" class="mt-1 text-sm text-red-600" />
+            <div class="au-field">
+                <label for="Input.Password" class="au-label">@T["Field_Password"]</label>
+                <div class="au-input-wrap">
+                    <LandingIcon Name="lock" Class="au-icon" />
+                    <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="au-input"
+                               autocomplete="current-password" aria-required="true" placeholder="@T["Placeholder_Password"]" />
                 </div>
-
-                <!-- Password Field -->
-                <div>
-                    <label for="Input.Password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                        </div>
-                        <InputText type="password" @bind-Value="Input.Password" id="Input.Password"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                   autocomplete="current-password" aria-required="true" placeholder="Enter your password" />
-                    </div>
-                    <ValidationMessage For="() => Input.Password" class="mt-1 text-sm text-red-600" />
-                </div>
-
-                <!-- Remember Me -->
-                <div class="flex items-center">
-                    <InputCheckbox @bind-Value="Input.RememberMe" id="Input.RememberMe"
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                    <label for="Input.RememberMe" class="ml-2 block text-sm text-gray-700">
-                        Remember me
-                    </label>
-                </div>
-
-                <!-- Submit Button -->
-                <div>
-                    <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                        Sign in
-                    </button>
-                </div>
-
-                <!-- Links -->
-                <div class="space-y-3 text-center">
-                    <div>
-                        <a href="Account/ForgotPassword" class="text-sm text-blue-600 hover:text-blue-500 hover:underline">
-                            Forgot your password?
-                        </a>
-                    </div>
-                    <div>
-                        <a href="@(NavigationManager.GetUriWithQueryParameters("Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))"
-                           class="text-sm text-blue-600 hover:text-blue-500 hover:underline">
-                            Don't have an account? Register here
-                        </a>
-                    </div>
-                    <div>
-                        <a href="Account/ResendEmailConfirmation" class="text-sm text-gray-600 hover:text-gray-500 hover:underline">
-                            Resend email confirmation
-                        </a>
-                    </div>
-                </div>
-            </EditForm>
-        </div>
-
-        <!-- External Login Section -->
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <div class="text-center mb-6">
-                <h3 class="text-lg font-medium text-gray-900">Or continue with</h3>
-                <div class="mt-2 border-t border-gray-200"></div>
+                <ValidationMessage For="() => Input.Password" class="validation-message" />
             </div>
-            <ExternalLoginPicker />
-        </div>
-    </div>
-</div>
+
+            <div class="au-row">
+                <label class="au-check" for="Input.RememberMe">
+                    <InputCheckbox @bind-Value="Input.RememberMe" id="Input.RememberMe" />
+                    @T["Login_RememberMe"]
+                </label>
+                <a href="/Account/ForgotPassword" class="au-link au-inline-link" data-testid="login-forgot">@T["Login_ForgotPassword"]</a>
+            </div>
+
+            <button type="submit" class="au-button au-button--primary" data-testid="login-submit">@T["Login_Submit"]</button>
+        </EditForm>
+
+        <ExternalLoginPicker Heading="@T["External_LoginHeading"]" />
+    </ChildContent>
+    <Links>
+        <li><a href="@(NavigationManager.GetUriWithQueryParameters("/Account/Register", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl }))" class="au-link" data-testid="login-register">@T["Login_NoAccount"]</a></li>
+        <li><a href="/Account/ResendEmailConfirmation" class="au-link">@T["Login_ResendConfirmation"]</a></li>
+    </Links>
+</AuthCard>
 
 @code {
     private string? errorMessage;
@@ -157,21 +105,20 @@
         }
         else
         {
-            errorMessage = "Error: Invalid login attempt.";
+            errorMessage = T["Status_InvalidLogin"];
         }
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailRequired))]
+        [EmailAddress(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailInvalid))]
         public string Email { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_PasswordRequired))]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 
-        [Display(Name = "Remember me?")]
         public bool RememberMe { get; set; }
     }
 }

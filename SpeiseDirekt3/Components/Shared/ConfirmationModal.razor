@@ -1,73 +1,136 @@
-﻿@using SpeiseDirekt.ServiceInterface
+@using SpeiseDirekt.ServiceInterface
+@implements IAsyncDisposable
 @inject INotificationService NotificationService
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime JS
+@inject IStringLocalizer<CommonText> C
 
-<div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true" @onclick="@(async () => await HideModal(false))">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">@title</h5>
-                <button id="cancelBtn2" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" @onclick="() => HideModal(false)"></button>
-            </div>
-            <div class="modal-body">
-                @message
-            </div>
-            <div class="modal-footer">
-                <button id="cancelBtn" type="button" class="btn btn-secondary" @onclick="() => HideModal(false)">Abort</button>
-                <button id="confirmBtn" type="button" class="btn btn-primary" @onclick="() => HideModal(true)">Ok</button>
-            </div>
-        </div>
+@* The one confirmation of the back office (INotificationService.ShowConfirmation(ConfirmationRequest)), rendered once
+   by MainLayout. A quiet native <dialog> (js/modal-dialog.js): white, neutral title, the message, "Cancel" (focused
+   first) and a button named after the action (ConfirmationRequest.ConfirmText; without one the title of a destructive
+   action, else "OK") — red when Destructive. The caller brings every text localized. Escape, a backdrop click and
+   "Cancel" answer false. Test ids/ids: #confirmationModal, #confirmBtn, #cancelBtn, confirmation-message. *@
+<dialog @ref="dialog" id="confirmationModal" class="sd-dialog" aria-labelledby="confirmation-title" aria-describedby="confirmation-message" data-testid="confirmation">
+    <div class="sd-dialog-head">
+        <h2 id="confirmation-title" class="sd-dialog-title">@title</h2>
     </div>
-</div>
+    <div class="sd-dialog-body" id="confirmation-message" data-testid="confirmation-message">@message</div>
+    <div class="sd-dialog-actions">
+        <button id="cancelBtn" type="button" class="sd-btn sd-btn--secondary" autofocus @onclick="() => CloseAsync(false)">@C["Cancel"]</button>
+        <button id="confirmBtn" type="button" class="@(IsDestructive ? "sd-btn sd-btn--danger" : "sd-btn sd-btn--primary")" @onclick="() => CloseAsync(true)">@ConfirmText</button>
+    </div>
+</dialog>
 
 @code {
-    private string message;
-    private string title;
-    private bool isModalVisible = false;
+    private string title = "";
+    private string message = "";
+    private string? confirmText;
+    private bool destructive;
+    private bool isModalVisible;
+    private bool openPending;
     private TaskCompletionSource<bool> tcs = new();
-    private object lockObj = new object();
+    private ElementReference dialog;
+    private IJSObjectReference? module;
+    private IJSObjectReference? handle;
+    private DotNetObjectReference<ConfirmationModal>? selfRef;
+
+    private bool IsDestructive => destructive;
+
+    /// <summary>
+    /// The confirm button names the action ("Delete menu", "Discard changes"): the caller's text, else the title of a
+    /// destructive action, else "OK" for a plain question.
+    /// </summary>
+    private string ConfirmText => confirmText ?? (IsDestructive ? title : C["Ok"]);
 
     protected override void OnInitialized()
     {
         NotificationService.OnConfirmationRequested += ShowModal;
     }
 
-    public void Dispose()
+    private Task<bool> ShowModal(ConfirmationRequest request)
     {
-        NotificationService.OnConfirmationRequested -= ShowModal;
-    }
-
-    private Task<bool> ShowModal((string title, string message) tuple)
-    {
-        title = tuple.title;
-        message = tuple.message;
-        InvokeAsync(StateHasChanged);
+        title = request.Title;
+        message = request.Message;
+        confirmText = request.ConfirmText;
+        destructive = request.Destructive;
         if (isModalVisible)
         {
+            _ = InvokeAsync(StateHasChanged);
             return tcs.Task;
         }
-        else
-        {
-            isModalVisible = true;
-        }
-        tcs = new();
-        // Show the modal using JavaScript interop
-        JSRuntime.InvokeVoidAsync("window.openModal", "confirmationModal");
+        isModalVisible = true;
+        openPending = true;
+        tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _ = InvokeAsync(StateHasChanged);
         return tcs.Task;
     }
 
-
-    private async Task HideModal(bool arg)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (isModalVisible)
-        {
-            isModalVisible = false;
-        }
-        else
-        {
+        if (!openPending)
             return;
+        openPending = false;
+        try
+        {
+            if (handle is null)
+            {
+                selfRef ??= DotNetObjectReference.Create(this);
+                module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/modal-dialog.js");
+                handle = await module.InvokeAsync<IJSObjectReference>("attach", dialog, selfRef, null);
+            }
+            await handle.InvokeVoidAsync("open");
         }
-        await JSRuntime.InvokeVoidAsync("window.hideModal", "confirmationModal");
-        tcs.SetResult(arg);
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException)
+        {
+            // No dialog: answer "no" rather than leaving the caller waiting
+            isModalVisible = false;
+            tcs.TrySetResult(false);
+        }
+    }
+
+    private async Task CloseAsync(bool result)
+    {
+        if (!isModalVisible)
+            return;
+        isModalVisible = false;
+        tcs.TrySetResult(result);
+        try
+        {
+            if (handle is not null)
+                await handle.InvokeVoidAsync("close");
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException)
+        {
+        }
+    }
+
+    /// <summary>Escape, a backdrop click or close(): the browser closed the dialog.</summary>
+    [JSInvokable]
+    public void OnDialogClosedJs()
+    {
+        if (!isModalVisible)
+            return;
+        isModalVisible = false;
+        tcs.TrySetResult(false);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        NotificationService.OnConfirmationRequested -= ShowModal;
+        isModalVisible = false;
+        tcs.TrySetResult(false);
+        try
+        {
+            if (handle is not null)
+            {
+                await handle.InvokeVoidAsync("dispose");
+                await handle.DisposeAsync();
+            }
+            if (module is not null)
+                await module.DisposeAsync();
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException)
+        {
+        }
+        selfRef?.Dispose();
     }
 }

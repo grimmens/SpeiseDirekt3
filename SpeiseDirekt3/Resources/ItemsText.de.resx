@@ -1,0 +1,396 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Gerichte</value>
+  </data>
+  <data name="Label_Popular" xml:space="preserve">
+    <value>Beliebt</value>
+  </data>
+  <data name="Label_New" xml:space="preserve">
+    <value>Neu</value>
+  </data>
+  <data name="Label_Vegan" xml:space="preserve">
+    <value>Vegan</value>
+  </data>
+  <data name="Label_Vegetarian" xml:space="preserve">
+    <value>Vegetarisch</value>
+  </data>
+  <data name="Label_Halal" xml:space="preserve">
+    <value>Halal</value>
+  </data>
+  <data name="Label_AlcoholFree" xml:space="preserve">
+    <value>Alkoholfrei</value>
+  </data>
+  <data name="Label_Spicy" xml:space="preserve">
+    <value>Scharf</value>
+  </data>
+  <data name="LabelGroup_Dietary" xml:space="preserve">
+    <value>Ernährung</value>
+  </data>
+  <data name="LabelGroup_Highlights" xml:space="preserve">
+    <value>Hervorhebungen</value>
+  </data>
+  <data name="AllergenChip" xml:space="preserve">
+    <value>Allergen {0}: {1}</value>
+    <comment>title of an allergen chip, {0} = code, {1} = name</comment>
+  </data>
+  <data name="NoLabels" xml:space="preserve">
+    <value>Keine Kennzeichnungen</value>
+  </data>
+  <data name="NoDescription" xml:space="preserve">
+    <value>Keine Beschreibung</value>
+  </data>
+  <data name="Price_From" xml:space="preserve">
+    <value>ab {0}</value>
+    <comment>{0} = the lowest variant price</comment>
+  </data>
+  <data name="Count_Items_One" xml:space="preserve">
+    <value>1 Gericht</value>
+  </data>
+  <data name="Count_Items_Other" xml:space="preserve">
+    <value>{0} Gerichte</value>
+  </data>
+  <data name="Count_Variants_One" xml:space="preserve">
+    <value>1 Variante</value>
+  </data>
+  <data name="Count_Variants_Other" xml:space="preserve">
+    <value>{0} Varianten</value>
+  </data>
+  <data name="Count_Extras_One" xml:space="preserve">
+    <value>1 Extra</value>
+  </data>
+  <data name="Count_Extras_Other" xml:space="preserve">
+    <value>{0} Extras</value>
+  </data>
+  <data name="NotFound_CategoryTitle" xml:space="preserve">
+    <value>Kategorie nicht gefunden</value>
+  </data>
+  <data name="NotFound_CategoryText" xml:space="preserve">
+    <value>Sie wurde möglicherweise gelöscht.</value>
+  </data>
+  <data name="BackToMenus" xml:space="preserve">
+    <value>Zurück zu den Speisekarten</value>
+  </data>
+  <data name="Header_Eyebrow" xml:space="preserve">
+    <value>Gerichte</value>
+  </data>
+  <data name="Header_SwitchCategory" xml:space="preserve">
+    <value>Kategorie wechseln</value>
+  </data>
+  <data name="Header_NoCategories" xml:space="preserve">
+    <value>Keine Kategorien vorhanden</value>
+  </data>
+  <data name="Header_Description" xml:space="preserve">
+    <value>Gäste sehen die Gerichte in der Reihenfolge dieser Liste.</value>
+  </data>
+  <data name="Header_EditCategories" xml:space="preserve">
+    <value>Kategorien bearbeiten</value>
+  </data>
+  <data name="Loading_NotFoundTitle" xml:space="preserve">
+    <value>Speisekarte nicht gefunden</value>
+  </data>
+  <data name="Loading_NotFoundText" xml:space="preserve">
+    <value>Sie wurde möglicherweise gelöscht.</value>
+  </data>
+  <data name="Loading_NoCategoriesTitle" xml:space="preserve">
+    <value>Noch keine Kategorien</value>
+  </data>
+  <data name="Loading_NoCategoriesText" xml:space="preserve">
+    <value>Gerichte gehören zu einer Kategorie, z. B. Vorspeisen, Hauptgerichte oder Getränke.</value>
+  </data>
+  <data name="Loading_AddCategoryFirst" xml:space="preserve">
+    <value>Legen Sie zuerst eine Kategorie an und fügen Sie ihr dann die Gerichte hinzu.</value>
+  </data>
+  <data name="Loading_CategoryNeeded" xml:space="preserve">
+    <value>Zuerst muss eine Kategorie angelegt werden.</value>
+  </data>
+  <data name="Loading_AddCategory" xml:space="preserve">
+    <value>Kategorie anlegen</value>
+  </data>
+  <data name="Table_Label" xml:space="preserve">
+    <value>Gerichte in {0}</value>
+    <comment>{0} = category name</comment>
+  </data>
+  <data name="Table_New" xml:space="preserve">
+    <value>Neues Gericht</value>
+  </data>
+  <data name="Table_OrderHint" xml:space="preserve">
+    <value>Ziehen Sie am Griff, um die Reihenfolge zu ändern.</value>
+  </data>
+  <data name="Table_DeleteAll" xml:space="preserve">
+    <value>Alle löschen</value>
+  </data>
+  <data name="Column_Order" xml:space="preserve">
+    <value>Reihenfolge</value>
+  </data>
+  <data name="Column_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Column_Price" xml:space="preserve">
+    <value>Preis</value>
+  </data>
+  <data name="Column_Labels" xml:space="preserve">
+    <value>Kennzeichnungen</value>
+  </data>
+  <data name="Column_Description" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
+  <data name="Column_Actions" xml:space="preserve">
+    <value>Aktionen</value>
+  </data>
+  <data name="Table_EmptyTitle" xml:space="preserve">
+    <value>Noch keine Gerichte in {0}</value>
+    <comment>{0} = category name</comment>
+  </data>
+  <data name="Table_EmptyText" xml:space="preserve">
+    <value>Legen Sie die Speisen und Getränke an, die Gäste in dieser Kategorie finden.</value>
+  </data>
+  <data name="Table_Generating" xml:space="preserve">
+    <value>Wird erzeugt …</value>
+  </data>
+  <data name="Table_Generate" xml:space="preserve">
+    <value>Gerichte erzeugen</value>
+  </data>
+  <data name="EditLabel" xml:space="preserve">
+    <value>{0} bearbeiten</value>
+    <comment>aria-label, {0} = item name</comment>
+  </data>
+  <data name="DeleteLabel" xml:space="preserve">
+    <value>{0} löschen</value>
+    <comment>aria-label, {0} = item name</comment>
+  </data>
+  <data name="Error_Order" xml:space="preserve">
+    <value>Die neue Position von „{0}“ konnte nicht gespeichert werden. Die vorherige Reihenfolge wird wieder angezeigt.</value>
+  </data>
+  <data name="Error_DeleteInCombo" xml:space="preserve">
+    <value>„{0}“ konnte nicht gelöscht werden. Es wird noch in einem Kombi-Angebot verwendet.</value>
+  </data>
+  <data name="Error_DeleteAllInCombo" xml:space="preserve">
+    <value>Die Gerichte von „{0}“ konnten nicht gelöscht werden. Einige werden noch in einem Kombi-Angebot verwendet.</value>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Gericht löschen</value>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>„{0}“ löschen?</value>
+  </data>
+  <data name="DeleteAll_Title" xml:space="preserve">
+    <value>Alle Gerichte löschen</value>
+  </data>
+  <data name="DeleteAll_Message_One" xml:space="preserve">
+    <value>Das einzige Gericht in „{1}“ löschen? Das lässt sich nicht rückgängig machen.</value>
+    <comment>{1} = category name</comment>
+  </data>
+  <data name="DeleteAll_Message_Other" xml:space="preserve">
+    <value>Alle {0} Gerichte in „{1}“ löschen? Das lässt sich nicht rückgängig machen.</value>
+    <comment>{0} = count, {1} = category name</comment>
+  </data>
+  <data name="Edit_PageTitleNew" xml:space="preserve">
+    <value>Neues Gericht</value>
+  </data>
+  <data name="Edit_PageTitleEdit" xml:space="preserve">
+    <value>{0} bearbeiten</value>
+    <comment>{0} = item name</comment>
+  </data>
+  <data name="Edit_NotFoundTitle" xml:space="preserve">
+    <value>Gericht nicht gefunden</value>
+  </data>
+  <data name="Edit_NotFoundText" xml:space="preserve">
+    <value>Es wurde möglicherweise gelöscht.</value>
+  </data>
+  <data name="Edit_Breadcrumb" xml:space="preserve">
+    <value>Gerichte · {0}</value>
+    <comment>{0} = category name</comment>
+  </data>
+  <data name="Edit_EyebrowNew" xml:space="preserve">
+    <value>Neues Gericht</value>
+  </data>
+  <data name="Edit_EyebrowView" xml:space="preserve">
+    <value>Gericht ansehen</value>
+  </data>
+  <data name="Edit_EyebrowEdit" xml:space="preserve">
+    <value>Gericht bearbeiten</value>
+  </data>
+  <data name="Edit_DescriptionNew" xml:space="preserve">
+    <value>Ein neues Gericht oder Getränk in {0}, es kommt ans Ende der Liste.</value>
+    <comment>{0} = category name (bold)</comment>
+  </data>
+  <data name="Edit_DescriptionEdit" xml:space="preserve">
+    <value>In {0}. Gäste sehen Ihre Änderungen, sobald Sie sie speichern.</value>
+    <comment>{0} = category name (bold)</comment>
+  </data>
+  <data name="Edit_ReadOnly" xml:space="preserve">
+    <value>Sie können dieses Gericht ansehen, aber nicht ändern: Ihre Rolle hat keine Berechtigung, Gerichte zu bearbeiten.</value>
+  </data>
+  <data name="Section_Basics" xml:space="preserve">
+    <value>Grunddaten</value>
+  </data>
+  <data name="Section_BasicsText" xml:space="preserve">
+    <value>Name, Beschreibung und die Kategorie, zu der es gehört.</value>
+  </data>
+  <data name="Field_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Field_Description" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
+  <data name="Field_Category" xml:space="preserve">
+    <value>Kategorie</value>
+  </data>
+  <data name="Field_CategoryMoved" xml:space="preserve">
+    <value>Verschobene Gerichte kommen ans Ende ihrer neuen Kategorie.</value>
+  </data>
+  <data name="Section_Photo" xml:space="preserve">
+    <value>Foto</value>
+  </data>
+  <data name="Section_PhotoText" xml:space="preserve">
+    <value>Erscheint auf der Speisekarte und in den Details des Gerichts.</value>
+  </data>
+  <data name="Photo_Alt" xml:space="preserve">
+    <value>Foto des Gerichts</value>
+  </data>
+  <data name="Photo_None" xml:space="preserve">
+    <value>Noch kein Foto</value>
+  </data>
+  <data name="Photo_Upload" xml:space="preserve">
+    <value>Foto hochladen</value>
+  </data>
+  <data name="Photo_Replace" xml:space="preserve">
+    <value>Foto ersetzen</value>
+  </data>
+  <data name="Photo_Formats" xml:space="preserve">
+    <value>PNG, JPG, GIF oder WEBP, bis 5 MB.</value>
+  </data>
+  <data name="Photo_Remove" xml:space="preserve">
+    <value>Foto entfernen</value>
+  </data>
+  <data name="Photo_Invalid" xml:space="preserve">
+    <value>Bitte wählen Sie eine gültige Bilddatei (JPG, PNG, GIF, WEBP) unter 5 MB.</value>
+  </data>
+  <data name="Photo_UploadFailed" xml:space="preserve">
+    <value>Das Bild konnte nicht hochgeladen werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="Section_Price" xml:space="preserve">
+    <value>Preis und Optionen</value>
+  </data>
+  <data name="Section_PriceText" xml:space="preserve">
+    <value>Der Preis, Größen mit eigenem Preis und Extras.</value>
+  </data>
+  <data name="Field_Price" xml:space="preserve">
+    <value>Preis (€)</value>
+  </data>
+  <data name="Price_FollowsVariants" xml:space="preserve">
+    <value>Ergibt sich aus der günstigsten Variante. Gäste sehen „ab {0}“.</value>
+    <comment>{0} = the price</comment>
+  </data>
+  <data name="Section_Labels" xml:space="preserve">
+    <value>Kennzeichnungen</value>
+  </data>
+  <data name="Section_LabelsText" xml:space="preserve">
+    <value>Erscheinen als Kennzeichen auf der Speisekarte. Vegane Gerichte zeigen „Vegetarisch“ nicht zusätzlich.</value>
+  </data>
+  <data name="Section_Allergens" xml:space="preserve">
+    <value>Allergene</value>
+  </data>
+  <data name="Section_AllergensText" xml:space="preserve">
+    <value>Die Allergen-Kürzel, die Gäste bei diesem Gericht sehen.</value>
+  </data>
+  <data name="Allergens_None" xml:space="preserve">
+    <value>Für diese Speisekarte sind noch keine Allergene angelegt.</value>
+  </data>
+  <data name="Allergens_Manage" xml:space="preserve">
+    <value>Allergene verwalten</value>
+  </data>
+  <data name="Savebar_ReadOnly" xml:space="preserve">
+    <value>Schreibgeschützt</value>
+  </data>
+  <data name="Savebar_BackToList" xml:space="preserve">
+    <value>Zurück zur Liste</value>
+  </data>
+  <data name="Savebar_Unsaved" xml:space="preserve">
+    <value>Ungespeicherte Änderungen</value>
+  </data>
+  <data name="Savebar_NoChanges" xml:space="preserve">
+    <value>Noch keine Änderungen</value>
+  </data>
+  <data name="Options_Variants" xml:space="preserve">
+    <value>Preisvarianten</value>
+  </data>
+  <data name="Options_Extras" xml:space="preserve">
+    <value>Extras</value>
+  </data>
+  <data name="Options_VariantsHelp" xml:space="preserve">
+    <value>Größen oder Ausführungen mit eigenem Preis, z. B. „0,25 l“ und „0,5 l“ oder „Standard“ und „Vegan“. Der Preis oben richtet sich dann nach der günstigsten Variante.</value>
+  </data>
+  <data name="Options_ExtrasHelp" xml:space="preserve">
+    <value>Zusätze mit eigenem Aufpreis, z. B. „+ Halloumi“.</value>
+  </data>
+  <data name="Options_VariantPlaceholder" xml:space="preserve">
+    <value>z. B. 0,5 l</value>
+  </data>
+  <data name="Options_ExtraPlaceholder" xml:space="preserve">
+    <value>z. B. + Halloumi</value>
+  </data>
+  <data name="Option_Variant" xml:space="preserve">
+    <value>Variante {0}</value>
+    <comment>the row's name in announcements, {0} = its name or position</comment>
+  </data>
+  <data name="Option_Extra" xml:space="preserve">
+    <value>Extra {0}</value>
+    <comment>the row's name in announcements, {0} = its name or position</comment>
+  </data>
+  <data name="Option_VariantName" xml:space="preserve">
+    <value>Name der Variante {0}</value>
+    <comment>{0} = position</comment>
+  </data>
+  <data name="Option_ExtraName" xml:space="preserve">
+    <value>Name des Extras {0}</value>
+    <comment>{0} = position</comment>
+  </data>
+  <data name="Option_VariantPrice" xml:space="preserve">
+    <value>Preis der Variante {0}</value>
+    <comment>{0} = position</comment>
+  </data>
+  <data name="Option_ExtraPrice" xml:space="preserve">
+    <value>Preis des Extras {0}</value>
+    <comment>{0} = position</comment>
+  </data>
+  <data name="Option_Remove" xml:space="preserve">
+    <value>{0} entfernen</value>
+    <comment>{0} = Option_Variant / Option_Extra</comment>
+  </data>
+  <data name="Options_AddVariant" xml:space="preserve">
+    <value>Variante hinzufügen</value>
+  </data>
+  <data name="Options_AddExtra" xml:space="preserve">
+    <value>Extra hinzufügen</value>
+  </data>
+  <data name="Error_InvalidValue" xml:space="preserve">
+    <value>Ungültiger Wert.</value>
+  </data>
+  <data name="Error_SaveItem" xml:space="preserve">
+    <value>Das Gericht konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="Leave_Title" xml:space="preserve">
+    <value>Änderungen verwerfen</value>
+  </data>
+  <data name="Leave_Message" xml:space="preserve">
+    <value>Sie haben ungespeicherte Änderungen an „{0}“. Möchten Sie die Seite verlassen und sie verwerfen?</value>
+    <comment>{0} = item name</comment>
+  </data>
+  <data name="Leave_MessageUnnamed" xml:space="preserve">
+    <value>Sie haben ungespeicherte Änderungen an diesem Gericht. Möchten Sie die Seite verlassen und sie verwerfen?</value>
+  </data>
+</root>

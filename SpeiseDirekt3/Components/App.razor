@@ -2,30 +2,56 @@
 @implements IDisposable
 @inject GuestDocument GuestDocument
 <!DOCTYPE html>
-@if (IsGuestPage)
+@if (Document is PageDocument.Guest or PageDocument.Landing or PageDocument.Auth)
 {
-    @* Guest pages (/qr, /menu, /menu/preview): own assets only, static SSR, no blazor.web.js — see Components/Guest.
-       No <base href>: every URL on these pages is absolute (fragment and ?item= links must stay on the page). *@
-    @* lang: the menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages) *@
-    <html lang="@GuestDocument.Language" data-guest-page>
+    @* Pages with their own document (OwnDocumentAttribute): the guest pages (/qr, /menu, /menu/preview, /demo —
+       Components/Guest), the landing page (/ — Components/Landing) and the anonymous account pages (/Account/Login, … —
+       [AuthPage], AP13). Static SSR, own assets only, no Tailwind CDN, Bootstrap or blazor.web.js. No <base href>: every
+       URL on these pages is absolute (fragment and ?item= links must stay on the page).
+       lang: the guest menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages — never the browser's),
+       the landing and account pages the request's language (AppCultures: Accept-Language). *@
+    var guest = Document == PageDocument.Guest;
+    var auth = Document == PageDocument.Auth;
+    <html lang="@(guest ? GuestDocument.Language : AppCultures.HtmlLang)" data-guest-page="@guest"
+          data-landing-page="@(Document == PageDocument.Landing)" data-auth-page="@auth">
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="stylesheet" href="@Asset("css/fonts.css")" />
-        <link rel="stylesheet" href="@Asset("css/guest-themes.css")" />
-        <link rel="stylesheet" href="@Asset("css/guest-menu.css")" />
-        <script type="module" src="@Asset("js/guest-menu.js")"></script>
-        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="stylesheet" href="@Assets.Absolute("css/fonts.css")" />
+        @if (guest)
+        {
+            <link rel="stylesheet" href="@Assets.Absolute("css/guest-themes.css")" />
+            <link rel="stylesheet" href="@Assets.Absolute("css/guest-menu.css")" />
+            <script type="module" src="@Assets.Absolute("js/guest-menu.js")"></script>
+        }
+        else if (auth)
+        {
+            <link rel="stylesheet" href="@Assets.Absolute("css/brand.css")" />
+            <link rel="stylesheet" href="@Assets.Absolute("css/auth.css")" />
+            <meta name="theme-color" content="#fff8ec" />
+            <meta name="robots" content="noindex" />
+        }
+        else
+        {
+            <link rel="stylesheet" href="@Assets.Absolute("css/brand.css")" />
+            <link rel="stylesheet" href="@Assets.Absolute("css/landing.css")" />
+            <script type="module" src="@Assets.Absolute("js/landing.js")"></script>
+            <meta name="theme-color" content="#fff8ec" />
+        }
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <HeadOutlet />
     </head>
-    <body class="gm-body">
+    <body class="@(guest ? "gm-body" : auth ? "au-body" : "lp-body")">
         <Routes />
     </body>
     </html>
 }
 else
 {
-<html lang="en">
+@* lang: the request's language (AppCultures, from Accept-Language); an Interactive Server circuit keeps it *@
+<html lang="@AppCultures.HtmlLang">
 
 <head>
     <meta charset="utf-8" />
@@ -35,50 +61,42 @@ else
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            200: '#bfdbfe',
-                            300: '#93c5fd',
-                            400: '#60a5fa',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                            800: '#1e40af',
-                            900: '#1e3a8a',
+        // Brand palettes from css/brand.css (RGB channels), so opacity modifiers work: bg-brand-600/20. `gray` is the
+        // back office's cool, brand-tinted gray (AP11, --sd-gray-*), `shadow-sm` the card shadow (--sd-shadow-card).
+        (() => {
+            const scale = name => Object.fromEntries([50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
+                .map(step => [step, `rgb(var(--sd-${name}-${step}) / <alpha-value>)`]));
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            brand: scale('brand'),
+                            primary: scale('brand'),
+                            accent: scale('accent'),
+                            gray: scale('gray')
                         },
-                        secondary: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            200: '#bbf7d0',
-                            300: '#86efac',
-                            400: '#4ade80',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d',
+                        boxShadow: {
+                            sm: 'var(--sd-shadow-card)'
+                        },
+                        fontFamily: {
+                            'sans': ['Inter', 'system-ui', 'sans-serif'],
+                            'display': ['Manrope', 'system-ui', 'sans-serif'],
                         }
-                    },
-                    fontFamily: {
-                        'sans': ['Inter', 'system-ui', 'sans-serif'],
-                        'display': ['Manrope', 'system-ui', 'sans-serif'],
                     }
                 }
-            }
-        }
+            };
+        })();
     </script>
     <!-- Fonts (self-hosted, wwwroot/fonts) -->
     <link rel="stylesheet" href="@Assets["css/fonts.css"]" />
+    <!-- Brand tokens (css/brand.css) before everything that reads them -->
+    <link rel="stylesheet" href="@Assets["css/brand.css"]" />
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["SpeiseDirekt3.styles.css"]" />
     <link rel="stylesheet" href="@Assets["css/tailwind-overrides.css"]" />
-    <script src="speise.js"></script>
+    <link rel="stylesheet" href="@Assets["css/shell.css"]" />
+    <link rel="stylesheet" href="@Assets["css/back-office.css"]" />
     <!-- Bootstrap JS (required for modal to work) -->
     <script src="@Assets["lib/bootstrap/dist/js/bootstrap.bundle.min.js"]"></script>
 
@@ -86,10 +104,14 @@ else
     <script src="@Assets["lib/chartjs/chart.umd.min.js"]"></script>
     <script src="@Assets["lib/chartjs/chartjs-adapter-date-fns.bundle.min.js"]"></script>
 
-    <script src="js/speisedirekt.js"></script>
-    <script src="js/analytics.js"></script>
+    <script src="@Assets["js/speisedirekt.js"]"></script>
+    <script src="@Assets["js/analytics.js"]"></script>
     <ImportMap />
-    <link rel="icon" type="image/png" href="favicon.png" />
+    <script src="@Assets["js/shell.js"]" defer></script>
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#1b3d46" />
     <HeadOutlet @rendermode="RenderModeForPage" />
 </head>
 
@@ -107,7 +129,7 @@ else
 
     /// <summary>
     /// Back-office pages are Interactive Server. Static SSR: the Identity pages under /Account and every page with
-    /// [ExcludeFromInteractiveRouting] (the guest pages).
+    /// [ExcludeFromInteractiveRouting] (the guest pages and the landing page).
     /// </summary>
     private IComponentRenderMode? RenderModeForPage =>
         HttpContext.Request.Path.StartsWithSegments("/Account") || !HttpContext.AcceptsInteractiveRouting()
@@ -121,13 +143,11 @@ else
 
     public void Dispose() => GuestDocument.Changed -= OnGuestDocumentChanged;
 
-    /// <summary>The page carries <see cref="GuestPageAttribute"/>: render the guest document.</summary>
-    private bool IsGuestPage => HttpContext.GetEndpoint()?.Metadata.GetMetadata<GuestPageAttribute>() is not null;
-
-    /// <summary>Fingerprinted asset URL, absolute (guest pages have no base href).</summary>
-    private string Asset(string path)
-    {
-        var url = Assets[path];
-        return url.StartsWith('/') ? url : "/" + url;
-    }
+    /// <summary>
+    /// The document of the page: its <see cref="OwnDocumentAttribute"/> (<see cref="GuestPageAttribute"/>,
+    /// <see cref="SpeiseDirekt3.Components.Landing.LandingPageAttribute"/>, <see cref="Account.AuthPageAttribute"/>), else the
+    /// back office's.
+    /// </summary>
+    private PageDocument Document =>
+        HttpContext.GetEndpoint()?.Metadata.GetMetadata<OwnDocumentAttribute>()?.Document ?? PageDocument.BackOffice;
 }

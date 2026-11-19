@@ -65,7 +65,7 @@ public class MenusController : ControllerBase
         {
             Id = Guid.NewGuid(),
             Name = dto.Name,
-            Description = dto.Description,
+            Description = dto.Description?.Trim() ?? string.Empty,
             Theme = dto.Theme,
             Language = dto.Language
         };
@@ -86,7 +86,7 @@ public class MenusController : ControllerBase
         var menu = await _menuRepository.UpdateAsync(id, m =>
         {
             m.Name = dto.Name;
-            m.Description = dto.Description;
+            m.Description = dto.Description?.Trim() ?? string.Empty;
             m.Theme = dto.Theme;
             m.Language = dto.Language;
         });

@@ -1,4 +1,4 @@
-/* FullCalendar in the back-office look (Tailwind grays/blue, Inter). FullCalendar's own CSS is injected by its bundle;
+/* FullCalendar in the back-office look (Tailwind grays, the brand colours of css/brand.css, Inter). FullCalendar's own CSS is injected by its bundle;
    its colors are --fc-* variables, set here on the wrapper so they win over the bundle's :root values. Bootstrap's
    reboot (link color + underline) and Tailwind's preflight would otherwise leak into its tables and buttons. */
 .sd-fc {
@@ -6,21 +6,21 @@
     --fc-page-bg-color: #fff;
     --fc-neutral-bg-color: #f9fafb;
     --fc-neutral-text-color: #6b7280;
-    --fc-today-bg-color: #eff6ff;
-    --fc-highlight-color: rgba(59, 130, 246, .16);
-    --fc-event-bg-color: #2563eb;
-    --fc-event-border-color: #2563eb;
+    --fc-today-bg-color: rgb(var(--sd-brand-50));
+    --fc-highlight-color: rgb(var(--sd-brand-500) / .16);
+    --fc-event-bg-color: rgb(var(--sd-brand-600));
+    --fc-event-border-color: rgb(var(--sd-brand-600));
     --fc-event-text-color: #fff;
     --fc-more-link-bg-color: transparent;
-    --fc-more-link-text-color: #1d4ed8;
+    --fc-more-link-text-color: rgb(var(--sd-brand-700));
     --fc-list-event-hover-bg-color: #f3f4f6;
     --fc-button-text-color: #374151;
     --fc-button-bg-color: #fff;
     --fc-button-border-color: #d1d5db;
     --fc-button-hover-bg-color: #f9fafb;
     --fc-button-hover-border-color: #d1d5db;
-    --fc-button-active-bg-color: #eff6ff;
-    --fc-button-active-border-color: #93c5fd;
+    --fc-button-active-bg-color: rgb(var(--sd-brand-50));
+    --fc-button-active-border-color: rgb(var(--sd-brand-300));
     position: relative;
     min-width: 0;
     max-width: 100%;
@@ -84,7 +84,7 @@
 
 .sd-fc ::deep .fc .fc-button-primary:not(:disabled).fc-button-active,
 .sd-fc ::deep .fc .fc-button-primary:not(:disabled):active {
-    color: #1d4ed8;
+    color: rgb(var(--sd-brand-700));
 }
 
 .sd-fc ::deep .fc .fc-button-primary:disabled {
@@ -95,7 +95,7 @@
 .sd-fc ::deep .fc .fc-button:focus,
 .sd-fc ::deep .fc .fc-button-primary:not(:disabled):active:focus,
 .sd-fc ::deep .fc .fc-button-primary:not(:disabled).fc-button-active:focus {
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, .45);
+    box-shadow: 0 0 0 3px rgb(var(--sd-brand-500) / .45);
 }
 
 /* Grid */
@@ -140,7 +140,7 @@
 }
 
 .sd-fc ::deep .fc .fc-day-today .fc-daygrid-day-number {
-    background: #2563eb;
+    background: rgb(var(--sd-brand-600));
     color: #fff;
     font-weight: 700;
 }
@@ -162,7 +162,7 @@
 }
 
 .sd-fc ::deep .fc .fc-event:focus-visible {
-    outline: 3px solid rgba(59, 130, 246, .7);
+    outline: 3px solid rgb(var(--sd-brand-500) / .7);
     outline-offset: 1px;
 }
 

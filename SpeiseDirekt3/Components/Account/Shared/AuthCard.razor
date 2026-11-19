@@ -1,0 +1,41 @@
+@using SpeiseDirekt3.Components.Landing
+@* The card of an anonymous account page (css/auth.css): an optional icon tile, the page's h1, a lead, the content
+   (form or message) and, below a line, the page's links (Links). *@
+<section class="au-card" aria-labelledby="au-title" data-testid="auth-card">
+    <div class="au-card-head">
+        @if (Icon is not null)
+        {
+            <span class="au-tile @(Tone is null ? null : $"au-tile--{Tone}")" aria-hidden="true">
+                <LandingIcon Name="@Icon" Class="au-icon" StrokeWidth="1.75" />
+            </span>
+        }
+        <h1 id="au-title" class="au-title">@Title</h1>
+        @if (Lead is not null)
+        {
+            <p class="au-lead">@Lead</p>
+        }
+    </div>
+    @ChildContent
+    @if (Links is not null)
+    {
+        <ul class="au-links" role="list" data-testid="auth-links">
+            @Links
+        </ul>
+    }
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Lead { get; set; }
+
+    /// <summary>A LandingIcon name (e.g. <c>user-plus</c>, <c>mail</c>, <c>shield</c>).</summary>
+    [Parameter] public string? Icon { get; set; }
+
+    /// <summary>Tile colour: null = brand, <c>accent</c>, <c>danger</c>, <c>success</c>.</summary>
+    [Parameter] public string? Tone { get; set; }
+
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    /// <summary><c>&lt;li&gt;</c> items below the card's content.</summary>
+    [Parameter] public RenderFragment? Links { get; set; }
+}

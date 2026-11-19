@@ -1,0 +1,690 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Field_EmailAddress" xml:space="preserve">
+    <value>E-Mail-Adresse</value>
+  </data>
+  <data name="Field_Email" xml:space="preserve">
+    <value>E-Mail-Adresse</value>
+  </data>
+  <data name="Field_Password" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="Field_ConfirmPassword" xml:space="preserve">
+    <value>Passwort bestätigen</value>
+  </data>
+  <data name="Field_CurrentPassword" xml:space="preserve">
+    <value>Aktuelles Passwort</value>
+  </data>
+  <data name="Field_NewPassword" xml:space="preserve">
+    <value>Neues Passwort</value>
+  </data>
+  <data name="Field_ConfirmNewPassword" xml:space="preserve">
+    <value>Neues Passwort bestätigen</value>
+  </data>
+  <data name="Field_NewEmail" xml:space="preserve">
+    <value>Neue E-Mail-Adresse</value>
+  </data>
+  <data name="Field_Username" xml:space="preserve">
+    <value>Benutzername</value>
+  </data>
+  <data name="Field_PhoneNumber" xml:space="preserve">
+    <value>Telefonnummer</value>
+  </data>
+  <data name="Field_AuthenticatorCode" xml:space="preserve">
+    <value>Code aus der Authenticator-App</value>
+  </data>
+  <data name="Field_RecoveryCode" xml:space="preserve">
+    <value>Wiederherstellungscode</value>
+  </data>
+  <data name="Field_VerificationCode" xml:space="preserve">
+    <value>Bestätigungscode</value>
+  </data>
+  <data name="Placeholder_Email" xml:space="preserve">
+    <value>Ihre E-Mail-Adresse</value>
+  </data>
+  <data name="Placeholder_Password" xml:space="preserve">
+    <value>Ihr Passwort</value>
+  </data>
+  <data name="Placeholder_CreatePassword" xml:space="preserve">
+    <value>Passwort festlegen</value>
+  </data>
+  <data name="Placeholder_RepeatPassword" xml:space="preserve">
+    <value>Passwort wiederholen</value>
+  </data>
+  <data name="Placeholder_CurrentPassword" xml:space="preserve">
+    <value>Ihr aktuelles Passwort</value>
+  </data>
+  <data name="Placeholder_NewPassword" xml:space="preserve">
+    <value>Ihr neues Passwort</value>
+  </data>
+  <data name="Placeholder_RepeatNewPassword" xml:space="preserve">
+    <value>Neues Passwort wiederholen</value>
+  </data>
+  <data name="Placeholder_NewEmail" xml:space="preserve">
+    <value>Neue E-Mail-Adresse</value>
+  </data>
+  <data name="Placeholder_Code" xml:space="preserve">
+    <value>Code eingeben</value>
+  </data>
+  <data name="Placeholder_SixDigitCode" xml:space="preserve">
+    <value>Ihr sechsstelliger Code</value>
+  </data>
+  <data name="Placeholder_Phone" xml:space="preserve">
+    <value>Ihre Telefonnummer</value>
+  </data>
+  <data name="PasswordRules" xml:space="preserve">
+    <value>Mindestens 6 Zeichen, mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen.</value>
+  </data>
+  <data name="Valid_EmailRequired" xml:space="preserve">
+    <value>Bitte geben Sie Ihre E-Mail-Adresse ein.</value>
+  </data>
+  <data name="Valid_EmailInvalid" xml:space="preserve">
+    <value>Bitte geben Sie eine gültige E-Mail-Adresse ein.</value>
+  </data>
+  <data name="Valid_NewEmailRequired" xml:space="preserve">
+    <value>Bitte geben Sie die neue E-Mail-Adresse ein.</value>
+  </data>
+  <data name="Valid_PasswordRequired" xml:space="preserve">
+    <value>Bitte geben Sie Ihr Passwort ein.</value>
+  </data>
+  <data name="Valid_CurrentPasswordRequired" xml:space="preserve">
+    <value>Bitte geben Sie Ihr aktuelles Passwort ein.</value>
+  </data>
+  <data name="Valid_NewPasswordRequired" xml:space="preserve">
+    <value>Bitte geben Sie ein neues Passwort ein.</value>
+  </data>
+  <data name="Valid_PasswordLength" xml:space="preserve">
+    <value>Das Passwort muss mindestens {2} und höchstens {1} Zeichen lang sein.</value>
+  </data>
+  <data name="Valid_PasswordsDoNotMatch" xml:space="preserve">
+    <value>Die beiden Passwörter stimmen nicht überein.</value>
+  </data>
+  <data name="Valid_NewPasswordsDoNotMatch" xml:space="preserve">
+    <value>Die beiden neuen Passwörter stimmen nicht überein.</value>
+  </data>
+  <data name="Valid_CodeRequired" xml:space="preserve">
+    <value>Bitte geben Sie den Code ein.</value>
+  </data>
+  <data name="Valid_CodeLength" xml:space="preserve">
+    <value>Der Code muss mindestens {2} und höchstens {1} Zeichen lang sein.</value>
+  </data>
+  <data name="Valid_RecoveryCodeRequired" xml:space="preserve">
+    <value>Bitte geben Sie einen Wiederherstellungscode ein.</value>
+  </data>
+  <data name="Valid_PhoneInvalid" xml:space="preserve">
+    <value>Bitte geben Sie eine gültige Telefonnummer ein.</value>
+  </data>
+  <data name="Status_InvalidLogin" xml:space="preserve">
+    <value>Die Anmeldung ist fehlgeschlagen. Bitte prüfen Sie E-Mail-Adresse und Passwort.</value>
+  </data>
+  <data name="Status_UnableToLoadUser" xml:space="preserve">
+    <value>Das Konto mit der ID „{0}“ konnte nicht geladen werden.</value>
+  </data>
+  <data name="Status_InvalidEmailChangeLink" xml:space="preserve">
+    <value>Der Link zur Bestätigung der neuen E-Mail-Adresse ist ungültig.</value>
+  </data>
+  <data name="Status_EmailChangeError" xml:space="preserve">
+    <value>Die E-Mail-Adresse konnte nicht geändert werden.</value>
+  </data>
+  <data name="Status_UserNameChangeError" xml:space="preserve">
+    <value>Der Benutzername konnte nicht geändert werden.</value>
+  </data>
+  <data name="Status_EmailChangeConfirmed" xml:space="preserve">
+    <value>Vielen Dank, Ihre neue E-Mail-Adresse ist bestätigt.</value>
+  </data>
+  <data name="Status_NoAccountForEmail" xml:space="preserve">
+    <value>Zu dieser E-Mail-Adresse gibt es kein Konto.</value>
+  </data>
+  <data name="Status_VerificationSent" xml:space="preserve">
+    <value>Die Bestätigungs-E-Mail ist unterwegs. Bitte prüfen Sie Ihr Postfach.</value>
+  </data>
+  <data name="Status_InvalidAuthenticatorCode" xml:space="preserve">
+    <value>Der Code aus der Authenticator-App ist ungültig.</value>
+  </data>
+  <data name="Status_InvalidRecoveryCode" xml:space="preserve">
+    <value>Der Wiederherstellungscode ist ungültig.</value>
+  </data>
+  <data name="Status_EmailUnchanged" xml:space="preserve">
+    <value>Ihre E-Mail-Adresse ist unverändert.</value>
+  </data>
+  <data name="Status_EmailChangeLinkSent" xml:space="preserve">
+    <value>Wir haben Ihnen einen Link zur Bestätigung der neuen E-Mail-Adresse gesendet. Bitte prüfen Sie Ihr Postfach.</value>
+  </data>
+  <data name="Status_PhoneNotSaved" xml:space="preserve">
+    <value>Die Telefonnummer konnte nicht gespeichert werden.</value>
+  </data>
+  <data name="Status_ProfileUpdated" xml:space="preserve">
+    <value>Ihr Profil wurde gespeichert.</value>
+  </data>
+  <data name="Status_EmailConfirmed" xml:space="preserve">
+    <value>Vielen Dank, Ihre E-Mail-Adresse ist bestätigt.</value>
+  </data>
+  <data name="Status_EmailConfirmError" xml:space="preserve">
+    <value>Ihre E-Mail-Adresse konnte nicht bestätigt werden.</value>
+  </data>
+  <data name="Status_BrowserForgotten" xml:space="preserve">
+    <value>Dieser Browser wird nicht mehr gespeichert. Wenn Sie sich hier wieder anmelden, werden Sie nach Ihrem Code für die Zwei-Faktor-Authentifizierung gefragt.</value>
+  </data>
+  <data name="Status_RecoveryCodesGenerated" xml:space="preserve">
+    <value>Sie haben neue Wiederherstellungscodes erzeugt.</value>
+  </data>
+  <data name="Status_ExternalLoginNotRemoved" xml:space="preserve">
+    <value>Die externe Anmeldung wurde nicht entfernt.</value>
+  </data>
+  <data name="Status_ExternalLoginRemoved" xml:space="preserve">
+    <value>Die externe Anmeldung wurde entfernt.</value>
+  </data>
+  <data name="Status_ExternalLoginInfoError" xml:space="preserve">
+    <value>Die Daten der externen Anmeldung konnten nicht geladen werden.</value>
+  </data>
+  <data name="Status_ExternalLoginNotAdded" xml:space="preserve">
+    <value>Die externe Anmeldung wurde nicht hinzugefügt. Eine externe Anmeldung kann nur mit einem Konto verbunden sein.</value>
+  </data>
+  <data name="Status_ExternalLoginAdded" xml:space="preserve">
+    <value>Die externe Anmeldung wurde hinzugefügt.</value>
+  </data>
+  <data name="Status_ExternalProviderError" xml:space="preserve">
+    <value>Fehler des externen Anbieters: {0}</value>
+  </data>
+  <data name="Status_VerificationCodeInvalid" xml:space="preserve">
+    <value>Der Bestätigungscode ist ungültig.</value>
+  </data>
+  <data name="Status_AuthenticatorVerified" xml:space="preserve">
+    <value>Ihre Authenticator-App ist bestätigt.</value>
+  </data>
+  <data name="Status_TwoFactorDisabled" xml:space="preserve">
+    <value>Die Zwei-Faktor-Authentifizierung ist ausgeschaltet. Sie können sie wieder einschalten, sobald Sie eine Authenticator-App einrichten.</value>
+  </data>
+  <data name="Status_AuthenticatorReset" xml:space="preserve">
+    <value>Der Schlüssel Ihrer Authenticator-App wurde zurückgesetzt. Richten Sie die App mit dem neuen Schlüssel neu ein.</value>
+  </data>
+  <data name="Status_PasswordChanged" xml:space="preserve">
+    <value>Ihr Passwort wurde geändert.</value>
+  </data>
+  <data name="Status_PasswordSet" xml:space="preserve">
+    <value>Ihr Passwort ist festgelegt.</value>
+  </data>
+  <data name="Status_IncorrectPassword" xml:space="preserve">
+    <value>Das Passwort ist nicht korrekt.</value>
+  </data>
+  <data name="Login_Title" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="Login_Heading" xml:space="preserve">
+    <value>Willkommen zurück</value>
+  </data>
+  <data name="Login_Subtitle" xml:space="preserve">
+    <value>Melden Sie sich mit Ihrem Konto an.</value>
+  </data>
+  <data name="Login_RememberMe" xml:space="preserve">
+    <value>Angemeldet bleiben</value>
+  </data>
+  <data name="Login_Submit" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="Login_ForgotPassword" xml:space="preserve">
+    <value>Passwort vergessen?</value>
+  </data>
+  <data name="Login_NoAccount" xml:space="preserve">
+    <value>Noch kein Konto? Hier registrieren</value>
+  </data>
+  <data name="Login_ResendConfirmation" xml:space="preserve">
+    <value>Bestätigungs-E-Mail erneut senden</value>
+  </data>
+  <data name="External_LoginHeading" xml:space="preserve">
+    <value>Oder weiter mit</value>
+  </data>
+  <data name="External_RegisterHeading" xml:space="preserve">
+    <value>Oder registrieren mit</value>
+  </data>
+  <data name="External_ButtonTitle" xml:space="preserve">
+    <value>Mit Ihrem {0}-Konto anmelden</value>
+  </data>
+  <data name="Register_Title" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="Register_Heading" xml:space="preserve">
+    <value>Konto erstellen</value>
+  </data>
+  <data name="Register_Subtitle" xml:space="preserve">
+    <value>Registrieren Sie sich und legen Sie Ihre digitale Speisekarte an.</value>
+  </data>
+  <data name="Register_Submit" xml:space="preserve">
+    <value>Konto erstellen</value>
+  </data>
+  <data name="Register_HaveAccount" xml:space="preserve">
+    <value>Sie haben schon ein Konto?</value>
+  </data>
+  <data name="Register_SignIn" xml:space="preserve">
+    <value>Hier anmelden</value>
+  </data>
+  <data name="Forgot_Title" xml:space="preserve">
+    <value>Passwort vergessen</value>
+  </data>
+  <data name="Forgot_Heading" xml:space="preserve">
+    <value>Passwort vergessen?</value>
+  </data>
+  <data name="Forgot_Subtitle" xml:space="preserve">
+    <value>Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Link zum Zurücksetzen.</value>
+  </data>
+  <data name="Forgot_Submit" xml:space="preserve">
+    <value>Link senden</value>
+  </data>
+  <data name="Forgot_Remember" xml:space="preserve">
+    <value>Sie kennen Ihr Passwort?</value>
+  </data>
+  <data name="Forgot_BackToLogin" xml:space="preserve">
+    <value>Zur Anmeldung</value>
+  </data>
+  <data name="Forgot_HelpText" xml:space="preserve">
+    <value>Sie kommen nicht in Ihr Konto? Schreiben Sie uns:</value>
+  </data>
+  <data name="ForgotConfirm_Title" xml:space="preserve">
+    <value>Passwort vergessen</value>
+  </data>
+  <data name="ForgotConfirm_Text" xml:space="preserve">
+    <value>Bitte prüfen Sie Ihr Postfach, um Ihr Passwort zurückzusetzen.</value>
+  </data>
+  <data name="Reset_Title" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="Reset_Heading" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="Reset_Subtitle" xml:space="preserve">
+    <value>Geben Sie unten Ihr neues Passwort ein.</value>
+  </data>
+  <data name="Reset_Submit" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="Reset_SecurityText" xml:space="preserve">
+    <value>Nach dem Zurücksetzen werden Sie aus Sicherheitsgründen auf allen Geräten abgemeldet.</value>
+  </data>
+  <data name="ResetConfirm_Title" xml:space="preserve">
+    <value>Passwort zurückgesetzt</value>
+  </data>
+  <data name="ResetConfirm_Text" xml:space="preserve">
+    <value>Ihr Passwort wurde zurückgesetzt.</value>
+  </data>
+  <data name="ResetConfirm_Login" xml:space="preserve">
+    <value>Jetzt anmelden</value>
+  </data>
+  <data name="InvalidReset_Title" xml:space="preserve">
+    <value>Ungültiger Link</value>
+  </data>
+  <data name="InvalidReset_Text" xml:space="preserve">
+    <value>Der Link zum Zurücksetzen des Passworts ist ungültig.</value>
+  </data>
+  <data name="AccessDenied_Title" xml:space="preserve">
+    <value>Kein Zugriff</value>
+  </data>
+  <data name="AccessDenied_Text" xml:space="preserve">
+    <value>Sie haben keinen Zugriff auf diese Seite.</value>
+  </data>
+  <data name="Lockout_Title" xml:space="preserve">
+    <value>Konto gesperrt</value>
+  </data>
+  <data name="Lockout_Text" xml:space="preserve">
+    <value>Dieses Konto ist vorübergehend gesperrt. Bitte versuchen Sie es später noch einmal.</value>
+  </data>
+  <data name="InvalidUser_Title" xml:space="preserve">
+    <value>Ungültiges Konto</value>
+  </data>
+  <data name="ConfirmEmail_Title" xml:space="preserve">
+    <value>E-Mail-Adresse bestätigen</value>
+  </data>
+  <data name="ConfirmEmailChange_Title" xml:space="preserve">
+    <value>Neue E-Mail-Adresse bestätigen</value>
+  </data>
+  <data name="RegisterConfirm_Title" xml:space="preserve">
+    <value>Registrierung bestätigen</value>
+  </data>
+  <data name="RegisterConfirm_ConfirmLink" xml:space="preserve">
+    <value>Konto bestätigen</value>
+  </data>
+  <data name="RegisterConfirm_CheckEmail" xml:space="preserve">
+    <value>Bitte prüfen Sie Ihr Postfach, um Ihr Konto zu bestätigen.</value>
+  </data>
+  <data name="Resend_Title" xml:space="preserve">
+    <value>Bestätigungs-E-Mail erneut senden</value>
+  </data>
+  <data name="Resend_Intro" xml:space="preserve">
+    <value>Geben Sie Ihre E-Mail-Adresse ein.</value>
+  </data>
+  <data name="Resend_Submit" xml:space="preserve">
+    <value>Erneut senden</value>
+  </data>
+  <data name="TwoFactorLogin_Title" xml:space="preserve">
+    <value>Zwei-Faktor-Authentifizierung</value>
+  </data>
+  <data name="TwoFactorLogin_Text" xml:space="preserve">
+    <value>Ihre Anmeldung ist mit einer Authenticator-App geschützt. Geben Sie unten den Code aus der App ein.</value>
+  </data>
+  <data name="TwoFactorLogin_RememberMachine" xml:space="preserve">
+    <value>Dieses Gerät merken</value>
+  </data>
+  <data name="TwoFactorLogin_Submit" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="TwoFactorLogin_UseRecovery" xml:space="preserve">
+    <value>Kein Zugriff auf Ihre Authenticator-App? Mit einem Wiederherstellungscode anmelden</value>
+  </data>
+  <data name="RecoveryLogin_Title" xml:space="preserve">
+    <value>Anmelden mit Wiederherstellungscode</value>
+  </data>
+  <data name="RecoveryLogin_Text" xml:space="preserve">
+    <value>Sie melden sich mit einem Wiederherstellungscode an. Diese Anmeldung wird erst gespeichert, wenn Sie sich mit einem Code aus der Authenticator-App anmelden oder die Zwei-Faktor-Authentifizierung ausschalten und sich neu anmelden.</value>
+  </data>
+  <data name="RecoveryLogin_Submit" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="ExternalLogin_Title" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="ExternalLogin_Associate" xml:space="preserve">
+    <value>Ihr {0}-Konto verknüpfen</value>
+  </data>
+  <data name="ExternalLogin_Info" xml:space="preserve">
+    <value>Sie haben sich erfolgreich mit {0} angemeldet. Geben Sie unten eine E-Mail-Adresse für diese Seite ein und klicken Sie auf „Registrieren“, um die Anmeldung abzuschließen.</value>
+  </data>
+  <data name="ExternalLogin_Submit" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="Manage_Heading" xml:space="preserve">
+    <value>Kontoverwaltung</value>
+  </data>
+  <data name="Manage_Subtitle" xml:space="preserve">
+    <value>Verwalten Sie die Einstellungen Ihres Kontos.</value>
+  </data>
+  <data name="Manage_NavHeading" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="Manage_NavSubtitle" xml:space="preserve">
+    <value>Ihr Konto</value>
+  </data>
+  <data name="ManageNav_Profile" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="ManageNav_Email" xml:space="preserve">
+    <value>E-Mail-Adresse</value>
+  </data>
+  <data name="ManageNav_Password" xml:space="preserve">
+    <value>Passwort</value>
+  </data>
+  <data name="ManageNav_ExternalLogins" xml:space="preserve">
+    <value>Externe Anmeldungen</value>
+  </data>
+  <data name="ManageNav_TwoFactor" xml:space="preserve">
+    <value>Zwei-Faktor-Authentifizierung</value>
+  </data>
+  <data name="ManageNav_PersonalData" xml:space="preserve">
+    <value>Persönliche Daten</value>
+  </data>
+  <data name="Profile_Title" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="Profile_Heading" xml:space="preserve">
+    <value>Profil</value>
+  </data>
+  <data name="Profile_Subtitle" xml:space="preserve">
+    <value>Ihre persönlichen Angaben</value>
+  </data>
+  <data name="Profile_UsernamePlaceholder" xml:space="preserve">
+    <value>Ihr Benutzername</value>
+  </data>
+  <data name="Profile_UsernameHint" xml:space="preserve">
+    <value>Der Benutzername kann nicht geändert werden.</value>
+  </data>
+  <data name="Profile_PhoneHint" xml:space="preserve">
+    <value>Optional</value>
+  </data>
+  <data name="Profile_Save" xml:space="preserve">
+    <value>Änderungen speichern</value>
+  </data>
+  <data name="Profile_InfoTitle" xml:space="preserve">
+    <value>Kontoinformationen</value>
+  </data>
+  <data name="Profile_InfoText" xml:space="preserve">
+    <value>Ihre Profilangaben gehören zu Ihrem Konto und dienen dessen Sicherheit.</value>
+  </data>
+  <data name="ChangePassword_Title" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
+  <data name="ChangePassword_Subtitle" xml:space="preserve">
+    <value>Ändern Sie das Passwort Ihres Kontos.</value>
+  </data>
+  <data name="ChangePassword_Submit" xml:space="preserve">
+    <value>Passwort ändern</value>
+  </data>
+  <data name="ChangePassword_TipsTitle" xml:space="preserve">
+    <value>Tipps für ein sicheres Passwort</value>
+  </data>
+  <data name="ChangePassword_Tip1" xml:space="preserve">
+    <value>Verwenden Sie mindestens 8 Zeichen.</value>
+  </data>
+  <data name="ChangePassword_Tip2" xml:space="preserve">
+    <value>Kombinieren Sie Groß- und Kleinbuchstaben, Ziffern und Sonderzeichen.</value>
+  </data>
+  <data name="ChangePassword_Tip3" xml:space="preserve">
+    <value>Verwenden Sie kein Passwort, das Sie schon für ein anderes Konto nutzen.</value>
+  </data>
+  <data name="ChangePassword_Tip4" xml:space="preserve">
+    <value>Schalten Sie für mehr Sicherheit die Zwei-Faktor-Authentifizierung ein.</value>
+  </data>
+  <data name="Email_Title" xml:space="preserve">
+    <value>E-Mail-Adresse</value>
+  </data>
+  <data name="Email_Confirmed" xml:space="preserve">
+    <value>Bestätigt</value>
+  </data>
+  <data name="Email_SendVerification" xml:space="preserve">
+    <value>Bestätigungs-E-Mail senden</value>
+  </data>
+  <data name="Email_Submit" xml:space="preserve">
+    <value>E-Mail-Adresse ändern</value>
+  </data>
+  <data name="SetPassword_Title" xml:space="preserve">
+    <value>Passwort festlegen</value>
+  </data>
+  <data name="SetPassword_Heading" xml:space="preserve">
+    <value>Passwort festlegen</value>
+  </data>
+  <data name="SetPassword_Text" xml:space="preserve">
+    <value>Sie haben für diese Seite noch kein eigenes Passwort. Legen Sie eines fest, damit Sie sich auch ohne externe Anmeldung anmelden können.</value>
+  </data>
+  <data name="SetPassword_Submit" xml:space="preserve">
+    <value>Passwort festlegen</value>
+  </data>
+  <data name="TwoFactor_Title" xml:space="preserve">
+    <value>Zwei-Faktor-Authentifizierung (2FA)</value>
+  </data>
+  <data name="TwoFactor_NoCodesLeft" xml:space="preserve">
+    <value>Sie haben keine Wiederherstellungscodes mehr.</value>
+  </data>
+  <data name="TwoFactor_NoCodesLeftText" xml:space="preserve">
+    <value>Erzeugen Sie neue Codes, bevor Sie sich mit einem Wiederherstellungscode anmelden können.</value>
+  </data>
+  <data name="TwoFactor_CodesLeft_One" xml:space="preserve">
+    <value>Sie haben noch 1 Wiederherstellungscode.</value>
+  </data>
+  <data name="TwoFactor_CodesLeft_Other" xml:space="preserve">
+    <value>Sie haben noch {0} Wiederherstellungscodes.</value>
+  </data>
+  <data name="TwoFactor_GenerateCodes" xml:space="preserve">
+    <value>Neue Wiederherstellungscodes erzeugen</value>
+  </data>
+  <data name="TwoFactor_ForgetBrowser" xml:space="preserve">
+    <value>Diesen Browser vergessen</value>
+  </data>
+  <data name="TwoFactor_Disable" xml:space="preserve">
+    <value>2FA ausschalten</value>
+  </data>
+  <data name="TwoFactor_ResetCodes" xml:space="preserve">
+    <value>Wiederherstellungscodes zurücksetzen</value>
+  </data>
+  <data name="TwoFactor_AppHeading" xml:space="preserve">
+    <value>Authenticator-App</value>
+  </data>
+  <data name="TwoFactor_AddApp" xml:space="preserve">
+    <value>Authenticator-App hinzufügen</value>
+  </data>
+  <data name="TwoFactor_SetUpApp" xml:space="preserve">
+    <value>Authenticator-App einrichten</value>
+  </data>
+  <data name="TwoFactor_ResetApp" xml:space="preserve">
+    <value>Authenticator-App zurücksetzen</value>
+  </data>
+  <data name="TwoFactor_NoConsentTitle" xml:space="preserve">
+    <value>Die Datenschutz- und Cookie-Richtlinie wurde nicht akzeptiert.</value>
+  </data>
+  <data name="TwoFactor_NoConsentText" xml:space="preserve">
+    <value>Bitte akzeptieren Sie die Richtlinie, bevor Sie die Zwei-Faktor-Authentifizierung einschalten.</value>
+  </data>
+  <data name="EnableApp_Title" xml:space="preserve">
+    <value>Authenticator-App einrichten</value>
+  </data>
+  <data name="EnableApp_Intro" xml:space="preserve">
+    <value>So richten Sie eine Authenticator-App ein:</value>
+  </data>
+  <data name="EnableApp_Step1" xml:space="preserve">
+    <value>Installieren Sie eine Authenticator-App auf Ihrem Handy, zum Beispiel:</value>
+  </data>
+  <data name="EnableApp_Step2" xml:space="preserve">
+    <value>Scannen Sie den QR-Code oder geben Sie diesen Schlüssel in die App ein. Leerzeichen sowie Groß- und Kleinschreibung spielen keine Rolle.</value>
+  </data>
+  <data name="EnableApp_QrAlt" xml:space="preserve">
+    <value>QR-Code für Ihre Authenticator-App</value>
+  </data>
+  <data name="EnableApp_Step3" xml:space="preserve">
+    <value>Die App zeigt dann einen Code an. Geben Sie ihn unten ein, um die Einrichtung zu bestätigen.</value>
+  </data>
+  <data name="EnableApp_Verify" xml:space="preserve">
+    <value>Bestätigen</value>
+  </data>
+  <data name="RecoveryCodes_Heading" xml:space="preserve">
+    <value>Wiederherstellungscodes</value>
+  </data>
+  <data name="RecoveryCodes_SafePlace" xml:space="preserve">
+    <value>Bewahren Sie diese Codes an einem sicheren Ort auf.</value>
+  </data>
+  <data name="RecoveryCodes_Warning" xml:space="preserve">
+    <value>Wenn Sie Ihr Gerät verlieren und die Wiederherstellungscodes nicht haben, verlieren Sie den Zugang zu Ihrem Konto.</value>
+  </data>
+  <data name="ResetKeyLink" xml:space="preserve">
+    <value>Schlüssel zurücksetzen</value>
+  </data>
+  <data name="Disable2fa_Title" xml:space="preserve">
+    <value>Zwei-Faktor-Authentifizierung ausschalten</value>
+  </data>
+  <data name="Disable2fa_OnlyDisables" xml:space="preserve">
+    <value>Damit wird nur die Zwei-Faktor-Authentifizierung ausgeschaltet.</value>
+  </data>
+  <data name="Disable2fa_KeysUnchanged" xml:space="preserve">
+    <value>Der Schlüssel in Ihrer Authenticator-App bleibt dabei unverändert. Um ihn zu ändern, setzen Sie ihn zurück.</value>
+  </data>
+  <data name="Disable2fa_Submit" xml:space="preserve">
+    <value>2FA ausschalten</value>
+  </data>
+  <data name="GenerateCodes_Title" xml:space="preserve">
+    <value>Wiederherstellungscodes erzeugen</value>
+  </data>
+  <data name="GenerateCodes_KeysUnchanged" xml:space="preserve">
+    <value>Neue Wiederherstellungscodes ändern den Schlüssel in Ihrer Authenticator-App nicht. Um ihn zu ändern, setzen Sie ihn zurück.</value>
+  </data>
+  <data name="GenerateCodes_Submit" xml:space="preserve">
+    <value>Wiederherstellungscodes erzeugen</value>
+  </data>
+  <data name="ResetApp_Title" xml:space="preserve">
+    <value>Schlüssel der Authenticator-App zurücksetzen</value>
+  </data>
+  <data name="ResetApp_Warning" xml:space="preserve">
+    <value>Wenn Sie den Schlüssel zurücksetzen, funktioniert Ihre Authenticator-App erst wieder, wenn Sie sie neu einrichten.</value>
+  </data>
+  <data name="ResetApp_Text" xml:space="preserve">
+    <value>Bis Sie die App neu bestätigen, ist die Zwei-Faktor-Authentifizierung ausgeschaltet. Wenn Sie die Einrichtung nicht abschließen, können Sie den Zugang zu Ihrem Konto verlieren.</value>
+  </data>
+  <data name="ResetApp_Submit" xml:space="preserve">
+    <value>Schlüssel zurücksetzen</value>
+  </data>
+  <data name="ExternalLogins_Title" xml:space="preserve">
+    <value>Externe Anmeldungen</value>
+  </data>
+  <data name="ExternalLogins_Registered" xml:space="preserve">
+    <value>Verknüpfte Anmeldungen</value>
+  </data>
+  <data name="ExternalLogins_RemoveTitle" xml:space="preserve">
+    <value>Die Anmeldung mit {0} von Ihrem Konto entfernen</value>
+  </data>
+  <data name="ExternalLogins_AddAnother" xml:space="preserve">
+    <value>Weiteren Dienst zur Anmeldung hinzufügen</value>
+  </data>
+  <data name="PersonalData_Title" xml:space="preserve">
+    <value>Persönliche Daten</value>
+  </data>
+  <data name="PersonalData_Text" xml:space="preserve">
+    <value>Ihr Konto enthält persönliche Daten, die Sie uns gegeben haben. Hier können Sie diese Daten herunterladen oder löschen.</value>
+  </data>
+  <data name="PersonalData_DeleteWarning" xml:space="preserve">
+    <value>Wenn Sie diese Daten löschen, wird Ihr Konto endgültig entfernt. Das lässt sich nicht rückgängig machen.</value>
+  </data>
+  <data name="PersonalData_Download" xml:space="preserve">
+    <value>Herunterladen</value>
+  </data>
+  <data name="DeleteData_Title" xml:space="preserve">
+    <value>Persönliche Daten löschen</value>
+  </data>
+  <data name="DeleteData_PasswordPlaceholder" xml:space="preserve">
+    <value>Bitte geben Sie Ihr Passwort ein.</value>
+  </data>
+  <data name="DeleteData_Submit" xml:space="preserve">
+    <value>Daten löschen und Konto schließen</value>
+  </data>
+  <data name="Email_ConfirmSubject" xml:space="preserve">
+    <value>Bestätigen Sie Ihre E-Mail-Adresse</value>
+  </data>
+  <data name="Email_ConfirmText" xml:space="preserve">
+    <value>Bitte bestätigen Sie Ihr Speise-Direkt-Konto mit diesem Link:</value>
+  </data>
+  <data name="Email_ConfirmLink" xml:space="preserve">
+    <value>Konto bestätigen</value>
+  </data>
+  <data name="Email_ResetSubject" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="Email_ResetText" xml:space="preserve">
+    <value>Mit diesem Link können Sie ein neues Passwort wählen:</value>
+  </data>
+  <data name="Email_ResetLink" xml:space="preserve">
+    <value>Passwort zurücksetzen</value>
+  </data>
+  <data name="Email_ResetCodeText" xml:space="preserve">
+    <value>Ihr Code zum Zurücksetzen des Passworts: {0}</value>
+  </data>
+  <data name="Auth_Skip" xml:space="preserve">
+    <value>Zum Formular springen</value>
+  </data>
+  <data name="Auth_Home" xml:space="preserve">
+    <value>Zur Startseite</value>
+  </data>
+  <data name="Auth_ToDashboard" xml:space="preserve">
+    <value>Zum Dashboard</value>
+  </data>
+  <data name="Auth_PanelLabel" xml:space="preserve">
+    <value>Speise-Direkt auf einen Blick</value>
+  </data>
+  <data name="Login_Or" xml:space="preserve">
+    <value>oder</value>
+  </data>
+</root>

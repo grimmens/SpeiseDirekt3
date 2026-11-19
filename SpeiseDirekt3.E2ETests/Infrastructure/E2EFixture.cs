@@ -45,6 +45,16 @@ public sealed class E2EFixture : IAsyncLifetime
         });
     }
 
+    /// <summary>
+    /// A browser context with <paramref name="options"/>; without a <see cref="BrowserNewContextOptions.Locale"/> it gets
+    /// <see cref="E2ESettings.DefaultLocale"/> (English), so no test depends on the host's default language.
+    /// </summary>
+    public Task<IBrowserContext> NewBrowserContextAsync(BrowserNewContextOptions options)
+    {
+        options.Locale ??= E2ESettings.DefaultLocale;
+        return Browser.NewContextAsync(options);
+    }
+
     public async Task DisposeAsync()
     {
         if (Browser is not null)

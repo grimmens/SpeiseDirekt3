@@ -1,7 +1,16 @@
 ﻿@page "/Account/InvalidUser"
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>Invalid user</PageTitle>
+<PageTitle>@C["PageTitle", T["InvalidUser_Title"]]</PageTitle>
 
-<h3>Invalid user</h3>
-
-<StatusMessage />
+<AuthCard Title="@T["InvalidUser_Title"]" Icon="alert" Tone="danger">
+    <ChildContent>
+        <StatusMessage />
+    </ChildContent>
+    <Links>
+        <li><a href="/Account/Login" class="au-link">@T["Forgot_BackToLogin"]</a></li>
+    </Links>
+</AuthCard>

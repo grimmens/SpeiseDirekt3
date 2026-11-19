@@ -23,7 +23,7 @@ public class ComboEditorTests : BackOfficeTestBase
         await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "No combos yet" })).ToBeVisibleAsync();
         await Button("New Combo").First.ClickAsync();
 
-        var editor = Page.Locator("div.fixed", new() { Has = Page.Locator("#ComboName") });
+        var editor = Page.GetByTestId("combo-editor");
         await Assertions.Expect(editor).ToBeVisibleAsync();
         await editor.Locator("#ComboName").FillAsync("Burger Menü");
         await editor.Locator("#ComboDesc").FillAsync("Burger mit Pommes und Cola");
@@ -103,7 +103,7 @@ public class ComboEditorTests : BackOfficeTestBase
 
         await GotoInteractiveAsync($"/combos/{menuId}");
         await Button("New Combo").First.ClickAsync();
-        var editor = Page.Locator("div.fixed", new() { Has = Page.Locator("#ComboName") });
+        var editor = Page.GetByTestId("combo-editor");
         await editor.Locator("#ComboName").FillAsync("Unvollständig");
         await editor.Locator("#ComboPrice").FillAsync("5");
         var burgerOption = editor.Locator("#TriggerItem option", new() { HasTextString = "Burger" });
@@ -113,5 +113,36 @@ public class ComboEditorTests : BackOfficeTestBase
 
         await Assertions.Expect(editor.GetByText("Select at least one included item.")).ToBeVisibleAsync();
         await Assertions.Expect(editor).ToBeVisibleAsync();
+    }
+
+    [Fact]
+    public async Task ComboEditor_IsAQuietPanel_AndCancelOrEscapeKeepTheStoredValues()
+    {
+        var menuId = await SetUpMenuWithComboViaUiAsync();
+        var editor = Page.GetByTestId("combo-editor");
+
+        await Button("Edit", exact: true).ClickAsync();
+        await Assertions.Expect(Page.Locator("dialog[data-testid='combo-editor'][open]")).ToHaveCountAsync(1);
+        await Assertions.Expect(editor.GetByRole(AriaRole.Heading, new() { Name = "Edit Combo" })).ToBeVisibleAsync();
+        await Assertions.Expect(editor.Locator("#ComboName")).ToHaveValueAsync("Burger Menü");
+        await editor.Locator("#ComboName").FillAsync("Nicht gespeichert");
+        await editor.Locator("#ComboPrice").FillAsync("1");
+        await editor.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await Assertions.Expect(editor).ToBeHiddenAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Burger Menü" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("€6.00")).ToBeVisibleAsync();
+
+        // Escape as well
+        await Button("Edit", exact: true).ClickAsync();
+        await editor.Locator("#ComboName").FillAsync("Auch nicht");
+        await editor.Locator("#ComboName").PressAsync("Tab");
+        await Page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(editor).ToBeHiddenAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Burger Menü" })).ToBeVisibleAsync();
+
+        // A later save of something else does not write the cancelled values
+        await GotoInteractiveAsync($"/combos/{menuId}");
+        await Assertions.Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Burger Menü" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("Nicht gespeichert")).ToHaveCountAsync(0);
     }
 }

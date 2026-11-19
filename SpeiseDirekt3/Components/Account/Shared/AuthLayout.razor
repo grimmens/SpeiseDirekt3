@@ -1,0 +1,85 @@
+@inherits LayoutComponentBase
+@using SpeiseDirekt3.Components.Landing
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<LandingText> L
+@inject NavigationManager Navigation
+@inject IConfiguration Configuration
+@inject TimeProvider Clock
+@* Layout of the anonymous account pages ([AuthPage] + @layout AuthLayout; css/auth.css, AP13): it continues the landing
+   page — the logo links back to /, a calm petrol brand panel from 1024 px (the landing page's promise, its proof points,
+   "Die Registrierung ist kostenlos." and the live demo; texts from LandingText, so both say the same), the page's card
+   centred on a cream background, a footer with the operator's legal links (LandingSettings, hidden when empty). No
+   script. The header's link: "Anmelden" on the registration page, "Zum Dashboard" for a signed-in user (e.g. on
+   AccessDenied), else "Registrieren". The panel comes first in the DOM, like it sits on the left (the skip link jumps to
+   the form); below 1024 px it is not shown and the header carries the logo. *@
+@{
+    var settings = LandingSettings.From(Configuration);
+    var path = "/" + Navigation.ToBaseRelativePath(Navigation.Uri).Split('?', '#')[0];
+    var signedIn = HttpContext?.User.Identity?.IsAuthenticated == true;
+}
+<a class="au-skip" href="#au-main" data-testid="auth-skip">@T["Auth_Skip"]</a>
+<div class="au-shell" data-testid="auth-layout">
+    <aside class="au-panel" aria-label="@T["Auth_PanelLabel"]" data-testid="auth-panel">
+        <div class="au-panel-inner">
+            <a class="au-brand" href="/" aria-label="@L["BrandHome"]">
+                <BrandLogo Inverse="true" Height="34" Alt="" TestId="auth-panel-logo" />
+            </a>
+            <div class="au-panel-copy">
+                <p class="au-panel-eyebrow">@L["Hero_Eyebrow"]</p>
+                <p class="au-panel-title">@HeadlineMarkup.Highlight(L["Hero_Title"], "au-mark")</p>
+                <ul class="au-points" role="list">
+                    <li><LandingIcon Name="phone" Class="au-icon" /> @L["Proof_NoApp"]</li>
+                    <li><LandingIcon Name="bolt" Class="au-icon" /> @L["Proof_Live"]</li>
+                    <li><LandingIcon Name="shield" Class="au-icon" /> @L["Proof_Allergens"]</li>
+                    <li><LandingIcon Name="globe" Class="au-icon" /> @L["Proof_Languages"]</li>
+                </ul>
+            </div>
+            <div class="au-panel-foot">
+                <span>@L["Hero_Note"]</span>
+                <a href="@LandingPage.DemoPath" data-testid="auth-demo">@L["Hero_Demo"] <LandingIcon Name="arrow-right" Class="au-icon" StrokeWidth="2" /></a>
+            </div>
+        </div>
+    </aside>
+
+    <div class="au-column">
+        <header class="au-header" data-testid="auth-header">
+            <a class="au-brand" href="/" aria-label="@L["BrandHome"]" data-testid="auth-brand">
+                <BrandLogo Height="32" Alt="" TestId="auth-logo" />
+            </a>
+            @if (signedIn)
+            {
+                <a class="au-header-link" href="/dashboard" data-testid="auth-header-link">@T["Auth_ToDashboard"]</a>
+            }
+            else if (path.Equals("/Account/Register", StringComparison.OrdinalIgnoreCase))
+            {
+                <a class="au-header-link" href="/Account/Login" data-testid="auth-header-link">@L["LogIn"]</a>
+            }
+            else
+            {
+                <a class="au-header-link" href="/Account/Register" data-testid="auth-header-link">@L["RegisterShort"]</a>
+            }
+        </header>
+
+        <main id="au-main" class="au-main" tabindex="-1">
+            @Body
+        </main>
+
+        <footer class="au-footer" data-testid="auth-footer">
+            <span>© @Clock.GetLocalNow().Year Speise-Direkt</span>
+            <a href="/" data-testid="auth-home">@T["Auth_Home"]</a>
+            @if (settings.ImprintUrl is { } imprint)
+            {
+                <a href="@imprint" data-testid="auth-imprint">@L["Footer_Imprint"]</a>
+            }
+            @if (settings.PrivacyUrl is { } privacy)
+            {
+                <a href="@privacy" data-testid="auth-privacy">@L["Footer_Privacy"]</a>
+            }
+        </footer>
+    </div>
+
+</div>
+
+@code {
+    [CascadingParameter] private HttpContext? HttpContext { get; set; }
+}

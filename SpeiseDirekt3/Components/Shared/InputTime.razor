@@ -1,5 +1,8 @@
 ﻿@using System
+@using System.Globalization
 
+@* A native time field bound to TimeOnly. The value crosses as "HH:mm" in the invariant culture (the browser's format for
+   type="time", whatever the page's language). *@
 <input type="time"
        value="@FormattedTime"
        @onchange="OnTimeChanged"
@@ -16,11 +19,11 @@
     public Dictionary<string, object> AdditionalAttributes { get; set; } = new Dictionary<string, object>();
 
 
-    private string FormattedTime => Value?.ToString("HH:mm");
+    private string? FormattedTime => Value?.ToString("HH:mm", CultureInfo.InvariantCulture);
 
     private async Task OnTimeChanged(ChangeEventArgs e)
     {
-        if (TimeOnly.TryParse(e.Value?.ToString(), out var newTime))
+        if (TimeOnly.TryParse(e.Value?.ToString(), CultureInfo.InvariantCulture, out var newTime))
         {
             Value = newTime;
             await ValueChanged.InvokeAsync(Value);

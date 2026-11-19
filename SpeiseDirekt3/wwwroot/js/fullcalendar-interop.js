@@ -76,8 +76,15 @@ function toEvent(e) {
     });
 }
 
-/** Options from .NET (CalendarOptions) → FullCalendar options that may change after creation. */
+/** "$0" in a text from .NET → the count. */
+const fill = (text, n) => text.replace('$0', String(n));
+
+/**
+ * Options from .NET (CalendarOptions) → FullCalendar options that may change after creation. Every text comes from
+ * .NET in the page's language (o.texts); `locale` makes FullCalendar format dates with Intl in that language.
+ */
 function toOptions(o) {
+    const t = o.texts ?? null;
     return compact({
         locale: o.locale,
         firstDay: o.firstDay,
@@ -90,7 +97,15 @@ function toOptions(o) {
         selectable: !!o.selectable,
         editable: !!o.editable,
         dayMaxEventRows: o.dayMaxEventRows ?? false,
-        noEventsText: o.noEventsText
+        noEventsText: o.noEventsText,
+        allDayText: t?.allDay,
+        moreLinkText: t ? n => fill(t.moreLink, n) : null,
+        moreLinkHint: t ? n => (n === 1 ? t.moreHintOne : fill(t.moreHintOther, n)) : null,
+        buttonHints: t?.buttonHints,
+        viewHint: t?.viewHint,
+        closeHint: t?.closeHint,
+        timeHint: t?.timeHint,
+        eventHint: t?.eventHint
     });
 }
 
