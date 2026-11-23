@@ -1,5 +1,6 @@
-/* Additions to the Tailwind Play CDN for the back office (the brand colours live in css/brand.css, the chrome in
-   css/shell.css). Note: `@apply` does not work in a plain stylesheet with the Play CDN, so only plain CSS here. */
+/* Additions to Tailwind for the back office (the brand colours live in css/brand.css, the chrome in css/shell.css).
+   Plain CSS only: the Tailwind CLI (tools/tailwind) builds css/tailwind.css and does not process this file, so no
+   `@apply`. css/tailwind.css comes last in <head> and wins over these rules at equal specificity. */
 
 /* Line clamp utilities */
 .line-clamp-2 {

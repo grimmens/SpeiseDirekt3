@@ -1,5 +1,5 @@
 /*
- * back-office.css — shared back-office components that must not depend on the Tailwind CDN (the E2E runs block it):
+ * back-office.css — shared back-office components in plain CSS, independent of Tailwind's utilities:
  * page headers with icon tiles, card heads, table heads, count pills, empty states, drag-and-drop sorting
  * (Shared/Sortable/SortableList + js/sortable-list.js), inline row editing, the item edit page's sections and sticky
  * save bar, the quiet dialogs (confirmation, combo editor) and the "just edited" row highlight.
