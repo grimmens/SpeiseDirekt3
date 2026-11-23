@@ -51,6 +51,13 @@ jobs:
           dotnet restore SpeiseDirekt3.sln
           dotnet tool restore
 
+      # Das Tailwind-CSS des Back Office (SpeiseDirekt3/wwwroot/css/tailwind.css) ist eingecheckt und wird mit
+      # tools/tailwind gebaut. Passt es nicht mehr zum Markup (Klassen geändert, CSS nicht neu gebaut), bricht der Lauf
+      # hier ab. Die festgenagelte Tailwind-CLI (linux-arm64, SHA-256 geprüft) liegt nach dem ersten Lauf im Cache
+      # ~/.cache/speisedirekt3/tailwind des Runners.
+      - name: Tailwind-CSS aktuell?
+        run: bash tools/tailwind/build.sh --check
+
       - name: Build
         run: dotnet build SpeiseDirekt3.sln -c Release --no-restore
 
