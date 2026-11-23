@@ -228,7 +228,7 @@ public class LocalizationTests : BackOfficeTestBase
 
         // A string made in the circuit at event time: the drag handle's announcement
         var handle = page.GetByRole(AriaRole.Button, new() { Name = "Desserts verschieben" });
-        await handle.FocusAsync();
+        await FocusHandleAsync(handle);
         await page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(Announcer(page)).ToHaveTextAsync("Desserts an Position 1 von 2 verschoben.");
         await page.Keyboard.PressAsync("ArrowUp");

@@ -373,6 +373,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
         await GotoInteractiveAsync(page, $"/Categories/{s.MenuId}");
         await SettleAsync(page);
         var handle = page.GetByTestId("category-row").First.GetByTestId("sort-handle");
+        await WaitForSortableAsync(handle);
         var box = (await handle.BoundingBoxAsync())!;
         await page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
         await page.Mouse.DownAsync();
@@ -554,7 +555,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
             await page.GetByTestId("menu-switcher-button").ClickAsync();
             await Shot("context-switcher", fullPage: false);
             await page.Keyboard.PressAsync("Escape");
-            await page.GetByTestId("category-row").First.GetByTestId("sort-handle").FocusAsync();
+            await FocusHandleAsync(page.GetByTestId("category-row").First.GetByTestId("sort-handle"));
             await page.Keyboard.PressAsync("ArrowUp");
             await Shot("context-bar", fullPage: false);
 
