@@ -9,7 +9,7 @@
                                                                                 committed CSS differs (what CI checks)
     The CLI (pinned version, SHA-256 checked) is downloaded once from the official GitHub release into
     %LOCALAPPDATA%\speisedirekt3\tailwind\<version>\ (elsewhere: ~/.cache/speisedirekt3/tailwind/<version>/), never into
-    the repository. Works with Windows PowerShell 5.1 and PowerShell 7.
+    the repository. Meant for Windows PowerShell 5.1 and PowerShell 7 (also on Linux/macOS).
 #>
 [CmdletBinding()]
 param([switch] $Check)
@@ -28,37 +28,38 @@ $Sha256 = @{
     'tailwindcss-macos-arm64'       = 'a1d0c7985759accca0bf12e51ac1dcbf0f6cf2fffb62e6e0f62d091c477a10a3'
 }
 
+# Paths built with Path.Combine, so the script also runs under PowerShell 7 on Linux/macOS
 $Here = $PSScriptRoot
-$Repo = (Resolve-Path (Join-Path $Here '..\..')).Path
-$Output = Join-Path $Repo 'SpeiseDirekt3\wwwroot\css\tailwind.css'
-$Config = Join-Path $Here 'tailwind.config.js'
-$InputCss = Join-Path $Here 'input.css'
+$Repo = Split-Path -Parent (Split-Path -Parent $Here)
+$Output = [System.IO.Path]::Combine($Repo, 'SpeiseDirekt3', 'wwwroot', 'css', 'tailwind.css')
+$Config = [System.IO.Path]::Combine($Here, 'tailwind.config.js')
+$InputCss = [System.IO.Path]::Combine($Here, 'input.css')
 
 # Platform -> release asset ($IsWindows does not exist in Windows PowerShell 5.1)
 if ($env:OS -eq 'Windows_NT') {
     $arch = if ($env:PROCESSOR_ARCHITECTURE -eq 'ARM64' -or $env:PROCESSOR_ARCHITEW6432 -eq 'ARM64') { 'arm64' } else { 'x64' }
     $asset = "tailwindcss-windows-$arch.exe"
-    $cacheRoot = Join-Path $env:LOCALAPPDATA 'speisedirekt3\tailwind'
+    $cacheRoot = [System.IO.Path]::Combine($env:LOCALAPPDATA, 'speisedirekt3', 'tailwind')
 } else {
     $osArch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
     $arch = switch ($osArch) { 'X64' { 'x64' } 'Arm64' { 'arm64' } default { throw "Unsupported CPU architecture: $osArch" } }
     $os = if ($IsMacOS) { 'macos' } else { 'linux' }
     $asset = "tailwindcss-$os-$arch"
-    $cacheBase = if ($env:XDG_CACHE_HOME) { $env:XDG_CACHE_HOME } else { Join-Path $HOME '.cache' }
-    $cacheRoot = Join-Path $cacheBase 'speisedirekt3/tailwind'
+    $cacheBase = if ($env:XDG_CACHE_HOME) { $env:XDG_CACHE_HOME } else { [System.IO.Path]::Combine($HOME, '.cache') }
+    $cacheRoot = [System.IO.Path]::Combine($cacheBase, 'speisedirekt3', 'tailwind')
 }
 $expected = $Sha256[$asset]
 
 function Get-Sha256([string] $Path) { (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash.ToLowerInvariant() }
 
 # Download once, verify every time
-$dir = Join-Path $cacheRoot $Version
-$cli = Join-Path $dir $asset
+$dir = [System.IO.Path]::Combine($cacheRoot, $Version)
+$cli = [System.IO.Path]::Combine($dir, $asset)
 if (-not (Test-Path -LiteralPath $cli) -or (Get-Sha256 $cli) -ne $expected) {
     New-Item -ItemType Directory -Force -Path $dir | Out-Null
     $url = "https://github.com/tailwindlabs/tailwindcss/releases/download/v$Version/$asset"
     Write-Host "Downloading $url"
-    $tmp = Join-Path $dir ("$asset." + [System.Guid]::NewGuid().ToString('N') + '.download')
+    $tmp = [System.IO.Path]::Combine($dir, "$asset." + [System.Guid]::NewGuid().ToString('N') + '.download')
     try {
         # Windows PowerShell 5.1 does not offer TLS 1.2 by default
         [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
@@ -76,7 +77,7 @@ if (-not (Test-Path -LiteralPath $cli) -or (Get-Sha256 $cli) -ne $expected) {
 $env:BROWSERSLIST_IGNORE_OLD_DATA = '1'
 
 if ($Check) {
-    $tmp = Join-Path ([System.IO.Path]::GetTempPath()) ('tailwind-check-' + [System.Guid]::NewGuid().ToString('N') + '.css')
+    $tmp = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), 'tailwind-check-' + [System.Guid]::NewGuid().ToString('N') + '.css')
     try {
         & $cli -c $Config -i $InputCss -o $tmp --minify
         if ($LASTEXITCODE -ne 0) { throw "Tailwind CLI failed with exit code $LASTEXITCODE" }
