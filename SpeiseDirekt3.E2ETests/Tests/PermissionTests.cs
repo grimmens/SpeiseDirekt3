@@ -1,117 +1,225 @@
 using System.Text.RegularExpressions;
+using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Playwright;
+using SpeiseDirekt.Model;
 using SpeiseDirekt3.E2ETests.Infrastructure;
 
 namespace SpeiseDirekt3.E2ETests.Tests;
 
 /// <summary>
-/// The owner invites an Employee (<c>/users/invite</c>); the Employee logs in with the temporary password,
-/// sees the owner's data read-only and is turned away from edit pages.
+/// The two roles of AP14 from the team member's side: the owner invites a manager (<c>/users/invite</c>, no role picker);
+/// the manager signs in, sees no team entry, is denied the team pages and works on the owner's menus, items, QR codes,
+/// restaurant profile and analytics. A deactivated member is denied every page of the tenant.
 /// </summary>
 public class PermissionTests : BackOfficeTestBase
 {
     public PermissionTests(E2EFixture fixture) : base(fixture) { }
 
-    private async Task InviteAsync(string email, string displayName, string role)
+    private readonly List<IBrowserContext> _contexts = [];
+
+    public new async Task DisposeAsync()
+    {
+        foreach (var context in _contexts)
+            await context.DisposeAsync();
+        await base.DisposeAsync();
+    }
+
+    private async Task<IPage> NewMemberPageAsync(string? locale = null)
+    {
+        var (context, page) = await NewContextAsync(locale);
+        _contexts.Add(context);
+        return page;
+    }
+
+    /// <summary>Invites a team member through the UI (as the owner in <see cref="E2ETestBase.Page"/>).</summary>
+    private async Task InviteAsync(string email, string displayName)
     {
         await GotoInteractiveAsync("/users/invite");
+        await Assertions.Expect(Page.Locator("select")).ToHaveCountAsync(0); // no role picker any more
         await Page.GetByPlaceholder("employee@example.com").FillAsync(email);
         await Page.GetByPlaceholder("John Doe").FillAsync(displayName);
         await Page.GetByPlaceholder("Min. 8 characters").FillAsync(Password);
-        await Page.Locator("select").SelectOptionAsync(new SelectOptionValue { Label = role });
         await Button("Create Account").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/users$"));
     }
 
-    /// <summary>Owner with one menu (category + item); returns the menu id and the employee's page.</summary>
-    private async Task<(Guid MenuId, IPage Employee)> SetUpOwnerAndEmployeeAsync(string menuName)
+    private static ILocator NavEntry(IPage page, string area, string key) =>
+        page.GetByTestId(area).Locator($"a[data-nav='{key}']");
+
+    private static async Task ExpectAccessDeniedAsync(IPage page, string url)
     {
-        await RegisterNewOwnerAsync();
-        var menuId = await CreateMenuViaUiAsync(menuName);
+        await page.GotoAsync(url);
+        await Assertions.Expect(page).ToHaveURLAsync(new Regex("/Account/AccessDenied$"), new() { Timeout = 15_000 });
+    }
+
+    [Fact]
+    public async Task Manager_SeesNoTeam_IsDeniedTheTeamPages_AndEditsAMenuItem()
+    {
+        var ownerEmail = await RegisterNewOwnerAsync();
+        var ownerId = await OwnerIdAsync(ownerEmail);
+        var menuId = await CreateMenuViaUiAsync("Team Menü");
         await CreateCategoryViaUiAsync(menuId, "Vorspeisen");
         await CreateMenuItemViaUiAsync(menuId, "Bruschetta", "Tomate, Basilikum", 5.50m);
 
-        var employeeEmail = UniqueEmail("employee");
-        await InviteAsync(employeeEmail, "Erika Mitarbeiterin", "Employee");
-        await Assertions.Expect(Page.GetByText("Erika Mitarbeiterin").First).ToBeVisibleAsync();
+        var managerEmail = UniqueEmail("manager");
+        await InviteAsync(managerEmail, "Erika Managerin");
+        var row = Page.GetByTestId("user-row").Filter(new() { HasText = "Erika Managerin" });
+        await Assertions.Expect(row.GetByTestId("role-badge")).ToHaveTextAsync("Manager");
+        Guid memberId;
+        await using (var db = App.CreateDbContext(ownerId))
+        {
+            var member = await db.TenantUsers.SingleAsync(tu => tu.TenantOwnerId == ownerId.ToString());
+            member.Role.Should().Be(TenantRole.Manager);
+            memberId = member.Id;
+        }
 
-        var (employeeContext, employee) = await NewContextAsync();
-        _employeeContext = employeeContext;
-        await LoginAsync(employee, employeeEmail);
-        return (menuId, employee);
-    }
+        var manager = await NewMemberPageAsync();
+        await LoginAsync(manager, managerEmail);
 
-    private IBrowserContext? _employeeContext;
+        // The chrome: no "Team" in the top bar, the role is "Manager"; the dashboard has no team tile
+        await GotoInteractiveAsync(manager, "/dashboard");
+        await Assertions.Expect(NavEntry(manager, "top-nav", "menus")).ToBeVisibleAsync();
+        await Assertions.Expect(NavEntry(manager, "top-nav", "qrcodes")).ToBeVisibleAsync();
+        await Assertions.Expect(NavEntry(manager, "top-nav", "analytics")).ToBeVisibleAsync();
+        await Assertions.Expect(NavEntry(manager, "top-nav", "restaurant")).ToBeVisibleAsync();
+        await Assertions.Expect(NavEntry(manager, "top-nav", "team")).ToHaveCountAsync(0);
+        await Assertions.Expect(manager.GetByTestId("user-role")).ToHaveTextAsync("Manager");
+        await Assertions.Expect(manager.GetByTestId("stat-menus")).ToBeVisibleAsync();
+        await Assertions.Expect(manager.GetByTestId("stat-team")).ToHaveCountAsync(0);
 
-    public new async Task DisposeAsync()
-    {
-        if (_employeeContext is not null)
-            await _employeeContext.DisposeAsync();
-        await base.DisposeAsync();
-    }
+        // Nor in the phone drawer
+        await manager.SetViewportSizeAsync(390, 844);
+        await manager.GetByTestId("nav-drawer-button").ClickAsync();
+        await Assertions.Expect(NavEntry(manager, "drawer-nav", "menus")).ToBeVisibleAsync();
+        await Assertions.Expect(NavEntry(manager, "drawer-nav", "team")).ToHaveCountAsync(0);
+        await manager.GetByTestId("nav-drawer-close").ClickAsync();
+        await manager.SetViewportSizeAsync(1280, 900);
 
-    [Fact]
-    public async Task Employee_SeesOwnersMenus_WithoutCreateEditDeleteButtons()
-    {
-        var (menuId, employee) = await SetUpOwnerAndEmployeeAsync("Team Menü");
+        // The team pages are the owner's
+        await ExpectAccessDeniedAsync(manager, "/users");
+        await Assertions.Expect(manager.GetByText("Erika Managerin")).ToHaveCountAsync(0);
+        await ExpectAccessDeniedAsync(manager, "/users/invite");
+        await ExpectAccessDeniedAsync(manager, $"/users/edit/{memberId}");
 
-        await GotoInteractiveAsync(employee, "/menus");
-        await Assertions.Expect(MenuCardLink(employee, "Team Menü")).ToBeVisibleAsync();
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Create New Menu" })).ToHaveCountAsync(0);
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Edit" })).ToHaveCountAsync(0);
+        // The menu work is the manager's: create buttons, and an item edited and saved
+        await GotoInteractiveAsync(manager, "/menus");
+        await Assertions.Expect(MenuCardLink(manager, "Team Menü")).ToBeVisibleAsync();
+        await Assertions.Expect(manager.GetByRole(AriaRole.Button, new() { Name = "Create New Menu" })).ToBeVisibleAsync();
 
-        await GotoInteractiveAsync(employee, $"/menudetail/{menuId}");
-        await Assertions.Expect(employee.GetByRole(AriaRole.Heading, new() { Name = "Team Menü" })).ToBeVisibleAsync();
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Edit" })).ToHaveCountAsync(0);
-
-        await GotoInteractiveAsync(employee, $"/MenuItems/{menuId}");
-        await Assertions.Expect(employee.Locator("td", new() { HasTextString = "Bruschetta" }).First).ToBeVisibleAsync();
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "New Menu Entry" })).ToHaveCountAsync(0);
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Edit" })).ToHaveCountAsync(0);
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Delete" })).ToHaveCountAsync(0);
-
-        await GotoInteractiveAsync(employee, $"/Categories/{menuId}");
-        await Assertions.Expect(employee.Locator("table a", new() { HasTextString = "Vorspeisen" })).ToBeVisibleAsync();
-        await Assertions.Expect(employee.GetByRole(AriaRole.Button, new() { Name = "Add Category" })).ToHaveCountAsync(0);
-    }
-
-    [Fact]
-    public async Task Employee_DirectEditUrls_AreDenied()
-    {
-        var (menuId, employee) = await SetUpOwnerAndEmployeeAsync("Gesperrtes Menü");
-
-        // Menu edit form redirects to the list without the MenusEdit permission
-        await GotoInteractiveAsync(employee, $"/menu/edit/{menuId}");
-        await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/menus$"));
-        await Assertions.Expect(employee.Locator("#menuName")).ToHaveCountAsync(0);
-
-        // Creating a menu is denied as well
-        await GotoInteractiveAsync(employee, "/menu/edit");
-        await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/menus$"));
-
-        // Inviting users requires UsersCreate
-        await GotoInteractiveAsync(employee, "/users/invite");
-        await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/users$"));
-        await Assertions.Expect(employee.GetByPlaceholder("employee@example.com")).ToHaveCountAsync(0);
-
-        // Creating a QR code requires QrCodesCreate; the redirect target /qrcodes needs QrCodesView,
-        // which an Employee does not have either → access denied
-        await employee.GotoAsync("/qrcode/edit");
-        await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/Account/AccessDenied$"));
-        await Assertions.Expect(employee.Locator("#qrTitle")).ToHaveCountAsync(0);
+        await GotoInteractiveAsync(manager, $"/MenuItems/{menuId}");
+        await manager.GetByRole(AriaRole.Link, new() { Name = "Edit Bruschetta", Exact = true }).ClickAsync();
+        var editor = manager.GetByTestId("item-edit-form");
+        await Assertions.Expect(editor).ToBeVisibleAsync();
+        await Assertions.Expect(manager.GetByTestId("item-read-only")).ToHaveCountAsync(0);
+        await editor.Locator("#MenuItem\\.Name").FillAsync("Bruschetta della casa");
+        await editor.GetByRole(AriaRole.Button, new() { Name = "Save", Exact = true }).ClickAsync();
+        await Assertions.Expect(manager).ToHaveURLAsync(new Regex("/MenuItems/Category/.+\\?highlight=", RegexOptions.IgnoreCase));
+        await Assertions.Expect(manager.Locator("td", new() { HasTextString = "Bruschetta della casa" }).First).ToBeVisibleAsync();
+        await using (var db = App.CreateDbContext(ownerId))
+            (await db.MenuItems.SingleAsync()).Name.Should().Be("Bruschetta della casa");
     }
 
     [Fact]
-    public async Task Employee_QrCodeList_IsDenied()
+    public async Task Manager_WorksWithQrCodes_TheRestaurantProfile_AndAnalytics()
     {
-        var (_, employee) = await SetUpOwnerAndEmployeeAsync("QR Menü");
-        await CreateDirectQrViaUiAsync("Owner Tisch 1", "QR Menü"); // owner (Page) creates a QR code
+        var ownerEmail = await RegisterNewOwnerAsync();
+        var ownerId = await OwnerIdAsync(ownerEmail);
+        var menuId = await CreateMenuViaUiAsync("QR Menü");
+        await CreateDirectQrViaUiAsync("Tisch 1", "QR Menü");
+        var member = await SeedTeamMemberAsync(ownerId, "Paul Manager");
+        var manager = await NewMemberPageAsync();
+        await LoginAsync(manager, member.Email);
 
-        // Employees have no QrCodesView permission
-        await employee.GotoAsync("/qrcodes");
+        // QR codes: create and edit (no read-only "View")
+        await GotoInteractiveAsync(manager, "/qrcodes");
+        var card = manager.GetByTestId("qr-card").Filter(new() { HasText = "Tisch 1" });
+        await Assertions.Expect(card.GetByRole(AriaRole.Button, new() { Name = "View" })).ToHaveCountAsync(0);
+        await card.GetByRole(AriaRole.Button, new() { Name = "Edit" }).ClickAsync();
+        await Assertions.Expect(manager.Locator("#qrTitle")).ToBeEnabledAsync();
+        await Assertions.Expect(manager.GetByTestId("qr-readonly-notice")).ToHaveCountAsync(0);
+        await manager.Locator("#qrTitle").FillAsync("Tisch 1 (Terrasse)");
+        await manager.GetByRole(AriaRole.Button, new() { Name = "Save Changes" }).ClickAsync();
+        await Assertions.Expect(manager).ToHaveURLAsync(new Regex("/qrcodes$"));
+        await Assertions.Expect(manager.GetByTestId("qr-card").Filter(new() { HasText = "Tisch 1 (Terrasse)" })).ToBeVisibleAsync();
 
-        await Assertions.Expect(employee).ToHaveURLAsync(new Regex("/Account/AccessDenied$"));
-        await Assertions.Expect(employee.GetByRole(AriaRole.Heading, new() { Name = "Access denied" })).ToBeVisibleAsync();
-        await Assertions.Expect(employee.GetByText("Owner Tisch 1")).ToHaveCountAsync(0);
+        // The restaurant profile is the tenant's: the manager creates it, the owner's data has it
+        await GotoInteractiveAsync(manager, "/restaurant");
+        await Assertions.Expect(manager.GetByTestId("profile-read-only")).ToHaveCountAsync(0);
+        await manager.Locator("#Restaurant\\.Name").FillAsync("Gasthaus des Teams");
+        await manager.GetByRole(AriaRole.Button, new() { Name = "Save profile", Exact = true }).ClickAsync();
+        await Assertions.Expect(manager.GetByTestId("profile-saved")).ToBeVisibleAsync();
+        await using (var db = App.CreateDbContext(ownerId))
+            (await db.RestaurantProfiles.SingleAsync()).Name.Should().Be("Gasthaus des Teams");
+
+        // Analytics
+        await GotoInteractiveAsync(manager, "/analytics");
+        await Assertions.Expect(manager).ToHaveURLAsync(new Regex("/analytics$"));
+        await Assertions.Expect(manager.GetByTestId("summary-views")).ToBeVisibleAsync();
+
+        // The menu settings (language versions included) open for editing
+        await GotoInteractiveAsync(manager, $"/menu/edit/{menuId}");
+        await Assertions.Expect(manager.Locator("#menuName")).ToBeEnabledAsync();
+    }
+
+    /// <summary>
+    /// "Deactivate" takes every permission at once: an open session is turned away on its next page, a new sign-in lands
+    /// on the access-denied page, and "Activate" gives the access back.
+    /// </summary>
+    [Fact]
+    public async Task DeactivatedMember_IsDeniedEverything_UntilActivatedAgain()
+    {
+        var ownerEmail = await RegisterNewOwnerAsync();
+        var ownerId = await OwnerIdAsync(ownerEmail);
+        var menuId = await CreateMenuViaUiAsync("Gesperrtes Menü");
+        await CreateCategoryViaUiAsync(menuId, "Suppen");
+        await CreateMenuItemViaUiAsync(menuId, "Gulaschsuppe", "Scharf", 6.90m);
+        var qrId = await CreateDirectQrViaUiAsync("Tisch 9", "Gesperrtes Menü");
+        Guid categoryId, itemId;
+        await using (var db = App.CreateDbContext(ownerId))
+        {
+            categoryId = (await db.Categories.SingleAsync()).Id;
+            itemId = (await db.MenuItems.SingleAsync()).Id;
+        }
+        var member = await SeedTeamMemberAsync(ownerId, "Lena Später");
+
+        var memberPage = await NewMemberPageAsync();
+        await LoginAsync(memberPage, member.Email);
+        await GotoInteractiveAsync(memberPage, "/menus");
+        await Assertions.Expect(MenuCardLink(memberPage, "Gesperrtes Menü")).ToBeVisibleAsync();
+
+        // The owner deactivates the member on the edit page
+        await GotoInteractiveAsync($"/users/edit/{member.TenantUserId}");
+        await Page.GetByTestId("member-toggle-active").ClickAsync();
+        await Page.Locator("#confirmBtn").ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("member-access").GetByTestId("status-badge")).ToHaveTextAsync("Inactive");
+
+        // Every page of the tenant is denied now (the session is still signed in)
+        foreach (var url in new[]
+                 {
+                     "/dashboard", "/menus", $"/menudetail/{menuId}", $"/Categories/{menuId}", $"/MenuItems/{menuId}",
+                     $"/MenuItems/Category/{categoryId}", $"/MenuItems/item/{itemId}/edit", $"/MenuItems/Category/{categoryId}/new",
+                     $"/allergens/{menuId}", $"/combos/{menuId}", $"/menu/edit/{menuId}", "/menu/edit", $"/menu/preview/{menuId}",
+                     "/qrcodes", $"/qrcode/edit/{qrId}", "/qrcode/edit", "/analytics", "/restaurant", "/users", "/users/invite"
+                 })
+        {
+            await ExpectAccessDeniedAsync(memberPage, url);
+        }
+        await Assertions.Expect(memberPage.GetByText("Gesperrtes Menü")).ToHaveCountAsync(0);
+
+        // A new sign-in ends on the access-denied page as well (the dashboard behind the login)
+        await memberPage.Context.ClearCookiesAsync();
+        await memberPage.GotoAsync("/Account/Login");
+        await memberPage.Locator("#Input\\.Email").FillAsync(member.Email);
+        await memberPage.Locator("#Input\\.Password").FillAsync(Password);
+        await memberPage.GetByTestId("login-submit").ClickAsync();
+        await Assertions.Expect(memberPage).ToHaveURLAsync(new Regex("/Account/AccessDenied$"));
+
+        // Activated again, the member works as before
+        await Page.GetByTestId("member-toggle-active").ClickAsync();
+        await Page.Locator("#confirmBtn").ClickAsync();
+        await Assertions.Expect(Page.GetByTestId("member-access").GetByTestId("status-badge")).ToHaveTextAsync("Active");
+        await GotoInteractiveAsync(memberPage, "/menus");
+        await Assertions.Expect(MenuCardLink(memberPage, "Gesperrtes Menü")).ToBeVisibleAsync();
     }
 }

@@ -9,33 +9,25 @@
 @inject IJSRuntime JS
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
+@inject IStringLocalizer<MenusText> T
+@inject IStringLocalizer<CommonText> C
+@inject IStringLocalizer<ShellText> S
 
-<PageTitle>@(IsNew ? "New Menu" : $"Edit {Menu.Name}") - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", IsNew ? T["Edit_PageTitleNew"] : T["Edit_PageTitleEdit", Menu.Name]]</PageTitle>
 
 <!-- Header -->
-<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-    <div class="p-[1rem] sm:p-6">
-        <div class="flex items-center text-sm text-gray-500 mb-3">
-            <a href="menus" class="hover:text-blue-600 transition-colors">Menus</a>
-            @if (!IsNew)
-            {
-                <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-                <a href="@($"menudetail/{Id}")" class="hover:text-blue-600 transition-colors">@Menu.Name</a>
-            }
-            <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-            <span class="text-gray-900 font-medium">@(IsNew ? "New Menu" : "Settings")</span>
-        </div>
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div class="flex items-center gap-3">
-                <h1 class="text-3xl font-bold text-gray-900 font-display">@(IsNew ? "Create New Menu" : "Menu Settings")</h1>
-            </div>
-        </div>
-    </div>
-</div>
+@if (IsNew)
+{
+    @* An existing menu has "Menus › menu" in the menu context bar; a new one has no bar yet *@
+    <nav class="flex items-center text-sm text-gray-500 mb-3" aria-label="@S["Context_BreadcrumbLabel"]">
+        <a href="menus" class="hover:text-brand-600 transition-colors">@S["Nav_Menus"]</a>
+        <svg class="mx-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-gray-900 font-medium">@T["Edit_PageTitleNew"]</span>
+    </nav>
+}
+<PageHeader Title="@(IsNew ? T["Edit_HeadingNew"] : T["Edit_HeadingEdit"])" Icon="PageIcons.Menus" Class="mb-8" />
 
 <!-- Content -->
 <div>
@@ -43,45 +35,45 @@
         <div class="flex flex-col gap-8 min-w-0">
         <!-- Form Card (menu-preview-draft.js listens to its inputs and sends the draft to the preview) -->
         <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-6" @ref="formCard">
-            <h2 class="text-lg font-semibold text-gray-900 mb-6">Menu Details</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-6">@T["Edit_DetailsTitle"]</h2>
             <EditForm EditContext="EditContext" OnValidSubmit="HandleValidSubmit">
                 <DataAnnotationsValidator />
 
                 <!-- Menu Name -->
                 <div class="mb-5">
-                    <label for="menuName" class="block text-sm font-medium text-gray-700 mb-1">Menu Name</label>
+                    <label for="menuName" class="block text-sm font-medium text-gray-700 mb-1">@T["Edit_Name"]</label>
                     <InputText @bind-Value="Menu.Name"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
-                               id="menuName" placeholder="Enter menu name" />
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
+                               id="menuName" placeholder="@T["Edit_NamePlaceholder"]" />
                     <ValidationMessage For="@(() => Menu.Name)" class="text-sm text-red-600 mt-1" />
                 </div>
 
                 <!-- Description -->
                 <div class="mb-5">
-                    <label for="menuDesc" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <label for="menuDesc" class="block text-sm font-medium text-gray-700 mb-1">@T["Edit_Description"] <span class="font-normal text-gray-500">@C["OptionalSuffix"]</span></label>
                     <InputText @bind-Value="Menu.Description"
-                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
-                               id="menuDesc" placeholder="Enter description" />
+                               class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
+                               id="menuDesc" placeholder="@T["Edit_DescriptionPlaceholder"]" />
                 </div>
 
                 <!-- Language -->
                 <div class="mb-5">
                     <label for="languageSelect" class="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
-                        Language
+                        @T["Edit_Language"]
                         <SpeiseDirekt3.Components.HelperComp.InfoPopoverComp>
                             <Content>
-                                This setting defines the language in which your menu content is written, and will be automatically translated from.
+                                @T["Edit_LanguageHelp"]
                             </Content>
                         </SpeiseDirekt3.Components.HelperComp.InfoPopoverComp>
                     </label>
                     <InputSelect @bind-Value="Menu.Language" @bind-Value:after="OnLanguageChanged"
-                                 class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                                 class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
                                  id="languageSelect">
                         @foreach (var language in Enum.GetValues<MenuLanguage>())
                         {
                             @* A language another version of this menu has is taken (one menu per language in a group) *@
                             var takenBy = versions.FirstOrDefault(v => v.Language == language && v.Id != Menu.Id);
-                            <option value="@language" disabled="@(takenBy is not null)">@language@(takenBy is not null ? " (another version)" : "")</option>
+                            <option value="@language" disabled="@(takenBy is not null)">@(takenBy is not null ? T["Edit_LanguageTaken", MenuDisplay.LanguageName(language)] : MenuDisplay.LanguageName(language))</option>
                         }
                     </InputSelect>
                     <ValidationMessage For="@(() => Menu.Language)" class="text-sm text-red-600 mt-1" />
@@ -89,30 +81,32 @@
 
                 <!-- Design Theme -->
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Design Theme</label>
-                    <p class="text-xs text-gray-500 mb-2">Colors and fonts of the guest view. The preview updates immediately.</p>
+                    <label for="themeSelect" class="block text-sm font-medium text-gray-700 mb-1">@T["Edit_Theme"]</label>
+                    <p class="text-xs text-gray-500 mb-2">@T["Edit_ThemeHelp"]</p>
                     <div class="flex items-center gap-2">
                         <button type="button"
                                 class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                                aria-label="@T["Edit_ThemePrevious"]" title="@T["Edit_ThemePrevious"]"
                                 @onclick="() => ChangeTheme(-1)">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
 
                         <InputSelect @bind-Value="Menu.Theme"
-                                     class="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition-colors"
+                                     class="flex-1 rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none transition-colors"
                                      id="themeSelect">
                             @foreach (var theme in Enum.GetValues<DesignTheme>())
                             {
-                                <option value="@theme">@theme</option>
+                                <option value="@theme">@T.ThemeName(theme)</option>
                             }
                         </InputSelect>
 
                         <button type="button"
                                 class="inline-flex items-center justify-center w-10 h-10 rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                                aria-label="@T["Edit_ThemeNext"]" title="@T["Edit_ThemeNext"]"
                                 @onclick="() => ChangeTheme(+1)">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
@@ -124,14 +118,14 @@
                     <button type="button"
                             class="inline-flex items-center justify-center whitespace-nowrap px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition-colors"
                             @onclick="Cancel">
-                        Cancel
+                        @C["Cancel"]
                     </button>
                     <button type="submit"
-                            class="inline-flex items-center justify-center whitespace-nowrap px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors">
+                            class="inline-flex items-center justify-center whitespace-nowrap px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
-                        @(IsNew ? "Create Menu" : "Save Changes")
+                        @(IsNew ? T["Edit_Create"] : T["Edit_SaveChanges"])
                     </button>
                 </div>
             </EditForm>
@@ -147,14 +141,14 @@
         <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-6 lg:sticky lg:top-6">
             <div class="flex items-start justify-between gap-3 mb-4">
                 <div>
-                    <h2 class="text-lg font-semibold text-gray-900">Preview</h2>
-                    <p class="text-sm text-gray-500">How guests see it on their phone.</p>
+                    <h2 class="text-lg font-semibold text-gray-900">@C["Preview"]</h2>
+                    <p class="text-sm text-gray-500">@T["Edit_PreviewText"]</p>
                 </div>
                 @if (!IsNew)
                 {
                     <a href="@($"menu/preview/{Id}")" target="_blank" rel="noopener"
-                       class="inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-blue-600 hover:text-blue-800">
-                        Full screen
+                       class="inline-flex items-center gap-1 whitespace-nowrap text-sm font-medium text-brand-600 hover:text-brand-800">
+                        @T["Edit_FullScreen"]
                         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" fill="currentColor" viewBox="0 0 16 16" class="shrink-0" aria-hidden="true"><path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5"/> <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0z"/></svg>
                     </a>
                 }
@@ -162,7 +156,7 @@
             @if (IsNew)
             {
                 <div data-testid="menu-preview-hint" class="rounded-lg border border-dashed border-gray-300 bg-gray-50 px-[1rem] py-6 text-sm text-gray-600">
-                    Save the menu to see how guests will see it.
+                    @T["Edit_PreviewHint"]
                 </div>
             }
             else
@@ -177,12 +171,12 @@
                     <div data-testid="menu-preview-frame" @ref="previewFrame"
                          class="relative w-full rounded-[2.25rem] border-[10px] border-gray-900 bg-gray-900 shadow-xl"
                          style="max-width: 380px; height: 640px; overflow: hidden;">
-                        <iframe @key="previewUrl" src="@previewUrl" title="Guest preview" data-testid="menu-preview-iframe"
+                        <iframe @key="previewUrl" src="@previewUrl" title="@T["Edit_PreviewFrameTitle"]" data-testid="menu-preview-iframe"
                                 class="bg-white rounded-[1.6rem]"
                                 style="display: block; width: 100%; height: 100%; border: 0;"></iframe>
                     </div>
                 </div>
-                <p class="mt-3 text-xs text-gray-500" data-testid="menu-preview-note">Shows your unsaved changes. Guests see them after you save.</p>
+                <p class="mt-3 text-xs text-gray-500" data-testid="menu-preview-note">@T["Edit_PreviewNote"]</p>
             }
         </div>
     </div>
@@ -314,7 +308,7 @@
 
         if (nameExists)
         {
-            messages!.Add(() => Menu.Name, "This name already exists.");
+            messages!.Add(() => Menu.Name, T["Edit_NameTaken"]);
             EditContext.NotifyValidationStateChanged();
             return;
         }

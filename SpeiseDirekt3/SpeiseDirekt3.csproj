@@ -20,5 +20,20 @@
     <ProjectReference Include="..\SpeiseDirekt.Model\SpeiseDirekt.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- UI texts (AP12): Resources/<Area>Text.resx (English, the neutral culture) + <Area>Text.de.resx (German). MSBuild
+         generates a class SpeiseDirekt3.<Area>Text per neutral file (one static property per key): it is the marker of
+         IStringLocalizer<<Area>Text> (ResourcesPath "Resources") and the ErrorMessageResourceType of DataAnnotations
+         attributes. The German texts end up in the satellite assembly de/SpeiseDirekt3.resources.dll. -->
+    <EmbeddedResource Update="Resources\*Text.resx">
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedClassName>%(Filename)</StronglyTypedClassName>
+      <StronglyTypedNamespace>$(RootNamespace)</StronglyTypedNamespace>
+      <StronglyTypedManifestPrefix>$(RootNamespace).Resources</StronglyTypedManifestPrefix>
+      <StronglyTypedFileName>$(IntermediateOutputPath)%(Filename).Designer.cs</StronglyTypedFileName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>
 

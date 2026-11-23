@@ -8,16 +8,14 @@
 @inject SignInManager<ApplicationUser> SignInManager
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>Profile - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", T["Profile_Title"]]</PageTitle>
 
 <!-- Profile Management -->
 <div class="space-y-6">
-    <!-- Header -->
-    <div class="border-b border-gray-200 pb-6">
-        <h3 class="text-2xl font-bold text-gray-900 font-display">Profile Settings</h3>
-        <p class="mt-2 text-gray-600">Manage your personal information and account preferences</p>
-    </div>
+    <ManageHeader Title="@T["Profile_Heading"]" Description="@T["Profile_Subtitle"]" />
 
     <!-- Status Message -->
     <StatusMessage />
@@ -30,7 +28,7 @@
 
             <!-- Username Field (Read-only) -->
             <div>
-                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">Username</label>
+                <label for="username" class="block text-sm font-medium text-gray-700 mb-2">@T["Field_Username"]</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -39,14 +37,14 @@
                     </div>
                     <input type="text" value="@username" id="username"
                            class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
-                           placeholder="Your username" disabled />
+                           placeholder="@T["Profile_UsernamePlaceholder"]" disabled />
                 </div>
-                <p class="mt-1 text-xs text-gray-500">Your username cannot be changed</p>
+                <p class="mt-1 text-xs text-gray-500">@T["Profile_UsernameHint"]</p>
             </div>
 
             <!-- Phone Number Field -->
             <div>
-                <label for="Input.PhoneNumber" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                <label for="Input.PhoneNumber" class="block text-sm font-medium text-gray-700 mb-2">@T["Field_PhoneNumber"]</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,38 +52,38 @@
                         </svg>
                     </div>
                     <InputText @bind-Value="Input.PhoneNumber" id="Input.PhoneNumber"
-                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                               placeholder="Enter your phone number" />
+                               class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-colors duration-200"
+                               placeholder="@T["Placeholder_Phone"]" />
                 </div>
                 <ValidationMessage For="() => Input.PhoneNumber" class="mt-1 text-sm text-red-600" />
-                <p class="mt-1 text-xs text-gray-500">Optional: Add your phone number for account recovery</p>
+                <p class="mt-1 text-xs text-gray-500">@T["Profile_PhoneHint"]</p>
             </div>
 
             <!-- Save Button -->
             <div class="flex justify-end pt-4">
                 <button type="submit"
-                        class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                        class="inline-flex items-center px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 transition-colors duration-200">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                     </svg>
-                    Save Changes
+                    @T["Profile_Save"]
                 </button>
             </div>
         </EditForm>
     </div>
 
     <!-- Account Information -->
-    <div class="bg-blue-50 rounded-xl p-6">
+    <div class="bg-brand-50 rounded-xl p-6">
         <div class="flex items-start">
             <div class="flex-shrink-0">
-                <svg class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-6 w-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
             </div>
             <div class="ml-3">
-                <h3 class="text-sm font-medium text-blue-900">Account Information</h3>
-                <div class="mt-2 text-sm text-blue-800">
-                    <p>Your profile information is used to personalize your experience and for account security purposes.</p>
+                <h3 class="text-sm font-medium text-brand-900">@T["Profile_InfoTitle"]</h3>
+                <div class="mt-2 text-sm text-brand-800">
+                    <p>@T["Profile_InfoText"]</p>
                 </div>
             </div>
         </div>
@@ -119,18 +117,17 @@
             var setPhoneResult = await UserManager.SetPhoneNumberAsync(user, Input.PhoneNumber);
             if (!setPhoneResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus(T["Status_PhoneNotSaved"], HttpContext, isError: true);
             }
         }
 
         await SignInManager.RefreshSignInAsync(user);
-        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+        RedirectManager.RedirectToCurrentPageWithStatus(T["Status_ProfileUpdated"], HttpContext);
     }
 
     private sealed class InputModel
     {
-        [Phone]
-        [Display(Name = "Phone number")]
+        [Phone(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_PhoneInvalid))]
         public string? PhoneNumber { get; set; }
     }
 }

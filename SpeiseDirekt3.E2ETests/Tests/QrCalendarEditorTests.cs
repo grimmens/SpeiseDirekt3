@@ -369,7 +369,7 @@ public class QrCalendarEditorTests : QrCalendarTestBase
 
         // "Save" is refused with the model's message, nothing is written
         await Button("Save Changes").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Die Datumsperioden überschneiden sich").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("The date ranges overlap").First).ToBeVisibleAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex($"/qrcode/edit/{s.QrId}$"));
         (await LoadQrAsync(s.OwnerId, s.QrId)).CalendarEntries.Should().HaveCount(3);
 
@@ -378,7 +378,7 @@ public class QrCalendarEditorTests : QrCalendarTestBase
         await Assertions.Expect(EntryRow("Every day from Sun, Dec 27, 2026 to Mon, Dec 28, 2026")).ToHaveCountAsync(1);
         await Assertions.Expect(Alert).ToHaveCountAsync(0);
         await Assertions.Expect(CalendarOf(Page).Locator(".sd-cal-conflict")).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByText("Die Datumsperioden überschneiden sich")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByText("The date ranges overlap")).ToHaveCountAsync(0);
 
         await Button("Save Changes").ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
@@ -427,61 +427,37 @@ public class QrCalendarEditorTests : QrCalendarTestBase
         after.CalendarEntries.Should().BeEquivalentTo(before.CalendarEntries, o => o.Excluding(e => e.QRCode).Excluding(e => e.Menu));
     }
 
-    // --- Read-only ---
+    // --- A team member ---
 
+    /// <summary>
+    /// AP14: a manager (invited by the owner) edits the calendar like the owner — the read-only editor (QR codes viewable
+    /// but not editable, formerly the cashier's) belongs to no role any more and is not reachable.
+    /// </summary>
     [Fact]
-    public async Task UserWithoutEditPermission_SeesTheCalendar_ButCannotChangeAnything()
+    public async Task AManager_EditsTheCalendar_LikeTheOwner()
     {
         var s = await SeedHolidayCalendarAsync();
-        var before = await LoadQrAsync(s.OwnerId, s.QrId);
-        var cashierEmail = UniqueEmail("cashier");
-        await InviteAsync(cashierEmail, "Carla Kassa", "Cashier"); // QrCodesView, no QrCodesEdit
-        var (cashierContext, cashier) = await NewContextAsync();
-        await using var _ = cashierContext;
-        await LoginAsync(cashier, cashierEmail);
+        var managerEmail = UniqueEmail("manager");
+        await InviteAsync(managerEmail, "Carla Kasse");
+        var (managerContext, manager) = await NewContextAsync();
+        await using var _ = managerContext;
+        await LoginAsync(manager, managerEmail);
 
-        await GotoInteractiveAsync(cashier, "/qrcodes");
-        var card = cashier.GetByTestId("qr-card").Filter(new() { HasText = "Festtage" });
-        await Assertions.Expect(card.GetByRole(AriaRole.Button, new() { Name = "Edit" })).ToHaveCountAsync(0);
-        await card.GetByRole(AriaRole.Button, new() { Name = "View" }).ClickAsync();
-        await Assertions.Expect(cashier).ToHaveURLAsync(new Regex($"/qrcode/edit/{s.QrId}$"));
-        await WaitForCalendarAsync(cashier);
+        await GotoInteractiveAsync(manager, "/qrcodes");
+        var card = manager.GetByTestId("qr-card").Filter(new() { HasText = "Festtage" });
+        await Assertions.Expect(card.GetByRole(AriaRole.Button, new() { Name = "View" })).ToHaveCountAsync(0);
+        await card.GetByRole(AriaRole.Button, new() { Name = "Edit" }).ClickAsync();
+        await Assertions.Expect(manager).ToHaveURLAsync(new Regex($"/qrcode/edit/{s.QrId}$"));
+        await WaitForCalendarAsync(manager);
 
-        await Assertions.Expect(cashier.GetByTestId("qr-readonly-notice")).ToBeVisibleAsync();
-        await Assertions.Expect(cashier.Locator("#qrTitle")).ToBeDisabledAsync();
-        await Assertions.Expect(cashier.Locator("#fallbackMenuSelect")).ToBeDisabledAsync();
-        await Assertions.Expect(cashier.GetByRole(AriaRole.Button, new() { Name = "Save Changes" })).ToHaveCountAsync(0);
-        await Assertions.Expect(cashier.GetByTestId("calendar-add-entry")).ToHaveCountAsync(0);
-        await Assertions.Expect(cashier.GetByTestId("calendar-entry").GetByRole(AriaRole.Button)).ToHaveCountAsync(0);
-        await Assertions.Expect(cashier.GetByTestId("calendar-entry")).ToHaveCountAsync(3);
-
-        // The month buttons work, the entries are shown — but clicks and drags change nothing
-        await GotoMonthAsync(cashier, 2026, 12);
-        var silvester = CalendarOf(cashier).Locator("td[data-date='2026-12-31'] .fc-event");
-        await Assertions.Expect(silvester).ToHaveCountAsync(1);
-        await ClickDayAsync(cashier, D(2026, 12, 8));
-        await silvester.ClickAsync();
-        await CenterCalendarAsync(cashier);
-        var box = (await silvester.BoundingBoxAsync())!;
-        var target = (await CalendarOf(cashier).Locator("td[data-date='2026-12-29']").BoundingBoxAsync())!;
-        await cashier.Mouse.MoveAsync(box.X + 10, box.Y + box.Height / 2);
-        await cashier.Mouse.DownAsync();
-        await cashier.Mouse.MoveAsync(target.X + target.Width / 2, target.Y + target.Height - 6, new() { Steps = 12 });
-        await cashier.Mouse.UpAsync();
-        await cashier.WaitForTimeoutAsync(500);
-        await Assertions.Expect(cashier.Locator("dialog[data-testid='calendar-panel'][open]")).ToHaveCountAsync(0);
-        await Assertions.Expect(silvester).ToHaveCountAsync(1);
-        await Assertions.Expect(cashier.GetByTestId("calendar-entry-summary").GetByText("Only on Thu, Dec 31, 2026", new() { Exact = true })).ToHaveCountAsync(1);
-
-        await cashier.GetByRole(AriaRole.Button, new() { Name = "Back" }).ClickAsync();
-        await Assertions.Expect(cashier).ToHaveURLAsync(new Regex("/qrcodes$"));
-        var after = await LoadQrAsync(s.OwnerId, s.QrId);
-        after.CalendarEntries.Should().BeEquivalentTo(before.CalendarEntries, o => o.Excluding(e => e.QRCode).Excluding(e => e.Menu));
-        after.Title.Should().Be("Festtage");
-
-        // Creating stays denied without QrCodesCreate
-        await GotoInteractiveAsync(cashier, "/qrcode/edit");
-        await Assertions.Expect(cashier).ToHaveURLAsync(new Regex("/qrcodes$"));
+        await Assertions.Expect(manager.GetByTestId("qr-readonly-notice")).ToHaveCountAsync(0);
+        await Assertions.Expect(manager.Locator("#qrTitle")).ToBeEnabledAsync();
+        await Assertions.Expect(manager.GetByTestId("calendar-add-entry")).ToBeVisibleAsync();
+        await Assertions.Expect(manager.GetByTestId("calendar-entry")).ToHaveCountAsync(3);
+        await manager.Locator("#qrTitle").FillAsync("Festtage 2026");
+        await manager.GetByRole(AriaRole.Button, new() { Name = "Save Changes" }).ClickAsync();
+        await Assertions.Expect(manager).ToHaveURLAsync(new Regex("/qrcodes$"));
+        (await LoadQrAsync(s.OwnerId, s.QrId)).Title.Should().Be("Festtage 2026");
     }
 
     // --- Phone ---
@@ -491,7 +467,7 @@ public class QrCalendarEditorTests : QrCalendarTestBase
     {
         var s = await SeedHolidayCalendarAsync();
         var state = await Context.StorageStateAsync();
-        await using var phoneContext = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var phoneContext = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, StorageState = state,
             ViewportSize = new ViewportSize { Width = 390, Height = 844 }, IsMobile = true, HasTouch = true

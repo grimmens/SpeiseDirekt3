@@ -83,8 +83,11 @@ public sealed record CalendarOptions
     /// <summary>The day marked as today (default: the browser's date). Pass the server's date to follow its clock.</summary>
     public DateOnly? Today { get; init; }
 
-    /// <summary>FullCalendar locale code; only the built-in <c>en</c> is vendored.</summary>
-    public string Locale { get; init; } = "en";
+    /// <summary>
+    /// FullCalendar locale code (<c>null</c> = the page's language, <c>de</c>/<c>en</c>): month and day names come from Intl;
+    /// only the English locale data is vendored, so the wrapper passes every text itself (ShellText).
+    /// </summary>
+    public string? Locale { get; init; }
 
     public DayOfWeek FirstDay { get; init; } = DayOfWeek.Monday;
 
@@ -93,11 +96,8 @@ public sealed record CalendarOptions
 
     public CalendarToolbar? HeaderToolbar { get; init; } = CalendarToolbar.MonthAndList;
 
-    /// <summary>Labels of the toolbar buttons (keys: today, month, list, …).</summary>
-    public IReadOnlyDictionary<string, string>? ButtonText { get; init; } = new Dictionary<string, string>
-    {
-        ["today"] = "Today", ["month"] = "Month", ["list"] = "List", ["week"] = "Week", ["year"] = "Year"
-    };
+    /// <summary>Labels of the toolbar buttons (keys: today, month, list, …); <c>null</c> = ShellText.Calendar_*.</summary>
+    public IReadOnlyDictionary<string, string>? ButtonText { get; init; }
 
     /// <summary>Days can be selected by dragging (raises <see cref="FullCalendar.OnSelect"/>).</summary>
     public bool Selectable { get; init; }
@@ -108,8 +108,8 @@ public sealed record CalendarOptions
     /// <summary>Rows of events per day before "+n more" (<c>null</c> = no limit).</summary>
     public int? DayMaxEventRows { get; init; } = 3;
 
-    /// <summary>Text of the list view without events.</summary>
-    public string NoEventsText { get; init; } = "Nothing this month";
+    /// <summary>Text of the list view without events; <c>null</c> = ShellText.Calendar_NoEvents.</summary>
+    public string? NoEventsText { get; init; }
 }
 
 /// <summary>A range of days: <see cref="End"/> is exclusive (the day after the last one).</summary>

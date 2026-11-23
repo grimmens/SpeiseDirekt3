@@ -1,0 +1,48 @@
+@* The phone/tablet navigation (< 1024 px): a native modal <dialog> opened by the top bar's menu button
+   (data-sd-drawer-open, driven by js/shell.js). It holds the primary navigation and the user section. It closes on
+   navigation (a followed link), Escape, the backdrop and its close button; focus moves in on open and back to the
+   menu button on close, which carries aria-expanded. *@
+<dialog class="sd-drawer" id="sd-nav-drawer" aria-label="@T["DrawerLabel"]" data-sd-drawer data-testid="nav-drawer">
+    <div class="sd-drawer-panel">
+        <div class="sd-drawer-head">
+            <a href="/dashboard" class="sd-brand" aria-label="@T["BrandToDashboard"]">
+                <BrandLogo Inverse="true" Height="30" Alt="" TestId="drawer-logo" />
+            </a>
+            <button type="button" class="sd-icon-button sd-icon-button--on-dark" aria-label="@T["CloseNavigation"]"
+                    data-sd-drawer-close data-testid="nav-drawer-close">
+                <svg class="sd-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <NavMenu Variant="drawer" Permissions="User.Permissions" />
+
+        <div class="sd-drawer-user" data-testid="drawer-user">
+            <div class="sd-drawer-user-id" title="@User.Title">
+                <span class="sd-avatar" aria-hidden="true">@User.Initials</span>
+                <span class="sd-user-text">
+                    <span class="sd-user-name">@User.Name</span>
+                    @if (!string.IsNullOrEmpty(User.Role))
+                    {
+                        <span class="sd-user-role">@User.Role</span>
+                    }
+                </span>
+            </div>
+            <a href="Account/Manage" class="sd-drawer-link">
+                <svg class="sd-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>@T["AccountSettings"]</span>
+            </a>
+            <LogoutForm ButtonClass="sd-drawer-link sd-drawer-link--logout" />
+        </div>
+    </div>
+</dialog>
+
+@code {
+    [Parameter, EditorRequired] public ShellUser User { get; set; } = default!;
+
+    [Inject] private IStringLocalizer<ShellText> T { get; set; } = default!;
+}

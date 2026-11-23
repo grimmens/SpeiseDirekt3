@@ -67,12 +67,27 @@ namespace SpeiseDirekt3.Components.Account
             RedirectTo(newUri);
         }
 
+        /// <summary>
+        /// Redirects and leaves <paramref name="message"/> for the next page's <c>StatusMessage</c> (a short-lived
+        /// cookie). <paramref name="isError"/> shows it in red. The text is localized by the caller.
+        /// </summary>
         [DoesNotReturn]
-        public void RedirectToWithStatus(string uri, string message, HttpContext context)
+        public void RedirectToWithStatus(string uri, string message, HttpContext context, bool isError = false)
         {
-            context.Response.Cookies.Append(StatusCookieName, message, StatusCookieBuilder.Build(context));
+            context.Response.Cookies.Append(StatusCookieName, (isError ? ErrorPrefix : SuccessPrefix) + message, StatusCookieBuilder.Build(context));
             RedirectTo(uri);
         }
+
+        // The cookie says whether the message is an error (the visible text no longer starts with "Error", which
+        // would not work in German)
+        private const string ErrorPrefix = "e:";
+        private const string SuccessPrefix = "s:";
+
+        /// <summary>The message of a status cookie and whether it is an error.</summary>
+        public static (string Message, bool IsError) ReadStatus(string cookie) =>
+            cookie.StartsWith(ErrorPrefix, StringComparison.Ordinal) ? (cookie[ErrorPrefix.Length..], true)
+            : cookie.StartsWith(SuccessPrefix, StringComparison.Ordinal) ? (cookie[SuccessPrefix.Length..], false)
+            : (cookie, cookie.StartsWith("Error", StringComparison.Ordinal));
 
         private string CurrentPath => navigationManager.ToAbsoluteUri(navigationManager.Uri).GetLeftPart(UriPartial.Path);
 
@@ -80,7 +95,7 @@ namespace SpeiseDirekt3.Components.Account
         public void RedirectToCurrentPage() => RedirectTo(CurrentPath);
 
         [DoesNotReturn]
-        public void RedirectToCurrentPageWithStatus(string message, HttpContext context)
-            => RedirectToWithStatus(CurrentPath, message, context);
+        public void RedirectToCurrentPageWithStatus(string message, HttpContext context, bool isError = false)
+            => RedirectToWithStatus(CurrentPath, message, context, isError);
     }
 }

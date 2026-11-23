@@ -179,7 +179,7 @@ public class GuestLanguageTests : BackOfficeTestBase
     public async Task WithoutJavaScript_TheButtonLinksToTheLanguageList()
     {
         var group = await SeedGroupAsync();
-        await using var noJs = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var noJs = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, JavaScriptEnabled = false, ViewportSize = new ViewportSize { Width = 390, Height = 844 }
         });

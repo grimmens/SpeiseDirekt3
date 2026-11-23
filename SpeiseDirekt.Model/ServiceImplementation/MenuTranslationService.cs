@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
@@ -70,13 +71,13 @@ public class MenuTranslationService : IMenuTranslationService
             .AsSplitQuery()
             .FirstOrDefaultAsync(m => m.Id == menuId);
         if (source is null)
-            return MenuTranslationResult.Fail("The menu does not exist.");
+            return MenuTranslationResult.Fail(ModelText.Menu_NotFound);
 
         var target = MenuLanguages.Of(language);
         if (source.Language == language)
-            return MenuTranslationResult.Fail($"This menu is already in {target.EnglishName}.");
+            return MenuTranslationResult.Fail(Text(ModelText.Translation_AlreadyInLanguage, target.DisplayName));
         if (await TakenByAsync(source.TranslationGroupId, language, exceptMenuId: menuId) is { } taken)
-            return MenuTranslationResult.Fail($"The {target.EnglishName} version already exists: \"{taken}\".");
+            return MenuTranslationResult.Fail(Text(ModelText.Translation_VersionExists, target.DisplayName, taken));
 
         var combos = await db.MenuCombos.AsNoTracking()
             .Include(c => c.Items)
@@ -171,24 +172,24 @@ public class MenuTranslationService : IMenuTranslationService
     public async Task<MenuTranslationResult> LinkAsync(Guid menuId, Guid otherMenuId)
     {
         if (menuId == otherMenuId)
-            return MenuTranslationResult.Fail("A menu cannot be linked to itself.");
+            return MenuTranslationResult.Fail(ModelText.Translation_LinkSelf);
 
         var menu = await db.Menus.FirstOrDefaultAsync(m => m.Id == menuId);
         var other = await db.Menus.FirstOrDefaultAsync(m => m.Id == otherMenuId);
         if (menu is null || other is null)
-            return MenuTranslationResult.Fail("The menu does not exist.");
+            return MenuTranslationResult.Fail(ModelText.Menu_NotFound);
 
         if (menu.TranslationGroupId is not null && other.TranslationGroupId == menu.TranslationGroupId)
-            return MenuTranslationResult.Fail($"\"{other.Name}\" is already a version of this menu.");
+            return MenuTranslationResult.Fail(Text(ModelText.Translation_AlreadyVersion, other.Name));
         if (other.TranslationGroupId is { } otherGroup
             && await db.Menus.AnyAsync(m => m.TranslationGroupId == otherGroup && m.Id != other.Id))
-            return MenuTranslationResult.Fail($"\"{other.Name}\" is linked to other menus. Unlink it there first.");
+            return MenuTranslationResult.Fail(Text(ModelText.Translation_LinkedElsewhere, other.Name));
 
         var language = MenuLanguages.Of(other.Language);
         if (menu.Language == other.Language)
-            return MenuTranslationResult.Fail($"\"{other.Name}\" is in {language.EnglishName} like this menu.");
+            return MenuTranslationResult.Fail(Text(ModelText.Translation_SameLanguage, other.Name, language.DisplayName));
         if (await TakenByAsync(menu.TranslationGroupId, other.Language, exceptMenuId: other.Id) is { } taken)
-            return MenuTranslationResult.Fail($"The {language.EnglishName} version already exists: \"{taken}\".");
+            return MenuTranslationResult.Fail(Text(ModelText.Translation_VersionExists, language.DisplayName, taken));
 
         var groupId = menu.TranslationGroupId ?? Guid.NewGuid();
         menu.TranslationGroupId = groupId;
@@ -201,7 +202,7 @@ public class MenuTranslationService : IMenuTranslationService
     {
         var menu = await db.Menus.FirstOrDefaultAsync(m => m.Id == menuId);
         if (menu is null)
-            return MenuTranslationResult.Fail("The menu does not exist.");
+            return MenuTranslationResult.Fail(ModelText.Menu_NotFound);
         if (menu.TranslationGroupId is not { } groupId)
             return MenuTranslationResult.Ok(menuId);
 
@@ -217,9 +218,12 @@ public class MenuTranslationService : IMenuTranslationService
     {
         var groupId = await db.Menus.Where(m => m.Id == menuId).Select(m => m.TranslationGroupId).FirstOrDefaultAsync();
         return await TakenByAsync(groupId, language, exceptMenuId: menuId) is { } taken
-            ? $"This menu already has a {MenuLanguages.Of(language).EnglishName} version: \"{taken}\". Unlink it first or pick another language."
+            ? Text(ModelText.Translation_LanguageTaken, MenuLanguages.Of(language).DisplayName, taken)
             : null;
     }
+
+    /// <summary>A message of <see cref="ModelText"/> in the current UI language (AP12; the API's is the server's, English).</summary>
+    private static string Text(string format, params object[] args) => string.Format(CultureInfo.CurrentCulture, format, args);
 
     /// <summary>
     /// Before a menu of <paramref name="groupId"/> is deleted (same transaction): when only one other menu stays in the

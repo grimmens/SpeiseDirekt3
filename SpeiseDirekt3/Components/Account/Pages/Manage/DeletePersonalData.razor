@@ -9,32 +9,30 @@
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<DeletePersonalData> Logger
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>Delete Personal Data</PageTitle>
+<PageTitle>@C["PageTitle", T["DeleteData_Title"]]</PageTitle>
 
-<StatusMessage Message="@message" />
-
-<h3>Delete Personal Data</h3>
-
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Deleting this data will permanently remove your account, and this cannot be recovered.</strong>
-    </p>
-</div>
-
-<div>
-    <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
+<ManageHeader Title="@T["DeleteData_Title"]" />
+<div class="sd-manage-body">
+    <StatusMessage Message="@message" IsError="true" />
+    <div class="sd-notice sd-notice--danger" role="alert">
+        <p><strong>@T["PersonalData_DeleteWarning"]</strong></p>
+    </div>
+    <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post" class="grid gap-4 max-w-sm">
         <DataAnnotationsValidator />
-        <ValidationSummary class="text-danger" role="alert" />
         @if (requirePassword)
         {
-            <div class="form-floating mb-3">
-                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="form-control" autocomplete="current-password" aria-required="true" placeholder="Please enter your password." />
-                <label for="Input.Password" class="form-label">Password</label>
-                <ValidationMessage For="() => Input.Password" class="text-danger" />
+            <div class="sd-field">
+                <label for="Input.Password" class="sd-label">@T["Field_Password"]</label>
+                <InputText type="password" @bind-Value="Input.Password" id="Input.Password" class="sd-input" autocomplete="current-password" aria-required="true" placeholder="@T["DeleteData_PasswordPlaceholder"]" />
+                <ValidationMessage For="() => Input.Password" class="validation-message" />
             </div>
         }
-        <button class="w-100 btn btn-lg btn-danger" type="submit">Delete data and close my account</button>
+        <div class="sd-actions">
+            <button class="sd-btn sd-btn--danger" type="submit">@T["DeleteData_Submit"]</button>
+        </div>
     </EditForm>
 </div>
 
@@ -60,7 +58,7 @@
     {
         if (requirePassword && !await UserManager.CheckPasswordAsync(user, Input.Password))
         {
-            message = "Error: Incorrect password.";
+            message = T["Status_IncorrectPassword"];
             return;
         }
 

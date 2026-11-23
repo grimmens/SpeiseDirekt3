@@ -64,4 +64,56 @@ public class AllergenTests : BackOfficeTestBase
 
         await Assertions.Expect(Page.GetByText("This code already exists for this menu.")).ToHaveCountAsync(0);
     }
+
+    [Fact]
+    public async Task Allergen_IsEditedInTheRow_EnterSaves_EscapeCancels_DuplicateCodeIsRejected()
+    {
+        await RegisterNewOwnerAsync();
+        var menuId = await CreateMenuViaUiAsync("Inline Allergene");
+        await CreateAllergenViaUiAsync(menuId, "A", "Gluten");
+        await CreateAllergenViaUiAsync(menuId, "G", "Milch");
+
+        var form = Page.GetByTestId("allergen-edit");
+        var code = form.Locator("#Allergen\\.Code");
+        var name = form.Locator("#Allergen\\.Name");
+        async Task EditAsync(string allergenCode)
+        {
+            await Page.GetByRole(AriaRole.Button, new() { Name = $"Edit allergen {allergenCode}", Exact = true }).ClickAsync();
+            await Assertions.Expect(form).ToBeVisibleAsync();
+            await Assertions.Expect(code).ToBeFocusedAsync();
+        }
+
+        // Enter saves (code and name), the focus returns to the row's edit button
+        await EditAsync("A");
+        await name.FillAsync("Glutenhaltiges Getreide");
+        await name.PressAsync("Enter");
+        await Assertions.Expect(form).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.Locator("table td", new() { HasTextString = "Glutenhaltiges Getreide" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByRole(AriaRole.Button, new() { Name = "Edit allergen A", Exact = true })).ToBeFocusedAsync();
+
+        // Escape cancels
+        await EditAsync("G");
+        await name.FillAsync("Nicht speichern");
+        await name.PressAsync("Escape");
+        await Assertions.Expect(form).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.Locator("table td", new() { HasTextString = "Milch" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.Locator("table td", new() { HasTextString = "Nicht speichern" })).ToHaveCountAsync(0);
+
+        // The same messages as the add form: a code of another allergen is refused, an empty name is required
+        await EditAsync("G");
+        await code.FillAsync("A");
+        await code.PressAsync("Enter");
+        await Assertions.Expect(form.GetByText("This code already exists for this menu.")).ToBeVisibleAsync();
+        await code.FillAsync("G");
+        await name.FillAsync("");
+        await name.PressAsync("Enter");
+        await Assertions.Expect(form.GetByText("The Name field is required.")).ToBeVisibleAsync();
+        await form.GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await Assertions.Expect(form).ToHaveCountAsync(0);
+
+        await GotoInteractiveAsync($"/allergens/{menuId}");
+        await Assertions.Expect(Page.GetByTestId("allergen-code")).ToHaveTextAsync(new[] { "A", "G" });
+        await Assertions.Expect(Page.Locator("table td", new() { HasTextString = "Glutenhaltiges Getreide" })).ToBeVisibleAsync();
+        await Assertions.Expect(Page.Locator("table td", new() { HasTextString = "Milch" })).ToBeVisibleAsync();
+    }
 }

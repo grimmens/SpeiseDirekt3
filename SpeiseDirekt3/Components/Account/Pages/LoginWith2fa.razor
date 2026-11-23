@@ -8,73 +8,40 @@
 @inject UserManager<ApplicationUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWith2fa> Logger
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>Two-factor authentication - Speise-Direkt</PageTitle>
+<PageTitle>@C["PageTitle", T["TwoFactorLogin_Title"]]</PageTitle>
 
-<!-- 2FA Login Page -->
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
-        <!-- Header -->
-        <div class="text-center">
-            <div class="flex justify-center mb-6">
-                <img src="/image/speise-direkt.jpg" alt="Speise-Direkt Logo" class="h-16 w-16 rounded-full shadow-lg" />
+<AuthCard Title="@T["TwoFactorLogin_Title"]" Lead="@T["TwoFactorLogin_Text"]" Icon="shield">
+    <ChildContent>
+        <StatusMessage Message="@message" IsError="true" />
+        <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post" class="au-form">
+            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+            <input type="hidden" name="RememberMe" value="@RememberMe" />
+            <DataAnnotationsValidator />
+            <div class="au-field">
+                <label for="Input.TwoFactorCode" class="au-label">@T["Field_AuthenticatorCode"]</label>
+                <div class="au-input-wrap">
+                    <LandingIcon Name="key" Class="au-icon" />
+                    <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="au-input" inputmode="numeric"
+                               autocomplete="one-time-code" aria-required="true" placeholder="@T["Placeholder_SixDigitCode"]" />
+                </div>
+                <ValidationMessage For="() => Input.TwoFactorCode" class="validation-message" />
             </div>
-            <h2 class="text-3xl font-bold text-gray-900 font-display">Two-factor authentication</h2>
-            <p class="mt-2 text-gray-600">Your login is protected with an authenticator app. Enter your authenticator code below.</p>
-        </div>
-
-        <!-- 2FA Form -->
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <StatusMessage Message="@message" />
-            <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post" class="space-y-6">
-                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-                <input type="hidden" name="RememberMe" value="@RememberMe" />
-                <DataAnnotationsValidator />
-                <ValidationSummary class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm" role="alert" />
-
-                <!-- Authenticator Code Field -->
-                <div>
-                    <label for="Input.TwoFactorCode" class="block text-sm font-medium text-gray-700 mb-2">Authenticator code</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                            </svg>
-                        </div>
-                        <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode"
-                                   class="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-                                   autocomplete="off" aria-required="true" placeholder="Enter your 6-digit code" />
-                    </div>
-                    <ValidationMessage For="() => Input.TwoFactorCode" class="mt-1 text-sm text-red-600" />
-                </div>
-
-                <!-- Remember Machine -->
-                <div class="flex items-center">
-                    <InputCheckbox @bind-Value="Input.RememberMachine" id="Input.RememberMachine"
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                    <label for="Input.RememberMachine" class="ml-2 block text-sm text-gray-700">
-                        Remember this machine
-                    </label>
-                </div>
-
-                <!-- Submit Button -->
-                <div>
-                    <button type="submit"
-                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                        Log in
-                    </button>
-                </div>
-
-                <!-- Recovery Code Link -->
-                <div class="text-center">
-                    <a href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl" class="text-sm text-blue-600 hover:text-blue-500 hover:underline">
-                        Don't have access to your authenticator device? Use a recovery code
-                    </a>
-                </div>
-            </EditForm>
-        </div>
-    </div>
-</div>
+            <label class="au-check" for="Input.RememberMachine">
+                <InputCheckbox @bind-Value="Input.RememberMachine" id="Input.RememberMachine" />
+                @T["TwoFactorLogin_RememberMachine"]
+            </label>
+            <button type="submit" class="au-button au-button--primary">@T["TwoFactorLogin_Submit"]</button>
+        </EditForm>
+    </ChildContent>
+    <Links>
+        <li><a href="@($"/Account/LoginWithRecoveryCode?ReturnUrl={Uri.EscapeDataString(ReturnUrl ?? "")}")" class="au-link">@T["TwoFactorLogin_UseRecovery"]</a></li>
+    </Links>
+</AuthCard>
 
 @code {
     private string? message;
@@ -115,19 +82,17 @@
         else
         {
             Logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", userId);
-            message = "Error: Invalid authenticator code.";
+            message = T["Status_InvalidAuthenticatorCode"];
         }
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_CodeRequired))]
+        [StringLength(7, MinimumLength = 6, ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_CodeLength))]
         [DataType(DataType.Text)]
-        [Display(Name = "Authenticator code")]
         public string? TwoFactorCode { get; set; }
 
-        [Display(Name = "Remember this machine")]
         public bool RememberMachine { get; set; }
     }
 }

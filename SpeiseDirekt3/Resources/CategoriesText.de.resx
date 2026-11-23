@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Kategorien</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Die Abschnitte von {0}. Gäste sehen sie in der Reihenfolge dieser Liste.</value>
+    <comment>{0} = the menu's name (bold)</comment>
+  </data>
+  <data name="List_Heading" xml:space="preserve">
+    <value>Kategorien</value>
+  </data>
+  <data name="OrderHint" xml:space="preserve">
+    <value>Ziehen Sie am Griff, um die Reihenfolge zu ändern.</value>
+  </data>
+  <data name="Column_Order" xml:space="preserve">
+    <value>Reihenfolge</value>
+  </data>
+  <data name="Column_Category" xml:space="preserve">
+    <value>Kategorie</value>
+  </data>
+  <data name="Column_Actions" xml:space="preserve">
+    <value>Aktionen</value>
+  </data>
+  <data name="Field_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Field_SubtitleOptional" xml:space="preserve">
+    <value>Untertitel (optional)</value>
+  </data>
+  <data name="Field_SubtitlePlaceholder" xml:space="preserve">
+    <value>z. B. Mezze</value>
+  </data>
+  <data name="InlineHint" xml:space="preserve">
+    <value>Eingabetaste speichert, Escape bricht ab. Den Untertitel sehen Gäste unter dem Namen.</value>
+  </data>
+  <data name="ItemCount_One" xml:space="preserve">
+    <value>1 Gericht</value>
+  </data>
+  <data name="ItemCount_Other" xml:space="preserve">
+    <value>{0} Gerichte</value>
+  </data>
+  <data name="EditLabel" xml:space="preserve">
+    <value>{0} bearbeiten</value>
+    <comment>aria-label, {0} = category name</comment>
+  </data>
+  <data name="DeleteLabel" xml:space="preserve">
+    <value>{0} löschen</value>
+    <comment>aria-label, {0} = category name</comment>
+  </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>Noch keine Kategorien</value>
+  </data>
+  <data name="EmptyText" xml:space="preserve">
+    <value>Kategorien sind die Abschnitte der Speisekarte, z. B. Vorspeisen, Hauptgerichte, Desserts und Getränke.</value>
+  </data>
+  <data name="EmptyAddHint" xml:space="preserve">
+    <value>Legen Sie die erste mit dem Formular an.</value>
+  </data>
+  <data name="Add_Title" xml:space="preserve">
+    <value>Neue Kategorie</value>
+  </data>
+  <data name="Add_Name" xml:space="preserve">
+    <value>Name der Kategorie</value>
+  </data>
+  <data name="Add_NameHint" xml:space="preserve">
+    <value>Neue Kategorien kommen ans Ende der Liste.</value>
+  </data>
+  <data name="Add_Subtitle" xml:space="preserve">
+    <value>Untertitel</value>
+  </data>
+  <data name="Add_SubtitleHint" xml:space="preserve">
+    <value>Gäste sehen ihn unter dem Namen der Kategorie.</value>
+  </data>
+  <data name="Add_Submit" xml:space="preserve">
+    <value>Kategorie hinzufügen</value>
+  </data>
+  <data name="Error_NotLoggedIn" xml:space="preserve">
+    <value>Sie müssen angemeldet sein, um Kategorien anzulegen.</value>
+  </data>
+  <data name="Error_NameTaken" xml:space="preserve">
+    <value>Diesen Namen gibt es bereits.</value>
+  </data>
+  <data name="Error_Add" xml:space="preserve">
+    <value>Die Kategorie konnte nicht angelegt werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="Error_Order" xml:space="preserve">
+    <value>Die neue Position von „{0}“ konnte nicht gespeichert werden. Die vorherige Reihenfolge wird wieder angezeigt.</value>
+  </data>
+  <data name="Error_Gone" xml:space="preserve">
+    <value>Diese Kategorie gibt es nicht mehr.</value>
+  </data>
+  <data name="Error_Save" xml:space="preserve">
+    <value>Die Kategorie konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.</value>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Kategorie löschen</value>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>Möchten Sie die Kategorie „{0}“ wirklich löschen?</value>
+  </data>
+</root>

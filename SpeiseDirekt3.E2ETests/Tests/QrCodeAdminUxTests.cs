@@ -197,7 +197,7 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
 
         // No entry at all
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Es muss zumindest einen Kalender-Eintrag geben.").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("There must be at least one calendar entry.").First).ToBeVisibleAsync();
 
         // An entry without a menu cannot be added any more: the panel asks for one and Escape discards it
         await Page.GetByTestId("calendar-add-entry").ClickAsync();
@@ -209,7 +209,7 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
         await Assertions.Expect(EntryRows).ToHaveCountAsync(0);
 
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Es muss zumindest einen Kalender-Eintrag geben.").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("There must be at least one calendar entry.").First).ToBeVisibleAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcode/edit$"));
     }
 
@@ -255,7 +255,7 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
         await AddEntryViaPanelAsync("Überschneidung", "2026-12-07", weekly: "Monday");
         await Assertions.Expect(Page.GetByTestId("calendar-conflicts")).ToBeVisibleAsync();
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Die wöchentlichen Einträge am Montag überschneiden sich").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("The weekly entries on Monday overlap").First).ToBeVisibleAsync();
 
         // On different weekdays they do not
         await EntryRow("Every Monday from Mon, Dec 7, 2026").GetByRole(AriaRole.Button, new() { Name = "Edit" }).ClickAsync();
@@ -274,7 +274,7 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
         await AddEntryViaPanelAsync("Überschneidung", "2026-11-12");
         await Assertions.Expect(Page.GetByTestId("calendar-conflicts")).ToBeVisibleAsync();
         await Button("Create QR Code").ClickAsync();
-        await Assertions.Expect(Page.GetByText("Die Datumsperioden überschneiden sich").First).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByText("The date ranges overlap").First).ToBeVisibleAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcode/edit$"));
     }
 
@@ -351,6 +351,44 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
     }
 
+    /// <summary>
+    /// AP13: the thumbnail opens the code enlarged in a quiet native dialog (no Bootstrap modal): title, the large image,
+    /// Escape / the close button / the backdrop close it, and the focus returns to the thumbnail.
+    /// </summary>
+    [Fact]
+    public async Task List_Thumbnail_OpensTheEnlargedCode_InANativeDialog()
+    {
+        var ownerId = await RegisterOwnerAsync();
+        var menu = await SeedMenuAsync(ownerId, "Vorschau Menü");
+        await SeedQrAsync(ownerId, new QRCode { Title = "Tisch 7", MenuId = menu });
+
+        await GotoInteractiveAsync("/qrcodes");
+        var thumbnail = Card("Tisch 7").GetByTestId("qr-preview-button");
+        var dialog = Card("Tisch 7").GetByTestId("qr-preview-dialog");
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+        (await Page.Locator("[data-bs-toggle=modal], .modal").CountAsync()).Should().Be(0);
+
+        await thumbnail.ClickAsync();
+        await Assertions.Expect(dialog).ToBeVisibleAsync();
+        await Assertions.Expect(dialog.Locator("h2")).ToHaveTextAsync("Tisch 7");
+        await Assertions.Expect(dialog.Locator("img")).ToHaveJSPropertyAsync("complete", true);
+        (await dialog.Locator("img").EvaluateAsync<int>("i => i.naturalWidth")).Should().BeGreaterThan(0);
+        await Assertions.Expect(dialog.GetByRole(AriaRole.Button, new() { Name = "Close" })).ToBeFocusedAsync();
+
+        await Page.Keyboard.PressAsync("Escape");
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+        await Assertions.Expect(thumbnail).ToBeFocusedAsync();
+
+        await thumbnail.ClickAsync();
+        await dialog.GetByRole(AriaRole.Button, new() { Name = "Close" }).ClickAsync();
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+
+        await thumbnail.ClickAsync();
+        await Assertions.Expect(dialog).ToBeVisibleAsync();
+        await Page.Mouse.ClickAsync(5, 5); // the backdrop
+        await Assertions.Expect(dialog).ToBeHiddenAsync();
+    }
+
     [Fact]
     public async Task ImageEndpoint_WithoutDownload_IsInline_AndRejectsUnsafeNames()
     {
@@ -414,8 +452,11 @@ public class QrCodeAdminUxTests : QrCalendarTestBase
 
         await GotoInteractiveAsync("/qrcodes");
         await Card("Zeitplan weg").GetByRole(AriaRole.Button, new() { Name = "Delete Zeitplan weg" }).ClickAsync();
+        // Wait for the open dialog (its text is rendered before it opens), then confirm
+        await Assertions.Expect(Page.Locator("#confirmationModal")).ToBeVisibleAsync();
         await Assertions.Expect(Page.Locator("#confirmationModal")).ToContainTextAsync("“Zeitplan weg”");
         await Page.Locator("#confirmBtn").ClickAsync();
+        await Assertions.Expect(Page.Locator("#confirmationModal")).ToBeHiddenAsync();
 
         await Assertions.Expect(Card("Zeitplan weg")).ToHaveCountAsync(0);
         await using var db = App.CreateDbContext(ownerId);

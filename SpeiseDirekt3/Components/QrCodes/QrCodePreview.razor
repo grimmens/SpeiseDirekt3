@@ -1,47 +1,46 @@
-﻿@inject NavigationManager NavManager
-
+@inject NavigationManager NavManager
+@inject IStringLocalizer<QrCodesText> T
+@inject IStringLocalizer<CommonText> C
+@* A QR code thumbnail; a click opens it enlarged in a quiet native <dialog> (css/back-office.css .sd-dialog). Opening and
+   closing are plain JS (js/shell.js, [data-sd-dialog-open] / [data-sd-dialog]): Escape, the backdrop and the close button
+   close it, the focus returns to the thumbnail. No Blazor state, no Bootstrap modal. *@
 
 <div class="qr-preview">
     @if (QrId != Guid.Empty)
     {
         <button type="button"
-                class="block p-0 border-0 bg-transparent"
-                title="Click to enlarge"
-                data-bs-toggle="modal"
-                data-bs-target="#@ModalId">
+                class="block p-0 border-0 bg-transparent cursor-zoom-in rounded-lg"
+                title="@T["Preview_Enlarge"]"
+                aria-haspopup="dialog"
+                aria-controls="@ModalId"
+                data-sd-dialog-open
+                data-testid="qr-preview-button">
             <img src="@_imageUrl"
-                 alt="@(string.IsNullOrEmpty(Title) ? "QR Code" : $"QR code {Title}")"
+                 alt="@(string.IsNullOrEmpty(Title) ? T["Preview_AltUntitled"] : T["Preview_Alt", Title])"
                  width="@ThumbnailSize"
                  height="@ThumbnailSize"
-                 class="@ImageClass"
-                 style="cursor:pointer;" />
+                 class="@ImageClass" />
         </button>
     }
     else
     {
-        <p class="text-muted">Loading QR…</p>
+        <p class="text-muted">@T["Preview_Loading"]</p>
     }
 </div>
 
-<div class="modal fade" id="@ModalId" tabindex="-1" aria-labelledby="@($"{ModalId}Label")" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="@($"{ModalId}Label")">@(string.IsNullOrEmpty(Title) ? "QR Code Preview" : Title)</h5>
-                <button type="button"
-                        class="btn-close"
-                        data-bs-dismiss="modal"
-                        aria-label="Close"></button>
-            </div>
-            <div class="modal-body text-center">
-                <img src="@_imageUrl"
-                     alt="QR Code Large"
-                     loading="lazy"
-                     class="img-fluid" />
-            </div>
-        </div>
+<dialog class="sd-dialog" id="@ModalId" aria-labelledby="@($"{ModalId}Label")" data-sd-dialog data-testid="qr-preview-dialog">
+    <div class="sd-dialog-head">
+        <h2 class="sd-dialog-title" id="@($"{ModalId}Label")">@(string.IsNullOrEmpty(Title) ? T["Preview_Title"] : Title)</h2>
+        <button type="button" class="sd-row-action sd-dialog-close" aria-label="@C["Close"]" data-sd-dialog-close>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
     </div>
-</div>
+    <div class="sd-dialog-body text-center">
+        <img src="@_imageUrl" alt="@T["Preview_LargeAlt"]" width="320" height="320" loading="lazy" class="mx-auto block h-auto w-full max-w-xs" />
+    </div>
+</dialog>
 
 @code {
     /// <summary>
@@ -50,7 +49,7 @@
     [Parameter, EditorRequired] public Guid QrId { get; set; }
 
     /// <summary>
-    /// The HTML id for the modal.  Defaults to a random GUID-based id.
+    /// The HTML id of the dialog.  Defaults to a random GUID-based id.
     /// </summary>
     public string ModalId { get; set; } = $"qrModal_{Guid.NewGuid():N}";
 

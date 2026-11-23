@@ -10,7 +10,7 @@ namespace SpeiseDirekt.Model
     public sealed class HttpUrlAttribute : ValidationAttribute
     {
         public HttpUrlAttribute()
-            : base("Enter a full web address starting with https:// (or http://).") { }
+            : base(() => ModelText.HttpUrl_Invalid) { }
 
         public static bool IsHttpUrl(string? value) =>
             Uri.TryCreate(value?.Trim(), UriKind.Absolute, out var uri)
@@ -28,7 +28,7 @@ namespace SpeiseDirekt.Model
         private static readonly EmailAddressAttribute Email = new();
 
         public OptionalEmailAttribute()
-            : base("Enter a valid e-mail address.") { }
+            : base(() => ModelText.Email_Invalid) { }
 
         public override bool IsValid(object? value) =>
             value is null || value is string text && (string.IsNullOrWhiteSpace(text) || Email.IsValid(text.Trim()));

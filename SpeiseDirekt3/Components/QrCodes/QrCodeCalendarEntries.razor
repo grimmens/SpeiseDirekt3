@@ -5,6 +5,8 @@
 @using Microsoft.AspNetCore.Components.Forms
 @implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject IStringLocalizer<QrCodesText> T
+@inject IStringLocalizer<CommonText> C
 
 @* Calendar entries of a calendar-based QR code: a menu on a single date, over a date range or weekly on one weekday,
    shown in a month calendar (Shared/Calendar/FullCalendar) with the menu guests get on each day. Click a day (or drag
@@ -15,18 +17,11 @@
 @{ var view = BuildView(); }
 <div class="sd-cal-editor" data-testid="calendar-editor">
     <p class="sd-cal-help">
-        @if (ReadOnly)
-        {
-            @:Which menu guests get on each day.
-        }
-        else
-        {
-            @:Click or tap a day to add an entry, or drag across days for a period. Click an entry to change it, drag it to move it.
-        }
+        @(ReadOnly ? T["Cal_HelpReadOnly"] : T["Cal_Help"])
     </p>
 
     <div class="sd-cal-card">
-        <FullCalendar TestId="qr-calendar" AriaLabel="Calendar: which menu guests get on each day"
+        <FullCalendar TestId="qr-calendar" AriaLabel="@T["Cal_AriaLabel"]"
                       Events="@view.Events" Options="@CalendarOptions"
                       OnDateClick="@(ReadOnly ? default : EventCallback.Factory.Create<DateOnly>(this, OnDayClicked))"
                       OnSelect="@(ReadOnly ? default : EventCallback.Factory.Create<CalendarRange>(this, OnRangeSelected))"
@@ -35,7 +30,7 @@
                       OnDatesSet="OnDatesSet" />
     </div>
 
-    <ul class="sd-cal-legend" aria-label="Legend" data-testid="calendar-legend">
+    <ul class="sd-cal-legend" aria-label="@T["Cal_Legend"]" data-testid="calendar-legend">
         @foreach (var menuId in view.LegendMenus)
         {
             <li data-testid="legend-menu"><span class="sd-cal-swatch" style="background-color: @view.ColorOf(menuId)" aria-hidden="true"></span>@MenuName(menuId)</li>
@@ -43,14 +38,14 @@
         <li data-testid="calendar-fallback-hint"><span class="sd-cal-swatch sd-cal-swatch--fallback" aria-hidden="true"></span>@FallbackText</li>
         @if (view.HasOverridden)
         {
-            <li data-testid="legend-overridden"><span class="sd-cal-swatch sd-cal-swatch--overridden" aria-hidden="true"></span>Struck through: a single date or period wins that day</li>
+            <li data-testid="legend-overridden"><span class="sd-cal-swatch sd-cal-swatch--overridden" aria-hidden="true"></span>@T["Cal_LegendOverridden"]</li>
         }
     </ul>
 
     @if (view.ProblemTexts.Count > 0)
     {
         <div class="sd-cal-alert" role="alert" data-testid="calendar-conflicts">
-            <p class="sd-cal-alert-title">Guests can get only one menu per day. Change one of these entries before saving:</p>
+            <p class="sd-cal-alert-title">@T["Cal_ConflictsTitle"]</p>
             <ul>
                 @foreach (var text in view.ProblemTexts)
                 {
@@ -62,18 +57,18 @@
     @ChildContent
 
     <div class="sd-cal-list-head">
-        <h3 id="cal-entries-heading" class="sd-cal-list-title">Entries</h3>
+        <h3 id="cal-entries-heading" class="sd-cal-list-title">@T["Cal_Entries"]</h3>
         @if (!ReadOnly)
         {
             <button type="button" @ref="addButton" class="sd-cal-button" data-testid="calendar-add-entry" @onclick="OpenNewFromButton">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" /></svg>
-                Add entry
+                @T["Cal_AddEntry"]
             </button>
         }
     </div>
     @if (CalendarEntries.Count == 0)
     {
-        <p class="sd-cal-empty">No calendar entries yet. Add one for a holiday, a festival week or a weekly special.</p>
+        <p class="sd-cal-empty">@T["Cal_Empty"]</p>
     }
     else
     {
@@ -96,8 +91,8 @@
                     @if (!ReadOnly)
                     {
                         <div class="sd-cal-row-actions">
-                            <button type="button" class="sd-cal-button sd-cal-button--small" aria-describedby="@summaryId" @onclick="() => OpenEdit(entry)">Edit</button>
-                            <button type="button" class="sd-cal-button sd-cal-button--small sd-cal-button--danger" aria-describedby="@summaryId" @onclick="() => RemoveEntry(entry)">Remove</button>
+                            <button type="button" class="sd-cal-button sd-cal-button--small" aria-describedby="@summaryId" @onclick="() => OpenEdit(entry)">@C["Edit"]</button>
+                            <button type="button" class="sd-cal-button sd-cal-button--small sd-cal-button--danger" aria-describedby="@summaryId" @onclick="() => RemoveEntry(entry)">@C["Remove"]</button>
                         </div>
                     }
                 </li>
@@ -111,17 +106,17 @@
         {
             <div class="sd-cal-panel-body">
                 <div class="sd-cal-panel-head">
-                    <h2 id="cal-panel-title" class="sd-cal-panel-title">@(editing is null ? "New calendar entry" : "Edit calendar entry")</h2>
-                    <button type="button" class="sd-cal-icon-button" aria-label="Close" @onclick="CancelPanelAsync">
+                    <h2 id="cal-panel-title" class="sd-cal-panel-title">@(editing is null ? T["Cal_PanelNew"] : T["Cal_PanelEdit"])</h2>
+                    <button type="button" class="sd-cal-icon-button" aria-label="@C["Close"]" @onclick="CancelPanelAsync">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
                 <div class="sd-cal-panel-fields">
                     <div>
-                        <label for="cal-panel-menu" class="sd-cal-label">Menu</label>
+                        <label for="cal-panel-menu" class="sd-cal-label">@T["Cal_Menu"]</label>
                         <select id="cal-panel-menu" class="sd-cal-input" @bind="DraftMenu" autofocus>
-                            <option value="">-- Select a menu --</option>
+                            <option value="">@T["Cal_SelectMenu"]</option>
                             @foreach (var m in Menus)
                             {
                                 <option value="@m.Id">@m.Name</option>
@@ -129,22 +124,22 @@
                         </select>
                     </div>
                     <div>
-                        <label for="cal-panel-weekly" class="sd-cal-label">Repeats weekly on</label>
+                        <label for="cal-panel-weekly" class="sd-cal-label">@T["Cal_Weekly"]</label>
                         <select id="cal-panel-weekly" class="sd-cal-input" @bind="DraftWeekly">
-                            <option value="">Does not repeat</option>
+                            <option value="">@T["Cal_NoRepeat"]</option>
                             @foreach (var day in Weekdays)
                             {
-                                <option value="@day">@day</option>
+                                <option value="@day">@DayName(day)</option>
                             }
                         </select>
                     </div>
                     <div class="sd-cal-panel-dates">
                         <div>
-                            <label for="cal-panel-date" class="sd-cal-label">From</label>
+                            <label for="cal-panel-date" class="sd-cal-label">@T["Cal_From"]</label>
                             <input type="date" id="cal-panel-date" class="sd-cal-input" @bind="draft.Date" @bind:format="yyyy-MM-dd" />
                         </div>
                         <div>
-                            <label for="cal-panel-until" class="sd-cal-label">Until (optional)</label>
+                            <label for="cal-panel-until" class="sd-cal-label">@T["Cal_Until"]</label>
                             <input type="date" id="cal-panel-until" class="sd-cal-input" @bind="draft.EndDate" @bind:format="yyyy-MM-dd" />
                         </div>
                     </div>
@@ -152,7 +147,7 @@
                     @if (PanelConflicts() is { Count: > 0 } collisions)
                     {
                         <p class="sd-cal-panel-warning" data-testid="calendar-panel-conflict">
-                            Overlaps @string.Join(" and ", collisions.Select(Label)). Saving is refused until one of them changes.
+                            @T["Cal_PanelConflict", JoinLabels(collisions)]
                         </p>
                     }
                     @if (draftError is not null)
@@ -164,12 +159,12 @@
                 <div class="sd-cal-panel-actions">
                     @if (editing is not null)
                     {
-                        <button type="button" class="sd-cal-button sd-cal-button--danger" data-testid="calendar-panel-delete" @onclick="DeleteFromPanelAsync">Delete entry</button>
+                        <button type="button" class="sd-cal-button sd-cal-button--danger" data-testid="calendar-panel-delete" @onclick="DeleteFromPanelAsync">@T["Cal_DeleteEntry"]</button>
                     }
                     <span class="sd-cal-panel-spacer"></span>
-                    <button type="button" class="sd-cal-button" @onclick="CancelPanelAsync">Cancel</button>
+                    <button type="button" class="sd-cal-button" @onclick="CancelPanelAsync">@C["Cancel"]</button>
                     <button type="button" class="sd-cal-button sd-cal-button--primary" data-dialog-default data-testid="calendar-panel-apply" @onclick="ApplyDraftAsync">
-                        @(editing is null ? "Add entry" : "Apply")
+                        @(editing is null ? T["Cal_AddEntry"] : T["Cal_Apply"])
                     </button>
                 </div>
             </div>
@@ -205,7 +200,6 @@
         DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
     };
 
-    private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en-US");
 
     /// <summary>
     /// Menu colours, hues far apart (blue, green, orange, purple, teal, pink, olive, brown, slate); white text on each
@@ -253,7 +247,7 @@
         FirstDay = DayOfWeek.Monday,
         Selectable = !ReadOnly,
         Editable = !ReadOnly,
-        NoEventsText = "No calendar entries this month"
+        NoEventsText = T["Cal_NoEvents"]
     };
 
     // --- What the calendar, legend, list and alert show ---
@@ -282,14 +276,14 @@
 
         foreach (var (first, second) in CalendarSchedule.Conflicts(CalendarEntries))
         {
-            view.Problems[first] = "Overlaps another entry";
-            view.Problems[second] = "Overlaps another entry";
-            view.ProblemTexts.Add($"{Label(first)} and {Label(second)} overlap.");
+            view.Problems[first] = T["Cal_Overlaps"];
+            view.Problems[second] = T["Cal_Overlaps"];
+            view.ProblemTexts.Add(T["Cal_OverlapPair", Label(first), Label(second)]);
         }
         foreach (var entry in CalendarEntries.Where(CalendarSchedule.HasEndBeforeStart))
         {
-            view.Problems[entry] = "“Until” is before the first day";
-            view.ProblemTexts.Add($"{MenuName(entry.MenuId)} from {Format(entry.Date)}: “Until” is before the first day.");
+            view.Problems[entry] = T["Cal_UntilBeforeFirst"];
+            view.ProblemTexts.Add(T["Cal_UntilBeforeFirstOf", MenuName(entry.MenuId), Format(entry.Date)]);
         }
 
         // Weekly occurrences that a single date or period overrides are marked per day (a little beyond the month)
@@ -301,7 +295,7 @@
             var color = view.ColorOf(entry.MenuId);
             var problem = view.ProblemOf(entry);
             var classes = problem is null ? new[] { "sd-cal-entry" } : new[] { "sd-cal-entry", "sd-cal-conflict" };
-            var tooltip = $"{name}: {Describe(entry)}" + (problem is null ? "" : $" ({problem})");
+            string tooltip = problem is null ? T["Cal_Tooltip", name, Describe(entry)] : T["Cal_TooltipProblem", name, Describe(entry), problem];
 
             if (entry.RecurringDayOfWeek is { } day)
             {
@@ -315,7 +309,7 @@
                         continue;
                     (occurrences ??= new())[date] = new CalendarOccurrence(
                         new[] { "sd-cal-overridden" },
-                        $"{name}: not on {Format(date)}, {MenuName(winner.MenuId)} applies that day");
+                        T["Cal_NotOn", name, Format(date), MenuName(winner.MenuId)]);
                     view.HasOverridden = true;
                 }
 
@@ -378,10 +372,10 @@
     }
 
     private string FallbackText => FallbackIsSchedule
-        ? "Other days: the time schedule applies"
+        ? T["Cal_FallbackSchedule"]
         : FallbackMenuId is { } id && Menus.Any(m => m.Id == id)
-            ? $"Other days: {MenuName(id)} (fallback menu)"
-            : "Other days: no menu (guests see a notice)";
+            ? T["Cal_FallbackMenu", MenuName(id)]
+            : T["Cal_FallbackNone"];
 
     private string KeyOf(CalendarEntry entry)
     {
@@ -396,26 +390,34 @@
     private IEnumerable<CalendarEntry> SortedEntries() =>
         CalendarEntries.OrderBy(e => e.Date).ThenBy(e => e.RecurringDayOfWeek.HasValue);
 
-    private string MenuName(Guid menuId) => Menus.FirstOrDefault(m => m.Id == menuId)?.Name ?? "(no menu)";
+    private string MenuName(Guid menuId) => Menus.FirstOrDefault(m => m.Id == menuId)?.Name ?? T["NoMenu"];
 
-    private string Label(CalendarEntry entry) => $"“{MenuName(entry.MenuId)}: {Describe(entry)}”";
+    private string Label(CalendarEntry entry) => T["Cal_Label", MenuName(entry.MenuId), Describe(entry)];
 
-    private static string Format(DateOnly date) => date.ToString("ddd, MMM d, yyyy", English);
+    /// <summary>"“A” and “B” and “C”" in the page's language.</summary>
+    private string JoinLabels(IEnumerable<CalendarEntry> entries) =>
+        entries.Select(Label).Aggregate((joined, next) => T["Cal_ListTwo", joined, next]);
+
+    /// <summary>A date of the entry texts: "Fri, Nov 6, 2026" / "Fr., 6. Nov. 2026".</summary>
+    private string Format(DateOnly date) => date.ToString(T["Cal_DateFormat"], CultureInfo.CurrentCulture);
+
+    /// <summary>The weekday's name in the page's language: "Friday" / "Freitag".</summary>
+    private static string DayName(DayOfWeek day) => CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(day);
 
     /// <summary>The entry in words, e.g. "Every Friday from Fri, Nov 6, 2026 until Thu, Dec 31, 2026".</summary>
-    public static string Describe(CalendarEntry entry)
+    private string Describe(CalendarEntry entry)
     {
         if (entry.EndDate is { } until && until < entry.Date)
-            return "\"Until\" is before the date";
+            return T["Cal_UntilBeforeDate"];
 
         if (entry.RecurringDayOfWeek is { } day)
             return entry.EndDate is { } end
-                ? $"Every {day} from {Format(entry.Date)} until {Format(end)}"
-                : $"Every {day} from {Format(entry.Date)}";
+                ? T["Cal_WeeklyUntil", DayName(day), Format(entry.Date), Format(end)]
+                : T["Cal_WeeklyOpen", DayName(day), Format(entry.Date)];
 
         return entry.EndDate is { } last && last != entry.Date
-            ? $"Every day from {Format(entry.Date)} to {Format(last)}"
-            : $"Only on {Format(entry.Date)}";
+            ? T["Cal_Range", Format(entry.Date), Format(last)]
+            : T["Cal_Single", Format(entry.Date)];
     }
 
     // --- Calendar callbacks ---
@@ -539,12 +541,12 @@
             return;
         if (draft.MenuId == Guid.Empty)
         {
-            draftError = "Choose the menu guests get.";
+            draftError = T["Cal_ChooseMenu"];
             return;
         }
         if (CalendarSchedule.HasEndBeforeStart(draft))
         {
-            draftError = "“Until” must be on or after the first day.";
+            draftError = T["Cal_UntilMustFollow"];
             return;
         }
         if (draft.RecurringDayOfWeek is null && draft.EndDate == draft.Date)

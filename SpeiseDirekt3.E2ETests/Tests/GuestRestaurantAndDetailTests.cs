@@ -191,7 +191,7 @@ public class GuestRestaurantAndDetailTests : BackOfficeTestBase
     [Fact]
     public async Task Info_WithoutJavaScript_TheButtonJumpsToTheFooter()
     {
-        await using var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, JavaScriptEnabled = false, ViewportSize = new ViewportSize { Width = 390, Height = 844 },
             ReducedMotion = ReducedMotion.Reduce
@@ -278,7 +278,7 @@ public class GuestRestaurantAndDetailTests : BackOfficeTestBase
     [Fact]
     public async Task DeepLink_RendersVariantsAndExtrasOnTheServer_WithoutJavaScript()
     {
-        await using var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress, JavaScriptEnabled = false, ViewportSize = new ViewportSize { Width = 390, Height = 844 },
             ReducedMotion = ReducedMotion.Reduce

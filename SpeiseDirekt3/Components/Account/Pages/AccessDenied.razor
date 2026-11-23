@@ -1,8 +1,16 @@
 ﻿@page "/Account/AccessDenied"
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>Access denied</PageTitle>
+<PageTitle>@C["PageTitle", T["AccessDenied_Title"]]</PageTitle>
 
-<header>
-    <h1 class="text-danger">Access denied</h1>
-    <p class="text-danger">You do not have access to this resource.</p>
-</header>
+<AuthCard Title="@T["AccessDenied_Title"]" Icon="lock" Tone="danger">
+    <ChildContent>
+        <p class="au-text" role="alert">@T["AccessDenied_Text"]</p>
+        <div class="au-actions">
+            <a class="au-button au-button--primary" href="/dashboard" data-testid="access-denied-dashboard">@T["Auth_ToDashboard"]</a>
+        </div>
+    </ChildContent>
+</AuthCard>

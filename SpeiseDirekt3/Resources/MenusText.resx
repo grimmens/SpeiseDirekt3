@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="List_Title" xml:space="preserve">
+    <value>Menus</value>
+  </data>
+  <data name="List_Heading" xml:space="preserve">
+    <value>Your Menus</value>
+  </data>
+  <data name="List_Description" xml:space="preserve">
+    <value>Create and manage your restaurant's digital menus</value>
+  </data>
+  <data name="List_Create" xml:space="preserve">
+    <value>Create New Menu</value>
+  </data>
+  <data name="List_Loading" xml:space="preserve">
+    <value>Loading menus…</value>
+  </data>
+  <data name="List_EmptyTitle" xml:space="preserve">
+    <value>No menus yet</value>
+  </data>
+  <data name="List_EmptyText" xml:space="preserve">
+    <value>Get started by creating your first digital menu</value>
+  </data>
+  <data name="List_EmptyCreate" xml:space="preserve">
+    <value>Create Your First Menu</value>
+  </data>
+  <data name="List_EmptyNoPermission" xml:space="preserve">
+    <value>Menus created in your restaurant's account appear here.</value>
+  </data>
+  <data name="List_Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Badge_Theme" xml:space="preserve">
+    <value>Design theme</value>
+  </data>
+  <data name="Badge_Language" xml:space="preserve">
+    <value>Menu language</value>
+  </data>
+  <data name="NoDescription" xml:space="preserve">
+    <value>No description</value>
+  </data>
+  <data name="Count_Categories_One" xml:space="preserve">
+    <value>1 category</value>
+  </data>
+  <data name="Count_Categories_Other" xml:space="preserve">
+    <value>{0} categories</value>
+  </data>
+  <data name="Count_Items_One" xml:space="preserve">
+    <value>1 item</value>
+  </data>
+  <data name="Count_Items_Other" xml:space="preserve">
+    <value>{0} items</value>
+  </data>
+  <data name="Count_Allergens_One" xml:space="preserve">
+    <value>1 allergen</value>
+  </data>
+  <data name="Count_Allergens_Other" xml:space="preserve">
+    <value>{0} allergens</value>
+  </data>
+  <data name="Count_Combos_One" xml:space="preserve">
+    <value>1 combo</value>
+  </data>
+  <data name="Count_Combos_Other" xml:space="preserve">
+    <value>{0} combos</value>
+  </data>
+  <data name="Count_QrCodes_One" xml:space="preserve">
+    <value>1 QR code</value>
+  </data>
+  <data name="Count_QrCodes_Other" xml:space="preserve">
+    <value>{0} QR codes</value>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Delete menu</value>
+  </data>
+  <data name="Delete_Label" xml:space="preserve">
+    <value>Delete menu {0}</value>
+    <comment>aria-label of the delete button, {0} = menu name</comment>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>Delete "{0}" with its categories and items?</value>
+  </data>
+  <data name="Delete_DirectQr_One" xml:space="preserve">
+    <value>This also deletes 1 QR code pointing at this menu.</value>
+  </data>
+  <data name="Delete_DirectQr_Other" xml:space="preserve">
+    <value>This also deletes {0} QR codes pointing at this menu.</value>
+  </data>
+  <data name="Delete_ScheduledQr_One" xml:space="preserve">
+    <value>It is also removed from the schedule of 1 other QR code.</value>
+  </data>
+  <data name="Delete_ScheduledQr_Other" xml:space="preserve">
+    <value>It is also removed from the schedules of {0} other QR codes.</value>
+  </data>
+  <data name="Delete_OtherVersions" xml:space="preserve">
+    <value>Its other language versions ({0}) stay.</value>
+    <comment>{0} = language names, comma-separated</comment>
+  </data>
+  <data name="Theme_Modern" xml:space="preserve">
+    <value>Modern</value>
+  </data>
+  <data name="Theme_Classic" xml:space="preserve">
+    <value>Classic</value>
+  </data>
+  <data name="Theme_Elegant" xml:space="preserve">
+    <value>Elegant</value>
+  </data>
+  <data name="Theme_Minimal" xml:space="preserve">
+    <value>Minimal</value>
+  </data>
+  <data name="Theme_Fancy" xml:space="preserve">
+    <value>Fancy</value>
+  </data>
+  <data name="Theme_Dark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="Detail_TitleFallback" xml:space="preserve">
+    <value>Menu</value>
+  </data>
+  <data name="Detail_NotFoundTitle" xml:space="preserve">
+    <value>Menu not found</value>
+  </data>
+  <data name="Detail_NotFoundText" xml:space="preserve">
+    <value>It may have been deleted.</value>
+  </data>
+  <data name="Detail_BackToMenus" xml:space="preserve">
+    <value>Back to menus</value>
+  </data>
+  <data name="Detail_StatCategories" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Detail_StatItems" xml:space="preserve">
+    <value>Menu Items</value>
+  </data>
+  <data name="Detail_StatAllergens" xml:space="preserve">
+    <value>Allergens</value>
+  </data>
+  <data name="Detail_StatCombos" xml:space="preserve">
+    <value>Combos</value>
+  </data>
+  <data name="Detail_StatQrCodesTitle" xml:space="preserve">
+    <value>QR codes that show this menu directly or through their schedule</value>
+  </data>
+  <data name="Detail_StatQrCodes_One" xml:space="preserve">
+    <value>QR Code</value>
+  </data>
+  <data name="Detail_StatQrCodes_Other" xml:space="preserve">
+    <value>QR Codes</value>
+  </data>
+  <data name="Detail_StatQrCodesSplit" xml:space="preserve">
+    <value>{0} direct, {1} via schedule</value>
+  </data>
+  <data name="Detail_Manage" xml:space="preserve">
+    <value>Manage</value>
+  </data>
+  <data name="Detail_CategoriesTitle" xml:space="preserve">
+    <value>Categories</value>
+  </data>
+  <data name="Detail_CategoriesText" xml:space="preserve">
+    <value>Organize your menu items into categories</value>
+  </data>
+  <data name="Detail_ItemsTitle" xml:space="preserve">
+    <value>Menu Items</value>
+  </data>
+  <data name="Detail_ItemsText" xml:space="preserve">
+    <value>Add and edit dishes, prices, and descriptions</value>
+  </data>
+  <data name="Detail_AllergensTitle" xml:space="preserve">
+    <value>Allergens</value>
+  </data>
+  <data name="Detail_AllergensText" xml:space="preserve">
+    <value>Manage allergen information for your dishes</value>
+  </data>
+  <data name="Detail_CombosTitle" xml:space="preserve">
+    <value>Combos</value>
+  </data>
+  <data name="Detail_CombosText" xml:space="preserve">
+    <value>Create combo offers for bundled deals</value>
+  </data>
+  <data name="Detail_SettingsTitle" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Detail_SettingsSummary" xml:space="preserve">
+    <value>Name, theme, language</value>
+  </data>
+  <data name="Detail_SettingsText" xml:space="preserve">
+    <value>Configure menu name, design theme, and language</value>
+  </data>
+  <data name="Edit_PageTitleNew" xml:space="preserve">
+    <value>New Menu</value>
+  </data>
+  <data name="Edit_PageTitleEdit" xml:space="preserve">
+    <value>Edit {0}</value>
+    <comment>{0} = menu name</comment>
+  </data>
+  <data name="Edit_HeadingNew" xml:space="preserve">
+    <value>Create New Menu</value>
+  </data>
+  <data name="Edit_HeadingEdit" xml:space="preserve">
+    <value>Menu Settings</value>
+  </data>
+  <data name="Edit_DetailsTitle" xml:space="preserve">
+    <value>Menu Details</value>
+  </data>
+  <data name="Edit_Name" xml:space="preserve">
+    <value>Menu Name</value>
+  </data>
+  <data name="Edit_NamePlaceholder" xml:space="preserve">
+    <value>Enter menu name</value>
+  </data>
+  <data name="Edit_Description" xml:space="preserve">
+    <value>Description</value>
+  </data>
+  <data name="Edit_DescriptionPlaceholder" xml:space="preserve">
+    <value>Enter description</value>
+  </data>
+  <data name="Edit_Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Edit_LanguageHelp" xml:space="preserve">
+    <value>The language your dishes and descriptions are written in. The guest view uses it for its own texts, such as buttons and labels, and for the price notation.</value>
+  </data>
+  <data name="Edit_LanguageTaken" xml:space="preserve">
+    <value>{0} (another version)</value>
+    <comment>{0} = language name; the language belongs to another version of this menu</comment>
+  </data>
+  <data name="Edit_Theme" xml:space="preserve">
+    <value>Design Theme</value>
+  </data>
+  <data name="Edit_ThemeHelp" xml:space="preserve">
+    <value>Colors and fonts of the guest view. The preview updates immediately.</value>
+  </data>
+  <data name="Edit_ThemePrevious" xml:space="preserve">
+    <value>Previous design theme</value>
+  </data>
+  <data name="Edit_ThemeNext" xml:space="preserve">
+    <value>Next design theme</value>
+  </data>
+  <data name="Edit_Create" xml:space="preserve">
+    <value>Create Menu</value>
+  </data>
+  <data name="Edit_SaveChanges" xml:space="preserve">
+    <value>Save Changes</value>
+  </data>
+  <data name="Edit_PreviewText" xml:space="preserve">
+    <value>How guests see it on their phone.</value>
+  </data>
+  <data name="Edit_FullScreen" xml:space="preserve">
+    <value>Full screen</value>
+  </data>
+  <data name="Edit_PreviewHint" xml:space="preserve">
+    <value>Save the menu to see how guests will see it.</value>
+  </data>
+  <data name="Edit_PreviewFrameTitle" xml:space="preserve">
+    <value>Guest preview</value>
+  </data>
+  <data name="Edit_PreviewNote" xml:space="preserve">
+    <value>Shows your unsaved changes. Guests see them after you save.</value>
+  </data>
+  <data name="Edit_NameTaken" xml:space="preserve">
+    <value>This name already exists.</value>
+  </data>
+  <data name="Versions_Title" xml:space="preserve">
+    <value>Language versions</value>
+  </data>
+  <data name="Versions_Intro" xml:space="preserve">
+    <value>The same menu in other languages. Guests switch between linked versions with the language button of the menu.</value>
+  </data>
+  <data name="Versions_ThisMenu" xml:space="preserve">
+    <value>{0} · this menu</value>
+    <comment>{0} = language name</comment>
+  </data>
+  <data name="Versions_EditLabel" xml:space="preserve">
+    <value>Edit the {0} version</value>
+    <comment>{0} = language name</comment>
+  </data>
+  <data name="Versions_Unlink" xml:space="preserve">
+    <value>Unlink</value>
+  </data>
+  <data name="Versions_UnlinkLabel" xml:space="preserve">
+    <value>Unlink the {0} version</value>
+    <comment>{0} = language name</comment>
+  </data>
+  <data name="Versions_Empty" xml:space="preserve">
+    <value>Not linked to menus in other languages yet.</value>
+  </data>
+  <data name="Versions_CopyLanguage" xml:space="preserve">
+    <value>Language of the copy</value>
+  </data>
+  <data name="Versions_CopyText" xml:space="preserve">
+    <value>Copies this menu with its categories, items, prices, labels, photos, allergens and combos into a new menu in that language, then opens it so you can translate its texts. The copy is linked right away, so guests can switch to it — unlink it until the translation is done if needed. No QR code is created.</value>
+  </data>
+  <data name="Versions_CreateCopy" xml:space="preserve">
+    <value>Create copy</value>
+  </data>
+  <data name="Versions_LinkMenu" xml:space="preserve">
+    <value>Menu to link</value>
+  </data>
+  <data name="Versions_LinkOption" xml:space="preserve">
+    <value>{0} ({1})</value>
+    <comment>{0} = menu name, {1} = its language</comment>
+  </data>
+  <data name="Versions_LinkText" xml:space="preserve">
+    <value>Menus of your restaurant in a language this menu does not have yet and not linked to other menus.</value>
+  </data>
+  <data name="Versions_Link" xml:space="preserve">
+    <value>Link</value>
+  </data>
+  <data name="Versions_AddTranslation" xml:space="preserve">
+    <value>Add translation</value>
+  </data>
+  <data name="Versions_LinkExisting" xml:space="preserve">
+    <value>Link existing menu</value>
+  </data>
+  <data name="Versions_UnlinkThis" xml:space="preserve">
+    <value>Unlink this menu</value>
+  </data>
+  <data name="Versions_NothingToLink" xml:space="preserve">
+    <value>There is no menu to link: every other menu is in a language this menu already has, or linked to other menus.</value>
+  </data>
+</root>

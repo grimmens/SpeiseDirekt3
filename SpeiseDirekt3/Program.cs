@@ -1,6 +1,7 @@
 ﻿using BytexDigital.Blazor.Components.CookieConsent;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
@@ -8,6 +9,8 @@ using OpenAI;
 using SpeiseDirekt3.Components;
 using SpeiseDirekt3.Components.Account;
 using SpeiseDirekt3.Components.Guest;
+using SpeiseDirekt3.Components.Landing;
+using SpeiseDirekt3.Localization;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.ServiceImplementation;
@@ -37,6 +40,22 @@ namespace SpeiseDirekt3
             // Add services to the container.
             builder.Services.AddRazorComponents()
                 .AddInteractiveServerComponents();
+
+            // English and German from Resources/*.resx, chosen only by the browser's Accept-Language (AP12; guest pages
+            // excluded, see Localization/LocalizationSetup.cs)
+            builder.Services.AddAppLocalization();
+
+            // Behind Apache (server2: app.speisedirekt.de / the PR preview → http://localhost:<port>): the scheme, host and
+            // client address the browser used come from X-Forwarded-Proto/-Host/-For, trusted only from the loopback
+            // proxy. Without it the login redirect of a protected page pointed to http:// (one extra hop through Apache).
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto | ForwardedHeaders.XForwardedHost;
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+                options.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(System.Net.IPAddress.Loopback, 8));
+                options.KnownProxies.Add(System.Net.IPAddress.IPv6Loopback);
+            });
 
             builder.Services.AddCascadingAuthenticationState();
             builder.Services.AddScoped<IdentityUserAccessor>();
@@ -155,7 +174,9 @@ namespace SpeiseDirekt3
             builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders()
+                // Identity's error messages in the request's language (Resources/IdentityText.resx)
+                .AddErrorDescriber<LocalizedIdentityErrorDescriber>();
 
             builder.Services.AddControllers();
 
@@ -196,6 +217,10 @@ namespace SpeiseDirekt3
 
             var app = builder.Build();
 
+            // First: everything after it (HTTPS redirection, HSTS, cookies' Secure flag, redirects, absolute URLs in meta
+            // tags via GuestFormat.PublicOrigin, the tracking's client address) sees the browser's scheme, host and address
+            app.UseForwardedHeaders();
+
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -210,11 +235,23 @@ namespace SpeiseDirekt3
 
             app.UseHttpsRedirection();
 
+            // Explicit, so they run after UseForwardedHeaders: WebApplication would otherwise add them implicitly at the
+            // very start of the pipeline, and the login challenge of a protected page would build its redirect from
+            // Kestrel's http://localhost instead of the browser's https origin
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            // Culture of the request from Accept-Language (back office, account pages, landing page); the guest pages are
+            // pinned to the invariant culture. Needs the endpoint, which the implicit UseRouting has already chosen.
+            app.UseAppRequestLocalization();
+
             app.UseAntiforgery();
 
             app.MapControllers();
             // Item click tracking of the static guest pages (js/guest-menu.js)
             app.MapGuestEndpoints();
+            // robots.txt and sitemap.xml (Components/Landing/SeoEndpoints.cs)
+            app.MapSeoEndpoints();
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
                 .AddInteractiveServerRenderMode();

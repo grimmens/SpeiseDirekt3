@@ -1,0 +1,14 @@
+@* The header of an account settings page (Account/Manage, inside ManageLayout under its h1): the page's h2 and a
+   description (css/back-office.css .sd-manage-head). *@
+<header class="sd-manage-head" data-testid="manage-head">
+    <h2 class="sd-manage-title">@Title</h2>
+    @if (Description is not null)
+    {
+        <p class="sd-manage-desc">@Description</p>
+    }
+</header>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "";
+    [Parameter] public string? Description { get; set; }
+}

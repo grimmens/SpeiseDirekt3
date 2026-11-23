@@ -42,6 +42,12 @@ public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>
     public string ServerAddress { get; private set; } = string.Empty;
 
     /// <summary>
+    /// The services of the Kestrel host — the one the browser talks to (<see cref="WebApplicationFactory{TEntryPoint}.Services"/>
+    /// is the TestServer's). E.g. its <c>IConfiguration</c>, to switch a setting that is read per request.
+    /// </summary>
+    public IServiceProvider ServerServices => _kestrelHost?.Services ?? Services;
+
+    /// <summary>
     /// Starts the server (the app creates the schema itself via <c>EnsureCreated()</c> in the
     /// <see cref="SpeiseDirekt3.Program.E2EEnvironment"/> environment) and seeds the test data.
     /// </summary>

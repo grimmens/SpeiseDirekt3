@@ -1,0 +1,370 @@
+@page "/"
+@* The landing page for visitors who are not logged in, in German (formal "Sie") or English — the browser's
+   Accept-Language decides (AP12; texts in Resources/LandingText.resx, German is the reference copy). Static SSR with its own document
+   ([LandingPage] → App.razor: css/brand.css, css/landing.css, js/landing.js; no Tailwind, Bootstrap or blazor.web.js,
+   no request to another host). Complete without JS: js/landing.js only condenses the header, opens the phone menu
+   sheet and fades sections in. A logged-in user is redirected to /dashboard (server-side).
+   Product truth only: every claim here is a feature that exists (see the repo's CLAUDE.md); no prices, no customer
+   logos, testimonials or numbers. *@
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [LandingPage]
+@layout LandingLayout
+@inject NavigationManager Navigation
+@inject IStringLocalizer<LandingText> T
+
+<LandingHead />
+
+<a class="lp-skip" href="#lp-main" data-testid="landing-skip">@T["SkipToContent"]</a>
+<LandingHeader />
+
+<main id="lp-main" class="lp-main" tabindex="-1" data-testid="landing">
+    @* --- Hero --- *@
+    <section class="lp-hero" aria-labelledby="lp-hero-title" data-testid="landing-hero">
+        <div class="lp-container lp-hero-grid">
+            <div class="lp-hero-copy">
+                <p class="lp-eyebrow"><span class="lp-eyebrow-dot" aria-hidden="true"></span>@T["Hero_Eyebrow"]</p>
+                <h1 id="lp-hero-title" class="lp-hero-title">@HeadlineMarkup.Highlight(T["Hero_Title"], "lp-mark")</h1>
+                <p class="lp-lead">@T["Hero_Lead"]</p>
+                <div class="lp-actions">
+                    <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-testid="hero-register">
+                        @T["RegisterFree"] <LandingIcon Name="arrow-right" StrokeWidth="2" />
+                    </a>
+                    <a class="lp-button lp-button--secondary lp-button--lg" href="@DemoPath" data-testid="hero-demo">
+                        <LandingIcon Name="phone" StrokeWidth="2" /> @T["Hero_Demo"]
+                    </a>
+                </div>
+                <p class="lp-hero-note"><LandingIcon Name="check" StrokeWidth="2.25" /> @T["Hero_Note"]</p>
+            </div>
+
+            <div class="lp-hero-visual">
+                <div class="lp-stage">
+                    <div class="lp-stage-phone">
+                        <span class="lp-corner lp-corner--tl" aria-hidden="true"></span>
+                        <span class="lp-corner lp-corner--tr" aria-hidden="true"></span>
+                        <LandingPhone Image="LandingImages.Hero" Eager="true" Class="lp-phone--hero" TestId="hero-phone" />
+                    </div>
+                    <div class="lp-float lp-float--scan" aria-hidden="true">
+                        <span class="lp-float-icon"><LandingIcon Name="qr" /></span>
+                        <span><strong>@T["Float_ScanTitle"]</strong><span>@T["Float_ScanText"]</span></span>
+                    </div>
+                    <div class="lp-float lp-float--live" aria-hidden="true">
+                        <span class="lp-float-icon lp-float-icon--accent"><LandingIcon Name="bolt" /></span>
+                        <span><strong>@T["Float_LiveTitle"]</strong><span>@T["Float_LiveText"]</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lp-container">
+            <ul class="lp-proof" role="list" aria-label="@T["Proof_Label"]" data-testid="landing-proof">
+                <li><LandingIcon Name="phone" /> @T["Proof_NoApp"]</li>
+                <li><LandingIcon Name="bolt" /> @T["Proof_Live"]</li>
+                <li><LandingIcon Name="shield" /> @T["Proof_Allergens"]</li>
+                <li><LandingIcon Name="globe" /> @T["Proof_Languages"]</li>
+                <li><LandingIcon Name="palette" /> @T["Proof_Designs"]</li>
+            </ul>
+        </div>
+    </section>
+
+    @* --- Features for guests --- *@
+    <section id="funktionen" class="lp-section" aria-labelledby="lp-features-title" data-testid="landing-features">
+        <div class="lp-container">
+            <div class="lp-intro" data-reveal>
+                <p class="lp-eyebrow">@T["Features_Eyebrow"]</p>
+                <h2 id="lp-features-title" class="lp-h2">@T["Features_Title"]</h2>
+                <p class="lp-intro-text">@T["Features_Intro"]</p>
+            </div>
+
+            <div class="lp-feature" data-reveal data-testid="feature-guests">
+                <div class="lp-feature-copy">
+                    <p class="lp-kicker"><LandingIcon Name="search" /> @T["Guests_Kicker"]</p>
+                    <h3 class="lp-h3">@T["Guests_Title"]</h3>
+                    <p>@T["Guests_Text"]</p>
+                    @Checks("Guests_Check1", "Guests_Check2", "Guests_Check3", "Guests_Check4", "Guests_Check5")
+                </div>
+                <div class="lp-feature-visual lp-visual lp-visual--duo">
+                    <LandingPhone Image="LandingImages.GuestFilter" Class="lp-phone--back" />
+                    <LandingPhone Image="LandingImages.GuestItem" Class="lp-phone--front" />
+                </div>
+            </div>
+
+            <div class="lp-feature lp-feature--flip" data-reveal data-testid="feature-profile">
+                <div class="lp-feature-copy">
+                    <p class="lp-kicker"><LandingIcon Name="store" /> @T["Profile_Kicker"]</p>
+                    <h3 class="lp-h3">@T["Profile_Title"]</h3>
+                    <p>@T["Profile_Text"]</p>
+                    @Checks("Profile_Check1", "Profile_Check2", "Profile_Check3")
+                </div>
+                <div class="lp-feature-visual lp-visual">
+                    <LandingPhone Image="LandingImages.GuestInfo" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* --- Six designs (theme switcher: radio buttons, CSS only — works without JS) --- *@
+    <section id="designs" class="lp-section lp-section--cream lp-designs" aria-labelledby="lp-designs-title" data-testid="landing-designs">
+        <div class="lp-container lp-designs-grid">
+            <div class="lp-designs-copy" data-reveal>
+                <p class="lp-eyebrow">@T["Designs_Eyebrow"]</p>
+                <h2 id="lp-designs-title" class="lp-h2">@T["Designs_Title"]</h2>
+                <p class="lp-intro-text">@T["Designs_Intro"]</p>
+                <fieldset class="lp-theme-picker" data-testid="theme-picker">
+                    <legend class="lp-theme-legend">@T["Designs_Legend"]</legend>
+                    <div class="lp-theme-options">
+                        @foreach (var theme in LandingImages.Themes)
+                        {
+                            var id = $"lp-theme-{theme.Key}";
+                            <input type="radio" class="lp-theme-input" name="lp-theme" id="@id" value="@theme.Key"
+                                   checked="@(theme.Key == LandingImages.DefaultThemeKey)" data-testid="theme-option" />
+                            <label class="lp-theme-chip" for="@id">
+                                <span class="lp-swatch" style="--lp-swatch: @theme.Swatch" aria-hidden="true"></span>
+                                @T[theme.LabelKey]
+                            </label>
+                        }
+                    </div>
+                </fieldset>
+                @* The chosen design live in the demo: one link per design, CSS shows the checked one's (without :has() the
+                   default's, like the screenshots) *@
+                <p class="lp-theme-demo" data-testid="theme-demo">
+                    @foreach (var theme in LandingImages.Themes)
+                    {
+                        <a class="lp-theme-demo-link" data-theme="@theme.Key" href="@($"{DemoPath}?theme={theme.Key}")" data-testid="theme-demo-link">
+                            @T["Designs_TryLive", T[theme.LabelKey].Value] <LandingIcon Name="arrow-right" StrokeWidth="2" />
+                        </a>
+                    }
+                </p>
+            </div>
+            <div class="lp-designs-visual" data-reveal>
+                <LandingPhone Class="lp-phone--themes" TestId="theme-phone">
+                    @foreach (var theme in LandingImages.Themes)
+                    {
+                        <LandingShot Image="theme.Image" Class="lp-theme-shot" data-theme="@theme.Key" TestId="theme-shot" />
+                    }
+                </LandingPhone>
+            </div>
+        </div>
+    </section>
+
+    @* --- Features for the owner --- *@
+    <section id="verwaltung" class="lp-section" aria-labelledby="lp-admin-title" data-testid="landing-admin">
+        <div class="lp-container">
+            <div class="lp-intro" data-reveal>
+                <p class="lp-eyebrow">@T["Admin_Eyebrow"]</p>
+                <h2 id="lp-admin-title" class="lp-h2">@T["Admin_Title"]</h2>
+                <p class="lp-intro-text">@T["Admin_Intro"]</p>
+            </div>
+
+            <div class="lp-feature" data-reveal data-testid="feature-schedule">
+                <div class="lp-feature-copy">
+                    <p class="lp-kicker"><LandingIcon Name="calendar" /> @T["Schedule_Kicker"]</p>
+                    <h3 class="lp-h3">@T["Schedule_Title"]</h3>
+                    <p>@T["Schedule_Text"]</p>
+                    @Checks("Schedule_Check1", "Schedule_Check2", "Schedule_Check3")
+                </div>
+                <div class="lp-feature-visual lp-visual lp-visual--wide">
+                    <LandingBrowser Image="LandingImages.Calendar" />
+                </div>
+            </div>
+
+            <div class="lp-feature lp-feature--flip" data-reveal data-testid="feature-preview">
+                <div class="lp-feature-copy">
+                    <p class="lp-kicker"><LandingIcon Name="eye" /> @T["Preview_Kicker"]</p>
+                    <h3 class="lp-h3">@T["Preview_Title"]</h3>
+                    <p>@T["Preview_Text"]</p>
+                    @Checks("Preview_Check1", "Preview_Check2", "Preview_Check3")
+                </div>
+                <div class="lp-feature-visual lp-visual lp-visual--wide">
+                    <LandingBrowser Image="LandingImages.Editor" />
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* --- More features (bento grid) --- *@
+    <section class="lp-section lp-section--cream" aria-labelledby="lp-more-title" data-testid="landing-more">
+        <div class="lp-container">
+            <div class="lp-intro lp-intro--center" data-reveal>
+                <p class="lp-eyebrow">@T["More_Eyebrow"]</p>
+                <h2 id="lp-more-title" class="lp-h2">@T["More_Title"]</h2>
+            </div>
+            <div class="lp-bento" data-reveal>
+                <article class="lp-card lp-card--wide lp-card--media" data-testid="card-analytics">
+                    <div class="lp-card-text">
+                        <span class="lp-card-icon"><LandingIcon Name="chart" /></span>
+                        <h3 class="lp-h4">@T["Card_Analytics_Title"]</h3>
+                        <p>@T["Card_Analytics_Text"]</p>
+                        <p class="lp-card-note">@T["Card_Analytics_Note"]</p>
+                    </div>
+                    <div class="lp-card-media">
+                        <LandingShot Image="LandingImages.Analytics" Class="lp-card-shot" />
+                    </div>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="users" /></span>
+                    <h3 class="lp-h4">@T["Card_Team_Title"]</h3>
+                    <p>@T["Card_Team_Text"]</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="shield" /></span>
+                    <h3 class="lp-h4">@T["Card_Allergens_Title"]</h3>
+                    <p>@T["Card_Allergens_Text"]</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="tag" /></span>
+                    <h3 class="lp-h4">@T["Card_Labels_Title"]</h3>
+                    <p>@T["Card_Labels_Text"]</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="layers" /></span>
+                    <h3 class="lp-h4">@T["Card_Variants_Title"]</h3>
+                    <p>@T["Card_Variants_Text"]</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="gift" /></span>
+                    <h3 class="lp-h4">@T["Card_Combos_Title"]</h3>
+                    <p>@T["Card_Combos_Text"]</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="globe" /></span>
+                    <h3 class="lp-h4">@T["Card_Languages_Title"]</h3>
+                    <p>@T["Card_Languages_Text"]</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="image" /></span>
+                    <h3 class="lp-h4">@T["Card_Photos_Title"]</h3>
+                    <p>@T["Card_Photos_Text"]</p>
+                </article>
+                <article class="lp-card">
+                    <span class="lp-card-icon"><LandingIcon Name="bolt" /></span>
+                    <h3 class="lp-h4">@T["Card_Fast_Title"]</h3>
+                    <p>@T["Card_Fast_Text"]</p>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    @* --- Three steps --- *@
+    <section id="so-funktionierts" class="lp-section lp-steps" aria-labelledby="lp-steps-title" data-testid="landing-steps">
+        <div class="lp-container">
+            <div class="lp-intro lp-intro--center lp-intro--on-dark" data-reveal>
+                <p class="lp-eyebrow">@T["Steps_Eyebrow"]</p>
+                <h2 id="lp-steps-title" class="lp-h2">@T["Steps_Title"]</h2>
+            </div>
+            <ol class="lp-step-list" role="list" data-reveal>
+                <li class="lp-step">
+                    <span class="lp-step-number" aria-hidden="true">01</span>
+                    <span class="lp-step-icon"><LandingIcon Name="user-plus" /></span>
+                    <h3 class="lp-h4">@T["Step1_Title"]</h3>
+                    <p>@T["Step1_Text"]</p>
+                </li>
+                <li class="lp-step">
+                    <span class="lp-step-number" aria-hidden="true">02</span>
+                    <span class="lp-step-icon"><LandingIcon Name="edit" /></span>
+                    <h3 class="lp-h4">@T["Step2_Title"]</h3>
+                    <p>@T["Step2_Text"]</p>
+                </li>
+                <li class="lp-step">
+                    <span class="lp-step-number" aria-hidden="true">03</span>
+                    <span class="lp-step-icon"><LandingIcon Name="qr" /></span>
+                    <h3 class="lp-h4">@T["Step3_Title"]</h3>
+                    <p>@T["Step3_Text"]</p>
+                </li>
+            </ol>
+            <div class="lp-steps-cta">
+                <a class="lp-button lp-button--accent lp-button--lg" href="/Account/Register" data-testid="steps-register">
+                    @T["Steps_Cta"] <LandingIcon Name="arrow-right" StrokeWidth="2" />
+                </a>
+            </div>
+        </div>
+    </section>
+
+    @* --- FAQ (native details/summary: works without JS) --- *@
+    <section id="faq" class="lp-section" aria-labelledby="lp-faq-title" data-testid="landing-faq">
+        <div class="lp-container lp-faq-grid">
+            <div class="lp-faq-intro" data-reveal>
+                <p class="lp-eyebrow">@T["Faq_Eyebrow"]</p>
+                <h2 id="lp-faq-title" class="lp-h2">@T["Faq_Title"]</h2>
+                <p class="lp-intro-text">@T["Faq_Intro"]</p>
+            </div>
+            <div class="lp-faq-list" data-reveal>
+                @foreach (var key in Faq)
+                {
+                    <details class="lp-faq-item" data-testid="faq-item">
+                        <summary>
+                            <span>@T[$"{key}_Q"]</span>
+                            <span class="lp-faq-toggle" aria-hidden="true"><LandingIcon Name="plus" StrokeWidth="2" /></span>
+                        </summary>
+                        <div class="lp-faq-answer"><p>@T[$"{key}_A"]</p></div>
+                    </details>
+                }
+            </div>
+        </div>
+    </section>
+
+    @* --- Closing CTA --- *@
+    <section class="lp-section lp-section--tight" aria-labelledby="lp-cta-title" data-testid="landing-cta">
+        <div class="lp-container">
+            <div class="lp-cta-band" data-reveal>
+                <div class="lp-cta-copy">
+                    <h2 id="lp-cta-title" class="lp-h2">@T["Cta_Title"]</h2>
+                    <p>@T["Cta_Text"]</p>
+                </div>
+                <div class="lp-actions">
+                    <a class="lp-button lp-button--accent lp-button--lg" href="/Account/Register" data-testid="cta-register">
+                        @T["RegisterFree"] <LandingIcon Name="arrow-right" StrokeWidth="2" />
+                    </a>
+                    <a class="lp-button lp-button--on-dark lp-button--lg" href="/Account/Login" data-testid="cta-login">@T["LogIn"]</a>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<LandingFooter />
+
+@code {
+    /// <summary>
+    /// The page's sections in the header, the menu sheet and the footer (id, LandingText key). The ids stay German in
+    /// both languages: one URL serves both, so an anchor link works whatever the visitor's language.
+    /// </summary>
+    public static readonly IReadOnlyList<(string Id, string LabelKey)> Sections =
+    [
+        ("funktionen", nameof(LandingText.Section_Features)),
+        ("designs", nameof(LandingText.Section_Designs)),
+        ("so-funktionierts", nameof(LandingText.Section_HowItWorks)),
+        ("faq", nameof(LandingText.Section_Faq))
+    ];
+
+    /// <summary>
+    /// The FAQ: each key has a question (<c>{key}_Q</c>) and an answer (<c>{key}_A</c>) in LandingText — honest, product
+    /// truth only; the cost answer is exactly "Die Registrierung ist kostenlos." / "Registration is free."
+    /// </summary>
+    public static readonly IReadOnlyList<string> Faq =
+        ["Faq_App", "Faq_Cost", "Faq_SameCode", "Faq_Schedule", "Faq_Allergens", "Faq_Languages", "Faq_Ordering", "Faq_Team", "Faq_Print"];
+
+    [CascadingParameter] private HttpContext HttpContext { get; set; } = default!;
+
+    /// <summary>The live demo (<c>/demo</c>, Components/Demo) in the visitor's language: German, else the English version.</summary>
+    public static string DemoPath => AppCultures.HtmlLang == "de"
+        ? SpeiseDirekt3.Components.Demo.DemoMenuContent.German.Path
+        : SpeiseDirekt3.Components.Demo.DemoMenuContent.English.Path;
+
+    protected override void OnInitialized()
+    {
+        // Logged in: the back office starts at the dashboard (static SSR: NavigateTo answers with a redirect)
+        if (HttpContext.User.Identity?.IsAuthenticated == true)
+            Navigation.NavigateTo("/dashboard");
+    }
+
+    /// <summary>A feature's check list from LandingText keys.</summary>
+    private RenderFragment Checks(params string[] keys) => __builder =>
+    {
+        <ul class="lp-checks" role="list">
+            @foreach (var key in keys)
+            {
+                <li><LandingIcon Name="check" StrokeWidth="2.25" /> @T[key]</li>
+            }
+        </ul>
+    };
+}

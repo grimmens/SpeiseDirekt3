@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using SpeiseDirekt.Infrastructure;
@@ -8,7 +9,7 @@ namespace SpeiseDirekt.Model
     {
         public Guid Id { get; set; }
 
-        [Required, StringLength(100)]
+        [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.QrCode_TitleRequired)), StringLength(100, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.QrCode_TitleTooLong))]
         public string Title { get; set; } = string.Empty;
 
         [ForeignKey(nameof(Menu))]
@@ -45,6 +46,11 @@ namespace SpeiseDirekt.Model
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public Guid ApplicationUserId { get; set; }
 
+        // Messages in the current (UI) culture (AP12): the back office's language; the API's is the server's (English).
+        private static string Text(string format, params object[] args) => string.Format(CultureInfo.CurrentCulture, format, args);
+        private static string Time(TimeOnly? time) => time?.ToString("HH:mm", CultureInfo.InvariantCulture) ?? "";
+        private static string Date(DateOnly date) => date.ToString("d", CultureInfo.CurrentCulture);
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             // Validate TimeTable entries
@@ -53,7 +59,7 @@ namespace SpeiseDirekt.Model
                 if (TimeTableEntries == null || !TimeTableEntries.Any())
                 {
                     yield return new ValidationResult(
-                            $"Es muss zumindest einen Zeitplan-Eintrag geben.",
+                            ModelText.QrCode_TimeTableRequired,
                             new[] { nameof(TimeTableEntries) }
                         );
                 }
@@ -65,7 +71,7 @@ namespace SpeiseDirekt.Model
                         if (entry.MenuId == Guid.Empty)
                         {
                             yield return new ValidationResult(
-                                $"Ein Zeitplan-Eintrag muss ein Menü auswählen.",
+                                ModelText.QrCode_TimeTableMenuRequired,
                                 new[] { nameof(TimeTableEntries) }
                             );
                             yield break;
@@ -85,7 +91,7 @@ namespace SpeiseDirekt.Model
                         if (prev.EndTime > curr.StartTime)
                         {
                             yield return new ValidationResult(
-                                $"Die Zeitfenster überschneiden sich: {prev.StartTime:HH:mm}–{prev.EndTime:HH:mm} und {curr.StartTime:HH:mm}–{curr.EndTime:HH:mm}.",
+                                Text(ModelText.QrCode_TimeTableOverlap, Time(prev.StartTime), Time(prev.EndTime), Time(curr.StartTime), Time(curr.EndTime)),
                                 new[] { nameof(TimeTableEntries) }
                             );
                             yield break;
@@ -100,7 +106,7 @@ namespace SpeiseDirekt.Model
                 if (CalendarEntries == null || !CalendarEntries.Any())
                 {
                     yield return new ValidationResult(
-                            $"Es muss zumindest einen Kalender-Eintrag geben.",
+                            ModelText.QrCode_CalendarRequired,
                             new[] { nameof(CalendarEntries) }
                         );
                 }
@@ -112,7 +118,7 @@ namespace SpeiseDirekt.Model
                         if (entry.MenuId == Guid.Empty)
                         {
                             yield return new ValidationResult(
-                                $"Ein Kalender-Eintrag muss ein Menü auswählen.",
+                                ModelText.QrCode_CalendarMenuRequired,
                                 new[] { nameof(CalendarEntries) }
                             );
                             yield break;
@@ -122,7 +128,7 @@ namespace SpeiseDirekt.Model
                         if (entry.EndDate.HasValue && entry.EndDate < entry.Date)
                         {
                             yield return new ValidationResult(
-                                $"Das End-Datum muss nach oder gleich dem Start-Datum sein.",
+                                ModelText.QrCode_CalendarEndBeforeStart,
                                 new[] { nameof(CalendarEntries) }
                             );
                             yield break;
@@ -149,7 +155,7 @@ namespace SpeiseDirekt.Model
                         if (CalendarSchedule.Collide(prev, curr))
                         {
                             yield return new ValidationResult(
-                                $"Die Datumsperioden überschneiden sich: {prev.Date:dd.MM.yyyy}–{prevEnd:dd.MM.yyyy} und {curr.Date:dd.MM.yyyy}–{(curr.EndDate ?? curr.Date):dd.MM.yyyy}.",
+                                Text(ModelText.QrCode_CalendarOverlap, Date(prev.Date), Date(prevEnd), Date(curr.Date), Date(curr.EndDate ?? curr.Date)),
                                 new[] { nameof(CalendarEntries) }
                             );
                             yield break;
@@ -167,9 +173,11 @@ namespace SpeiseDirekt.Model
                             // Without an end date a weekly entry repeats forever
                             if (CalendarSchedule.Collide(prev, curr))
                             {
-                                var dayName = System.Globalization.CultureInfo.GetCultureInfo("de-DE").DateTimeFormat.GetDayName(weekday.Key);
+                                var dayName = CultureInfo.CurrentCulture.DateTimeFormat.GetDayName(weekday.Key);
                                 yield return new ValidationResult(
-                                    $"Die wöchentlichen Einträge am {dayName} überschneiden sich: ab {prev.Date:dd.MM.yyyy}{(prev.EndDate is { } end ? $" bis {end:dd.MM.yyyy}" : "")} und ab {curr.Date:dd.MM.yyyy}.",
+                                    prev.EndDate is { } end
+                                        ? Text(ModelText.QrCode_WeeklyOverlap, dayName, Date(prev.Date), Date(end), Date(curr.Date))
+                                        : Text(ModelText.QrCode_WeeklyOverlapOpen, dayName, Date(prev.Date), Date(curr.Date)),
                                     new[] { nameof(CalendarEntries) }
                                 );
                                 yield break;
@@ -183,7 +191,7 @@ namespace SpeiseDirekt.Model
             if (!MenuId.HasValue && !IsTimeTableBased && !IsCalendarBased)
             {
                 yield return new ValidationResult(
-                    $"Es muss entweder ein direktes Menü oder Zeitplan-/Kalender-basierte Einträge geben.",
+                    ModelText.QrCode_MenuRequired,
                     new[] { nameof(MenuId) }
                 );
             }

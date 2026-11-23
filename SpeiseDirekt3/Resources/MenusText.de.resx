@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="List_Title" xml:space="preserve">
+    <value>Speisekarten</value>
+  </data>
+  <data name="List_Heading" xml:space="preserve">
+    <value>Ihre Speisekarten</value>
+  </data>
+  <data name="List_Description" xml:space="preserve">
+    <value>Erstellen und verwalten Sie die digitalen Speisekarten Ihres Restaurants</value>
+  </data>
+  <data name="List_Create" xml:space="preserve">
+    <value>Neue Speisekarte</value>
+  </data>
+  <data name="List_Loading" xml:space="preserve">
+    <value>Speisekarten werden geladen …</value>
+  </data>
+  <data name="List_EmptyTitle" xml:space="preserve">
+    <value>Noch keine Speisekarten</value>
+  </data>
+  <data name="List_EmptyText" xml:space="preserve">
+    <value>Legen Sie Ihre erste digitale Speisekarte an, um loszulegen.</value>
+  </data>
+  <data name="List_EmptyCreate" xml:space="preserve">
+    <value>Erste Speisekarte anlegen</value>
+  </data>
+  <data name="List_EmptyNoPermission" xml:space="preserve">
+    <value>Hier erscheinen die Speisekarten Ihres Restaurantkontos.</value>
+  </data>
+  <data name="List_Open" xml:space="preserve">
+    <value>Öffnen</value>
+  </data>
+  <data name="Badge_Theme" xml:space="preserve">
+    <value>Design</value>
+  </data>
+  <data name="Badge_Language" xml:space="preserve">
+    <value>Sprache der Speisekarte</value>
+  </data>
+  <data name="NoDescription" xml:space="preserve">
+    <value>Keine Beschreibung</value>
+  </data>
+  <data name="Count_Categories_One" xml:space="preserve">
+    <value>1 Kategorie</value>
+  </data>
+  <data name="Count_Categories_Other" xml:space="preserve">
+    <value>{0} Kategorien</value>
+  </data>
+  <data name="Count_Items_One" xml:space="preserve">
+    <value>1 Gericht</value>
+  </data>
+  <data name="Count_Items_Other" xml:space="preserve">
+    <value>{0} Gerichte</value>
+  </data>
+  <data name="Count_Allergens_One" xml:space="preserve">
+    <value>1 Allergen</value>
+  </data>
+  <data name="Count_Allergens_Other" xml:space="preserve">
+    <value>{0} Allergene</value>
+  </data>
+  <data name="Count_Combos_One" xml:space="preserve">
+    <value>1 Kombi-Angebot</value>
+  </data>
+  <data name="Count_Combos_Other" xml:space="preserve">
+    <value>{0} Kombi-Angebote</value>
+  </data>
+  <data name="Count_QrCodes_One" xml:space="preserve">
+    <value>1 QR-Code</value>
+  </data>
+  <data name="Count_QrCodes_Other" xml:space="preserve">
+    <value>{0} QR-Codes</value>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Speisekarte löschen</value>
+  </data>
+  <data name="Delete_Label" xml:space="preserve">
+    <value>Speisekarte {0} löschen</value>
+    <comment>aria-label of the delete button, {0} = menu name</comment>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>„{0}“ mit allen Kategorien und Gerichten löschen?</value>
+  </data>
+  <data name="Delete_DirectQr_One" xml:space="preserve">
+    <value>Dabei wird auch 1 QR-Code gelöscht, der auf diese Speisekarte zeigt.</value>
+  </data>
+  <data name="Delete_DirectQr_Other" xml:space="preserve">
+    <value>Dabei werden auch {0} QR-Codes gelöscht, die auf diese Speisekarte zeigen.</value>
+  </data>
+  <data name="Delete_ScheduledQr_One" xml:space="preserve">
+    <value>Außerdem wird sie aus dem Zeitplan bzw. Kalender 1 weiteren QR-Codes entfernt.</value>
+  </data>
+  <data name="Delete_ScheduledQr_Other" xml:space="preserve">
+    <value>Außerdem wird sie aus dem Zeitplan bzw. Kalender von {0} weiteren QR-Codes entfernt.</value>
+  </data>
+  <data name="Delete_OtherVersions" xml:space="preserve">
+    <value>Ihre anderen Sprachversionen ({0}) bleiben erhalten.</value>
+    <comment>{0} = language names, comma-separated</comment>
+  </data>
+  <data name="Theme_Modern" xml:space="preserve">
+    <value>Modern</value>
+  </data>
+  <data name="Theme_Classic" xml:space="preserve">
+    <value>Klassisch</value>
+  </data>
+  <data name="Theme_Elegant" xml:space="preserve">
+    <value>Elegant</value>
+  </data>
+  <data name="Theme_Minimal" xml:space="preserve">
+    <value>Minimal</value>
+  </data>
+  <data name="Theme_Fancy" xml:space="preserve">
+    <value>Verspielt</value>
+  </data>
+  <data name="Theme_Dark" xml:space="preserve">
+    <value>Dunkel</value>
+  </data>
+  <data name="Detail_TitleFallback" xml:space="preserve">
+    <value>Speisekarte</value>
+  </data>
+  <data name="Detail_NotFoundTitle" xml:space="preserve">
+    <value>Speisekarte nicht gefunden</value>
+  </data>
+  <data name="Detail_NotFoundText" xml:space="preserve">
+    <value>Sie wurde möglicherweise gelöscht.</value>
+  </data>
+  <data name="Detail_BackToMenus" xml:space="preserve">
+    <value>Zurück zu den Speisekarten</value>
+  </data>
+  <data name="Detail_StatCategories" xml:space="preserve">
+    <value>Kategorien</value>
+  </data>
+  <data name="Detail_StatItems" xml:space="preserve">
+    <value>Gerichte</value>
+  </data>
+  <data name="Detail_StatAllergens" xml:space="preserve">
+    <value>Allergene</value>
+  </data>
+  <data name="Detail_StatCombos" xml:space="preserve">
+    <value>Kombi-Angebote</value>
+  </data>
+  <data name="Detail_StatQrCodesTitle" xml:space="preserve">
+    <value>QR-Codes, die diese Speisekarte direkt oder über ihren Zeitplan bzw. Kalender zeigen</value>
+  </data>
+  <data name="Detail_StatQrCodes_One" xml:space="preserve">
+    <value>QR-Code</value>
+  </data>
+  <data name="Detail_StatQrCodes_Other" xml:space="preserve">
+    <value>QR-Codes</value>
+  </data>
+  <data name="Detail_StatQrCodesSplit" xml:space="preserve">
+    <value>{0} direkt, {1} über Zeitplan/Kalender</value>
+  </data>
+  <data name="Detail_Manage" xml:space="preserve">
+    <value>Verwalten</value>
+  </data>
+  <data name="Detail_CategoriesTitle" xml:space="preserve">
+    <value>Kategorien</value>
+  </data>
+  <data name="Detail_CategoriesText" xml:space="preserve">
+    <value>Ordnen Sie Ihre Gerichte in Kategorien</value>
+  </data>
+  <data name="Detail_ItemsTitle" xml:space="preserve">
+    <value>Gerichte</value>
+  </data>
+  <data name="Detail_ItemsText" xml:space="preserve">
+    <value>Gerichte, Preise und Beschreibungen anlegen und bearbeiten</value>
+  </data>
+  <data name="Detail_AllergensTitle" xml:space="preserve">
+    <value>Allergene</value>
+  </data>
+  <data name="Detail_AllergensText" xml:space="preserve">
+    <value>Allergenangaben zu Ihren Gerichten pflegen</value>
+  </data>
+  <data name="Detail_CombosTitle" xml:space="preserve">
+    <value>Kombi-Angebote</value>
+  </data>
+  <data name="Detail_CombosText" xml:space="preserve">
+    <value>Gerichte zu Kombi-Angeboten mit eigenem Preis bündeln</value>
+  </data>
+  <data name="Detail_SettingsTitle" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="Detail_SettingsSummary" xml:space="preserve">
+    <value>Name, Design, Sprache</value>
+  </data>
+  <data name="Detail_SettingsText" xml:space="preserve">
+    <value>Name, Design und Sprache der Speisekarte festlegen</value>
+  </data>
+  <data name="Edit_PageTitleNew" xml:space="preserve">
+    <value>Neue Speisekarte</value>
+  </data>
+  <data name="Edit_PageTitleEdit" xml:space="preserve">
+    <value>{0} bearbeiten</value>
+    <comment>{0} = menu name</comment>
+  </data>
+  <data name="Edit_HeadingNew" xml:space="preserve">
+    <value>Neue Speisekarte anlegen</value>
+  </data>
+  <data name="Edit_HeadingEdit" xml:space="preserve">
+    <value>Einstellungen der Speisekarte</value>
+  </data>
+  <data name="Edit_DetailsTitle" xml:space="preserve">
+    <value>Angaben zur Speisekarte</value>
+  </data>
+  <data name="Edit_Name" xml:space="preserve">
+    <value>Name der Speisekarte</value>
+  </data>
+  <data name="Edit_NamePlaceholder" xml:space="preserve">
+    <value>z. B. Mittagskarte</value>
+  </data>
+  <data name="Edit_Description" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
+  <data name="Edit_DescriptionPlaceholder" xml:space="preserve">
+    <value>Kurze Beschreibung (optional)</value>
+  </data>
+  <data name="Edit_Language" xml:space="preserve">
+    <value>Sprache</value>
+  </data>
+  <data name="Edit_LanguageHelp" xml:space="preserve">
+    <value>Die Sprache, in der Ihre Gerichte und Beschreibungen geschrieben sind. Die Gästeansicht verwendet sie für ihre eigenen Texte wie Schaltflächen und Kennzeichnungen und für die Schreibweise der Preise.</value>
+  </data>
+  <data name="Edit_LanguageTaken" xml:space="preserve">
+    <value>{0} (andere Version)</value>
+    <comment>{0} = language name; the language belongs to another version of this menu</comment>
+  </data>
+  <data name="Edit_Theme" xml:space="preserve">
+    <value>Design</value>
+  </data>
+  <data name="Edit_ThemeHelp" xml:space="preserve">
+    <value>Farben und Schriften der Gästeansicht. Die Vorschau ändert sich sofort.</value>
+  </data>
+  <data name="Edit_ThemePrevious" xml:space="preserve">
+    <value>Vorheriges Design</value>
+  </data>
+  <data name="Edit_ThemeNext" xml:space="preserve">
+    <value>Nächstes Design</value>
+  </data>
+  <data name="Edit_Create" xml:space="preserve">
+    <value>Speisekarte anlegen</value>
+  </data>
+  <data name="Edit_SaveChanges" xml:space="preserve">
+    <value>Änderungen speichern</value>
+  </data>
+  <data name="Edit_PreviewText" xml:space="preserve">
+    <value>So sehen Ihre Gäste sie auf dem Handy.</value>
+  </data>
+  <data name="Edit_FullScreen" xml:space="preserve">
+    <value>Vollbild</value>
+  </data>
+  <data name="Edit_PreviewHint" xml:space="preserve">
+    <value>Speichern Sie die Speisekarte, um zu sehen, wie Ihre Gäste sie sehen.</value>
+  </data>
+  <data name="Edit_PreviewFrameTitle" xml:space="preserve">
+    <value>Vorschau für Gäste</value>
+  </data>
+  <data name="Edit_PreviewNote" xml:space="preserve">
+    <value>Zeigt Ihre ungespeicherten Änderungen. Gäste sehen sie erst nach dem Speichern.</value>
+  </data>
+  <data name="Edit_NameTaken" xml:space="preserve">
+    <value>Diesen Namen gibt es bereits.</value>
+  </data>
+  <data name="Versions_Title" xml:space="preserve">
+    <value>Sprachversionen</value>
+  </data>
+  <data name="Versions_Intro" xml:space="preserve">
+    <value>Dieselbe Speisekarte in anderen Sprachen. Gäste wechseln zwischen verknüpften Versionen über die Sprachschaltfläche der Speisekarte.</value>
+  </data>
+  <data name="Versions_ThisMenu" xml:space="preserve">
+    <value>{0} · diese Speisekarte</value>
+    <comment>{0} = language name</comment>
+  </data>
+  <data name="Versions_EditLabel" xml:space="preserve">
+    <value>Version auf {0} bearbeiten</value>
+    <comment>{0} = language name</comment>
+  </data>
+  <data name="Versions_Unlink" xml:space="preserve">
+    <value>Trennen</value>
+  </data>
+  <data name="Versions_UnlinkLabel" xml:space="preserve">
+    <value>Version auf {0} trennen</value>
+    <comment>{0} = language name</comment>
+  </data>
+  <data name="Versions_Empty" xml:space="preserve">
+    <value>Noch nicht mit Speisekarten in anderen Sprachen verknüpft.</value>
+  </data>
+  <data name="Versions_CopyLanguage" xml:space="preserve">
+    <value>Sprache der Kopie</value>
+  </data>
+  <data name="Versions_CopyText" xml:space="preserve">
+    <value>Kopiert diese Speisekarte mit Kategorien, Gerichten, Preisen, Kennzeichnungen, Fotos, Allergenen und Kombi-Angeboten in eine neue Speisekarte in dieser Sprache und öffnet sie, damit Sie die Texte übersetzen können. Die Kopie ist sofort verknüpft, Gäste können also zu ihr wechseln – trennen Sie sie bei Bedarf, bis die Übersetzung fertig ist. Es wird kein QR-Code angelegt.</value>
+  </data>
+  <data name="Versions_CreateCopy" xml:space="preserve">
+    <value>Kopie anlegen</value>
+  </data>
+  <data name="Versions_LinkMenu" xml:space="preserve">
+    <value>Zu verknüpfende Speisekarte</value>
+  </data>
+  <data name="Versions_LinkOption" xml:space="preserve">
+    <value>{0} ({1})</value>
+    <comment>{0} = menu name, {1} = its language</comment>
+  </data>
+  <data name="Versions_LinkText" xml:space="preserve">
+    <value>Speisekarten Ihres Restaurants in einer Sprache, die diese Speisekarte noch nicht hat, und nicht mit anderen verknüpft.</value>
+  </data>
+  <data name="Versions_Link" xml:space="preserve">
+    <value>Verknüpfen</value>
+  </data>
+  <data name="Versions_AddTranslation" xml:space="preserve">
+    <value>Übersetzung hinzufügen</value>
+  </data>
+  <data name="Versions_LinkExisting" xml:space="preserve">
+    <value>Vorhandene Speisekarte verknüpfen</value>
+  </data>
+  <data name="Versions_UnlinkThis" xml:space="preserve">
+    <value>Diese Speisekarte trennen</value>
+  </data>
+  <data name="Versions_NothingToLink" xml:space="preserve">
+    <value>Es gibt keine Speisekarte zum Verknüpfen: Alle anderen sind in einer Sprache, die diese Speisekarte schon hat, oder mit anderen Speisekarten verknüpft.</value>
+  </data>
+</root>

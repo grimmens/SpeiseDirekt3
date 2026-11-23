@@ -27,6 +27,9 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
 
     protected E2ETestBase(E2EFixture fixture) => Fixture = fixture;
 
+    /// <summary>Browser language of <see cref="Page"/> and of <see cref="NewContextAsync"/> without a locale.</summary>
+    protected virtual string ContextLocale => E2ESettings.DefaultLocale;
+
     public async Task InitializeAsync()
     {
         App.Clock.Reset();
@@ -36,15 +39,17 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
     public async Task DisposeAsync() => await Context.DisposeAsync();
 
     /// <summary>
-    /// A new, independent browser context (e.g. an anonymous guest next to a logged-in owner).
+    /// A new, independent browser context (e.g. an anonymous guest next to a logged-in owner), 1280 × 900 px, in the
+    /// browser language <paramref name="locale"/> (default <see cref="ContextLocale"/>, i.e. English).
     /// Disposed by the caller.
     /// </summary>
-    protected async Task<(IBrowserContext Context, IPage Page)> NewContextAsync()
+    protected async Task<(IBrowserContext Context, IPage Page)> NewContextAsync(string? locale = null)
     {
         var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress,
-            ViewportSize = new ViewportSize { Width = 1280, Height = 900 }
+            ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
+            Locale = locale ?? ContextLocale
         });
         context.SetDefaultTimeout(15_000);
 
@@ -57,14 +62,16 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
                     : route.AbortAsync());
 
             // Adopted stylesheets survive Blazor's DOM patching of <head> (enhanced navigation).
-            // Guest pages (<html data-guest-page>) do not use Tailwind: the stand-in is removed there again.
+            // Guest pages (<html data-guest-page>) and the landing page (<html data-landing-page>) do not use Tailwind:
+            // the stand-in is removed there again.
             await context.AddInitScriptAsync($$"""
                 (() => {
                     const sheet = new CSSStyleSheet();
                     sheet.replaceSync({{System.Text.Json.JsonSerializer.Serialize(E2ESettings.TailwindVisibilityCss)}});
                     document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
                     document.addEventListener('DOMContentLoaded', () => {
-                        if (document.documentElement.hasAttribute('data-guest-page'))
+                        const root = document.documentElement;
+                        if (root.hasAttribute('data-guest-page') || root.hasAttribute('data-landing-page'))
                             document.adoptedStyleSheets = document.adoptedStyleSheets.filter(s => s !== sheet);
                     });
                 })();
@@ -198,7 +205,8 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         await page.Locator("#Input\\.Email").FillAsync(email);
         await page.Locator("#Input\\.Password").FillAsync(password);
         await page.Locator("#Input\\.ConfirmPassword").FillAsync(password);
-        await WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Create Account" }).ClickAsync());
+        // By test id: the button's text depends on the browser language
+        await WaitForInteractiveAsync(page, () => page.GetByTestId("register-submit").ClickAsync());
     }
 
     /// <summary>Logs in via <c>/Account/Login</c> and waits for the (interactive) start page.</summary>
@@ -207,7 +215,7 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         await page.GotoAsync(returnUrl is null ? "/Account/Login" : $"/Account/Login?returnUrl={Uri.EscapeDataString(returnUrl)}");
         await page.Locator("#Input\\.Email").FillAsync(email);
         await page.Locator("#Input\\.Password").FillAsync(password);
-        await WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Sign in" }).ClickAsync());
+        await WaitForInteractiveAsync(page, () => page.GetByTestId("login-submit").ClickAsync());
     }
 
     /// <summary>Registers a fresh owner account (own tenant) in <see cref="Page"/> and returns its e-mail.</summary>
@@ -218,6 +226,37 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         return email;
     }
 
+    /// <summary>A team member as <see cref="SeedTeamMemberAsync"/> created it.</summary>
+    protected sealed record TeamMember(string Email, string AccountId, Guid TenantUserId);
+
+    /// <summary>
+    /// Seeds a team member of <paramref name="ownerId"/> (a manager — AP14 knows no other role): an Identity user with
+    /// <see cref="Password"/> and its <c>TenantUser</c> row, active or not. Sign in with <see cref="LoginAsync"/>.
+    /// </summary>
+    protected async Task<TeamMember> SeedTeamMemberAsync(Guid ownerId, string displayName = "Max Kellner", bool active = true, string? email = null)
+    {
+        email ??= UniqueEmail("team");
+        var account = new SpeiseDirekt.Data.ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(), UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email,
+            NormalizedEmail = email.ToUpperInvariant(), EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString(),
+            TenantOwnerId = ownerId.ToString()
+        };
+        account.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<SpeiseDirekt.Data.ApplicationUser>().HashPassword(account, Password);
+        var member = new SpeiseDirekt.Model.TenantUser
+        {
+            Id = Guid.NewGuid(), ApplicationUserId = account.Id, TenantOwnerId = ownerId.ToString(),
+            Role = SpeiseDirekt.Model.TenantRole.Manager, DisplayName = displayName, IsActive = active
+        };
+        await App.SeedAsync(ownerId, db =>
+        {
+            db.Users.Add(account);
+            db.TenantUsers.Add(member);
+            return Task.CompletedTask;
+        });
+        return new TeamMember(email, account.Id, member.Id);
+    }
+
     /// <summary>The tenant (owner) id of the account <paramref name="email"/>.</summary>
     protected async Task<Guid> OwnerIdAsync(string email)
     {
@@ -225,7 +264,21 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         return Guid.Parse((await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.SingleAsync(db.Users, u => u.Email == email)).Id);
     }
 
-    /// <summary>Logs out via the sidebar's logout form.</summary>
-    protected static Task LogoutAsync(IPage page) =>
-        WaitForInteractiveAsync(page, () => page.GetByRole(AriaRole.Button, new() { Name = "Logout" }).First.ClickAsync());
+    /// <summary>
+    /// Logs out with the logout form of the top bar's user menu (from 1024 px) or of the navigation drawer (narrower) and
+    /// waits for the page it returns to: the same URL, which asks for a login when it needs one (the dashboard does:
+    /// the static login page, no circuit).
+    /// </summary>
+    protected static async Task LogoutAsync(IPage page)
+    {
+        var userMenu = page.GetByTestId("user-menu-button");
+        if (await userMenu.IsVisibleAsync())
+            await userMenu.ClickAsync();
+        else
+            await page.GetByTestId("nav-drawer-button").ClickAsync();
+        await page.GetByTestId("logout-button").Filter(new() { Visible = true }).ClickAsync();
+        await Assertions.Expect(page.GetByTestId("user-menu-button")).ToHaveCountAsync(0);
+        await Assertions.Expect(page.GetByTestId("nav-drawer-button")).ToHaveCountAsync(0);
+        await page.WaitForLoadStateAsync(LoadState.Load);
+    }
 }

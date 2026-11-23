@@ -7,7 +7,7 @@ namespace SpeiseDirekt.Model
     public class MenuItem : IAppUserEntity
     {
         public Guid Id { get; set; }
-        [Required]
+        [Required(ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Name_Required))]
         public string Name { get; set; } = string.Empty;
         /// <summary>Optional (e.g. drinks); never null, empty when not set.</summary>
         public string Description { get; set; } = string.Empty;

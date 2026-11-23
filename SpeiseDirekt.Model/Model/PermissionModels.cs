@@ -1,15 +1,22 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using SpeiseDirekt.Data;
 
 namespace SpeiseDirekt.Model;
 
+/// <summary>
+/// The two roles of a tenant (AP14). The values are stored in <c>TenantUsers.Role</c> (int): 0 was "GeneralManager"
+/// before AP14, the migration <c>TeamRolesOwnerAndManager</c> turned every row into 1.
+/// </summary>
 public enum TenantRole
 {
-    GeneralManager = 0,
-    Manager = 1,
-    Cashier = 2,
-    Employee = 3,
-    Driver = 4
+    /// <summary>The account that registered the restaurant (no <c>TenantOwnerId</c>, no <see cref="TenantUser"/> row):
+    /// exactly one per tenant, every permission. Only ever computed, never stored.</summary>
+    Owner = 0,
+
+    /// <summary>Every invited team member (<see cref="TenantUser"/>): menus, items, QR codes, restaurant profile and
+    /// analytics, but not the team.</summary>
+    Manager = 1
 }
 
 [Flags]
@@ -56,20 +63,20 @@ public enum Permission : long
     // Analytics
     AnalyticsView = 1L << 20,
 
-    // User management
+    // User management (the owner only)
     UsersView = 1L << 24,
     UsersCreate = 1L << 25,
     UsersEdit = 1L << 26,
     UsersDelete = 1L << 27,
 
-    // Subscription management
-    SubscriptionManage = 1L << 30,
-
-    // Delivery-specific
-    DeliveryView = 1L << 32,
-    DeliveryManage = 1L << 33,
+    // Bits 30, 32 and 33 were SubscriptionManage, DeliveryView and DeliveryManage (removed in AP14, the product has
+    // neither): do not reuse them.
 }
 
+/// <summary>
+/// A team member of a tenant (an invited sub-account): always a <see cref="TenantRole.Manager"/>. Its permissions follow
+/// the role (<see cref="SpeiseDirekt.Infrastructure.PermissionDefaults"/>); an inactive member has none.
+/// </summary>
 public class TenantUser
 {
     public Guid Id { get; set; }
@@ -82,8 +89,14 @@ public class TenantUser
     public string TenantOwnerId { get; set; } = string.Empty;
     public ApplicationUser? TenantOwner { get; set; }
 
-    public TenantRole Role { get; set; } = TenantRole.Employee;
+    /// <summary>Always <see cref="TenantRole.Manager"/>; the permission check does not read it.</summary>
+    public TenantRole Role { get; set; } = TenantRole.Manager;
 
+    /// <summary>
+    /// Not used since AP14 (permissions follow the role; there are no per-member permissions any more) and always
+    /// <see cref="Permission.None"/>. Kept only because the column exists; not part of the API's JSON.
+    /// </summary>
+    [JsonIgnore]
     public Permission Permissions { get; set; } = Permission.None;
 
     public bool IsActive { get; set; } = true;

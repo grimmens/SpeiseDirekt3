@@ -9,11 +9,13 @@
 @using SpeiseDirekt.ServiceInterface
 @inject IMenuTranslationService Translations
 @inject NavigationManager NavManager
+@inject IStringLocalizer<MenusText> T
+@inject IStringLocalizer<CommonText> C
 
 <div class="bg-white rounded-xl border border-gray-200 p-[1rem] sm:p-6" data-testid="language-versions">
-    <h2 class="text-lg font-semibold text-gray-900">Language versions</h2>
+    <h2 class="text-lg font-semibold text-gray-900">@T["Versions_Title"]</h2>
     <p class="mt-1 text-sm text-gray-500">
-        The same menu in other languages. Guests switch between linked versions with the language button of the menu.
+        @T["Versions_Intro"]
     </p>
 
     <ul class="mt-4 rounded-lg border border-gray-200 divide-y divide-gray-100" data-testid="language-version-list">
@@ -22,20 +24,20 @@
             var language = MenuLanguages.Of(version.Language);
             var isCurrent = version.Id == MenuId;
             <li class="flex items-center gap-3 px-3 py-2.5" data-testid="language-version" data-language="@language.Code" @key="version.Id">
-                <span class="inline-flex shrink-0 items-center justify-center w-10 h-7 rounded-md text-xs font-bold @(isCurrent ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700")">@language.ShortCode</span>
+                <span class="inline-flex shrink-0 items-center justify-center w-10 h-7 rounded-md text-xs font-bold @(isCurrent ? "bg-brand-600 text-white" : "bg-gray-100 text-gray-700")">@language.ShortCode</span>
                 <div class="min-w-0 flex-1">
                     <div class="text-sm font-medium text-gray-900 truncate">@version.Name</div>
-                    <div class="text-xs text-gray-500">@language.EnglishName@(isCurrent ? " · this menu" : "")</div>
+                    <div class="text-xs text-gray-500">@(isCurrent ? T["Versions_ThisMenu", language.DisplayName] : language.DisplayName)</div>
                 </div>
                 @if (!isCurrent)
                 {
-                    <a href="@($"menu/edit/{version.Id}")" class="text-sm font-medium text-blue-600 hover:text-blue-800 whitespace-nowrap"
-                       aria-label="@($"Edit the {language.EnglishName} version")">Edit</a>
+                    <a href="@($"menu/edit/{version.Id}")" class="text-sm font-medium text-brand-600 hover:text-brand-800 whitespace-nowrap"
+                       aria-label="@T["Versions_EditLabel", language.DisplayName]">@C["Edit"]</a>
                     @if (Versions.Count > 1)
                     {
                         <button type="button" class="ml-1 text-sm font-medium text-gray-500 hover:text-red-600 whitespace-nowrap disabled:opacity-50"
                                 disabled="@busy" @onclick="() => UnlinkAsync(version.Id)"
-                                aria-label="@($"Unlink the {language.EnglishName} version")">Unlink</button>
+                                aria-label="@T["Versions_UnlinkLabel", language.DisplayName]">@T["Versions_Unlink"]</button>
                     }
                 }
             </li>
@@ -43,7 +45,7 @@
     </ul>
     @if (Versions.Count <= 1)
     {
-        <p class="mt-2 text-sm text-gray-500" data-testid="language-versions-empty">Not linked to menus in other languages yet.</p>
+        <p class="mt-2 text-sm text-gray-500" data-testid="language-versions-empty">@T["Versions_Empty"]</p>
     }
 
     @if (error is not null)
@@ -54,44 +56,42 @@
     @if (panel == Panel.Add)
     {
         <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-[1rem] py-[1rem]" data-testid="add-translation-panel">
-            <label for="translationLanguage" class="block text-sm font-medium text-gray-700 mb-1">Language of the copy</label>
-            <select id="translationLanguage" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+            <label for="translationLanguage" class="block text-sm font-medium text-gray-700 mb-1">@T["Versions_CopyLanguage"]</label>
+            <select id="translationLanguage" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
                     @bind="newLanguage">
                 @foreach (var language in FreeLanguages)
                 {
-                    <option value="@language.Language">@language.EnglishName (@language.NativeName)</option>
+                    <option value="@language.Language">@T["Versions_LinkOption", language.DisplayName, language.NativeName]</option>
                 }
             </select>
             <p class="mt-2 text-xs text-gray-500">
-                Copies this menu with its categories, items, prices, labels, photos, allergens and combos into a new menu in
-                that language, then opens it so you can translate its texts. The copy is linked right away, so guests can
-                switch to it — unlink it until the translation is done if needed. No QR code is created.
+                @T["Versions_CopyText"]
             </p>
             <div class="mt-3 flex flex-wrap items-center gap-2">
-                <button type="button" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                        disabled="@busy" @onclick="CreateTranslationAsync">Create copy</button>
+                <button type="button" class="inline-flex items-center px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                        disabled="@busy" @onclick="CreateTranslationAsync">@T["Versions_CreateCopy"]</button>
                 <button type="button" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-                        @onclick="ClosePanel">Cancel</button>
+                        @onclick="ClosePanel">@C["Cancel"]</button>
             </div>
         </div>
     }
     else if (panel == Panel.Link)
     {
         <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-[1rem] py-[1rem]" data-testid="link-menu-panel">
-            <label for="linkMenu" class="block text-sm font-medium text-gray-700 mb-1">Menu to link</label>
-            <select id="linkMenu" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+            <label for="linkMenu" class="block text-sm font-medium text-gray-700 mb-1">@T["Versions_LinkMenu"]</label>
+            <select id="linkMenu" class="w-full rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
                     @bind="linkMenuIdText">
                 @foreach (var candidate in candidates)
                 {
-                    <option value="@candidate.Id">@candidate.Name (@MenuLanguages.Of(candidate.Language).EnglishName)</option>
+                    <option value="@candidate.Id">@T["Versions_LinkOption", candidate.Name, MenuLanguages.Of(candidate.Language).DisplayName]</option>
                 }
             </select>
-            <p class="mt-2 text-xs text-gray-500">Menus of your restaurant in a language this menu does not have yet and not linked to other menus.</p>
+            <p class="mt-2 text-xs text-gray-500">@T["Versions_LinkText"]</p>
             <div class="mt-3 flex flex-wrap items-center gap-2">
-                <button type="button" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                        disabled="@busy" @onclick="LinkAsync">Link</button>
+                <button type="button" class="inline-flex items-center px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+                        disabled="@busy" @onclick="LinkAsync">@T["Versions_Link"]</button>
                 <button type="button" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors"
-                        @onclick="ClosePanel">Cancel</button>
+                        @onclick="ClosePanel">@C["Cancel"]</button>
             </div>
         </div>
     }
@@ -103,15 +103,15 @@
                 <button type="button" class="inline-flex items-center px-3.5 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
                         disabled="@(FreeLanguages.Count == 0)" @onclick="OpenAddPanel">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m-7-7h14" /></svg>
-                    Add translation
+                    @T["Versions_AddTranslation"]
                 </button>
             }
             <button type="button" class="inline-flex items-center px-3.5 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                    disabled="@busy" @onclick="OpenLinkPanelAsync">Link existing menu</button>
+                    disabled="@busy" @onclick="OpenLinkPanelAsync">@T["Versions_LinkExisting"]</button>
             @if (Versions.Count > 1)
             {
                 <button type="button" class="inline-flex items-center px-3.5 py-2 text-gray-600 hover:text-red-600 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                        disabled="@busy" @onclick="() => UnlinkAsync(MenuId)">Unlink this menu</button>
+                        disabled="@busy" @onclick="() => UnlinkAsync(MenuId)">@T["Versions_UnlinkThis"]</button>
             }
         </div>
     }
@@ -155,7 +155,7 @@
         candidates = await Translations.GetLinkCandidatesAsync(MenuId);
         if (candidates.Count == 0)
         {
-            error = "There is no menu to link: every other menu is in a language this menu already has, or linked to other menus.";
+            error = T["Versions_NothingToLink"];
             return;
         }
         linkMenuIdText = candidates[0].Id.ToString();

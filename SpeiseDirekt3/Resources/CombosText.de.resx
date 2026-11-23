@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Kombi-Angebote</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Kombi-Angebote, die Gäste in den Details des auslösenden Gerichts sehen.</value>
+  </data>
+  <data name="New" xml:space="preserve">
+    <value>Neues Kombi-Angebot</value>
+  </data>
+  <data name="EmptyTitle" xml:space="preserve">
+    <value>Noch keine Kombi-Angebote</value>
+  </data>
+  <data name="EmptyText" xml:space="preserve">
+    <value>Legen Sie ein Kombi-Angebot an, um Gästen in den Details eines Gerichts ein Paket zum Sonderpreis zu zeigen.</value>
+  </data>
+  <data name="TriggerItem" xml:space="preserve">
+    <value>Auslösendes Gericht</value>
+  </data>
+  <data name="Includes_One" xml:space="preserve">
+    <value>Enthält (1 Gericht)</value>
+  </data>
+  <data name="Includes_Other" xml:space="preserve">
+    <value>Enthält ({0} Gerichte)</value>
+  </data>
+  <data name="DeleteLabel" xml:space="preserve">
+    <value>Kombi-Angebot {0} löschen</value>
+    <comment>aria-label, {0} = combo name</comment>
+  </data>
+  <data name="Delete_Title" xml:space="preserve">
+    <value>Kombi-Angebot löschen</value>
+  </data>
+  <data name="Delete_Message" xml:space="preserve">
+    <value>Kombi-Angebot „{0}“ löschen?</value>
+  </data>
+  <data name="Editor_TitleNew" xml:space="preserve">
+    <value>Neues Kombi-Angebot</value>
+  </data>
+  <data name="Editor_TitleEdit" xml:space="preserve">
+    <value>Kombi-Angebot bearbeiten</value>
+  </data>
+  <data name="Editor_Intro" xml:space="preserve">
+    <value>Gäste sehen es in den Details des auslösenden Gerichts.</value>
+  </data>
+  <data name="Editor_Name" xml:space="preserve">
+    <value>Name</value>
+  </data>
+  <data name="Editor_NamePlaceholder" xml:space="preserve">
+    <value>z. B. Burger-Kombi</value>
+  </data>
+  <data name="Editor_Description" xml:space="preserve">
+    <value>Beschreibung</value>
+  </data>
+  <data name="Editor_DescriptionPlaceholder" xml:space="preserve">
+    <value>z. B. Burger mit Getränk und Beilage</value>
+  </data>
+  <data name="Editor_Price" xml:space="preserve">
+    <value>Kombi-Preis (€)</value>
+  </data>
+  <data name="Editor_TriggerHelp" xml:space="preserve">
+    <value>Das Gericht, in dessen Details Gäste dieses Kombi-Angebot sehen.</value>
+  </data>
+  <data name="Editor_TriggerChoose" xml:space="preserve">
+    <value>-- Gericht wählen --</value>
+  </data>
+  <data name="Editor_ItemOption" xml:space="preserve">
+    <value>{0} ({1})</value>
+    <comment>{0} = item name, {1} = price</comment>
+  </data>
+  <data name="Editor_Included" xml:space="preserve">
+    <value>Enthaltene Gerichte</value>
+  </data>
+  <data name="Editor_IncludedHelp" xml:space="preserve">
+    <value>Suchen und wählen Sie die Gerichte, die das Kombi-Angebot enthält.</value>
+  </data>
+  <data name="Editor_SearchPlaceholder" xml:space="preserve">
+    <value>Gerichte suchen …</value>
+  </data>
+  <data name="Editor_IncludedRequired" xml:space="preserve">
+    <value>Wählen Sie mindestens ein enthaltenes Gericht.</value>
+  </data>
+  <data name="Editor_TriggerRequired" xml:space="preserve">
+    <value>Bitte wählen Sie ein auslösendes Gericht.</value>
+  </data>
+  <data name="Editor_Create" xml:space="preserve">
+    <value>Kombi-Angebot anlegen</value>
+  </data>
+  <data name="Editor_SaveChanges" xml:space="preserve">
+    <value>Änderungen speichern</value>
+  </data>
+</root>

@@ -15,34 +15,26 @@
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
+@inject IStringLocalizer<AccountText> T
+@inject IStringLocalizer<CommonText> C
+@attribute [AuthPage]
+@layout AuthLayout
 
-<PageTitle>Register</PageTitle>
+<PageTitle>@C["PageTitle", T["ExternalLogin_Title"]]</PageTitle>
 
-<StatusMessage Message="@message" />
-<h1>Register</h1>
-<h2>Associate your @ProviderDisplayName account.</h2>
-<hr />
-
-<div  class="alert alert-info">
-    You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
-    Please enter an email address for this site below and click the Register button to finish
-    logging in.
-</div>
-
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="Please enter your email." />
-                <label for="Input.Email" class="form-label">Email</label>
-                <ValidationMessage For="() => Input.Email" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </EditForm>
-    </div>
-</div>
+<AuthCard Title="@T["ExternalLogin_Title"]" Lead="@T["ExternalLogin_Associate", ProviderDisplayName ?? ""]" Icon="user-plus">
+    <StatusMessage Message="@message" IsError="true" />
+    <p class="au-text" style="margin-bottom:1.25rem">@T["ExternalLogin_Info", ProviderDisplayName ?? ""]</p>
+    <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post" class="au-form">
+        <DataAnnotationsValidator />
+        <div class="au-field">
+            <label for="Input.Email" class="au-label">@T["Field_EmailAddress"]</label>
+            <InputText @bind-Value="Input.Email" id="Input.Email" class="au-input" inputmode="email" autocomplete="email" placeholder="@T["Placeholder_Email"]" />
+            <ValidationMessage For="() => Input.Email" class="validation-message" />
+        </div>
+        <button type="submit" class="au-button au-button--primary">@T["ExternalLogin_Submit"]</button>
+    </EditForm>
+</AuthCard>
 
 @code {
     public const string LoginCallbackAction = "LoginCallback";
@@ -71,13 +63,13 @@
     {
         if (RemoteError is not null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", $"Error from external provider: {RemoteError}", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", T["Status_ExternalProviderError", RemoteError], HttpContext, isError: true);
         }
 
         var info = await SignInManager.GetExternalLoginInfoAsync();
         if (info is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", T["Status_ExternalLoginInfoError"], HttpContext, isError: true);
         }
 
         externalLoginInfo = info;
@@ -100,7 +92,7 @@
     {
         if (externalLoginInfo is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", T["Status_ExternalLoginInfoError"], HttpContext, isError: true);
         }
 
         // Sign in the user with this external login provider if the user already has a login.
@@ -134,7 +126,7 @@
     {
         if (externalLoginInfo is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error loading external login information during confirmation.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", T["Status_ExternalLoginInfoError"], HttpContext, isError: true);
         }
 
         var emailStore = GetEmailStore();
@@ -171,7 +163,7 @@
             }
         }
 
-        message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
+        message = string.Join(" ", result.Errors.Select(error => error.Description));
     }
 
     private ApplicationUser CreateUser()
@@ -198,8 +190,8 @@
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailRequired))]
+        [EmailAddress(ErrorMessageResourceType = typeof(AccountText), ErrorMessageResourceName = nameof(AccountText.Valid_EmailInvalid))]
         public string Email { get; set; } = "";
     }
 }

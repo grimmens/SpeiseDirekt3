@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="SkipToContent" xml:space="preserve">
+    <value>Zum Inhalt springen</value>
+  </data>
+  <data name="OpenNavigation" xml:space="preserve">
+    <value>Navigation öffnen</value>
+  </data>
+  <data name="CloseNavigation" xml:space="preserve">
+    <value>Navigation schließen</value>
+  </data>
+  <data name="DrawerLabel" xml:space="preserve">
+    <value>Navigation</value>
+  </data>
+  <data name="BrandToDashboard" xml:space="preserve">
+    <value>Speise-Direkt, Dashboard</value>
+  </data>
+  <data name="BrandToHome" xml:space="preserve">
+    <value>Speise-Direkt, Startseite</value>
+  </data>
+  <data name="AccountNavLabel" xml:space="preserve">
+    <value>Konto</value>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Anmelden</value>
+  </data>
+  <data name="Register" xml:space="preserve">
+    <value>Registrieren</value>
+  </data>
+  <data name="LogOut" xml:space="preserve">
+    <value>Abmelden</value>
+  </data>
+  <data name="AccountSettings" xml:space="preserve">
+    <value>Kontoeinstellungen</value>
+  </data>
+  <data name="UserMenuHint" xml:space="preserve">
+    <value>, Kontomenü</value>
+  </data>
+  <data name="MainNavLabel" xml:space="preserve">
+    <value>Hauptnavigation</value>
+  </data>
+  <data name="Nav_Dashboard" xml:space="preserve">
+    <value>Dashboard</value>
+  </data>
+  <data name="Nav_Menus" xml:space="preserve">
+    <value>Speisekarten</value>
+  </data>
+  <data name="Nav_QrCodes" xml:space="preserve">
+    <value>QR-Codes</value>
+  </data>
+  <data name="Nav_Analytics" xml:space="preserve">
+    <value>Statistik</value>
+  </data>
+  <data name="Nav_Restaurant" xml:space="preserve">
+    <value>Restaurant</value>
+  </data>
+  <data name="Nav_Team" xml:space="preserve">
+    <value>Team</value>
+  </data>
+  <data name="Context_BreadcrumbLabel" xml:space="preserve">
+    <value>Brotkrümelnavigation</value>
+  </data>
+  <data name="Context_SwitchMenuHint" xml:space="preserve">
+    <value>, Speisekarte wechseln</value>
+  </data>
+  <data name="Context_SwitchMenu" xml:space="preserve">
+    <value>Speisekarte wechseln</value>
+  </data>
+  <data name="Context_AllMenus" xml:space="preserve">
+    <value>Alle Speisekarten</value>
+  </data>
+  <data name="Context_PreviewTitle" xml:space="preserve">
+    <value>Die Speisekarte so sehen, wie Ihre Gäste sie sehen (neuer Tab)</value>
+  </data>
+  <data name="Context_TabsLabel" xml:space="preserve">
+    <value>Speisekarte: {0}</value>
+  </data>
+  <data name="Tab_Overview" xml:space="preserve">
+    <value>Übersicht</value>
+  </data>
+  <data name="Tab_Categories" xml:space="preserve">
+    <value>Kategorien</value>
+  </data>
+  <data name="Tab_Items" xml:space="preserve">
+    <value>Gerichte</value>
+  </data>
+  <data name="Tab_Allergens" xml:space="preserve">
+    <value>Allergene</value>
+  </data>
+  <data name="Tab_Combos" xml:space="preserve">
+    <value>Kombi-Angebote</value>
+  </data>
+  <data name="Tab_Settings" xml:space="preserve">
+    <value>Einstellungen</value>
+  </data>
+  <data name="Error_Unhandled" xml:space="preserve">
+    <value>Ein unerwarteter Fehler ist aufgetreten.</value>
+  </data>
+  <data name="Error_Reload" xml:space="preserve">
+    <value>Neu laden</value>
+  </data>
+  <data name="Error_Dismiss" xml:space="preserve">
+    <value>Ausblenden</value>
+  </data>
+  <data name="Sort_Help" xml:space="preserve">
+    <value>Ziehen Sie, um die Reihenfolge zu ändern, oder drücken Sie die Pfeiltasten nach oben und unten.</value>
+  </data>
+  <data name="Sort_Handle" xml:space="preserve">
+    <value>{0} verschieben</value>
+  </data>
+  <data name="Sort_HandleTitle" xml:space="preserve">
+    <value>Zum Verschieben ziehen (oder die Pfeiltasten verwenden)</value>
+  </data>
+  <data name="Sort_Moved" xml:space="preserve">
+    <value>{0} an Position {1} von {2} verschoben.</value>
+  </data>
+  <data name="Sort_AlreadyFirst" xml:space="preserve">
+    <value>{0} steht bereits an erster Stelle.</value>
+  </data>
+  <data name="Sort_AlreadyLast" xml:space="preserve">
+    <value>{0} steht bereits an letzter Stelle.</value>
+  </data>
+  <data name="Sort_Failed" xml:space="preserve">
+    <value>{0} konnte nicht verschoben werden. Die vorherige Reihenfolge wird wieder angezeigt.</value>
+  </data>
+  <data name="Combo_TypeToSearch" xml:space="preserve">
+    <value>Zum Suchen tippen …</value>
+  </data>
+  <data name="Combo_NoMatches" xml:space="preserve">
+    <value>Keine Treffer</value>
+  </data>
+  <data name="Combo_Remove" xml:space="preserve">
+    <value>{0} entfernen</value>
+  </data>
+  <data name="Info_More" xml:space="preserve">
+    <value>Weitere Informationen</value>
+  </data>
+  <data name="Pagination_Label" xml:space="preserve">
+    <value>Seitennavigation</value>
+  </data>
+  <data name="Pagination_Previous" xml:space="preserve">
+    <value>Vorherige Seite</value>
+  </data>
+  <data name="Pagination_Next" xml:space="preserve">
+    <value>Nächste Seite</value>
+  </data>
+  <data name="Pagination_Page" xml:space="preserve">
+    <value>Seite {0}</value>
+  </data>
+  <data name="ErrorPage_Title" xml:space="preserve">
+    <value>Fehler</value>
+  </data>
+  <data name="ErrorPage_Heading" xml:space="preserve">
+    <value>Fehler.</value>
+  </data>
+  <data name="ErrorPage_Text" xml:space="preserve">
+    <value>Bei der Bearbeitung Ihrer Anfrage ist ein Fehler aufgetreten.</value>
+  </data>
+  <data name="ErrorPage_RequestId" xml:space="preserve">
+    <value>Anfrage-ID:</value>
+  </data>
+  <data name="Calendar_LoadError" xml:space="preserve">
+    <value>Der Kalender konnte nicht geladen werden. Laden Sie die Seite neu, um es noch einmal zu versuchen.</value>
+  </data>
+  <data name="Calendar_Loading" xml:space="preserve">
+    <value>Kalender wird geladen …</value>
+  </data>
+  <data name="Calendar_Today" xml:space="preserve">
+    <value>Heute</value>
+  </data>
+  <data name="Calendar_Month" xml:space="preserve">
+    <value>Monat</value>
+  </data>
+  <data name="Calendar_List" xml:space="preserve">
+    <value>Liste</value>
+  </data>
+  <data name="Calendar_Week" xml:space="preserve">
+    <value>Woche</value>
+  </data>
+  <data name="Calendar_Year" xml:space="preserve">
+    <value>Jahr</value>
+  </data>
+  <data name="Calendar_NoEvents" xml:space="preserve">
+    <value>In diesem Monat nichts</value>
+  </data>
+  <data name="Calendar_AllDay" xml:space="preserve">
+    <value>ganztägig</value>
+  </data>
+  <data name="Calendar_MoreLink" xml:space="preserve">
+    <value>+{0} weitere</value>
+    <comment>{0} = hidden entries of a day</comment>
+  </data>
+  <data name="Calendar_MoreHint_One" xml:space="preserve">
+    <value>1 weiteren Eintrag anzeigen</value>
+  </data>
+  <data name="Calendar_MoreHint_Other" xml:space="preserve">
+    <value>{0} weitere Einträge anzeigen</value>
+  </data>
+  <data name="Calendar_PrevHint" xml:space="preserve">
+    <value>Vorheriger Monat</value>
+  </data>
+  <data name="Calendar_NextHint" xml:space="preserve">
+    <value>Nächster Monat</value>
+  </data>
+  <data name="Calendar_TodayHint" xml:space="preserve">
+    <value>Dieser Monat</value>
+  </data>
+  <data name="Calendar_ViewHint" xml:space="preserve">
+    <value>Ansicht {0}</value>
+    <comment>{0} = the view's button text</comment>
+  </data>
+  <data name="Calendar_TimeHint" xml:space="preserve">
+    <value>Uhrzeit</value>
+    <comment>column header of the list view (screen readers)</comment>
+  </data>
+  <data name="Calendar_EventHint" xml:space="preserve">
+    <value>Eintrag</value>
+    <comment>column header of the list view (screen readers)</comment>
+  </data>
+</root>

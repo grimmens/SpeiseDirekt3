@@ -1,0 +1,36 @@
+@implements IDisposable
+@inject NavigationManager NavigationManager
+@inject IStringLocalizer<ShellText> T
+
+@* The Identity logout: an anti-forgery POST to Account/Logout that returns to the current page (which then asks
+   for a login again when it needs one). Used by the user menu and the phone drawer. *@
+<form action="Account/Logout" method="post" class="sd-logout-form">
+    <AntiforgeryToken />
+    <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+    <button type="submit" class="@ButtonClass" data-testid="logout-button">
+        <svg class="sd-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span>@T["LogOut"]</span>
+    </button>
+</form>
+
+@code {
+    [Parameter] public string? ButtonClass { get; set; }
+
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => NavigationManager.LocationChanged -= OnLocationChanged;
+}

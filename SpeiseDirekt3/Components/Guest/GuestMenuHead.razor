@@ -1,10 +1,10 @@
 @* <title> and <head> meta of a guest menu page: description, canonical link and Open Graph tags for link previews
    (messengers, social networks). Every URL points to the public page /menu/{id} (also from /qr/… and the owner
-   preview); a page with ?item= describes that item. The owner preview is noindex.
+   preview; the demo's is /demo); a page with ?item= describes that item. The owner preview and the demo are noindex.
    Language: og:locale of the menu's language; public pages of a menu with language versions also list every version
    (this one included) as <link rel="alternate" hreflang> and og:locale:alternate — not the preview. Texts of our own
    (the "Speisekarte"/"Menu" suffix) follow the UI language (GuestText).
-   Absolute URLs use the origin the guest's browser sees (GuestFormat.PublicOrigin: forwarded headers first). *@
+   Absolute URLs use the origin the guest's browser sees (GuestFormat.PublicOrigin: the request after UseForwardedHeaders). *@
 @using Microsoft.AspNetCore.Http
 @{
     var menu = Model.Menu;
@@ -36,7 +36,7 @@
     @* Browser UI (scrollbars, form controls) before the CSS applies; the colors themselves live in guest-themes.css *@
     <meta name="color-scheme" content="@(Model.ThemeKey == "dark" ? "dark" : "light")" />
     <meta name="description" content="@description" />
-    @if (Model.IsPreview)
+    @if (Model.NoIndex)
     {
         <meta name="robots" content="noindex" />
     }
@@ -47,7 +47,7 @@
     }
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="@Model.Language.OgLocale" />
-    @if (!Model.IsPreview && Model.HasLanguageVersions)
+    @if (!Model.NoIndex && Model.HasLanguageVersions)
     {
         foreach (var version in Model.Versions)
         {

@@ -17,51 +17,51 @@ namespace SpeiseDirekt.Model
         public Guid Id { get; set; }
 
         /// <summary>Display name of the restaurant, e.g. "Gasthaus Zur Post".</summary>
-        [Required(AllowEmptyStrings = false, ErrorMessage = "Name is required.")]
-        [StringLength(NameMaxLength, ErrorMessage = "The name can have at most 100 characters.")]
+        [Required(AllowEmptyStrings = false, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Name_RequiredShort))]
+        [StringLength(NameMaxLength, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_NameTooLong))]
         public string Name { get; set; } = string.Empty;
 
-        [StringLength(DescriptionMaxLength, ErrorMessage = "The description can have at most 1000 characters.")]
+        [StringLength(DescriptionMaxLength, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_DescriptionTooLong))]
         public string? Description { get; set; }
 
         /// <summary>Stored like <see cref="MenuItem.ImagePath"/> (<c>image/{id}</c> from <c>IImageUploadService</c>).</summary>
-        [StringLength(200)]
+        [StringLength(200, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_ImagePathTooLong))]
         public string? LogoImagePath { get; set; }
 
         /// <summary>Wide header image, stored like <see cref="LogoImagePath"/>.</summary>
-        [StringLength(200)]
+        [StringLength(200, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_ImagePathTooLong))]
         public string? CoverImagePath { get; set; }
 
-        [StringLength(40, ErrorMessage = "The phone number can have at most 40 characters.")]
+        [StringLength(40, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_PhoneTooLong))]
         public string? Phone { get; set; }
 
         [OptionalEmail]
-        [StringLength(200, ErrorMessage = "The e-mail address can have at most 200 characters.")]
+        [StringLength(200, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_EmailTooLong))]
         public string? Email { get; set; }
 
         [HttpUrl]
-        [StringLength(UrlMaxLength, ErrorMessage = "The web address can have at most 500 characters.")]
+        [StringLength(UrlMaxLength, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_UrlTooLong))]
         public string? Website { get; set; }
 
         [HttpUrl]
-        [StringLength(UrlMaxLength, ErrorMessage = "The web address can have at most 500 characters.")]
+        [StringLength(UrlMaxLength, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_UrlTooLong))]
         public string? InstagramUrl { get; set; }
 
         [HttpUrl]
-        [StringLength(UrlMaxLength, ErrorMessage = "The web address can have at most 500 characters.")]
+        [StringLength(UrlMaxLength, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_UrlTooLong))]
         public string? FacebookUrl { get; set; }
 
         /// <summary>Link where guests can leave a review (e.g. the Google Maps review link).</summary>
         [HttpUrl]
-        [StringLength(UrlMaxLength, ErrorMessage = "The web address can have at most 500 characters.")]
+        [StringLength(UrlMaxLength, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_UrlTooLong))]
         public string? GoogleReviewUrl { get; set; }
 
         /// <summary>Postal address, several lines.</summary>
-        [StringLength(500, ErrorMessage = "The address can have at most 500 characters.")]
+        [StringLength(500, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_AddressTooLong))]
         public string? Address { get; set; }
 
         /// <summary>Opening hours as free text, several lines (e.g. "Mo–Fr 11:00–22:00").</summary>
-        [StringLength(1000, ErrorMessage = "The opening hours can have at most 1000 characters.")]
+        [StringLength(1000, ErrorMessageResourceType = typeof(ModelText), ErrorMessageResourceName = nameof(ModelText.Restaurant_OpeningHoursTooLong))]
         public string? OpeningHours { get; set; }
 
         public Guid ApplicationUserId { get; set; }

@@ -1,0 +1,978 @@
+/*
+ * back-office.css — shared back-office components that must not depend on the Tailwind CDN (the E2E runs block it):
+ * page headers with icon tiles, card heads, table heads, count pills, empty states, drag-and-drop sorting
+ * (Shared/Sortable/SortableList + js/sortable-list.js), inline row editing, the item edit page's sections and sticky
+ * save bar, the quiet dialogs (confirmation, combo editor) and the "just edited" row highlight.
+ * Reads only the tokens of css/brand.css (prefix sd-). The chrome (top bar, context bar) is css/shell.css.
+ */
+
+/* --- Page header: icon tile + title + description, actions at the right --- */
+
+.sd-page-head {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid rgb(var(--sd-border));
+    border-radius: var(--sd-radius-lg);
+    background: rgb(var(--sd-surface));
+    box-shadow: var(--sd-shadow-card);
+}
+
+@media (min-width: 640px) {
+    .sd-page-head {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.5rem;
+    }
+}
+
+.sd-page-head-main {
+    display: flex;
+    align-items: flex-start;
+    gap: .875rem;
+    min-width: 0;
+}
+
+@media (min-width: 640px) {
+    /* In the row: the title takes the room, the actions wrap below it when they do not fit */
+    .sd-page-head-main { flex: 1 1 18rem; }
+}
+
+.sd-page-head-text {
+    min-width: 0;
+}
+
+.sd-page-head-eyebrow {
+    margin: 0 0 .125rem;
+    color: rgb(var(--sd-text-subtle));
+    font-size: .75rem;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.sd-page-head-title {
+    margin: 0;
+    color: rgb(var(--sd-text));
+    font-family: var(--sd-font-display);
+    font-size: 1.625rem;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+    .sd-page-head-title { font-size: 1.875rem; }
+}
+
+.sd-page-head-desc {
+    margin: .375rem 0 0;
+    color: rgb(var(--sd-text-muted));
+}
+
+.sd-page-head-actions {
+    display: flex;
+    flex: 0 1 auto;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: .5rem;
+}
+
+@media (min-width: 640px) {
+    .sd-page-head-actions { justify-content: flex-end; }
+}
+
+/* Icon tiles: one tone per area (brand = menus and their structure, accent = food and people, green = analytics and
+   allergens, violet = QR codes). Icon/text colours are the 700/800 steps on the 100 step: ≥ 6:1. */
+.sd-tile {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: var(--sd-radius-lg);
+}
+
+.sd-tile svg {
+    width: 1.375rem;
+    height: 1.375rem;
+}
+
+.sd-tile--sm {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--sd-radius-md);
+}
+
+.sd-tile--sm svg {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.sd-tile--brand { background: rgb(var(--sd-brand-100)); color: rgb(var(--sd-brand-700)); }
+.sd-tile--accent { background: rgb(var(--sd-accent-100)); color: rgb(var(--sd-accent-800)); }
+.sd-tile--green { background: #d1fae5; color: #065f46; }
+.sd-tile--violet { background: #ede9fe; color: #5b21b6; }
+
+/* --- Cards: a header band with a light brand tint, a count pill, a table head with presence --- */
+
+.sd-card-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem .75rem;
+    padding: .875rem 1rem;
+    border-bottom: 1px solid rgb(var(--sd-brand-100));
+    border-radius: var(--sd-radius-lg) var(--sd-radius-lg) 0 0;
+    background: linear-gradient(to bottom, rgb(var(--sd-brand-50)), rgb(var(--sd-brand-50) / .55));
+}
+
+@media (min-width: 640px) {
+    .sd-card-head { padding: 1rem 1.5rem; }
+}
+
+.sd-card-head--stack {
+    display: block;
+}
+
+.sd-card-title {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0;
+    color: rgb(var(--sd-text));
+    font-size: 1.0625rem;
+    font-weight: 700;
+}
+
+.sd-card-hint {
+    margin: 0;
+    color: rgb(var(--sd-text-subtle));
+    font-size: .8125rem;
+}
+
+/* A count next to a title: the accent, quietly (accent-800 on accent-100: 6.1:1) */
+.sd-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.5rem;
+    padding: .0625rem .5rem;
+    border-radius: var(--sd-radius-full);
+    background: rgb(var(--sd-accent-100));
+    color: rgb(var(--sd-accent-800));
+    font-size: .75rem;
+    font-weight: 700;
+    line-height: 1.5;
+    font-variant-numeric: tabular-nums;
+}
+
+.sd-thead th {
+    border-bottom: 1px solid rgb(var(--sd-brand-100));
+    background: rgb(var(--sd-brand-50));
+    color: rgb(var(--sd-brand-800));
+    font-size: .6875rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+/* --- Empty states --- */
+
+.sd-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .25rem;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+}
+
+.sd-empty-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.25rem;
+    height: 3.25rem;
+    margin-bottom: .5rem;
+    border: 1px dashed rgb(var(--sd-brand-300));
+    border-radius: var(--sd-radius-full);
+    background: rgb(var(--sd-brand-50));
+    color: rgb(var(--sd-brand-600));
+}
+
+.sd-empty-icon svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.sd-empty-title {
+    margin: 0;
+    color: rgb(var(--sd-text));
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.sd-empty-text {
+    max-width: 32rem;
+    margin: 0;
+    color: rgb(var(--sd-text-subtle));
+    font-size: .875rem;
+}
+
+/* --- Icon buttons in rows (edit, delete): 40 px targets --- */
+
+.sd-row-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--sd-radius-md);
+    background: transparent;
+    color: rgb(var(--sd-text-subtle));
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color .15s, color .15s;
+}
+
+.sd-row-action svg {
+    width: 1.125rem;
+    height: 1.125rem;
+}
+
+.sd-row-action:hover {
+    background: rgb(var(--sd-brand-50));
+    color: rgb(var(--sd-brand-700));
+}
+
+.sd-row-action--danger:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.sd-row-action:focus-visible,
+.sd-sort-handle:focus-visible {
+    outline: 2px solid rgb(var(--sd-focus-color));
+    outline-offset: 1px;
+}
+
+/* --- Drag-and-drop sorting (Shared/Sortable/SortableList, js/sortable-list.js) --- */
+
+.sd-sort-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--sd-radius-md);
+    background: transparent;
+    color: rgb(var(--sd-gray-400));
+    cursor: grab;
+    touch-action: none;          /* a touch on the grip drags at once; the page still scrolls everywhere else */
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    transition: background-color .15s, color .15s;
+}
+
+.sd-sort-handle svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.sd-sort-handle:hover {
+    background: rgb(var(--sd-brand-50));
+    color: rgb(var(--sd-brand-700));
+}
+
+html.sd-sorting,
+html.sd-sorting * {
+    cursor: grabbing !important;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Rows the lifted one passes slide out of its way */
+.is-sorting > [data-sortable-item] {
+    transition: transform .16s ease;
+}
+
+.is-sorting > [data-sortable-item].is-sort-lifted {
+    position: relative;
+    z-index: 5;
+    transition: none;
+    background: rgb(var(--sd-surface));
+    box-shadow: var(--sd-shadow-lift), 0 0 0 2px rgb(var(--sd-brand-400));
+    border-radius: var(--sd-radius-md);
+}
+
+/* Table rows: WebKit paints no box-shadow on a <tr>; the cells draw the brand outline, a drop-shadow filter on the row
+   the lift (both engines) */
+.is-sorting > tr.is-sort-lifted {
+    box-shadow: none;
+    filter: drop-shadow(0 10px 12px rgb(13 38 45 / .28)) drop-shadow(0 2px 3px rgb(13 38 45 / .12));
+}
+
+.is-sorting > tr.is-sort-lifted > td {
+    background: rgb(var(--sd-surface));
+    box-shadow: inset 0 2px 0 rgb(var(--sd-brand-400)), inset 0 -2px 0 rgb(var(--sd-brand-400));
+}
+
+.is-sorting > tr.is-sort-lifted > td:first-child {
+    box-shadow: inset 2px 0 0 rgb(var(--sd-brand-400)), inset 0 2px 0 rgb(var(--sd-brand-400)), inset 0 -2px 0 rgb(var(--sd-brand-400));
+}
+
+.is-sorting > tr.is-sort-lifted > td:last-child {
+    box-shadow: inset -2px 0 0 rgb(var(--sd-brand-400)), inset 0 2px 0 rgb(var(--sd-brand-400)), inset 0 -2px 0 rgb(var(--sd-brand-400));
+}
+
+.is-sort-lifted .sd-sort-handle {
+    background: rgb(var(--sd-brand-100));
+    color: rgb(var(--sd-brand-800));
+}
+
+/* The drop slot (appended to <body>, outside Blazor's markup) */
+.sd-sort-placeholder {
+    position: absolute;
+    z-index: 4;
+    box-sizing: border-box;
+    border: 2px dashed rgb(var(--sd-brand-400));
+    border-radius: var(--sd-radius-md);
+    background: rgb(var(--sd-brand-50) / .85);
+    pointer-events: none;
+    transition: top .16s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .is-sorting > [data-sortable-item],
+    .sd-sort-placeholder {
+        transition: none;
+    }
+}
+
+/* --- A row just edited or created (the list scrolls to it after the edit page) --- */
+
+@keyframes sd-row-flash {
+    0%, 35% { background-color: rgb(var(--sd-accent-100)); }
+    100% { background-color: transparent; }
+}
+
+.sd-row-highlight,
+.sd-row-highlight > td {
+    animation: sd-row-flash 2.6s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sd-row-highlight,
+    .sd-row-highlight > td {
+        animation: none;
+        background-color: rgb(var(--sd-accent-50));
+    }
+}
+
+/* --- Inline editing in a row (categories, allergens) --- */
+
+.sd-inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: .5rem;
+    width: 100%;
+}
+
+.sd-inline-field {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+
+.sd-inline-field--narrow {
+    flex: 0 0 5.5rem;
+}
+
+.sd-inline-label {
+    display: block;
+    margin-bottom: .25rem;
+    color: rgb(var(--sd-text-muted));
+    font-size: .75rem;
+    font-weight: 600;
+}
+
+.sd-input {
+    display: block;
+    width: 100%;
+    min-height: 2.5rem;
+    padding: .4375rem .75rem;
+    border: 1px solid rgb(var(--sd-border-strong));
+    border-radius: var(--sd-radius-md);
+    background: rgb(var(--sd-surface));
+    color: rgb(var(--sd-text));
+    font: inherit;
+    font-size: .9375rem;
+}
+
+.sd-input:focus {
+    border-color: rgb(var(--sd-brand-500));
+    outline: 2px solid rgb(var(--sd-focus-color) / .35);
+    outline-offset: 0;
+}
+
+.sd-input[readonly],
+.sd-input:disabled {
+    background: rgb(var(--sd-surface-muted));
+    color: rgb(var(--sd-text-muted));
+}
+
+.sd-inline-actions {
+    display: flex;
+    gap: .375rem;
+    align-items: flex-end;
+    align-self: flex-end;
+}
+
+.sd-inline-hint {
+    flex-basis: 100%;
+    margin: 0;
+    color: rgb(var(--sd-text-subtle));
+    font-size: .75rem;
+}
+
+.sd-field-error {
+    margin-top: .25rem;
+    color: #b91c1c;
+    font-size: .8125rem;
+}
+
+/* --- Buttons for the components above (Tailwind-independent) --- */
+
+.sd-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .375rem;
+    min-height: 2.5rem;
+    padding: .5rem 1rem;
+    border: 1px solid transparent;
+    border-radius: var(--sd-radius-md);
+    background: transparent;
+    font: inherit;
+    font-size: .875rem;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s;
+}
+
+.sd-btn svg {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.sd-btn:focus-visible {
+    outline: 2px solid rgb(var(--sd-focus-color));
+    outline-offset: 2px;
+}
+
+.sd-btn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+.sd-btn--primary {
+    background: rgb(var(--sd-brand-600));
+    color: #fff;
+}
+
+.sd-btn--primary:hover:not(:disabled) {
+    background: rgb(var(--sd-brand-700));
+    color: #fff;
+}
+
+.sd-btn--secondary {
+    border-color: rgb(var(--sd-border-strong));
+    background: rgb(var(--sd-surface));
+    color: rgb(var(--sd-text));
+}
+
+.sd-btn--secondary:hover:not(:disabled) {
+    border-color: rgb(var(--sd-brand-300));
+    background: rgb(var(--sd-brand-50));
+    color: rgb(var(--sd-brand-800));
+}
+
+/* Danger: red-700 with white text 6.5:1 */
+.sd-btn--danger {
+    background: #b91c1c;
+    color: #fff;
+}
+
+.sd-btn--danger:hover:not(:disabled) {
+    background: #991b1b;
+    color: #fff;
+}
+
+.sd-btn--small {
+    min-height: 2.25rem;
+    padding: .375rem .75rem;
+}
+
+/* --- Quiet dialogs (native <dialog>, js/modal-dialog.js): white, neutral title, no dark band --- */
+
+.sd-dialog {
+    width: min(28rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    margin: auto;
+    padding: 0;
+    border: 1px solid rgb(var(--sd-border));
+    border-radius: var(--sd-radius-xl);
+    background: rgb(var(--sd-surface));
+    color: rgb(var(--sd-text));
+    box-shadow: var(--sd-shadow-lg);
+    overflow: hidden;
+}
+
+.sd-dialog::backdrop {
+    background: rgb(var(--sd-brand-950) / .38);
+}
+
+.sd-dialog[open] {
+    display: flex;
+    flex-direction: column;
+    animation: sd-dialog-in .14s ease-out;
+}
+
+@keyframes sd-dialog-in {
+    from { opacity: 0; transform: translateY(6px) scale(.985); }
+}
+
+.sd-dialog-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.25rem .25rem;
+}
+
+.sd-dialog-title {
+    margin: 0;
+    color: rgb(var(--sd-text));
+    font-family: var(--sd-font-display);
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.sd-dialog-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: .5rem 1.25rem 1.25rem;
+    color: rgb(var(--sd-text-muted));
+    font-size: .9375rem;
+    line-height: 1.55;
+}
+
+.sd-dialog-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .5rem;
+    padding: .875rem 1.25rem;
+    border-top: 1px solid rgb(var(--sd-border));
+    background: rgb(var(--sd-gray-50));
+}
+
+.sd-dialog-close {
+    margin: -.5rem -.5rem 0 0;
+}
+
+/* Side panel variant (combo editor): from the right from 1024 px, full width at the bottom below */
+.sd-dialog--panel {
+    width: min(34rem, calc(100vw - 2rem));
+}
+
+@media (min-width: 1024px) {
+    .sd-dialog--panel {
+        height: 100dvh;
+        max-height: 100dvh;
+        margin: 0 0 0 auto;
+        border-width: 0 0 0 1px;
+        border-radius: 0;
+    }
+
+    .sd-dialog--panel[open] {
+        animation: sd-panel-in .18s ease-out;
+    }
+}
+
+@media (max-width: 639.98px) {
+    .sd-dialog--panel {
+        width: 100vw;
+        max-width: 100vw;
+        max-height: calc(100dvh - 1.5rem);
+        margin: auto 0 0;
+        border-radius: var(--sd-radius-xl) var(--sd-radius-xl) 0 0;
+    }
+}
+
+@keyframes sd-panel-in {
+    from { opacity: 0; transform: translateX(1.5rem); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sd-dialog[open],
+    .sd-dialog--panel[open] {
+        animation: none;
+    }
+}
+
+/* --- Account settings (Account/Manage inside ManageLayout's card, AP13): header, notices, fields, recovery codes --- */
+
+.sd-manage-head {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid rgb(var(--sd-border));
+}
+
+.sd-manage-title {
+    margin: 0;
+    color: rgb(var(--sd-text));
+    font-family: var(--sd-font-display);
+    font-size: 1.375rem;
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.sd-manage-desc {
+    margin: .375rem 0 0;
+    color: rgb(var(--sd-text-muted));
+}
+
+.sd-manage-body {
+    display: grid;
+    gap: 1.25rem;
+    max-width: 40rem;
+}
+
+.sd-manage-subtitle {
+    margin: .5rem 0 0;
+    color: rgb(var(--sd-text));
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.sd-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.sd-actions form { margin: 0; }
+
+.sd-field { display: grid; gap: .375rem; }
+
+.sd-label {
+    color: rgb(var(--sd-gray-800));
+    font-size: .875rem;
+    font-weight: 600;
+}
+
+.sd-hint {
+    margin: 0;
+    color: rgb(var(--sd-text-subtle));
+    font-size: .8125rem;
+}
+
+.sd-input:focus {
+    border-color: rgb(var(--sd-brand-600));
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(var(--sd-brand-500) / .25);
+}
+
+.sd-input.invalid { border-color: #b91c1c; }
+
+/* Blazor's ValidationMessage inside the back office's own forms */
+.sd-field .validation-message,
+.sd-manage-body .validation-message {
+    color: #b91c1c;
+    font-size: .8125rem;
+}
+
+.sd-notice {
+    margin: 0;
+    padding: .875rem 1rem;
+    border: 1px solid;
+    border-radius: var(--sd-radius-lg);
+    font-size: .9375rem;
+    line-height: 1.55;
+}
+
+.sd-notice p { margin: 0; }
+.sd-notice p + p { margin-top: .375rem; }
+.sd-notice a { color: inherit; font-weight: 600; text-decoration: underline; }
+.sd-notice--warning { border-color: #fcd34d; background: #fffbeb; color: #78350f; }
+.sd-notice--danger { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+.sd-notice--info { border-color: rgb(var(--sd-brand-200)); background: rgb(var(--sd-brand-50)); color: rgb(var(--sd-brand-900)); }
+
+/* The authenticator's setup steps and key, the recovery codes */
+.sd-steps {
+    display: grid;
+    gap: 1.25rem;
+    margin: 0;
+    padding-left: 1.25rem;
+    list-style: decimal; /* Tailwind's preflight removes list markers */
+}
+
+.sd-steps > li::marker { color: rgb(var(--sd-brand-700)); font-weight: 700; }
+.sd-steps p { margin: 0 0 .5rem; }
+.sd-steps ul { margin: 0; padding-left: 1.125rem; list-style: disc; }
+.sd-steps a { color: rgb(var(--sd-brand-700)); }
+
+.sd-key {
+    display: inline-block;
+    padding: .375rem .625rem;
+    border-radius: var(--sd-radius-md);
+    background: rgb(var(--sd-gray-100));
+    color: rgb(var(--sd-text));
+    font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    font-size: .9375rem;
+    letter-spacing: .04em;
+    word-break: break-all;
+}
+
+.sd-codes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sd-codes code {
+    display: block;
+    padding: .5rem .625rem;
+    border: 1px solid rgb(var(--sd-border));
+    border-radius: var(--sd-radius-md);
+    background: rgb(var(--sd-gray-50));
+    color: rgb(var(--sd-text));
+    font-size: .9375rem;
+    text-align: center;
+}
+
+/* --- The item edit page: calm sections and a sticky save bar --- */
+
+.sd-form-section {
+    border: 1px solid rgb(var(--sd-border));
+    border-radius: var(--sd-radius-lg);
+    background: rgb(var(--sd-surface));
+    box-shadow: var(--sd-shadow-card);
+    scroll-margin-top: 8rem;
+}
+
+.sd-form-section-head {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: 1rem 1rem .25rem;
+}
+
+@media (min-width: 640px) {
+    .sd-form-section-head { padding: 1.25rem 1.5rem .25rem; }
+}
+
+.sd-form-section-title {
+    margin: 0;
+    color: rgb(var(--sd-text));
+    font-size: 1.0625rem;
+    font-weight: 700;
+}
+
+.sd-form-section-desc {
+    margin: .125rem 0 0;
+    color: rgb(var(--sd-text-subtle));
+    font-size: .8125rem;
+}
+
+.sd-form-section-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: .75rem 1rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+    .sd-form-section-body { padding: .75rem 1.5rem 1.5rem; }
+}
+
+/* Jump links to the sections (wide screens) */
+.sd-form-toc {
+    position: sticky;
+    top: 5.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .125rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.sd-form-toc a {
+    display: block;
+    padding: .375rem .75rem;
+    border-left: 3px solid transparent;
+    border-radius: 0 var(--sd-radius-sm) var(--sd-radius-sm) 0;
+    color: rgb(var(--sd-text-muted));
+    font-size: .875rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.sd-form-toc a:hover {
+    border-left-color: rgb(var(--sd-brand-300));
+    background: rgb(var(--sd-surface) / .7);
+    color: rgb(var(--sd-brand-800));
+}
+
+.sd-savebar {
+    position: sticky;
+    bottom: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .5rem .75rem;
+    margin-top: 1.5rem;
+    padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+    border: 1px solid rgb(var(--sd-border));
+    border-radius: var(--sd-radius-lg) var(--sd-radius-lg) 0 0;
+    background: rgb(var(--sd-surface) / .96);
+    box-shadow: 0 -8px 24px -14px rgb(13 38 45 / .35);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+}
+
+.sd-savebar-status {
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    margin-right: auto;
+    color: rgb(var(--sd-text-subtle));
+    font-size: .8125rem;
+}
+
+.sd-savebar-status--dirty {
+    color: rgb(var(--sd-accent-800));
+    font-weight: 600;
+}
+
+.sd-savebar-status--dirty::before {
+    content: "";
+    width: .5rem;
+    height: .5rem;
+    border-radius: var(--sd-radius-full);
+    background: rgb(var(--sd-accent-500));
+}
+
+@media (max-width: 639.98px) {
+    .sd-savebar {
+        margin-inline: -1rem;
+        border-width: 1px 0 0;
+        border-radius: 0;
+    }
+
+    .sd-savebar .sd-btn {
+        flex: 1 1 0;
+    }
+
+    .sd-savebar-status {
+        flex-basis: 100%;
+    }
+}
+
+/* Option rows (price variants, extras) in the item editor */
+.sd-option-row {
+    display: flex;
+    align-items: flex-start;
+    gap: .375rem;
+    padding: .5rem;
+    border: 1px solid rgb(var(--sd-border));
+    border-radius: var(--sd-radius-md);
+    background: rgb(var(--sd-gray-50));
+}
+
+.sd-option-list {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* A checkbox tile (labels, allergens) */
+.sd-check {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    min-height: 2.5rem;
+    padding: .375rem .75rem;
+    border: 1px solid rgb(var(--sd-border));
+    border-radius: var(--sd-radius-md);
+    background: rgb(var(--sd-surface));
+    color: rgb(var(--sd-text));
+    font-size: .875rem;
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s;
+}
+
+.sd-check:hover {
+    border-color: rgb(var(--sd-brand-300));
+}
+
+.sd-check:has(input:checked) {
+    border-color: rgb(var(--sd-brand-400));
+    background: rgb(var(--sd-brand-50));
+}
+
+.sd-check input {
+    width: 1.0625rem;
+    height: 1.0625rem;
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.sd-check-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: .5rem;
+}
+
+fieldset:disabled .sd-check {
+    cursor: default;
+    opacity: .8;
+}
+
+/* A dialog whose content is one form (combo editor): head and actions stay, the body scrolls */
+.sd-dialog-form {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+}

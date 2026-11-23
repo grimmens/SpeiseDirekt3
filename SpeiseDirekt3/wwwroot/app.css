@@ -1,21 +1,62 @@
-/* Fonts are self-hosted: css/fonts.css (loaded in App.razor) */
+/* Fonts are self-hosted: css/fonts.css (loaded in App.razor). The body font and background come from css/shell.css. */
 
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+/* Bootstrap in the brand (tokens: css/brand.css) */
+:root {
+    --bs-primary: rgb(var(--sd-brand-600));
+    --bs-primary-rgb: var(--sd-brand-600-rgb);
+    --bs-primary-text-emphasis: rgb(var(--sd-brand-800));
+    --bs-primary-bg-subtle: rgb(var(--sd-brand-50));
+    --bs-primary-border-subtle: rgb(var(--sd-brand-200));
+    --bs-link-color: rgb(var(--sd-brand-600));
+    --bs-link-color-rgb: var(--sd-brand-600-rgb);
+    --bs-link-hover-color: rgb(var(--sd-brand-700));
+    --bs-link-hover-color-rgb: var(--sd-brand-700-rgb);
+    --bs-focus-ring-color: rgb(var(--sd-focus-color) / .35);
 }
 
 a, .btn-link {
-    color: #006bb7;
+    color: rgb(var(--sd-brand-600));
 }
 
 .btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+    --bs-btn-color: #fff;
+    --bs-btn-bg: rgb(var(--sd-brand-600));
+    --bs-btn-border-color: rgb(var(--sd-brand-600));
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: rgb(var(--sd-brand-700));
+    --bs-btn-hover-border-color: rgb(var(--sd-brand-700));
+    --bs-btn-focus-shadow-rgb: var(--sd-brand-600-rgb);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: rgb(var(--sd-brand-800));
+    --bs-btn-active-border-color: rgb(var(--sd-brand-800));
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: rgb(var(--sd-brand-600));
+    --bs-btn-disabled-border-color: rgb(var(--sd-brand-600));
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+.btn-outline-primary {
+    --bs-btn-color: rgb(var(--sd-brand-700));
+    --bs-btn-border-color: rgb(var(--sd-brand-600));
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: rgb(var(--sd-brand-600));
+    --bs-btn-hover-border-color: rgb(var(--sd-brand-600));
+    --bs-btn-focus-shadow-rgb: var(--sd-brand-600-rgb);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: rgb(var(--sd-brand-700));
+    --bs-btn-active-border-color: rgb(var(--sd-brand-700));
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: rgb(var(--sd-brand-400));
+}
+
+.form-check-input:checked {
+    background-color: rgb(var(--sd-brand-600));
+    border-color: rgb(var(--sd-brand-600));
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-select:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgb(var(--sd-focus-color) / .7);
 }
 
 .content {

@@ -8,29 +8,15 @@
 @attribute [Authorize]
 @inject NavigationManager Navigation
 @inject IPermissionService PermissionService
+@inject IStringLocalizer<ItemsText> T
+@inject IStringLocalizer<CommonText> C
 
-<PageTitle>@(state == State.Loading ? "Loading..." : "Menu Items")</PageTitle>
+<PageTitle>@(state == State.Loading ? C["Loading"] : C["PageTitle", T["Title"]])</PageTitle>
 
 @if (state != State.Loading)
 {
     <div class="max-w-6xl mx-auto p-[1rem] sm:p-6 space-y-6">
-        @if (menu is not null)
-        {
-            <nav class="text-sm text-gray-600" aria-label="breadcrumb">
-                <ol class="flex flex-wrap gap-y-1 space-x-2">
-                    <li>
-                        <a href="/menus" class="text-blue-600 hover:underline">Menus</a>
-                        <span class="mx-2">/</span>
-                    </li>
-                    <li>
-                        <a href="@($"/menudetail/{menu.Id}")" class="text-blue-600 hover:underline">@menu.Name</a>
-                        <span class="mx-2">/</span>
-                    </li>
-                    <li class="text-gray-800">Menu items</li>
-                </ol>
-            </nav>
-        }
-
+        @* "Menus › menu" is in the menu context bar (Layout/MenuContextBar) *@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 px-6 py-12 text-center" data-testid="menu-items-no-categories">
             <div class="mx-auto h-12 w-12 text-gray-400 mb-3">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-full h-full" aria-hidden="true">
@@ -39,24 +25,24 @@
             </div>
             @if (state == State.MenuNotFound)
             {
-                <h1 class="text-lg font-semibold text-gray-900 mb-1">Menu not found</h1>
-                <p class="text-sm text-gray-500 mb-6">It may have been deleted.</p>
-                <a href="/menus" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors no-underline">Back to the menus</a>
+                <h1 class="text-lg font-semibold text-gray-900 mb-1">@T["Loading_NotFoundTitle"]</h1>
+                <p class="text-sm text-gray-500 mb-6">@T["Loading_NotFoundText"]</p>
+                <a href="/menus" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors no-underline">@T["BackToMenus"]</a>
             }
             else
             {
-                <h1 class="text-lg font-semibold text-gray-900 mb-1">No categories yet</h1>
+                <h1 class="text-lg font-semibold text-gray-900 mb-1">@T["Loading_NoCategoriesTitle"]</h1>
                 <p class="text-sm text-gray-500 mb-6">
-                    Menu items belong to a category, e.g. Starters, Mains or Drinks.
-                    @(canCreateCategories ? "Add a category first, then add the items to it." : "A category has to be added first.")
+                    @T["Loading_NoCategoriesText"]
+                    @(canCreateCategories ? T["Loading_AddCategoryFirst"] : T["Loading_CategoryNeeded"])
                 </p>
                 @if (canCreateCategories)
                 {
-                    <a href="@($"/Categories/{MenuId}")" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors no-underline">
+                    <a href="@($"/Categories/{MenuId}")" class="inline-flex items-center px-[1rem] py-2 text-sm font-medium bg-brand-600 hover:bg-brand-700 text-white rounded-lg transition-colors no-underline">
                         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                         </svg>
-                        Add a category
+                        @T["Loading_AddCategory"]
                     </a>
                 }
             }
@@ -77,6 +63,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // An inactive or removed team member sees nothing of the tenant (AP14)
+        if (!await PermissionService.RequireAsync(Permission.MenuItemsView, Navigation)) return;
         menu = Guid.TryParse(MenuId, out var menuId) ? await Context.Menus.FindAsync(menuId) : null;
 
         if (menu == null)

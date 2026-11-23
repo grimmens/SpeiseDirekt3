@@ -1,0 +1,35 @@
+@* The Speise-Direkt logo, the one place that names its files (wwwroot/images/brand). Swapping in another logo
+   = replacing those SVGs (or the paths here). Variants: the lockup (mark + wordmark) or the mark alone, each for a
+   light background or `Inverse` for the dark top bar. *@
+<img src="@Source" alt="@Alt" class="@Class" width="@Width" height="@Height" decoding="async" data-testid="@TestId" />
+
+@code {
+    /// <summary>Mark plus wordmark (default) or the mark alone.</summary>
+    [Parameter] public bool MarkOnly { get; set; }
+
+    /// <summary>For dark backgrounds (white wordmark, lighter tile).</summary>
+    [Parameter] public bool Inverse { get; set; }
+
+    /// <summary>Rendered height in px; the width follows the artwork's aspect ratio.</summary>
+    [Parameter] public int Height { get; set; } = 32;
+
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>Empty when the logo sits next to a visible name (decorative), else "Speise-Direkt".</summary>
+    [Parameter] public string Alt { get; set; } = "Speise-Direkt";
+
+    [Parameter] public string TestId { get; set; } = "brand-logo";
+
+    // viewBox of the lockup: 228.15 × 48; of the mark: 48 × 48
+    private const double LockupRatio = 228.15 / 48;
+
+    private string Source => (MarkOnly, Inverse) switch
+    {
+        (true, false) => "/images/brand/logo-mark.svg",
+        (true, true) => "/images/brand/logo-mark-inverse.svg",
+        (false, false) => "/images/brand/logo.svg",
+        (false, true) => "/images/brand/logo-inverse.svg"
+    };
+
+    private int Width => MarkOnly ? Height : (int)Math.Round(Height * LockupRatio);
+}

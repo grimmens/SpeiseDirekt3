@@ -26,4 +26,18 @@
     <PackageReference Include="SixLabors.ImageSharp" Version="3.1.10" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Texts of the shared core (AP12): Resources/<Name>Text.resx (English, neutral) + <Name>Text.de.resx. MSBuild
+         generates a class SpeiseDirekt.<Name>Text with one static property per key (culture = CurrentUICulture), usable
+         as ErrorMessageResourceType of DataAnnotations attributes and in services. Same rule as in SpeiseDirekt3. -->
+    <EmbeddedResource Update="Resources\*Text.resx">
+      <StronglyTypedLanguage>CSharp</StronglyTypedLanguage>
+      <StronglyTypedClassName>%(Filename)</StronglyTypedClassName>
+      <StronglyTypedNamespace>$(RootNamespace)</StronglyTypedNamespace>
+      <StronglyTypedManifestPrefix>$(RootNamespace).Resources</StronglyTypedManifestPrefix>
+      <StronglyTypedFileName>$(IntermediateOutputPath)%(Filename).Designer.cs</StronglyTypedFileName>
+      <PublicClass>true</PublicClass>
+    </EmbeddedResource>
+  </ItemGroup>
+
 </Project>
