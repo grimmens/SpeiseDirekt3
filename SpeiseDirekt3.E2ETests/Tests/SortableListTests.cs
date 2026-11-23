@@ -318,6 +318,41 @@ public class SortableListTests : BackOfficeTestBase
         await Assertions.Expect(names.Nth(1)).ToHaveValueAsync("0,4 l");
     }
 
+    /// <summary>
+    /// The list is left while js/sortable-list.js is still loading: the late script is let go. Attached anyway, the
+    /// list handed JS its disposed .NET reference, the exception ended the circuit, and the next page (here the item
+    /// page) looked fine but no longer reacted — no Save, no Cancel (found on Windows under the parallel test load).
+    /// </summary>
+    [Fact]
+    public async Task LeavingTheList_WhileTheScriptLoads_KeepsTheNextPageWorking()
+    {
+        var (_, _, soupsId) = await SeedAsync("Verlassen Menü");
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var script = new System.Text.RegularExpressions.Regex(@"/js/sortable-list(\.[^/]*)?\.js");
+        await Page.RouteAsync(script, async route =>
+        {
+            await release.Task;
+            await route.ContinueAsync();
+        });
+        await GotoInteractiveAsync($"/MenuItems/Category/{soupsId}");
+        await Assertions.Expect(HandleOf(ItemRows.First)).ToBeVisibleAsync();
+
+        // Off to the item page while the list still waits for its script, then the script arrives
+        await Link("Edit Tomatensuppe", exact: true).ClickAsync();
+        await Assertions.Expect(ItemEditor).ToBeVisibleAsync();
+        var loaded = Page.WaitForResponseAsync(script);
+        release.SetResult();
+        await (await loaded).FinishedAsync();
+
+        // The circuit is alive: the page notices a change and Cancel leaves it
+        await ItemEditor.Locator("#MenuItem\\.Name").FillAsync("Tomatencremesuppe");
+        await ItemEditor.Locator("#MenuItem\\.Name").PressAsync("Tab");
+        await Assertions.Expect(Page.GetByTestId("item-dirty-state")).ToHaveTextAsync("Unsaved changes");
+        await Page.GetByTestId("item-savebar").GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex($"/MenuItems/Category/{soupsId}\\?highlight=", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
+        await Assertions.Expect(Page.Locator("#blazor-error-ui")).ToBeHiddenAsync();
+    }
+
     [Fact]
     public async Task FailedSave_RollsBack_WithAMessage()
     {
