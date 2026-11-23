@@ -30,10 +30,12 @@ case "$arch" in
     aarch64|arm64) arch=arm64 ;;
     *) echo "Unsupported CPU architecture: $arch" >&2; exit 1 ;;
 esac
+windows=0
 case "$os" in
     Linux) asset=tailwindcss-linux-$arch; cache=${XDG_CACHE_HOME:-$HOME/.cache}/speisedirekt3/tailwind ;;
     Darwin) asset=tailwindcss-macos-$arch; cache=${XDG_CACHE_HOME:-$HOME/.cache}/speisedirekt3/tailwind ;;
-    MINGW*|MSYS*|CYGWIN*) asset=tailwindcss-windows-$arch.exe; cache=${LOCALAPPDATA:-$HOME/.cache}/speisedirekt3/tailwind ;;
+    # Git Bash, MSYS2, Cygwin: the cache build.ps1 uses; %LOCALAPPDATA% (C:\Users\...) as a POSIX path for the shell tools
+    MINGW*|MSYS*|CYGWIN*) windows=1; asset=tailwindcss-windows-$arch.exe; cache=$(cygpath -u "${LOCALAPPDATA:-$HOME/.cache}")/speisedirekt3/tailwind ;;
     *) echo "Unsupported operating system: $os (on Windows use tools/tailwind/build.ps1)" >&2; exit 1 ;;
 esac
 case "$asset" in
@@ -45,10 +47,17 @@ case "$asset" in
     tailwindcss-windows-arm64.exe) sha256=76f516476784c00f1562160b5758e3d8f0e6c48957efb26b5b50fbdfd76aa382 ;;
 esac
 
+# From stdin: given a file name with a backslash, sha256sum escapes its output line and puts a "\" before the hash
 sha256_of() {
-    if command -v sha256sum > /dev/null; then sha256sum "$1" | cut -d ' ' -f 1
-    else shasum -a 256 "$1" | cut -d ' ' -f 1
+    if command -v sha256sum > /dev/null; then sha256sum < "$1" | cut -d ' ' -f 1
+    else shasum -a 256 < "$1" | cut -d ' ' -f 1
     fi
+}
+
+# The Windows CLI is a native program: hand it Windows paths (C:/Users/...). Git Bash would convert /c/... arguments
+# itself, but not with MSYS_NO_PATHCONV=1, and Cygwin never does.
+native_path() {
+    if [ "$windows" = 1 ]; then cygpath -m "$1"; else printf '%s\n' "$1"; fi
 }
 
 # Download once, verify every time
@@ -74,10 +83,13 @@ fi
 # The browserslist data inside the pinned CLI is as old as the CLI; its warning is noise here
 export BROWSERSLIST_IGNORE_OLD_DATA=1
 
+config=$(native_path "$here/tailwind.config.js")
+input=$(native_path "$here/input.css")
+
 if [ "$check" = 1 ]; then
     tmp=$(mktemp "${TMPDIR:-/tmp}/tailwind-check.XXXXXX")
     trap 'rm -f "$tmp"' EXIT
-    "$cli" -c "$here/tailwind.config.js" -i "$here/input.css" -o "$tmp" --minify
+    "$cli" -c "$config" -i "$input" -o "$(native_path "$tmp")" --minify
     if ! cmp -s "$tmp" "$output"; then
         echo "SpeiseDirekt3/wwwroot/css/tailwind.css is not what the markup needs (classes changed?)." >&2
         echo "Run 'bash tools/tailwind/build.sh' (Windows: tools/tailwind/build.ps1) and commit the CSS." >&2
@@ -85,5 +97,5 @@ if [ "$check" = 1 ]; then
     fi
     echo "SpeiseDirekt3/wwwroot/css/tailwind.css is up to date." >&2
 else
-    "$cli" -c "$here/tailwind.config.js" -i "$here/input.css" -o "$output" --minify
+    "$cli" -c "$config" -i "$input" -o "$(native_path "$output")" --minify
 fi
