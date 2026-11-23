@@ -601,7 +601,7 @@ public class LandingPageTests : E2ETestBase
             lines.Should().Contain($"Disallow: {path}");
         // Guest pages stay crawlable: no rule matches /menu/{id} or /qr/{id}, nor the demo (it says noindex itself)
         var disallowed = lines.Where(l => l.StartsWith("Disallow: ")).Select(l => l["Disallow: ".Length..]).ToArray();
-        foreach (var url in new[] { "/", $"/menu/{Guid.NewGuid()}", $"/qr/{Guid.NewGuid()}", "/demo" })
+        foreach (var url in new[] { "/", "/impressum", $"/menu/{Guid.NewGuid()}", $"/qr/{Guid.NewGuid()}", "/demo" })
             disallowed.Should().NotContain(p => url.StartsWith(p, StringComparison.Ordinal), url);
         foreach (var url in new[] { "/dashboard", "/Account/Login", "/menu/edit/1", "/menu/preview/1", "/Categories/1", "/MenuItems/1", "/users/invite" })
             disallowed.Should().Contain(p => url.StartsWith(p, StringComparison.Ordinal), url);
@@ -609,7 +609,7 @@ public class LandingPageTests : E2ETestBase
     }
 
     [Fact]
-    public async Task SitemapXml_ListsOnlyTheLandingPage()
+    public async Task SitemapXml_ListsTheLandingPageAndTheImprint()
     {
         var response = await Page.APIRequest.GetAsync("/sitemap.xml", new()
         {
@@ -620,11 +620,11 @@ public class LandingPageTests : E2ETestBase
         var doc = System.Xml.Linq.XDocument.Parse(await response.TextAsync());
         System.Xml.Linq.XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
         doc.Root!.Name.Should().Be(ns + "urlset");
-        doc.Descendants(ns + "loc").Select(l => l.Value).Should().Equal("https://speisekarte.example/");
+        doc.Descendants(ns + "loc").Select(l => l.Value).Should().Equal("https://speisekarte.example/", "https://speisekarte.example/impressum");
 
         // Without a proxy: the server's own origin
         var direct = System.Xml.Linq.XDocument.Parse(await (await Page.APIRequest.GetAsync("/sitemap.xml")).TextAsync());
-        direct.Descendants(ns + "loc").Select(l => l.Value).Should().Equal(App.ServerAddress + "/");
+        direct.Descendants(ns + "loc").Select(l => l.Value).Should().Equal(App.ServerAddress + "/", App.ServerAddress + "/impressum");
     }
 
     [Theory]
@@ -657,15 +657,18 @@ public class LandingPageTests : E2ETestBase
 
     [Theory]
     [MemberData(nameof(Languages))]
-    public async Task LegalLinks_AndContact_AreHiddenByDefault_AndShownWhenConfigured(string language)
+    public async Task LegalLinks_AndContact_FollowTheSettings_TheImprintIsOnByDefault(string language)
     {
         var copy = CopyOf(language);
         var (context, Page) = await NewContextAsync(copy.Locale);
         await using var _ = context;
         await OpenLandingAsync(Page);
-        await Assertions.Expect(Page.GetByTestId("footer-legal")).ToHaveCountAsync(0);
+        // appsettings.json: Legal:ImprintUrl = /impressum (AP15a, the app's own imprint page), no privacy page, no contact
+        await Assertions.Expect(Page.GetByTestId("footer-legal")).ToBeVisibleAsync();
+        await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveAttributeAsync("href", "/impressum");
+        await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveTextAsync(copy.Imprint);
         await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByText(copy.Imprint)).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveCountAsync(0);
         await Assertions.Expect(Page.GetByText(copy.Privacy)).ToHaveCountAsync(0);
 
         var configuration = App.ServerServices.GetRequiredService<IConfiguration>();
@@ -696,7 +699,7 @@ public class LandingPageTests : E2ETestBase
         }
         finally
         {
-            configuration["Legal:ImprintUrl"] = "";
+            configuration["Legal:ImprintUrl"] = "/impressum";
             configuration["Legal:PrivacyUrl"] = "";
             configuration["Landing:ContactEmail"] = "";
         }

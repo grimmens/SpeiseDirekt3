@@ -8,6 +8,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.Processing;
 using SpeiseDirekt.Model;
 using SpeiseDirekt3.Components.Landing;
+using Microsoft.Extensions.DependencyInjection;
 using SpeiseDirekt3.E2ETests.Infrastructure;
 using ImageSharpImage = SixLabors.ImageSharp.Image;
 
@@ -30,6 +31,9 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// <para><see cref="Capture_landing_page"/> shoots the landing page at 360, 390, 768, 1024, 1280 and 1440 px (first screen
 /// and full page, reduced motion so nothing waits for a fade-in), the open phone menu, the page without JS and a few
 /// theme switches, in German and English (or only <c>E2E_LOCALE</c>), into <c>$E2E_SCREENSHOT_DIR/landing-page/{de|en}</c>.</para>
+/// <para><see cref="Capture_imprint"/> (AP15a) shoots <c>/impressum</c> at 360, 390, 768 and 1280 px (first screen and full
+/// page), with the e-mail placeholder and, at 390 and 1280 px, with a configured contact address, in German and English
+/// (or only <c>E2E_LOCALE</c>), into <c>$E2E_SCREENSHOT_DIR/imprint/{de|en}</c>.</para>
 /// <code>
 /// E2E_SCREENSHOT_DIR=/tmp/shots E2E_LANDING_IMAGES_DIR=$PWD/SpeiseDirekt3/wwwroot/images/landing \
 ///   dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~LandingScreenshotTour.Capture_landing_images
@@ -232,6 +236,47 @@ public class LandingScreenshotTour : QrCalendarTestBase
             : new[] { E2ESettings.GermanLocale, E2ESettings.DefaultLocale };
         foreach (var locale in locales)
             await CaptureLandingPageAsync(Path.Combine(dir, "landing-page", locale[..2]), locale);
+    }
+
+    [Fact]
+    public async Task Capture_imprint()
+    {
+        var dir = Directory;
+        if (dir is null) return; // opt-in only
+        var locales = Environment.GetEnvironmentVariable(E2ESettings.LocaleEnvVar) is { Length: > 0 } only
+            ? new[] { only }
+            : new[] { E2ESettings.GermanLocale, E2ESettings.DefaultLocale };
+        var configuration = App.ServerServices.GetRequiredService<Microsoft.Extensions.Configuration.IConfiguration>();
+        foreach (var locale in locales)
+        {
+            var target = Path.Combine(dir, "imprint", locale[..2]);
+            System.IO.Directory.CreateDirectory(target);
+            foreach (var (width, height, withEmail) in new[] { (360, 780, false), (390, 844, false), (768, 1024, false), (1280, 800, false), (390, 844, true), (1280, 800, true) })
+            {
+                var mobile = width < 1024;
+                configuration["Landing:ContactEmail"] = withEmail ? "kontakt@speisedirekt.example" : "";
+                try
+                {
+                    await using var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
+                    {
+                        BaseURL = App.ServerAddress, ReducedMotion = ReducedMotion.Reduce, Locale = locale,
+                        ViewportSize = new ViewportSize { Width = width, Height = height }, DeviceScaleFactor = mobile ? 2 : 1,
+                        IsMobile = mobile, HasTouch = mobile
+                    });
+                    var page = await context.NewPageAsync();
+                    await page.GotoAsync("/impressum");
+                    await page.Locator("html[data-landing-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
+                    await SettleAsync(page);
+                    var name = $"{width}{(withEmail ? "-email" : "")}";
+                    await page.ScreenshotAsync(new() { Path = Path.Combine(target, $"{name}-top.png") });
+                    await page.ScreenshotAsync(new() { Path = Path.Combine(target, $"{name}-full.png"), FullPage = true });
+                }
+                finally
+                {
+                    configuration["Landing:ContactEmail"] = "";
+                }
+            }
+        }
     }
 
     private async Task CaptureLandingPageAsync(string target, string locale)

@@ -1,0 +1,148 @@
+@page "/impressum"
+@* The imprint (AP15a, operator request 23.11.2026): the operator's own legal notice (his imprint of Web-Tech-Systems,
+   adapted to this product), not text the app makes up. The legal text is German for every visitor (lang="de" on the
+   article, Austrian notice under § 5 ECG / § 25 MedienG) and lives here in the markup, not in a resource: it is not
+   translated. The chrome follows the browser's language like the landing page: header, footer, <title>, description,
+   the eyebrow and, for a non-German visitor, the note "This legal notice is provided in German." (LegalText.resx).
+   Static SSR in the landing document ([LandingPage]: css/landing.css, the landing header and footer — their section
+   links point to /#…); no script of its own. Indexable: canonical /impressum, listed in sitemap.xml. Signed-in users
+   are not redirected.
+   Contact: Landing:ContactEmail (LandingSettings, the site's one contact address, also in the footer) as a mailto link;
+   while it is empty a placeholder — never an invented address, no phone number.
+   Deliberately missing: "Online-Streitbeilegung" of the operator's original — the EU ODR platform was shut down on
+   20 July 2025 (Regulation (EU) 2024/3228). Do not add sections or legal claims of our own. *@
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [LandingPage]
+@layout LandingLayout
+@using Microsoft.AspNetCore.Http
+@using SpeiseDirekt3.Components.Landing
+@inject IConfiguration Configuration
+@inject IStringLocalizer<LegalText> T
+@inject IStringLocalizer<LandingText> L
+@{
+    var email = LandingSettings.From(Configuration).ContactEmail;
+    var url = GuestFormat.Absolute(GuestFormat.PublicOrigin(HttpContext?.Request), Path);
+}
+<PageTitle>@T["Imprint_Title"]</PageTitle>
+<HeadContent>
+    <meta name="description" content="@T["Imprint_Description"]" />
+    @if (url is not null)
+    {
+        <link rel="canonical" href="@url" />
+    }
+</HeadContent>
+
+<a class="lp-skip" href="#lp-main" data-testid="landing-skip">@L["SkipToContent"]</a>
+<LandingHeader SectionBase="/" />
+
+<main id="lp-main" class="lp-main lp-legal" tabindex="-1" data-testid="imprint-page">
+    <article class="lp-container lp-legal-grid" lang="de" aria-labelledby="imprint-title" data-testid="imprint">
+        <header class="lp-legal-head">
+            <p class="lp-eyebrow" lang="@AppCultures.HtmlLang"><span class="lp-eyebrow-dot" aria-hidden="true"></span>@L["Footer_Legal"]</p>
+            <h1 id="imprint-title" class="lp-legal-title">Impressum</h1>
+            <p class="lp-legal-lead">Angaben gemäß §&nbsp;5 E-Commerce-Gesetz (ECG) und §&nbsp;25 Mediengesetz (MedienG).</p>
+            @if (!AppCultures.IsGerman)
+            {
+                <p class="lp-legal-note" lang="@AppCultures.HtmlLang" data-testid="imprint-language-note">
+                    <LandingIcon Name="globe" /> <span>@T["Imprint_LanguageNote"]</span>
+                </p>
+            }
+        </header>
+
+        <div class="lp-legal-body">
+            <section aria-labelledby="imprint-owner" data-testid="imprint-owner">
+                <h2 id="imprint-owner">Inhaber / Medieninhaber</h2>
+                <p>
+                    Bernhard Grimm<br />
+                    Mühlgasse 106<br />
+                    2500 Baden<br />
+                    Österreich
+                </p>
+            </section>
+
+            <section aria-labelledby="imprint-contact" data-testid="imprint-contact">
+                <h2 id="imprint-contact">Kontakt</h2>
+                @if (email is not null)
+                {
+                    <p>E-Mail: <a href="mailto:@email" data-testid="imprint-email">@email</a></p>
+                }
+                else
+                {
+                    <p class="lp-legal-placeholder" data-testid="imprint-email-placeholder">E-Mail-Adresse folgt in Kürze.</p>
+                }
+            </section>
+
+            <section aria-labelledby="imprint-company" data-testid="imprint-company">
+                <h2 id="imprint-company">Unternehmen</h2>
+                <p>
+                    Rechtsform: Einzelunternehmen<br />
+                    Unternehmensgegenstand: IT-Beratung und Softwareentwicklung<br />
+                    Auftritt unter dem Namen: Speise-Direkt
+                </p>
+            </section>
+
+            <section aria-labelledby="imprint-vat" data-testid="imprint-vat">
+                <h2 id="imprint-vat">Umsatzsteuer</h2>
+                <p>
+                    Hinweis gemäß §&nbsp;6 Abs.&nbsp;1 Z&nbsp;27 UStG: <strong>Kleinunternehmer</strong> —
+                    daher keine Umsatzsteuer ausgewiesen, kein Vorsteuerabzug.
+                </p>
+            </section>
+
+            <section aria-labelledby="imprint-law" data-testid="imprint-law">
+                <h2 id="imprint-law">Anwendbares Recht</h2>
+                <p>Es gilt österreichisches Recht. Erfüllungsort und Gerichtsstand: 2500 Baden, Österreich.</p>
+            </section>
+
+            <section aria-labelledby="imprint-consumer" data-testid="imprint-consumer">
+                <h2 id="imprint-consumer">Verbraucherstreitbeilegung</h2>
+                <p>
+                    Wir sind nicht bereit oder verpflichtet, an Streitbeilegungsverfahren
+                    vor einer Verbraucherschlichtungsstelle teilzunehmen.
+                </p>
+            </section>
+
+            <section aria-labelledby="imprint-content" data-testid="imprint-liability-content">
+                <h2 id="imprint-content">Haftung für Inhalte</h2>
+                <p>
+                    Die Inhalte dieser Website wurden mit Sorgfalt erstellt. Für die
+                    Richtigkeit, Vollständigkeit und Aktualität wird jedoch keine
+                    Gewähr übernommen. Eine Haftung für Schäden, die aus der Nutzung
+                    der bereitgestellten Inhalte entstehen, ist ausgeschlossen.
+                </p>
+            </section>
+
+            <section aria-labelledby="imprint-links" data-testid="imprint-liability-links">
+                <h2 id="imprint-links">Haftung für Links</h2>
+                <p>
+                    Diese Website enthält Links zu externen Websites Dritter, auf
+                    deren Inhalte ich keinen Einfluss habe. Für diese fremden Inhalte
+                    kann keine Gewähr übernommen werden. Für die Inhalte der
+                    verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber
+                    der Seiten verantwortlich.
+                </p>
+            </section>
+
+            <section aria-labelledby="imprint-copyright" data-testid="imprint-copyright">
+                <h2 id="imprint-copyright">Urheberrecht</h2>
+                <p>
+                    Die Inhalte und Werke auf diesen Seiten unterliegen dem
+                    österreichischen Urheberrecht. Vervielfältigung, Bearbeitung,
+                    Verbreitung und jede Art der Verwertung außerhalb der Grenzen des
+                    Urheberrechts bedürfen der schriftlichen Zustimmung des jeweiligen
+                    Autors bzw. Erstellers.
+                </p>
+            </section>
+        </div>
+    </article>
+</main>
+
+<LandingFooter SectionBase="/" ShowDemoNote="false" />
+
+@code {
+    /// <summary>The page's path (canonical link, sitemap).</summary>
+    public const string Path = "/impressum";
+
+    /// <summary>The request (static SSR).</summary>
+    [CascadingParameter] public HttpContext? HttpContext { get; set; }
+}

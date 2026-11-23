@@ -1,9 +1,11 @@
 namespace SpeiseDirekt3.Components.Landing;
 
 /// <summary>
-/// Operator settings of the landing page's footer, read per request from the configuration (empty = not shown):
-/// <c>Legal:ImprintUrl</c> and <c>Legal:PrivacyUrl</c> (the operator's own imprint and privacy pages — the app never
-/// writes legal text) and <c>Landing:ContactEmail</c>. URLs must be absolute http(s) or a path on this site.
+/// Operator settings of the landing page's and the account pages' footer, read per request from the configuration
+/// (empty = not shown): <c>Legal:ImprintUrl</c> and <c>Legal:PrivacyUrl</c> (the imprint is the app's page
+/// <c>/impressum</c> since AP15a, the operator's own text, set in <c>appsettings.json</c>; there is no privacy page yet,
+/// so <c>PrivacyUrl</c> stays empty) and <c>Landing:ContactEmail</c> (the site's one contact address: footer, imprint,
+/// the forgot-password help). URLs must be absolute http(s) or a path on this site.
 /// </summary>
 public sealed record LandingSettings(string? ImprintUrl, string? PrivacyUrl, string? ContactEmail)
 {
