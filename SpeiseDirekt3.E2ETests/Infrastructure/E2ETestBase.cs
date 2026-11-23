@@ -115,8 +115,6 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         {
             page.WebSocket -= OnWebSocket;
         }
-
-        await DismissCookieConsentAsync(page);
     }
 
     /// <summary>Full page load of <paramref name="url"/>, then waits for the interactive circuit.</summary>
@@ -124,20 +122,6 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
 
     protected static Task GotoInteractiveAsync(IPage page, string url) =>
         WaitForInteractiveAsync(page, () => page.GotoAsync(url));
-
-    /// <summary>
-    /// The BytexDigital cookie consent prompt is currently disabled (<c>CookieConsentHandler</c> is commented
-    /// out in <c>Routes.razor</c>). Should it come back, accept it so it does not cover the page.
-    /// </summary>
-    protected static async Task DismissCookieConsentAsync(IPage page)
-    {
-        var accept = page.Locator("button", new PageLocatorOptions
-        {
-            HasTextRegex = new Regex("^(Accept all|Alle akzeptieren|Accept|Akzeptieren)$")
-        });
-        if (await accept.CountAsync() > 0 && await accept.First.IsVisibleAsync())
-            await accept.First.ClickAsync();
-    }
 
     // --- Guest pages (static SSR + js/guest-menu.js) ---
 
