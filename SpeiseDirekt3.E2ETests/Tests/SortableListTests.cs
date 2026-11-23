@@ -236,6 +236,88 @@ public class SortableListTests : BackOfficeTestBase
         (await StoredCategoryOrderAsync(ownerId, menuId)).Should().Equal("Vorspeisen", "Desserts", "Hauptspeisen");
     }
 
+    /// <summary>
+    /// The page renders again while js/sortable-list.js is still loading: the script is attached once. Attached once per
+    /// render, every listener ran that often — a press on a handle lifted the row three times, and with two attachments
+    /// one ↑ moved the row up and straight back (the item page's variants, found on Windows).
+    /// </summary>
+    [Fact]
+    public async Task Script_IsAttachedOnce_WhenThePageRendersAgainWhileItLoads()
+    {
+        var (ownerId, _, soupsId) = await SeedAsync("Laden Menü");
+        var itemId = Guid.NewGuid();
+        await App.SeedAsync(ownerId, db =>
+        {
+            db.MenuItems.Add(new MenuItem
+            {
+                Id = itemId, Name = "Hausbier", Description = "", Price = 3.40m, CategoryId = soupsId, SortOrder = 9,
+                PriceOptions =
+                {
+                    new MenuItemPriceOption { Id = Guid.NewGuid(), Kind = PriceOptionKind.Variant, Name = "0,5 l", Price = 5.90m, SortOrder = 0 },
+                    new MenuItemPriceOption { Id = Guid.NewGuid(), Kind = PriceOptionKind.Variant, Name = "0,25 l", Price = 3.40m, SortOrder = 1 }
+                }
+            });
+            return Task.CompletedTask;
+        });
+
+        // Hold the script back until the page has rendered twice more
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        // (the import map points ./js/sortable-list.js to its fingerprinted name)
+        await Page.RouteAsync(new System.Text.RegularExpressions.Regex(@"/js/sortable-list(\.[^/]*)?\.js"), async route =>
+        {
+            await release.Task;
+            await route.ContinueAsync();
+        });
+        await GotoInteractiveAsync($"/MenuItems/item/{itemId}/edit");
+        var rows = ItemEditor.GetByTestId("variant-row");
+        var names = rows.Locator("input[aria-label^='Name of']");
+        // Each change re-renders the list (the handles' labels follow the names); the second one is processed after
+        // the first render's OnAfterRenderAsync, so that one has asked for the script again by then
+        await names.Nth(0).FillAsync("0,4 l");
+        await names.Nth(0).PressAsync("Tab");
+        await Assertions.Expect(HandleOf(rows.Nth(0))).ToHaveAccessibleNameAsync("Reorder variant 0,4 l");
+        await names.Nth(1).FillAsync("0,2 l");
+        await names.Nth(1).PressAsync("Tab");
+        await Assertions.Expect(HandleOf(rows.Nth(1))).ToHaveAccessibleNameAsync("Reorder variant 0,2 l");
+        release.SetResult();
+
+        // Until the script listens a key does nothing; ↑ on the first row only announces that it is first
+        for (var attempt = 0; ; attempt++)
+        {
+            await HandleOf(rows.Nth(0)).FocusAsync();
+            await Page.Keyboard.PressAsync("ArrowUp");
+            try
+            {
+                await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("variant 0,4 l is already first.", new() { Timeout = 500 });
+                break;
+            }
+            catch (PlaywrightException) when (attempt < 20)
+            {
+            }
+        }
+
+        // One set of listeners: a press on a handle lifts the row once (one placeholder marks its slot)
+        var handle = HandleOf(rows.Nth(1));
+        await handle.ScrollIntoViewIfNeededAsync();
+        var box = (await handle.BoundingBoxAsync())!;
+        await Page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
+        await Page.Mouse.DownAsync();
+        await Assertions.Expect(Page.GetByTestId("sort-placeholder")).ToHaveCountAsync(1);
+        await Page.Keyboard.PressAsync("Escape");
+        await Page.Mouse.UpAsync();
+        await Assertions.Expect(Page.GetByTestId("sort-placeholder")).ToHaveCountAsync(0);
+
+        // And one ↑ moves the row once
+        await handle.FocusAsync();
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Moved variant 0,2 l to position 1 of 2.");
+        // The next ↑ finds it at the top (moved twice, it would be second again and move once more)
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("variant 0,2 l is already first.");
+        await Assertions.Expect(names.Nth(0)).ToHaveValueAsync("0,2 l");
+        await Assertions.Expect(names.Nth(1)).ToHaveValueAsync("0,4 l");
+    }
+
     [Fact]
     public async Task FailedSave_RollsBack_WithAMessage()
     {

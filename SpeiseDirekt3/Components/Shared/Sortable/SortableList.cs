@@ -62,6 +62,7 @@ public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
     private IJSObjectReference? module;
     private IJSObjectReference? handle;
     private DotNetObjectReference<SortableList<TItem>>? selfRef;
+    private bool attaching;
     private bool busy;
     private string? focusKey;
     private string? announcement;
@@ -126,11 +127,21 @@ public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
             return;
         try
         {
-            if (Sortable && handle is null)
+            // Once: a render while the import is still loading runs this again before `handle` is set, and a second
+            // attach would double every listener (one arrow key moved the row twice, i.e. back to where it was)
+            if (Sortable && handle is null && !attaching)
             {
-                selfRef ??= DotNetObjectReference.Create(this);
-                module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/sortable-list.js");
-                handle = await module.InvokeAsync<IJSObjectReference>("attach", container, selfRef);
+                attaching = true;
+                try
+                {
+                    selfRef ??= DotNetObjectReference.Create(this);
+                    module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/sortable-list.js");
+                    handle = await module.InvokeAsync<IJSObjectReference>("attach", container, selfRef);
+                }
+                finally
+                {
+                    attaching = false;
+                }
             }
             if (module is null)
                 return;
