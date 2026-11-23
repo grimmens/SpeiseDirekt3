@@ -183,6 +183,10 @@ namespace SpeiseDirekt3
             // pinned to the invariant culture. Needs the endpoint, which the implicit UseRouting has already chosen.
             app.UseAppRequestLocalization();
 
+            // Guest pages, the landing page and the imprint set no cookie at all: they drop the antiforgery cookie Blazor's
+            // static SSR stores on every page (they have no form; Components/CookielessPages.cs, AP15a)
+            app.UseCookielessPublicPages();
+
             app.UseAntiforgery();
 
             app.MapControllers();

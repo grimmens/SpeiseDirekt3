@@ -46,7 +46,7 @@
     <value>Sessions</value>
   </data>
   <data name="Summary_SessionsHint" xml:space="preserve">
-    <value>A session is one guest device; guests stay anonymous.</value>
+    <value>A session is one guest device on one day; guests stay anonymous.</value>
   </data>
   <data name="Menus_Title" xml:space="preserve">
     <value>Traffic per Menu</value>
