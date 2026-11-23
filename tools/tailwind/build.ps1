@@ -50,7 +50,16 @@ if ($env:OS -eq 'Windows_NT') {
 }
 $expected = $Sha256[$asset]
 
-function Get-Sha256([string] $Path) { (Get-FileHash -Algorithm SHA256 -LiteralPath $Path).Hash.ToLowerInvariant() }
+# SHA-256 through .NET, not Get-FileHash: that one is a script function of Microsoft.PowerShell.Utility, which Windows
+# PowerShell 5.1 cannot load when it inherits PowerShell 7's PSModulePath (e.g. started from a Git Bash that pwsh
+# started; pwsh itself resets the variable for powershell.exe) and finds the PowerShell 7 copy of the module first.
+# The compiled cmdlets used here (Test-Path, New-Item, Invoke-WebRequest, Move-Item, Write-Host, ...) still load.
+function Get-Sha256([string] $Path) {
+    $sha = [System.Security.Cryptography.SHA256]::Create()
+    $stream = [System.IO.File]::OpenRead($Path)
+    try { ([System.BitConverter]::ToString($sha.ComputeHash($stream)) -replace '-', '').ToLowerInvariant() }
+    finally { $stream.Dispose(); $sha.Dispose() }
+}
 
 # Download once, verify every time
 $dir = [System.IO.Path]::Combine($cacheRoot, $Version)
