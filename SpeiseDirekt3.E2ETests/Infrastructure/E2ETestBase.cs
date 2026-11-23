@@ -44,14 +44,14 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
     /// </summary>
     protected async Task<(IBrowserContext Context, IPage Page)> NewContextAsync(string? locale = null)
     {
-        var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        // In the browser of that language (E2EFixture.BrowserForAsync), external requests blocked
+        var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress,
             ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
             Locale = locale ?? ContextLocale
         });
         context.SetDefaultTimeout(15_000);
-        await Fixture.BlockExternalRequestsAsync(context);
 
         return (context, await context.NewPageAsync());
     }
