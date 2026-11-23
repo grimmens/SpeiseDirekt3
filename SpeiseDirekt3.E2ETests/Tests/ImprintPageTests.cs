@@ -131,7 +131,7 @@ public class ImprintPageTests : E2ETestBase
         // Only the landing document's own assets, nothing from another host
         await page.WaitForLoadStateAsync(LoadState.NetworkIdle);
         external.Should().BeEmpty("the imprint makes no external request");
-        await Assertions.Expect(page.Locator("script[src*='tailwindcss'], link[href*='bootstrap'], script[src*='blazor']")).ToHaveCountAsync(0);
+        await Assertions.Expect(page.Locator("script[src*='tailwind'], link[href*='tailwind'], link[href*='bootstrap'], script[src*='blazor']")).ToHaveCountAsync(0);
 
         // No sideways scrolling on a small phone and on a desktop
         foreach (var width in new[] { 360, 1280 })

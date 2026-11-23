@@ -5,9 +5,8 @@ namespace SpeiseDirekt3.E2ETests.Infrastructure;
 
 /// <summary>
 /// Gives every test a fresh browser context (own cookies/storage) on the class fixture's server and
-/// resets the app clock. Requests to other hosts (Tailwind CDN, fonts, Chart.js, …) are blocked unless
-/// <see cref="E2ESettings.AllowExternalRequestsEnvVar"/> is set; while blocked, a minimal stylesheet
-/// emulates the Tailwind display utilities so hidden modals stay hidden.
+/// resets the app clock. Requests to other hosts are blocked unless <see cref="E2ESettings.AllowExternalRequestsEnvVar"/>
+/// is set (<see cref="E2EFixture.BlockExternalRequestsAsync"/>); the app needs none (AP15b: Tailwind is local too).
 /// </summary>
 public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
 {
@@ -52,31 +51,7 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
             Locale = locale ?? ContextLocale
         });
         context.SetDefaultTimeout(15_000);
-
-        if (!E2ESettings.AllowExternalRequests)
-        {
-            var appOrigin = new Uri(App.ServerAddress).GetLeftPart(UriPartial.Authority);
-            await context.RouteAsync("**/*", route =>
-                route.Request.Url.StartsWith(appOrigin, StringComparison.OrdinalIgnoreCase)
-                    ? route.ContinueAsync()
-                    : route.AbortAsync());
-
-            // Adopted stylesheets survive Blazor's DOM patching of <head> (enhanced navigation).
-            // Guest pages (<html data-guest-page>) and the landing page (<html data-landing-page>) do not use Tailwind:
-            // the stand-in is removed there again.
-            await context.AddInitScriptAsync($$"""
-                (() => {
-                    const sheet = new CSSStyleSheet();
-                    sheet.replaceSync({{System.Text.Json.JsonSerializer.Serialize(E2ESettings.TailwindVisibilityCss)}});
-                    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const root = document.documentElement;
-                        if (root.hasAttribute('data-guest-page') || root.hasAttribute('data-landing-page'))
-                            document.adoptedStyleSheets = document.adoptedStyleSheets.filter(s => s !== sheet);
-                    });
-                })();
-                """);
-        }
+        await Fixture.BlockExternalRequestsAsync(context);
 
         return (context, await context.NewPageAsync());
     }

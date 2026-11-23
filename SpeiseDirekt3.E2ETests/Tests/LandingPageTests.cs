@@ -111,7 +111,7 @@ public class LandingPageTests : E2ETestBase
         await Assertions.Expect(Page.Locator("html[data-landing-page]")).ToHaveCountAsync(1);
         await Assertions.Expect(Page.Locator("html[data-guest-page]")).ToHaveCountAsync(0);
         await Assertions.Expect(Page.Locator("base")).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.Locator("script[src*='blazor'], script[src*='tailwind'], link[href*='bootstrap'], script[src*='chart']")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.Locator("script[src*='blazor'], script[src*='tailwind'], link[href*='tailwind'], link[href*='bootstrap'], script[src*='chart']")).ToHaveCountAsync(0);
         (await Page.EvaluateAsync<bool>("() => typeof window.Blazor === 'undefined' && typeof window.tailwind === 'undefined'")).Should().BeTrue();
 
         requests.Should().OnlyContain(u => u.StartsWith(origin, StringComparison.OrdinalIgnoreCase) || u.StartsWith("data:"),

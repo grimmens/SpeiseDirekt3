@@ -47,12 +47,32 @@ public sealed class E2EFixture : IAsyncLifetime
 
     /// <summary>
     /// A browser context with <paramref name="options"/>; without a <see cref="BrowserNewContextOptions.Locale"/> it gets
-    /// <see cref="E2ESettings.DefaultLocale"/> (English), so no test depends on the host's default language.
+    /// <see cref="E2ESettings.DefaultLocale"/> (English), so no test depends on the host's default language. Requests to
+    /// other hosts are blocked as in every test context (<see cref="BlockExternalRequestsAsync"/>).
     /// </summary>
-    public Task<IBrowserContext> NewBrowserContextAsync(BrowserNewContextOptions options)
+    public async Task<IBrowserContext> NewBrowserContextAsync(BrowserNewContextOptions options)
     {
         options.Locale ??= E2ESettings.DefaultLocale;
-        return Browser.NewContextAsync(options);
+        var context = await Browser.NewContextAsync(options);
+        await BlockExternalRequestsAsync(context);
+        return context;
+    }
+
+    /// <summary>
+    /// Aborts every request to another host than the app, unless <see cref="E2ESettings.AllowExternalRequestsEnvVar"/> is
+    /// set: the tests run offline and deterministically, and a request the app should not make fails visibly (the app makes
+    /// none since AP15b: Tailwind is css/tailwind.css, no longer the Play CDN). The page's <c>Request</c> event still sees
+    /// the attempt, which is what <c>LocalAssetsTests</c> checks.
+    /// </summary>
+    public async Task BlockExternalRequestsAsync(IBrowserContext context)
+    {
+        if (E2ESettings.AllowExternalRequests)
+            return;
+        var appOrigin = new Uri(App.ServerAddress).GetLeftPart(UriPartial.Authority);
+        await context.RouteAsync("**/*", route =>
+            route.Request.Url.StartsWith(appOrigin, StringComparison.OrdinalIgnoreCase)
+                ? route.ContinueAsync()
+                : route.AbortAsync());
     }
 
     public async Task DisposeAsync()

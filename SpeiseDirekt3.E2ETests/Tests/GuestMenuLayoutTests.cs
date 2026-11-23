@@ -78,7 +78,7 @@ public class GuestMenuLayoutTests : BackOfficeTestBase
         await WaitForGuestReadyAsync(Page);
 
         await Assertions.Expect(Page.Locator("html")).ToHaveAttributeAsync("data-guest-page", "");
-        await Assertions.Expect(Page.Locator("script[src*='tailwindcss']")).ToHaveCountAsync(0);
+        await Assertions.Expect(Page.Locator("script[src*='tailwind'], link[href*='tailwind']")).ToHaveCountAsync(0);
         await Assertions.Expect(Page.GetByTestId("guest-topbar")).ToBeVisibleAsync();
     }
 

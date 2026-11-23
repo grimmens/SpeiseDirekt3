@@ -26,8 +26,8 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// (<c>og-de.png</c> / <c>og-en.png</c>, 1200 × 630, the headline from LandingText, composed with the hero's phone
 /// shot). The WebP files go to <c>E2E_LANDING_IMAGES_DIR</c>
 /// (point it at <c>SpeiseDirekt3/wwwroot/images/landing</c> to update the page) or else to
-/// <c>$E2E_SCREENSHOT_DIR/landing-images</c>; the raw PNGs to <c>$E2E_SCREENSHOT_DIR/landing-raw</c>. Its own browser
-/// contexts load the back office's Tailwind from the CDN (as in production).</para>
+/// <c>$E2E_SCREENSHOT_DIR/landing-images</c>; the raw PNGs to <c>$E2E_SCREENSHOT_DIR/landing-raw</c>. The back office
+/// shots use the app's own css/tailwind.css, as in production.</para>
 /// <para><see cref="Capture_landing_page"/> shoots the landing page at 360, 390, 768, 1024, 1280 and 1440 px (first screen
 /// and full page, reduced motion so nothing waits for a fade-in), the open phone menu, the page without JS and a few
 /// theme switches, in German and English (or only <c>E2E_LOCALE</c>), into <c>$E2E_SCREENSHOT_DIR/landing-page/{de|en}</c>.</para>
