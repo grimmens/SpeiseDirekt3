@@ -52,6 +52,7 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         });
         context.SetDefaultTimeout(15_000);
         await Fixture.BlockExternalRequestsAsync(context);
+        await ParityHarness.AttachAsync(context);
 
         return (context, await context.NewPageAsync());
     }
@@ -155,7 +156,7 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
     // --- Accounts ---
 
     /// <summary>A unique e-mail address: every test works in its own tenant (the class shares one DB).</summary>
-    protected static string UniqueEmail(string prefix = "owner") => $"{prefix}-{Guid.NewGuid():N}@e2e.test";
+    protected static string UniqueEmail(string prefix = "owner") => ParityHarness.Email(prefix) ?? $"{prefix}-{Guid.NewGuid():N}@e2e.test";
 
     /// <summary>Registers a new account via <c>/Account/Register</c>; the app signs it in right away.</summary>
     protected static async Task RegisterAsync(IPage page, string email, string password = Password)

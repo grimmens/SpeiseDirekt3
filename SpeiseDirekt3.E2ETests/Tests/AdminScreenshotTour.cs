@@ -639,12 +639,12 @@ public class AdminScreenshotTour : QrCalendarTestBase
 
     private async Task<Seeded> SeedTenantAsync(Guid ownerId)
     {
-        var menuId = Guid.NewGuid();
-        var emptyMenuId = Guid.NewGuid();
-        var lunchMenuId = Guid.NewGuid();
-        var timeTableQrId = Guid.NewGuid();
-        var calendarQrId = Guid.NewGuid();
-        var holidayQrId = Guid.NewGuid();
+        var menuId = ParityHarness.NewGuid();
+        var emptyMenuId = ParityHarness.NewGuid();
+        var lunchMenuId = ParityHarness.NewGuid();
+        var timeTableQrId = ParityHarness.NewGuid();
+        var calendarQrId = ParityHarness.NewGuid();
+        var holidayQrId = ParityHarness.NewGuid();
         // The next Christmas (this year's until Dec 26), the fish Fridays from November into January
         var today = DateOnly.FromDateTime(DateTime.Today);
         var holidayYear = today.Month == 12 && today.Day > 26 ? today.Year + 1 : today.Year;
@@ -652,7 +652,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
         while (firstFriday.DayOfWeek != DayOfWeek.Friday) firstFriday = firstFriday.AddDays(1);
         var lastFriday = new DateOnly(holidayYear + 1, 1, 31);
         while (lastFriday.DayOfWeek != DayOfWeek.Friday) lastFriday = lastFriday.AddDays(-1);
-        var tenantUserId = Guid.NewGuid();
+        var tenantUserId = ParityHarness.NewGuid();
         // The team (AP14: managers): "Max Kellner" (active, signs in with the tests' password) and "Anna Berger" (inactive).
         // The facts of this class share one database: a later tenant gets numbered addresses.
         string managerEmail;
@@ -669,13 +669,13 @@ public class AdminScreenshotTour : QrCalendarTestBase
             // --- Main menu with four categories, allergens, dietary flags and a combo
             var allergens = new Dictionary<string, Allergen>();
             foreach (var (code, name) in new[] { ("A", "Glutenhaltiges Getreide"), ("C", "Eier"), ("G", "Milch / Laktose"), ("L", "Sellerie"), ("H", "Schalenfrüchte"), ("O", "Sulfite") })
-                allergens[code] = new Allergen { Id = Guid.NewGuid(), Code = code, Name = name, MenuId = menuId };
+                allergens[code] = new Allergen { Id = ParityHarness.NewGuid(), Code = code, Name = name, MenuId = menuId };
             db.Allergens.AddRange(allergens.Values);
 
-            var vorspeisen = new Category { Id = Guid.NewGuid(), Name = "Vorspeisen", MenuId = menuId };
-            var haupt = new Category { Id = Guid.NewGuid(), Name = "Hauptspeisen", MenuId = menuId };
-            var desserts = new Category { Id = Guid.NewGuid(), Name = "Desserts", MenuId = menuId };
-            var getraenke = new Category { Id = Guid.NewGuid(), Name = "Getränke", MenuId = menuId };
+            var vorspeisen = new Category { Id = ParityHarness.NewGuid(), Name = "Vorspeisen", MenuId = menuId };
+            var haupt = new Category { Id = ParityHarness.NewGuid(), Name = "Hauptspeisen", MenuId = menuId };
+            var desserts = new Category { Id = ParityHarness.NewGuid(), Name = "Desserts", MenuId = menuId };
+            var getraenke = new Category { Id = ParityHarness.NewGuid(), Name = "Getränke", MenuId = menuId };
             firstCategoryId = vorspeisen.Id;
             // Menu card order (starters first), not alphabetical
             (vorspeisen.SortOrder, haupt.SortOrder, desserts.SortOrder, getraenke.SortOrder) = (0, 1, 2, 3);
@@ -689,7 +689,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
 
             MenuItem Item(Category c, string name, string desc, decimal price, bool vegan = false, bool veg = false, bool spicy = false, params string[] codes)
             {
-                var item = new MenuItem { Id = Guid.NewGuid(), Name = name, Description = desc, Price = price, CategoryId = c.Id, IsVegan = vegan, IsVegetarian = veg, IsSpicy = spicy };
+                var item = new MenuItem { Id = ParityHarness.NewGuid(), Name = name, Description = desc, Price = price, CategoryId = c.Id, IsVegan = vegan, IsVegetarian = veg, IsSpicy = spicy };
                 foreach (var code in codes) item.Allergens.Add(allergens[code]);
                 db.MenuItems.Add(item);
                 return item;
@@ -715,7 +715,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
             drinksCategoryId = getraenke.Id;
             schnitzel.IsPopular = true;
             MenuItemPriceOption Option(PriceOptionKind kind, string name, decimal price, int sortOrder) =>
-                new() { Id = Guid.NewGuid(), Kind = kind, Name = name, Price = price, SortOrder = sortOrder };
+                new() { Id = ParityHarness.NewGuid(), Kind = kind, Name = name, Price = price, SortOrder = sortOrder };
             spritzer.Name = "Sommerspritzer";
             spritzer.PriceOptions.Add(Option(PriceOptionKind.Variant, "0,25 l", 4.10m, 0));
             spritzer.PriceOptions.Add(Option(PriceOptionKind.Variant, "0,5 l", 7.40m, 1));
@@ -729,12 +729,12 @@ public class AdminScreenshotTour : QrCalendarTestBase
             melange.PriceOptions.Add(Option(PriceOptionKind.Extra, "+ Schlagobers", 0.60m, 1));
             var spaetzle = db.ChangeTracker.Entries<MenuItem>().Single(e => e.Entity.Name == "Käsespätzle").Entity;
             spaetzle.PriceOptions.Add(Option(PriceOptionKind.Extra, "+ Speck", 2.50m, 0));
-            var cover = new Image { Id = Guid.NewGuid(), MimeType = "image/png", Content = GradientPng(1200, 400, (120, 72, 40), (214, 168, 96)) };
-            var logo = new Image { Id = Guid.NewGuid(), MimeType = "image/png", Content = GradientPng(320, 320, (30, 58, 110), (90, 140, 200)) };
+            var cover = new Image { Id = ParityHarness.NewGuid(), MimeType = "image/png", Content = GradientPng(1200, 400, (120, 72, 40), (214, 168, 96)) };
+            var logo = new Image { Id = ParityHarness.NewGuid(), MimeType = "image/png", Content = GradientPng(320, 320, (30, 58, 110), (90, 140, 200)) };
             db.Images.AddRange(cover, logo);
             db.RestaurantProfiles.Add(new RestaurantProfile
             {
-                Id = Guid.NewGuid(), Name = "Gasthaus Zur Post",
+                Id = ParityHarness.NewGuid(), Name = "Gasthaus Zur Post",
                 Description = "Wiener Wirtshausküche seit 1890: Schnitzel, Rostbraten und Mehlspeisen aus der eigenen Küche.",
                 LogoImagePath = $"image/{logo.Id}", CoverImagePath = $"image/{cover.Id}",
                 Phone = "+43 1 234 56 78", Email = "info@example.com", Website = "https://example.com",
@@ -744,35 +744,35 @@ public class AdminScreenshotTour : QrCalendarTestBase
 
             db.MenuCombos.Add(new MenuCombo
             {
-                Id = Guid.NewGuid(), Name = "Mittagsmenü", Description = "Schnitzel mit Strudel und Spritzer",
+                Id = ParityHarness.NewGuid(), Name = "Mittagsmenü", Description = "Schnitzel mit Strudel und Spritzer",
                 ComboPrice = 29.90m, MenuId = menuId, TriggerMenuItemId = schnitzel.Id,
                 Items = { new MenuComboItem { MenuItemId = strudel.Id }, new MenuComboItem { MenuItemId = spritzer.Id } }
             });
 
             // --- Lunch menu (small) and an empty menu (freshly created, nothing in it yet)
-            var lunchCat = new Category { Id = Guid.NewGuid(), Name = "Mittagsteller", MenuId = lunchMenuId };
+            var lunchCat = new Category { Id = ParityHarness.NewGuid(), Name = "Mittagsteller", MenuId = lunchMenuId };
             db.Menus.Add(new Menu
             {
                 Id = lunchMenuId, Name = "Mittagskarte", Description = "Mo bis Fr 11:30 bis 14:00",
                 Theme = DesignTheme.Modern, Language = MenuLanguage.German, Categories = new List<Category> { lunchCat }
             });
             db.MenuItems.AddRange(
-                new MenuItem { Id = Guid.NewGuid(), Name = "Menü 1: Gulasch", Description = "Mit Semmelknödel", Price = 11.90m, CategoryId = lunchCat.Id },
-                new MenuItem { Id = Guid.NewGuid(), Name = "Menü 2: Gemüselasagne", Description = "Mit Blattsalat", Price = 10.90m, CategoryId = lunchCat.Id, IsVegetarian = true });
+                new MenuItem { Id = ParityHarness.NewGuid(), Name = "Menü 1: Gulasch", Description = "Mit Semmelknödel", Price = 11.90m, CategoryId = lunchCat.Id },
+                new MenuItem { Id = ParityHarness.NewGuid(), Name = "Menü 2: Gemüselasagne", Description = "Mit Blattsalat", Price = 10.90m, CategoryId = lunchCat.Id, IsVegetarian = true });
 
             db.Menus.Add(new Menu { Id = emptyMenuId, Name = "Abendkarte", Description = "", Theme = DesignTheme.Elegant, Language = MenuLanguage.German });
 
             // --- QR codes: direct, time table, calendar
-            var directQrId = Guid.NewGuid();
+            var directQrId = ParityHarness.NewGuid();
             db.QRCodes.Add(new QRCode { Id = directQrId, Title = "Tisch 1", MenuId = menuId });
-            db.QRCodes.Add(new QRCode { Id = Guid.NewGuid(), Title = "Tisch 2", MenuId = menuId });
+            db.QRCodes.Add(new QRCode { Id = ParityHarness.NewGuid(), Title = "Tisch 2", MenuId = menuId });
             db.QRCodes.Add(new QRCode
             {
                 Id = timeTableQrId, Title = "Eingang (Zeitplan)", IsTimeTableBased = true,
                 TimeTableEntries = new List<TimeTableEntry>
                 {
-                    new() { Id = Guid.NewGuid(), StartTime = new TimeOnly(11, 0), EndTime = new TimeOnly(14, 0), MenuId = lunchMenuId },
-                    new() { Id = Guid.NewGuid(), StartTime = new TimeOnly(17, 0), EndTime = new TimeOnly(22, 0), MenuId = menuId }
+                    new() { Id = ParityHarness.NewGuid(), StartTime = new TimeOnly(11, 0), EndTime = new TimeOnly(14, 0), MenuId = lunchMenuId },
+                    new() { Id = ParityHarness.NewGuid(), StartTime = new TimeOnly(17, 0), EndTime = new TimeOnly(22, 0), MenuId = menuId }
                 }
             });
             db.QRCodes.Add(new QRCode
@@ -780,18 +780,18 @@ public class AdminScreenshotTour : QrCalendarTestBase
                 Id = calendarQrId, Title = "Tagesaktion (Kalender)", IsCalendarBased = true, MenuId = menuId,
                 CalendarEntries = new List<CalendarEntry>
                 {
-                    new() { Id = Guid.NewGuid(), Date = DateOnly.FromDateTime(DateTime.Today), MenuId = lunchMenuId },
-                    new() { Id = Guid.NewGuid(), Date = DateOnly.FromDateTime(DateTime.Today), RecurringDayOfWeek = DayOfWeek.Friday, EndDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(2)), MenuId = menuId }
+                    new() { Id = ParityHarness.NewGuid(), Date = DateOnly.FromDateTime(DateTime.Today), MenuId = lunchMenuId },
+                    new() { Id = ParityHarness.NewGuid(), Date = DateOnly.FromDateTime(DateTime.Today), RecurringDayOfWeek = DayOfWeek.Friday, EndDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(2)), MenuId = menuId }
                 }
             });
 
             // --- Holiday calendar: Christmas period, weekly fish Friday with an until date, New Year's Eve
             Guid SmallMenu(string name, string dish, decimal price)
             {
-                var id = Guid.NewGuid();
-                var category = new Category { Id = Guid.NewGuid(), Name = "Gerichte", MenuId = id };
+                var id = ParityHarness.NewGuid();
+                var category = new Category { Id = ParityHarness.NewGuid(), Name = "Gerichte", MenuId = id };
                 db.Menus.Add(new Menu { Id = id, Name = name, Description = "", Theme = DesignTheme.Classic, Language = MenuLanguage.German, Categories = new List<Category> { category } });
-                db.MenuItems.Add(new MenuItem { Id = Guid.NewGuid(), Name = dish, Description = "", Price = price, CategoryId = category.Id });
+                db.MenuItems.Add(new MenuItem { Id = ParityHarness.NewGuid(), Name = dish, Description = "", Price = price, CategoryId = category.Id });
                 return id;
             }
             var christmasMenu = SmallMenu("Weihnachtsmenü", "Gansl mit Rotkraut und Knödel", 29.50m);
@@ -802,9 +802,9 @@ public class AdminScreenshotTour : QrCalendarTestBase
                 Id = holidayQrId, Title = "Festtage (Kalender)", IsCalendarBased = true, MenuId = menuId,
                 CalendarEntries = new List<CalendarEntry>
                 {
-                    new() { Id = Guid.NewGuid(), Date = firstFriday, EndDate = lastFriday, RecurringDayOfWeek = DayOfWeek.Friday, MenuId = fishMenu },
-                    new() { Id = Guid.NewGuid(), Date = new DateOnly(holidayYear, 12, 24), EndDate = new DateOnly(holidayYear, 12, 26), MenuId = christmasMenu },
-                    new() { Id = Guid.NewGuid(), Date = new DateOnly(holidayYear, 12, 31), MenuId = newYearMenu }
+                    new() { Id = ParityHarness.NewGuid(), Date = firstFriday, EndDate = lastFriday, RecurringDayOfWeek = DayOfWeek.Friday, MenuId = fishMenu },
+                    new() { Id = ParityHarness.NewGuid(), Date = new DateOnly(holidayYear, 12, 24), EndDate = new DateOnly(holidayYear, 12, 26), MenuId = christmasMenu },
+                    new() { Id = ParityHarness.NewGuid(), Date = new DateOnly(holidayYear, 12, 31), MenuId = newYearMenu }
                 }
             });
 
@@ -812,14 +812,14 @@ public class AdminScreenshotTour : QrCalendarTestBase
             foreach (var (id, email, name, active) in new[]
                      {
                          (tenantUserId, managerEmail, "Max Kellner", true),
-                         (Guid.NewGuid(), managerEmail.Replace("kellner", "berger"), "Anna Berger", false)
+                         (ParityHarness.NewGuid(), managerEmail.Replace("kellner", "berger"), "Anna Berger", false)
                      })
             {
                 var account = new ApplicationUser
                 {
-                    Id = Guid.NewGuid().ToString(), UserName = email, NormalizedUserName = email.ToUpperInvariant(),
+                    Id = ParityHarness.NewGuid().ToString(), UserName = email, NormalizedUserName = email.ToUpperInvariant(),
                     Email = email, NormalizedEmail = email.ToUpperInvariant(), EmailConfirmed = true,
-                    SecurityStamp = Guid.NewGuid().ToString(), TenantOwnerId = ownerId.ToString()
+                    SecurityStamp = ParityHarness.NewGuid().ToString(), TenantOwnerId = ownerId.ToString()
                 };
                 account.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<ApplicationUser>().HashPassword(account, Password);
                 db.Users.Add(account);
@@ -837,13 +837,13 @@ public class AdminScreenshotTour : QrCalendarTestBase
                 var date = DateTime.UtcNow.Date.AddDays(-day);
                 for (var i = 0; i < 5 + rnd.Next(12); i++)
                 {
-                    var session = Guid.NewGuid().ToString("N");
-                    db.MenuViews.Add(new MenuView { Id = Guid.NewGuid(), SessionId = session, MenuId = menuId, QRCodeId = directQrId, ViewedAt = date.AddHours(11 + rnd.Next(10)) });
+                    var session = ParityHarness.NewGuid().ToString("N");
+                    db.MenuViews.Add(new MenuView { Id = ParityHarness.NewGuid(), SessionId = session, MenuId = menuId, QRCodeId = directQrId, ViewedAt = date.AddHours(11 + rnd.Next(10)) });
                     if (rnd.Next(3) == 0)
-                        db.MenuItemClicks.Add(new MenuItemClick { Id = Guid.NewGuid(), SessionId = session, MenuId = menuId, MenuItemId = schnitzel.Id, ClickedAt = date.AddHours(12) });
+                        db.MenuItemClicks.Add(new MenuItemClick { Id = ParityHarness.NewGuid(), SessionId = session, MenuId = menuId, MenuItemId = schnitzel.Id, ClickedAt = date.AddHours(12) });
                 }
                 for (var i = 0; i < rnd.Next(5); i++)
-                    db.MenuViews.Add(new MenuView { Id = Guid.NewGuid(), SessionId = Guid.NewGuid().ToString("N"), MenuId = lunchMenuId, QRCodeId = timeTableQrId, ViewedAt = date.AddHours(12) });
+                    db.MenuViews.Add(new MenuView { Id = ParityHarness.NewGuid(), SessionId = ParityHarness.NewGuid().ToString("N"), MenuId = lunchMenuId, QRCodeId = timeTableQrId, ViewedAt = date.AddHours(12) });
             }
             await Task.CompletedTask;
         });

@@ -104,7 +104,7 @@ public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>
     {
         var testHost = builder.Build();
 
-        builder.ConfigureWebHost(b => b.UseKestrel(o => o.Listen(IPAddress.Loopback, 0)));
+        builder.ConfigureWebHost(b => b.UseKestrel(o => o.Listen(IPAddress.Loopback, ParityHarness.Port)));
         _kestrelHost = builder.Build();
         _kestrelHost.Start();
 

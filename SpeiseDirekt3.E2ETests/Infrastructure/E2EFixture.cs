@@ -55,6 +55,7 @@ public sealed class E2EFixture : IAsyncLifetime
         options.Locale ??= E2ESettings.DefaultLocale;
         var context = await Browser.NewContextAsync(options);
         await BlockExternalRequestsAsync(context);
+        await ParityHarness.AttachAsync(context);
         return context;
     }
 
