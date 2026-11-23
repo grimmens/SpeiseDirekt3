@@ -104,6 +104,7 @@ public class SortableListTests : BackOfficeTestBase
 
         var row = CategoryRow("Vorspeisen");
         var handle = HandleOf(row);
+        await WaitForSortableAsync(handle);
         var box = (await handle.BoundingBoxAsync())!;
         var target = (await CategoryRow("Desserts").BoundingBoxAsync())!;
         await Page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
@@ -214,7 +215,7 @@ public class SortableListTests : BackOfficeTestBase
         await Assertions.Expect(handle).ToHaveAttributeAsync("aria-describedby", "sd-sort-help");
         await Assertions.Expect(Page.Locator("#sd-sort-help")).ToHaveTextAsync(new System.Text.RegularExpressions.Regex("arrow keys"));
 
-        await handle.FocusAsync();
+        await FocusHandleAsync(handle);
         await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Vorspeisen", "Desserts", "Hauptspeisen" });
         await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Moved Desserts to position 2 of 3.");
@@ -281,20 +282,11 @@ public class SortableListTests : BackOfficeTestBase
         await Assertions.Expect(HandleOf(rows.Nth(1))).ToHaveAccessibleNameAsync("Reorder variant 0,2 l");
         release.SetResult();
 
-        // Until the script listens a key does nothing; ↑ on the first row only announces that it is first
-        for (var attempt = 0; ; attempt++)
-        {
-            await HandleOf(rows.Nth(0)).FocusAsync();
-            await Page.Keyboard.PressAsync("ArrowUp");
-            try
-            {
-                await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("variant 0,4 l is already first.", new() { Timeout = 500 });
-                break;
-            }
-            catch (PlaywrightException) when (attempt < 20)
-            {
-            }
-        }
+        // Once the script listens, ↑ on the first row only announces that it is first (a round trip, after which any
+        // further attach that was queued behind the first one would have run too)
+        await FocusHandleAsync(HandleOf(rows.Nth(0)));
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("variant 0,4 l is already first.");
 
         // One set of listeners: a press on a handle lifts the row once (one placeholder marks its slot)
         var handle = HandleOf(rows.Nth(1));

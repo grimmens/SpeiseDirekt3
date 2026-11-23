@@ -49,12 +49,28 @@ public abstract class BackOfficeTestBase : E2ETestBase
     protected static ILocator HandleOf(ILocator row) => row.GetByTestId("sort-handle");
 
     /// <summary>
+    /// Waits until the list of <paramref name="rowOrHandle"/> listens: js/sortable-list.js sets
+    /// <c>data-sortable-ready</c> on the container once attached. The circuit is interactive before that (the list loads
+    /// its script after its first interactive render), and a drag or arrow key that comes earlier does nothing.
+    /// </summary>
+    protected static Task WaitForSortableAsync(ILocator rowOrHandle) =>
+        Assertions.Expect(rowOrHandle.Locator("xpath=ancestor::*[@data-sortable][1]")).ToHaveAttributeAsync("data-sortable-ready", "");
+
+    /// <summary>Focuses a grip handle for the keyboard path (↑/↓), once its list listens.</summary>
+    protected static async Task FocusHandleAsync(ILocator handle)
+    {
+        await WaitForSortableAsync(handle);
+        await handle.FocusAsync();
+    }
+
+    /// <summary>
     /// Where the pointer has to go so that the dragged row's centre ends up just past the target row's middle (the
     /// handle need not sit at the row's centre, e.g. in the phone cards).
     /// </summary>
     private static async Task<(float X, float StartY, float EndY)> DragPathAsync(ILocator row, ILocator target)
     {
         var handle = HandleOf(row);
+        await WaitForSortableAsync(handle);
         await handle.ScrollIntoViewIfNeededAsync();
         var h = (await handle.BoundingBoxAsync())!;
         var r = (await row.BoundingBoxAsync())!;

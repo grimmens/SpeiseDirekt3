@@ -68,7 +68,7 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
 
         // Move the third category to the top with the keyboard path of the handle (↑ twice; wait for each step)
         var handle = ExactButton("Reorder Desserts");
-        await handle.FocusAsync();
+        await FocusHandleAsync(handle);
         await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Vorspeisen", "Desserts", "Hauptspeisen" });
         await Page.Keyboard.PressAsync("ArrowUp");
@@ -194,7 +194,7 @@ public class CategoryAndItemUxTests : BackOfficeTestBase
         await Assertions.Expect(ItemRows).ToContainTextAsync(new[] { "Tomatensuppe", "Brotkorb" });
         await Assertions.Expect(ItemRows.GetByTestId("sort-handle")).ToHaveCountAsync(2);
 
-        await ExactButton("Reorder Brotkorb").FocusAsync();
+        await FocusHandleAsync(ExactButton("Reorder Brotkorb"));
         await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(ItemRows).ToContainTextAsync(new[] { "Brotkorb", "Tomatensuppe" });
         await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Moved Brotkorb to position 1 of 2.");
