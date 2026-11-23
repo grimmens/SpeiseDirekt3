@@ -32,11 +32,8 @@ public class MenuDisplayController : ControllerBase
         if (menu == null)
             return NotFound();
 
-        var sessionId = _trackingService.GetOrCreateSessionId();
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var userAgent = Request.Headers.UserAgent.ToString();
-
-        await _trackingService.RecordMenuViewAsync(sessionId, menu.Id, qrCodeId, ipAddress, userAgent);
+        // The guest's daily visitor key for the menu's restaurant: no cookie, no IP address or user agent stored
+        await _trackingService.RecordMenuViewAsync(_trackingService.GetVisitorKey(menu.ApplicationUserId), menu.Id, qrCodeId);
 
         return Ok(menu);
     }
@@ -109,14 +106,22 @@ public class MenuDisplayController : ControllerBase
             profile.OpeningHours));
     }
 
+    /// <summary>
+    /// Records an item click under the guest's daily visitor key for the menu's restaurant (same rules as the Blazor app's
+    /// guest pages: no cookie, no IP address or user agent stored). Always 204, like before: an unknown menu records
+    /// nothing, an unknown item fails inside the tracking service, which never throws.
+    /// </summary>
     [HttpPost("menu/{menuId:guid}/items/{menuItemId:guid}/click")]
     public async Task<IActionResult> RecordMenuItemClick(Guid menuId, Guid menuItemId)
     {
-        var sessionId = _trackingService.GetOrCreateSessionId();
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
-        var userAgent = Request.Headers.UserAgent.ToString();
-
-        await _trackingService.RecordMenuItemClickAsync(sessionId, menuItemId, menuId, ipAddress, userAgent);
+        var tenantId = await _db.Menus
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(m => m.Id == menuId)
+            .Select(m => (Guid?)m.ApplicationUserId)
+            .FirstOrDefaultAsync();
+        if (tenantId is { } tenant)
+            await _trackingService.RecordMenuItemClickAsync(_trackingService.GetVisitorKey(tenant), menuItemId, menuId);
 
         return NoContent();
     }

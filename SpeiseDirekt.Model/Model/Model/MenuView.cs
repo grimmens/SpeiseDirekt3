@@ -8,6 +8,11 @@ namespace SpeiseDirekt.Model
     {
         public Guid Id { get; set; }
 
+        /// <summary>
+        /// The guest's daily visitor key (<c>IVisitorKeyService</c>: 16 hex characters, new every day and after a
+        /// restart). Rows from before AP15a hold the random GUID of the former session cookie. Nothing else about the
+        /// guest is stored: no IP address, no user agent (columns dropped by <c>RemoveGuestTrackingIpAndUserAgent</c>).
+        /// </summary>
         [Required]
         [StringLength(128)]
         public string SessionId { get; set; } = string.Empty;
@@ -21,11 +26,5 @@ namespace SpeiseDirekt.Model
         public QRCode? QRCode { get; set; }
 
         public DateTime ViewedAt { get; set; } = DateTime.UtcNow;
-
-        [StringLength(45)] // IPv6 max length
-        public string? IpAddress { get; set; }
-
-        [StringLength(500)]
-        public string? UserAgent { get; set; }
     }
 }

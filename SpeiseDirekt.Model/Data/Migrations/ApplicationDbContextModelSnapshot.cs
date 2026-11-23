@@ -522,10 +522,6 @@ namespace SpeiseDirekt.Data.Migrations
                     b.Property<DateTime>("ClickedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
-
                     b.Property<Guid>("MenuId")
                         .HasColumnType("uniqueidentifier");
 
@@ -536,10 +532,6 @@ namespace SpeiseDirekt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
-
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.HasKey("Id");
 
@@ -596,10 +588,6 @@ namespace SpeiseDirekt.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("IpAddress")
-                        .HasMaxLength(45)
-                        .HasColumnType("nvarchar(45)");
-
                     b.Property<Guid>("MenuId")
                         .HasColumnType("uniqueidentifier");
 
@@ -610,10 +598,6 @@ namespace SpeiseDirekt.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
-
-                    b.Property<string>("UserAgent")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime>("ViewedAt")
                         .HasColumnType("datetime2");

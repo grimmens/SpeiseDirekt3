@@ -25,7 +25,8 @@ public static class GuestEndpoints
     /// <summary>
     /// Records a <c>MenuItemClick</c> for an item the guest opened. 204 when recorded (or deliberately ignored:
     /// the owner preview), 400 for a malformed body, 404 when the item does not belong to the menu.
-    /// The session comes from the <c>ITrackingService</c> cookie (created here if missing).
+    /// The row carries the guest's daily visitor key for the menu's restaurant (<c>ITrackingService.GetVisitorKey</c>:
+    /// the same key as the page request that showed the menu, on the same day); no cookie is read or set.
     /// </summary>
     private static async Task<IResult> RecordItemClickAsync(HttpContext http, ApplicationDbContext db, ITrackingService tracking)
     {
@@ -46,13 +47,16 @@ public static class GuestEndpoints
         if (IsFromOwnerPreview(http.Request))
             return Results.NoContent();
 
-        var belongsToMenu = await db.MenuItems
+        // The item must belong to the menu; the menu's owner is the tenant of the visitor key
+        var tenantId = await db.MenuItems
             .IgnoreQueryFilters()
-            .AnyAsync(i => i.Id == request.ItemId && i.Category!.MenuId == request.MenuId, http.RequestAborted);
-        if (!belongsToMenu)
+            .Where(i => i.Id == request.ItemId && i.Category!.MenuId == request.MenuId)
+            .Select(i => (Guid?)i.Category!.Menu!.ApplicationUserId)
+            .FirstOrDefaultAsync(http.RequestAborted);
+        if (tenantId is null)
             return Results.NotFound();
 
-        await tracking.RecordMenuItemClickAsync(tracking.GetOrCreateSessionId(), request.ItemId, request.MenuId);
+        await tracking.RecordMenuItemClickAsync(tracking.GetVisitorKey(tenantId.Value), request.ItemId, request.MenuId);
         return Results.NoContent();
     }
 

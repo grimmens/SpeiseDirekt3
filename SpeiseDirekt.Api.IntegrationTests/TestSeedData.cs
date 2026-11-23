@@ -238,9 +238,7 @@ public static class TestSeedData
                 SessionId = TestSessionId,
                 MenuId = Menu1Id,
                 QRCodeId = QrCodeId,
-                ViewedAt = DateTime.UtcNow.AddDays(-1),
-                IpAddress = "127.0.0.1",
-                UserAgent = "TestAgent/1.0"
+                ViewedAt = DateTime.UtcNow.AddDays(-1)
             },
             new MenuView
             {
@@ -248,18 +246,14 @@ public static class TestSeedData
                 SessionId = TestSessionId,
                 MenuId = Menu1Id,
                 QRCodeId = QrCodeId,
-                ViewedAt = DateTime.UtcNow.AddDays(-2),
-                IpAddress = "127.0.0.1",
-                UserAgent = "TestAgent/1.0"
+                ViewedAt = DateTime.UtcNow.AddDays(-2)
             },
             new MenuView
             {
                 Id = MenuView3Id,
                 SessionId = "test-session-002",
                 MenuId = Menu2Id,
-                ViewedAt = DateTime.UtcNow.AddDays(-3),
-                IpAddress = "192.168.1.1",
-                UserAgent = "TestAgent/2.0"
+                ViewedAt = DateTime.UtcNow.AddDays(-3)
             }
         );
 
@@ -271,9 +265,7 @@ public static class TestSeedData
                 SessionId = TestSessionId,
                 MenuItemId = MenuItem1Id,
                 MenuId = Menu1Id,
-                ClickedAt = DateTime.UtcNow.AddDays(-1),
-                IpAddress = "127.0.0.1",
-                UserAgent = "TestAgent/1.0"
+                ClickedAt = DateTime.UtcNow.AddDays(-1)
             },
             new MenuItemClick
             {
@@ -281,9 +273,7 @@ public static class TestSeedData
                 SessionId = "test-session-002",
                 MenuItemId = MenuItem3Id,
                 MenuId = Menu2Id,
-                ClickedAt = DateTime.UtcNow.AddDays(-2),
-                IpAddress = "192.168.1.1",
-                UserAgent = "TestAgent/2.0"
+                ClickedAt = DateTime.UtcNow.AddDays(-2)
             }
         );
 

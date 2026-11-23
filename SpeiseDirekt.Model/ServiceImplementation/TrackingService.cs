@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.ServiceInterface;
@@ -9,133 +8,71 @@ namespace SpeiseDirekt.ServiceImplementation
     {
         private readonly ApplicationDbContext _context;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IVisitorKeyService _visitorKeys;
         private readonly ILogger<TrackingService> _logger;
 
-        public TrackingService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, ILogger<TrackingService> logger)
+        public TrackingService(ApplicationDbContext context, IHttpContextAccessor httpContextAccessor, IVisitorKeyService visitorKeys,
+            ILogger<TrackingService> logger)
         {
             _context = context;
             _httpContextAccessor = httpContextAccessor;
+            _visitorKeys = visitorKeys;
             _logger = logger;
         }
 
-        public async Task RecordMenuViewAsync(string sessionId, Guid menuId, Guid? qrCodeId = null, string? ipAddress = null, string? userAgent = null)
+        public async Task RecordMenuViewAsync(string visitorKey, Guid menuId, Guid? qrCodeId = null)
         {
             try
             {
-                var menuView = new MenuView
+                _context.MenuViews.Add(new MenuView
                 {
                     Id = Guid.NewGuid(),
-                    SessionId = sessionId,
+                    SessionId = visitorKey,
                     MenuId = menuId,
                     QRCodeId = qrCodeId,
-                    ViewedAt = DateTime.UtcNow,
-                    IpAddress = ipAddress ?? GetClientIpAddress(),
-                    UserAgent = userAgent ?? GetUserAgent()
-                };
-
-                _context.MenuViews.Add(menuView);
+                    ViewedAt = DateTime.UtcNow
+                });
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Recorded menu view: SessionId={SessionId}, MenuId={MenuId}, QRCodeId={QRCodeId}", 
-                    sessionId, menuId, qrCodeId);
+                // No visitor key in the log: it is the analytics' pseudonym, not something to correlate with access logs
+                _logger.LogInformation("Recorded menu view: MenuId={MenuId}, QRCodeId={QRCodeId}", menuId, qrCodeId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to record menu view: SessionId={SessionId}, MenuId={MenuId}", sessionId, menuId);
+                _logger.LogError(ex, "Failed to record menu view: MenuId={MenuId}", menuId);
                 // Don't throw - tracking failures shouldn't break the user experience
             }
         }
 
-        public async Task RecordMenuItemClickAsync(string sessionId, Guid menuItemId, Guid menuId, string? ipAddress = null, string? userAgent = null)
+        public async Task RecordMenuItemClickAsync(string visitorKey, Guid menuItemId, Guid menuId)
         {
             try
             {
-                var menuItemClick = new MenuItemClick
+                _context.MenuItemClicks.Add(new MenuItemClick
                 {
                     Id = Guid.NewGuid(),
-                    SessionId = sessionId,
+                    SessionId = visitorKey,
                     MenuItemId = menuItemId,
                     MenuId = menuId,
-                    ClickedAt = DateTime.UtcNow,
-                    IpAddress = ipAddress ?? GetClientIpAddress(),
-                    UserAgent = userAgent ?? GetUserAgent()
-                };
-
-                _context.MenuItemClicks.Add(menuItemClick);
+                    ClickedAt = DateTime.UtcNow
+                });
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Recorded menu item click: SessionId={SessionId}, MenuItemId={MenuItemId}, MenuId={MenuId}", 
-                    sessionId, menuItemId, menuId);
+                _logger.LogInformation("Recorded menu item click: MenuItemId={MenuItemId}, MenuId={MenuId}", menuItemId, menuId);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to record menu item click: SessionId={SessionId}, MenuItemId={MenuItemId}", sessionId, menuItemId);
+                _logger.LogError(ex, "Failed to record menu item click: MenuItemId={MenuItemId}, MenuId={MenuId}", menuItemId, menuId);
                 // Don't throw - tracking failures shouldn't break the user experience
             }
         }
 
-        public string GetOrCreateSessionId()
+        public string GetVisitorKey(Guid tenantId)
         {
-            var httpContext = _httpContextAccessor.HttpContext;
-            if (httpContext == null)
-            {
-                return Guid.NewGuid().ToString();
-            }
-
-            const string sessionCookieName = "SpeiseDirekt_SessionId";
-            
-            // Try to get existing session ID from cookie
-            if (httpContext.Request.Cookies.TryGetValue(sessionCookieName, out var existingSessionId) && 
-                !string.IsNullOrEmpty(existingSessionId))
-            {
-                return existingSessionId;
-            }
-
-            // Create new session ID
-            var newSessionId = Guid.NewGuid().ToString();
-            
-            // Set cookie with session ID (expires in 30 days)
-            var cookieOptions = new CookieOptions
-            {
-                Expires = DateTimeOffset.UtcNow.AddDays(30),
-                HttpOnly = true,
-                Secure = httpContext.Request.IsHttps,
-                SameSite = SameSiteMode.Lax
-            };
-            
-            if (!httpContext.Response.HasStarted)
-            {
-                httpContext.Response.Cookies.Append(sessionCookieName, newSessionId, cookieOptions);
-            }
-
-            return newSessionId;
-        }
-
-        private string? GetClientIpAddress()
-        {
-            var httpContext = _httpContextAccessor.HttpContext;
-            if (httpContext == null) return null;
-
-            // Check for forwarded IP first (in case of proxy/load balancer)
-            var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(forwardedFor))
-            {
-                return forwardedFor.Split(',')[0].Trim();
-            }
-
-            var realIp = httpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(realIp))
-            {
-                return realIp;
-            }
-
-            return httpContext.Connection.RemoteIpAddress?.ToString();
-        }
-
-        private string? GetUserAgent()
-        {
-            var httpContext = _httpContextAccessor.HttpContext;
-            return httpContext?.Request.Headers["User-Agent"].FirstOrDefault();
+            // RemoteIpAddress is the browser's address after UseForwardedHeaders (X-Forwarded-For is trusted only from
+            // the loopback proxy); the raw forwarding headers are not read here
+            var http = _httpContextAccessor.HttpContext;
+            return _visitorKeys.KeyFor(tenantId, http?.Connection.RemoteIpAddress, http?.Request.Headers.UserAgent.ToString());
         }
     }
 }

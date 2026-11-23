@@ -18,6 +18,9 @@ namespace SpeiseDirekt.Infrastructure
             // System clock (TryAdd, so tests can register a fake TimeProvider)
             services.TryAddSingleton(TimeProvider.System);
 
+            // The guests' daily visitor keys: one random salt in memory, replaced at local midnight (AP15a, no cookie)
+            services.AddSingleton<IVisitorKeyService, VisitorKeyService>();
+
             // Transient: services that depend on ApplicationDbContext
             // (each component gets a fresh DbContext to avoid concurrent access issues in Blazor Server)
             services.AddTransient<IMenuService, MenuService>();
