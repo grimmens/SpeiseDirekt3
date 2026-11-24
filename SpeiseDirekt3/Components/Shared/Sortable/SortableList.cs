@@ -62,6 +62,7 @@ public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
     private IJSObjectReference? module;
     private IJSObjectReference? handle;
     private DotNetObjectReference<SortableList<TItem>>? selfRef;
+    private bool attaching;
     private bool busy;
     private string? focusKey;
     private string? announcement;
@@ -126,11 +127,33 @@ public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
             return;
         try
         {
-            if (Sortable && handle is null)
+            // Once: a render while the import is still loading runs this again before `handle` is set, and a second
+            // attach would double every listener (one arrow key moved the row twice, i.e. back to where it was)
+            if (Sortable && handle is null && !attaching)
             {
-                selfRef ??= DotNetObjectReference.Create(this);
-                module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/sortable-list.js");
-                handle = await module.InvokeAsync<IJSObjectReference>("attach", container, selfRef);
+                attaching = true;
+                try
+                {
+                    selfRef ??= DotNetObjectReference.Create(this);
+                    module ??= await JS.InvokeAsync<IJSObjectReference>("import", "./js/sortable-list.js");
+                    // The page was left while the script loaded: DisposeAsync has run (and disposed selfRef, whose
+                    // serialization would throw and take the whole circuit down), so release what came late and stop
+                    if (disposed)
+                    {
+                        await ReleaseLateAsync();
+                        return;
+                    }
+                    handle = await module.InvokeAsync<IJSObjectReference>("attach", container, selfRef);
+                    if (disposed)
+                    {
+                        await ReleaseLateAsync();
+                        return;
+                    }
+                }
+                finally
+                {
+                    attaching = false;
+                }
             }
             if (module is null)
                 return;
@@ -204,6 +227,22 @@ public sealed class SortableList<TItem> : ComponentBase, IAsyncDisposable
         if (!disposed)
             StateHasChanged();
         return kept;
+    }
+
+    /// <summary>The script's module and handle that arrived after <see cref="DisposeAsync"/> (it saw them still null).</summary>
+    private async Task ReleaseLateAsync()
+    {
+        if (handle is not null)
+        {
+            await handle.InvokeVoidAsync("dispose");
+            await handle.DisposeAsync();
+            handle = null;
+        }
+        if (module is not null)
+        {
+            await module.DisposeAsync();
+            module = null;
+        }
     }
 
     public async ValueTask DisposeAsync()

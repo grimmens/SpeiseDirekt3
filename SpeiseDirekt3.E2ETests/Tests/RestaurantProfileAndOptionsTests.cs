@@ -320,7 +320,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await Assertions.Expect(Editor.GetByTestId("price-follows-variants")).ToContainTextAsync("from €3.40");
 
         // Smallest size first: the variant's grip handle, keyboard path (↑); at the top it stays
-        await Editor.GetByRole(AriaRole.Button, new() { Name = "Reorder variant 0,25 l" }).FocusAsync();
+        await FocusHandleAsync(Editor.GetByRole(AriaRole.Button, new() { Name = "Reorder variant 0,25 l" }));
         await Page.Keyboard.PressAsync("ArrowUp");
         var variantNames = Editor.GetByTestId("variant-row").Locator("input[aria-label^='Name of']");
         await Assertions.Expect(variantNames.Nth(0)).ToHaveValueAsync("0,25 l");
@@ -431,7 +431,7 @@ public class RestaurantProfileAndOptionsTests : BackOfficeTestBase
         await Assertions.Expect(row.GetByTestId("item-price-options")).ToHaveTextAsync("2 extras");
 
         await CreateMenuItemViaUiAsync(menuId, "Tabouleh", "Petersiliensalat", 9.50m);
-        await ExactButton("Reorder Tabouleh").FocusAsync();
+        await FocusHandleAsync(ExactButton("Reorder Tabouleh"));
         await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(ItemRows).ToContainTextAsync(new[] { "Tabouleh", "Fattoush" });
 

@@ -10,10 +10,10 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// Not a test in the usual sense: walks a seeded tenant through every back-office page and stores
 /// full-page screenshots (desktop 1280 px and phone 390 px) for design reviews, plus the QR code calendar editor
 /// (<see cref="ShootCalendarEditorAsync"/>) at both widths. Runs only when
-/// <c>E2E_SCREENSHOT_DIR</c> points at a directory; set <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> as well so
-/// Tailwind and the icon font come from their CDNs and the pages look like production.
+/// <c>E2E_SCREENSHOT_DIR</c> points at a directory. The pages look like production without external requests: since
+/// AP15b Tailwind is the app's own css/tailwind.css (before, <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> loaded the Play CDN).
 /// <code>
-/// E2E_SCREENSHOT_DIR=/tmp/shots E2E_ALLOW_EXTERNAL_REQUESTS=1 dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~AdminScreenshotTour
+/// E2E_SCREENSHOT_DIR=/tmp/shots dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~AdminScreenshotTour
 /// </code>
 /// The browser language is <c>E2E_LOCALE</c> (default <c>en-US</c>; <c>de-DE</c> for the German back office — use another
 /// <c>E2E_SCREENSHOT_DIR</c> per language, the file names are the same). Next to every full-page shot a <c>.txt</c> holds
@@ -117,7 +117,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
     /// 390, 768, 1024, 1280 and 1440 px (or <c>E2E_REVIEW_WIDTHS</c>, comma-separated), full page at device scale 1, into
     /// <c>$E2E_SCREENSHOT_DIR/review/{width}/{name}.png</c>, and <c>review/overflow.txt</c>: every page whose document,
     /// or a visible element, is wider than the viewport ("none" when all fit). Opt-in like the other facts; run it per
-    /// language with <c>E2E_LOCALE</c> and <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> (Tailwind from the CDN).
+    /// language with <c>E2E_LOCALE</c>.
     /// </summary>
     [Fact]
     public async Task Capture_review_widths()
@@ -281,7 +281,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
     }
 
     /// <summary>
-    /// Loads every back-office page at 360 and 390 px (Tailwind from the CDN, as in production) and writes the pages whose
+    /// Loads every back-office page at 360 and 390 px (with the production CSS) and writes the pages whose
     /// document is wider than the viewport to <c>phone-overflow.txt</c> ("none" when all fit).
     /// </summary>
     private async Task CheckPhoneOverflowAsync(string storageState, string dir, Seeded s)
@@ -373,6 +373,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
         await GotoInteractiveAsync(page, $"/Categories/{s.MenuId}");
         await SettleAsync(page);
         var handle = page.GetByTestId("category-row").First.GetByTestId("sort-handle");
+        await WaitForSortableAsync(handle);
         var box = (await handle.BoundingBoxAsync())!;
         await page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
         await page.Mouse.DownAsync();
@@ -497,7 +498,6 @@ public class AdminScreenshotTour : QrCalendarTestBase
         await System.IO.File.WriteAllTextAsync(Path.Combine(dir, $"{prefix}-qrcode-calendar-list.txt"), await PageTextsAsync(page));
     }
 
-    /// <summary>Tailwind's CDN build compiles classes after load; give it a moment and wait for fonts.</summary>
     /// <summary>
     /// The parts AP12a localized, for a language review (<c>E2E_LOCALE=de-DE</c>): the dashboard (first run and with a
     /// tenant), the open user menu and phone drawer, a menu's context bar with the switcher open, the confirmation, and the
@@ -555,7 +555,7 @@ public class AdminScreenshotTour : QrCalendarTestBase
             await page.GetByTestId("menu-switcher-button").ClickAsync();
             await Shot("context-switcher", fullPage: false);
             await page.Keyboard.PressAsync("Escape");
-            await page.GetByTestId("category-row").First.GetByTestId("sort-handle").FocusAsync();
+            await FocusHandleAsync(page.GetByTestId("category-row").First.GetByTestId("sort-handle"));
             await page.Keyboard.PressAsync("ArrowUp");
             await Shot("context-bar", fullPage: false);
 

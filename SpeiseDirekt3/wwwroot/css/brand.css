@@ -2,10 +2,11 @@
  * brand.css — the Speise-Direkt brand, defined once (tokens only, no selectors besides :root).
  *
  * Read by:
- * - the back office: the Tailwind Play CDN config in Components/App.razor maps the `brand` (alias `primary`) and
- *   `accent` palettes to these variables (`rgb(var(--sd-brand-600) / <alpha-value>)`, so opacity modifiers work),
- *   app.css points Bootstrap's primary/link/focus colours at them, css/shell.css (top bar, drawer, menu context bar)
- *   and the FullCalendar wrapper use them directly;
+ * - the back office: the Tailwind config (tools/tailwind/tailwind.config.js, built into css/tailwind.css) maps the
+ *   `brand` (alias `primary`), `accent` and `gray` palettes to these variables
+ *   (`rgb(var(--sd-brand-600) / <alpha-value>)`, so opacity modifiers work), app.css points Bootstrap's
+ *   primary/link/focus colours at them, css/shell.css (top bar, drawer, menu context bar) and the FullCalendar wrapper
+ *   use them directly;
  * - the landing page.
  * The guest menu (css/guest-*.css) has its own six themes and does not read this file.
  *
@@ -56,7 +57,7 @@
     --sd-text-muted: 70 82 90;     /* #46525a — 8.0:1 on white (was #4b5563) */
     --sd-text-subtle: 89 102 110;  /* #59666e — 5.9:1 on white, 5.1:1 on the canvas (was #6b7280) */
 
-    /* Back-office grays (AP11): Tailwind's `gray` palette in the back office maps to these (Components/App.razor), so
+    /* Back-office grays (AP11): Tailwind's `gray` palette in the back office maps to these (tools/tailwind/tailwind.config.js), so
        every gray-* utility gets the cool brand tint and AA-level secondary text: gray-400 text 4.5:1 on white (Tailwind's
        own #9ca3af was 2.5:1), gray-500 5.9:1, gray-600 8.0:1. The landing page and the guest menu do not use them. */
     --sd-gray-50: 243 246 248;     /* #f3f6f8 */

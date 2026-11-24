@@ -17,7 +17,9 @@
  *
  * attach(container, dotnet) → { dispose() }; dotnet.invokeMethodAsync('OnDropJs' | 'OnKeyMoveJs', oldIndex, newIndex)
  * resolves when .NET has saved (or rolled back). While a call runs, new drags are ignored and arrow keys wait their
- * turn (the moved row's handle keeps the focus, also when Blazor re-inserts the row element).
+ * turn (the moved row's handle keeps the focus, also when Blazor re-inserts the row element). Once the listeners are
+ * in place the container carries [data-sortable-ready] (Blazor never sets it, so its renders leave it alone; dispose
+ * removes it): before that a drag or an arrow key does nothing, which is what the E2E tests wait for.
  * focusHandle(container, key) puts the focus back on a row's handle after a keyboard move (the moved element lost it).
  * announce(text) speaks a status message through the shared live region #sd-announcer (Layout/MainLayout).
  */
@@ -305,10 +307,12 @@ export function attach(container, dotnet) {
     container.addEventListener('pointerdown', onPointerDown);
     container.addEventListener('keydown', onKeyDown);
     container.addEventListener('dragstart', onDragStart);
+    container.setAttribute('data-sortable-ready', '');
 
     return {
         dispose() {
             if (drag) end(false);
+            container.removeAttribute('data-sortable-ready');
             container.removeEventListener('pointerdown', onPointerDown);
             container.removeEventListener('keydown', onKeyDown);
             container.removeEventListener('dragstart', onDragStart);

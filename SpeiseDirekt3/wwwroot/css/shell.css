@@ -1,7 +1,7 @@
 /*
  * shell.css — the back-office chrome: top bar, user menu, phone drawer, menu context bar, skip link, error bar.
- * Reads only the tokens of css/brand.css (prefix sd-) and does not depend on the Tailwind CDN, so the chrome looks and
- * behaves the same without it (E2E tests block the CDN). Behaviour: js/shell.js. Markup: Components/Layout.
+ * Reads only the tokens of css/brand.css (prefix sd-) and does not depend on Tailwind's utilities.
+ * Behaviour: js/shell.js. Markup: Components/Layout.
  * Breakpoint for the full top navigation: 1024 px (Tailwind's lg).
  */
 

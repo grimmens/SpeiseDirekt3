@@ -5,9 +5,8 @@ namespace SpeiseDirekt3.E2ETests.Infrastructure;
 
 /// <summary>
 /// Gives every test a fresh browser context (own cookies/storage) on the class fixture's server and
-/// resets the app clock. Requests to other hosts (Tailwind CDN, fonts, Chart.js, …) are blocked unless
-/// <see cref="E2ESettings.AllowExternalRequestsEnvVar"/> is set; while blocked, a minimal stylesheet
-/// emulates the Tailwind display utilities so hidden modals stay hidden.
+/// resets the app clock. Requests to other hosts are blocked unless <see cref="E2ESettings.AllowExternalRequestsEnvVar"/>
+/// is set (<see cref="E2EFixture.BlockExternalRequestsAsync"/>); the app needs none (AP15b: Tailwind is local too).
 /// </summary>
 public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
 {
@@ -45,38 +44,14 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
     /// </summary>
     protected async Task<(IBrowserContext Context, IPage Page)> NewContextAsync(string? locale = null)
     {
-        var context = await Fixture.Browser.NewContextAsync(new BrowserNewContextOptions
+        // In the browser of that language (E2EFixture.BrowserForAsync), external requests blocked
+        var context = await Fixture.NewBrowserContextAsync(new BrowserNewContextOptions
         {
             BaseURL = App.ServerAddress,
             ViewportSize = new ViewportSize { Width = 1280, Height = 900 },
             Locale = locale ?? ContextLocale
         });
         context.SetDefaultTimeout(15_000);
-
-        if (!E2ESettings.AllowExternalRequests)
-        {
-            var appOrigin = new Uri(App.ServerAddress).GetLeftPart(UriPartial.Authority);
-            await context.RouteAsync("**/*", route =>
-                route.Request.Url.StartsWith(appOrigin, StringComparison.OrdinalIgnoreCase)
-                    ? route.ContinueAsync()
-                    : route.AbortAsync());
-
-            // Adopted stylesheets survive Blazor's DOM patching of <head> (enhanced navigation).
-            // Guest pages (<html data-guest-page>) and the landing page (<html data-landing-page>) do not use Tailwind:
-            // the stand-in is removed there again.
-            await context.AddInitScriptAsync($$"""
-                (() => {
-                    const sheet = new CSSStyleSheet();
-                    sheet.replaceSync({{System.Text.Json.JsonSerializer.Serialize(E2ESettings.TailwindVisibilityCss)}});
-                    document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-                    document.addEventListener('DOMContentLoaded', () => {
-                        const root = document.documentElement;
-                        if (root.hasAttribute('data-guest-page') || root.hasAttribute('data-landing-page'))
-                            document.adoptedStyleSheets = document.adoptedStyleSheets.filter(s => s !== sheet);
-                    });
-                })();
-                """);
-        }
 
         return (context, await context.NewPageAsync());
     }
@@ -115,8 +90,6 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         {
             page.WebSocket -= OnWebSocket;
         }
-
-        await DismissCookieConsentAsync(page);
     }
 
     /// <summary>Full page load of <paramref name="url"/>, then waits for the interactive circuit.</summary>
@@ -124,20 +97,6 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
 
     protected static Task GotoInteractiveAsync(IPage page, string url) =>
         WaitForInteractiveAsync(page, () => page.GotoAsync(url));
-
-    /// <summary>
-    /// The BytexDigital cookie consent prompt is currently disabled (<c>CookieConsentHandler</c> is commented
-    /// out in <c>Routes.razor</c>). Should it come back, accept it so it does not cover the page.
-    /// </summary>
-    protected static async Task DismissCookieConsentAsync(IPage page)
-    {
-        var accept = page.Locator("button", new PageLocatorOptions
-        {
-            HasTextRegex = new Regex("^(Accept all|Alle akzeptieren|Accept|Akzeptieren)$")
-        });
-        if (await accept.CountAsync() > 0 && await accept.First.IsVisibleAsync())
-            await accept.First.ClickAsync();
-    }
 
     // --- Guest pages (static SSR + js/guest-menu.js) ---
 

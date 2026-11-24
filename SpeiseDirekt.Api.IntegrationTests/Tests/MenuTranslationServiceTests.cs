@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Reflection;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
@@ -184,6 +185,11 @@ public class MenuTranslationServiceTests : BaseIntegrationTest
     [Fact]
     public async Task Link_Unlink_AndCandidates()
     {
+        // The service's messages follow the current culture (AP12; the API's is the server's): this test reads the
+        // English ones, so it pins them instead of taking the host's (a German Windows would answer in German)
+        CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en");
+        CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en");
+
         // Menu1 German, Menu2 English, plus another English and a French menu
         Guid otherEnglish = Guid.NewGuid(), french = Guid.NewGuid();
         await WithServiceAsync(async (_, db) =>

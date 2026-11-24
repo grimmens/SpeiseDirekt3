@@ -7,7 +7,6 @@
     <UserSecretsId>aspnet-SpeiseDirekt3-7fd3d807-af41-4c98-8305-01e41c8da8f8</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="BytexDigital.Blazor.Components.CookieConsent" Version="1.2.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.14">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

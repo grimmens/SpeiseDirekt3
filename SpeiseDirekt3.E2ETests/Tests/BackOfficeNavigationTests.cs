@@ -381,7 +381,9 @@ public class BackOfficeNavigationTests : QrCalendarTestBase
         await drawer.GetByRole(AriaRole.Link, new() { Name = "QR Codes", Exact = true }).ClickAsync();
         await Assertions.Expect(Page).ToHaveURLAsync(new Regex("/qrcodes$"));
         await Assertions.Expect(OpenDrawer).ToHaveCountAsync(0);
-        (await Page.EvaluateAsync<bool>("() => document.documentElement.classList.contains('sd-drawer-open')")).Should().BeFalse();
+        // The page lock goes in the dialog's close event, which the browser dispatches asynchronously after close()
+        // (measured 13 ms later, after the URL had already changed), so wait for it instead of reading the class once
+        await Assertions.Expect(Page.Locator("html")).Not.ToHaveClassAsync(new Regex(@"(^|\s)sd-drawer-open(\s|$)"));
 
         // Widening the window closes an open drawer
         await DrawerButton.ClickAsync();

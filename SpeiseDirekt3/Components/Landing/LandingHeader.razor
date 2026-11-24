@@ -11,7 +11,7 @@
             <ul role="list">
                 @foreach (var (id, labelKey) in LandingPage.Sections)
                 {
-                    <li><a class="lp-nav-link" href="#@id">@T[labelKey]</a></li>
+                    <li><a class="lp-nav-link" href="@(SectionBase)#@id">@T[labelKey]</a></li>
                 }
             </ul>
         </nav>
@@ -45,7 +45,7 @@
                 @foreach (var (id, labelKey) in LandingPage.Sections)
                 {
                     <li>
-                        <a class="lp-menu-link" href="#@id" data-lp-menu-link>
+                        <a class="lp-menu-link" href="@(SectionBase)#@id" data-lp-menu-link>
                             <span>@T[labelKey]</span>
                             <LandingIcon Name="arrow-right" />
                         </a>
@@ -59,3 +59,11 @@
         </div>
     </div>
 </dialog>
+
+@code {
+    /// <summary>
+    /// Prefix of the section links (<c>#funktionen</c>, …): empty on the landing page itself, <c>/</c> on the other
+    /// pages of the landing document (the imprint), so the links lead back to the landing page's sections.
+    /// </summary>
+    [Parameter] public string SectionBase { get; set; } = "";
+}

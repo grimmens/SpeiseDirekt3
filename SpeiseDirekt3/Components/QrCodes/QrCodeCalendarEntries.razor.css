@@ -1,5 +1,5 @@
 /* QR code calendar editor. Own classes (sd-cal-*) instead of Tailwind utilities: Bootstrap's !important spacing
-   utilities collide with Tailwind's, and the layout must also hold in the E2E runs without the Tailwind CDN. */
+   utilities collide with Tailwind's. */
 .sd-cal-editor {
     display: flex;
     flex-direction: column;

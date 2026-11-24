@@ -24,7 +24,7 @@
             <ul role="list">
                 @foreach (var (id, labelKey) in LandingPage.Sections)
                 {
-                    <li><a href="#@id">@T[labelKey]</a></li>
+                    <li><a href="@(SectionBase)#@id">@T[labelKey]</a></li>
                 }
             </ul>
         </nav>
@@ -55,7 +55,21 @@
     <div class="lp-container lp-footer-bottom-wrap">
         <div class="lp-footer-bottom">
             <p>© @Clock.GetLocalNow().Year Speise-Direkt</p>
-            <p data-testid="footer-demo-note">@T["Footer_DemoNote"]</p>
+            @if (ShowDemoNote)
+            {
+                <p data-testid="footer-demo-note">@T["Footer_DemoNote"]</p>
+            }
         </div>
     </div>
 </footer>
+
+@code {
+    /// <summary>
+    /// Prefix of the section links (<c>#funktionen</c>, …): empty on the landing page itself, <c>/</c> on the other
+    /// pages of the landing document (the imprint), so the links lead back to the landing page's sections.
+    /// </summary>
+    [Parameter] public string SectionBase { get; set; } = "";
+
+    /// <summary>The note that every example shows the made-up "Trattoria Lago" (only where there are examples).</summary>
+    [Parameter] public bool ShowDemoNote { get; set; } = true;
+}

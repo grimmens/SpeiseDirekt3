@@ -6,9 +6,10 @@ namespace SpeiseDirekt3.Components.Landing;
 /// <summary>
 /// <c>/robots.txt</c> and <c>/sitemap.xml</c> (AP13). Search engines may crawl the landing page and the guest pages
 /// (<c>/menu/{id}</c>, <c>/qr/{id}</c> — crawlable as before, an owner's public menu is meant to be found), but not
-/// the back office or the account pages. The sitemap lists only <c>/</c>: the one indexable page of our own (the guest
-/// pages belong to the restaurants, the demo and the preview are <c>noindex</c>). Absolute URLs use the origin the
-/// browser sees (<see cref="GuestFormat.PublicOrigin"/>, after <c>UseForwardedHeaders</c>).
+/// the back office or the account pages. The sitemap lists the indexable pages of our own, <see cref="SitemapPaths"/>:
+/// <c>/</c> and the imprint <c>/impressum</c> (the guest pages belong to the restaurants, the demo and the preview are
+/// <c>noindex</c>). Absolute URLs use the origin the browser sees (<see cref="GuestFormat.PublicOrigin"/>, after
+/// <c>UseForwardedHeaders</c>).
 /// </summary>
 public static class SeoEndpoints
 {
@@ -22,6 +23,9 @@ public static class SeoEndpoints
         "/MenuItems/", "/menuitems/", "/allergens/", "/combos/", "/qrcodes", "/qrcode/", "/analytics", "/Analytics",
         "/restaurant", "/users", "/guest/api/", "/api/", "/_blazor", "/_framework/"
     ];
+
+    /// <summary>The pages of <c>/sitemap.xml</c>: the landing page and the imprint (AP15a).</summary>
+    public static readonly IReadOnlyList<string> SitemapPaths = ["/", Legal.ImprintPage.Path];
 
     public static IEndpointRouteBuilder MapSeoEndpoints(this IEndpointRouteBuilder endpoints)
     {
@@ -40,12 +44,13 @@ public static class SeoEndpoints
 
         endpoints.MapGet("/sitemap.xml", (HttpContext http) =>
         {
-            var home = GuestFormat.Absolute(GuestFormat.PublicOrigin(http.Request), "/");
+            var origin = GuestFormat.PublicOrigin(http.Request);
+            var urls = string.Concat(SitemapPaths.Select(path =>
+                $"  <url><loc>{System.Security.SecurityElement.Escape(GuestFormat.Absolute(origin, path))}</loc></url>\n"));
             var xml = $"""
                 <?xml version="1.0" encoding="UTF-8"?>
                 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-                  <url><loc>{System.Security.SecurityElement.Escape(home)}</loc></url>
-                </urlset>
+                {urls}</urlset>
 
                 """;
             http.Response.Headers.CacheControl = "public, max-age=3600";

@@ -35,6 +35,6 @@ else
 
         // An item opened by a page request (no JS, or a shared link) counts like a click in the page
         if (model.SelectedItem is { } item)
-            await Tracking.RecordMenuItemClickAsync(Tracking.GetOrCreateSessionId(), item.Id, menu.Id);
+            await Tracking.RecordMenuItemClickAsync(Tracking.GetVisitorKey(menu.ApplicationUserId), item.Id, menu.Id);
     }
 }

@@ -64,6 +64,71 @@ public class MenuDisplayControllerTests : BaseIntegrationTest
     }
 
     // ---------------------------------------------------------------------
+    // Tracking without cookie, IP address or user agent (AP15a): a view and a click carry the guest's daily visitor key
+    // (16 hex characters from IVisitorKeyService), the same for the same client and restaurant on the same day.
+    // ---------------------------------------------------------------------
+
+    private async Task<HttpResponseMessage> SendAsync(HttpMethod method, string url, string userAgent)
+    {
+        var request = new HttpRequestMessage(method, url);
+        request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+        return await Client.SendAsync(request);
+    }
+
+    private async Task<List<string>> NewViewKeysAsync() => await QueryAsync(db => db.MenuViews
+        .Where(v => v.QRCodeId == TestSeedData.DirectQrCodeId).OrderBy(v => v.ViewedAt).Select(v => v.SessionId).ToListAsync());
+
+    private async Task<List<string>> NewClickKeysAsync() => await QueryAsync(db => db.MenuItemClicks
+        .Where(c => c.SessionId != TestSeedData.TestSessionId && c.SessionId != "test-session-002")
+        .OrderBy(c => c.ClickedAt).Select(c => c.SessionId).ToListAsync());
+
+    private async Task<T> QueryAsync<T>(Func<ApplicationDbContext, Task<T>> query)
+    {
+        using var scope = Factory.Services.CreateScope();
+        return await query(scope.ServiceProvider.GetRequiredService<ApplicationDbContext>());
+    }
+
+    [Fact]
+    public async Task GetMenuByQrCode_RecordsAViewUnderADailyVisitorKey_AndSetsNoCookie()
+    {
+        var response = await SendAsync(HttpMethod.Get, $"/api/public/menu/{TestSeedData.DirectQrCodeId}", "TestBrowser/1.0");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.Contains("Set-Cookie").Should().BeFalse("the public API sets no tracking cookie");
+        var keys = await NewViewKeysAsync();
+        keys.Should().ContainSingle().Which.Should().MatchRegex("^[0-9a-f]{16}$");
+    }
+
+    [Fact]
+    public async Task ViewAndClick_OfTheSameClient_ShareTheVisitorKey_AnotherUserAgentGetsAnother()
+    {
+        await SendAsync(HttpMethod.Get, $"/api/public/menu/{TestSeedData.DirectQrCodeId}", "TestBrowser/1.0");
+        var click = await SendAsync(HttpMethod.Post,
+            $"/api/public/menu/{TestSeedData.Menu1Id}/items/{TestSeedData.MenuItem1Id}/click", "TestBrowser/1.0");
+        click.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        click.Headers.Contains("Set-Cookie").Should().BeFalse();
+        await SendAsync(HttpMethod.Post,
+            $"/api/public/menu/{TestSeedData.Menu1Id}/items/{TestSeedData.MenuItem1Id}/click", "OtherBrowser/2.0");
+
+        var view = (await NewViewKeysAsync()).Should().ContainSingle().Subject;
+        var clicks = await NewClickKeysAsync();
+        clicks.Should().HaveCount(2);
+        clicks[0].Should().Be(view, "the same client opens the menu and clicks an item");
+        clicks[1].Should().NotBe(view, "another user agent is another visitor");
+    }
+
+    [Fact]
+    public async Task RecordClick_UnknownMenu_Returns204_AndRecordsNothing()
+    {
+        var before = await QueryAsync(db => db.MenuItemClicks.CountAsync());
+
+        var response = await Client.PostAsync($"/api/public/menu/{Guid.NewGuid()}/items/{TestSeedData.MenuItem1Id}/click", null);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+        (await QueryAsync(db => db.MenuItemClicks.CountAsync())).Should().Be(before);
+    }
+
+    // ---------------------------------------------------------------------
     // Menu resolution (calendar / time table / direct)
     // Menu1 ("Lunch Menu") is used as the direct menu, Menu2 ("Dinner Menu")
     // as the calendar / time-table menu, so the source of the result is visible.

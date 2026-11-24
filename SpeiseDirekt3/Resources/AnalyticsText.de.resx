@@ -46,7 +46,7 @@
     <value>Besuche</value>
   </data>
   <data name="Summary_SessionsHint" xml:space="preserve">
-    <value>Ein Besuch ist ein Gerät eines Gastes; Gäste bleiben anonym.</value>
+    <value>Ein Besuch ist ein Gerät eines Gastes an einem Tag; Gäste bleiben anonym.</value>
   </data>
   <data name="Menus_Title" xml:space="preserve">
     <value>Aufrufe je Speisekarte</value>

@@ -118,7 +118,7 @@ public class AuthTests : E2ETestBase
     };
 
     /// <summary>
-    /// Every anonymous account page: the auth document (lang, own CSS, no Tailwind CDN, Bootstrap or blazor.web.js, no
+    /// Every anonymous account page: the auth document (lang, own CSS, no Tailwind, Bootstrap or blazor.web.js, no
     /// request to another host, noindex), the logo back to the landing page, one h1 in the centred card, and no
     /// sideways scrolling from 360 to 1440 px; the brand panel only from 1024 px.
     /// </summary>
@@ -139,7 +139,7 @@ public class AuthTests : E2ETestBase
         await Assertions.Expect(Page.Locator("base")).ToHaveCountAsync(0);
         await Assertions.Expect(Page.Locator("link[rel=stylesheet][href*='css/auth']")).ToHaveCountAsync(1);
         (await Page.Locator("script[src]").CountAsync()).Should().Be(0, "the account pages run no script");
-        (await Page.Locator("link[href*='bootstrap'], link[href*='app.css'], link[href*='shell.css']").CountAsync()).Should().Be(0);
+        (await Page.Locator("link[href*='bootstrap'], link[href*='app.css'], link[href*='shell.css'], link[href*='tailwind']").CountAsync()).Should().Be(0);
         await Assertions.Expect(Page.GetByTestId("auth-brand")).ToHaveAttributeAsync("href", "/");
         await Assertions.Expect(Page.Locator("h1")).ToHaveCountAsync(1);
         await Assertions.Expect(Page.GetByTestId("auth-card").Locator("h1")).ToBeVisibleAsync();

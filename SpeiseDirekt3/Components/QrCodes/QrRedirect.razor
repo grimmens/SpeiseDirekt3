@@ -1,7 +1,7 @@
 ﻿@page "/qr/{QrId:guid}"
 @* Target of every QR code (anonymous): resolves the active menu (IMenuService) and shows it as the static SSR
    guest menu. Records one MenuView per page request; a request with ?item= (an item opened without JS) records
-   the item click instead. *@
+   the item click instead. Both under the guest's daily visitor key (ITrackingService.GetVisitorKey; sets no cookie). *@
 @attribute [ExcludeFromInteractiveRouting]
 @attribute [GuestPage]
 @layout GuestLayout
@@ -48,10 +48,11 @@ else
 
         model = await GuestMenuLoader.BuildAsync(Db, Profiles, menu, $"/qr/{QrId}", Item);
 
-        var sessionId = Tracking.GetOrCreateSessionId();
+        // The guest's daily visitor key for this restaurant: no cookie, no IP address or user agent stored (AP15a)
+        var visitor = Tracking.GetVisitorKey(menu.ApplicationUserId);
         if (model.SelectedItem is { } item)
-            await Tracking.RecordMenuItemClickAsync(sessionId, item.Id, menu.Id);
+            await Tracking.RecordMenuItemClickAsync(visitor, item.Id, menu.Id);
         else
-            await Tracking.RecordMenuViewAsync(sessionId, menu.Id, QrId);
+            await Tracking.RecordMenuViewAsync(visitor, menu.Id, QrId);
     }
 }

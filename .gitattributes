@@ -17,6 +17,13 @@
 # Vendored FullCalendar bundle: byte-identical to the npm tarball (see wwwroot/lib/fullcalendar/README.md)
 SpeiseDirekt3/wwwroot/lib/fullcalendar/*.js -text
 
+# Generated Tailwind CSS (tools/tailwind/build.sh, build.ps1): byte-exact in every working copy, so the
+# --check of CI compares the bytes the CLI writes, on Windows as on Linux
+SpeiseDirekt3/wwwroot/css/tailwind.css -text
+
+# Shell scripts are run with bash (CI on Linux): LF in every working copy
+*.sh text eol=lf
+
 ###############################################################################
 # Set default behavior for command prompt diff.
 #

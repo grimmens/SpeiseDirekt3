@@ -104,6 +104,7 @@ public class SortableListTests : BackOfficeTestBase
 
         var row = CategoryRow("Vorspeisen");
         var handle = HandleOf(row);
+        await WaitForSortableAsync(handle);
         var box = (await handle.BoundingBoxAsync())!;
         var target = (await CategoryRow("Desserts").BoundingBoxAsync())!;
         await Page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
@@ -214,7 +215,7 @@ public class SortableListTests : BackOfficeTestBase
         await Assertions.Expect(handle).ToHaveAttributeAsync("aria-describedby", "sd-sort-help");
         await Assertions.Expect(Page.Locator("#sd-sort-help")).ToHaveTextAsync(new System.Text.RegularExpressions.Regex("arrow keys"));
 
-        await handle.FocusAsync();
+        await FocusHandleAsync(handle);
         await Page.Keyboard.PressAsync("ArrowUp");
         await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Vorspeisen", "Desserts", "Hauptspeisen" });
         await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Moved Desserts to position 2 of 3.");
@@ -234,6 +235,114 @@ public class SortableListTests : BackOfficeTestBase
         await Assertions.Expect(CategoryNames).ToHaveTextAsync(new[] { "Vorspeisen", "Desserts", "Hauptspeisen" });
         await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Moved Desserts to position 2 of 3.");
         (await StoredCategoryOrderAsync(ownerId, menuId)).Should().Equal("Vorspeisen", "Desserts", "Hauptspeisen");
+    }
+
+    /// <summary>
+    /// The page renders again while js/sortable-list.js is still loading: the script is attached once. Attached once per
+    /// render, every listener ran that often — a press on a handle lifted the row three times, and with two attachments
+    /// one ↑ moved the row up and straight back (the item page's variants, found on Windows).
+    /// </summary>
+    [Fact]
+    public async Task Script_IsAttachedOnce_WhenThePageRendersAgainWhileItLoads()
+    {
+        var (ownerId, _, soupsId) = await SeedAsync("Laden Menü");
+        var itemId = Guid.NewGuid();
+        await App.SeedAsync(ownerId, db =>
+        {
+            db.MenuItems.Add(new MenuItem
+            {
+                Id = itemId, Name = "Hausbier", Description = "", Price = 3.40m, CategoryId = soupsId, SortOrder = 9,
+                PriceOptions =
+                {
+                    new MenuItemPriceOption { Id = Guid.NewGuid(), Kind = PriceOptionKind.Variant, Name = "0,5 l", Price = 5.90m, SortOrder = 0 },
+                    new MenuItemPriceOption { Id = Guid.NewGuid(), Kind = PriceOptionKind.Variant, Name = "0,25 l", Price = 3.40m, SortOrder = 1 }
+                }
+            });
+            return Task.CompletedTask;
+        });
+
+        // Hold the script back until the page has rendered twice more
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        // (the import map points ./js/sortable-list.js to its fingerprinted name)
+        await Page.RouteAsync(new System.Text.RegularExpressions.Regex(@"/js/sortable-list(\.[^/]*)?\.js"), async route =>
+        {
+            await release.Task;
+            await route.ContinueAsync();
+        });
+        await GotoInteractiveAsync($"/MenuItems/item/{itemId}/edit");
+        var rows = ItemEditor.GetByTestId("variant-row");
+        var names = rows.Locator("input[aria-label^='Name of']");
+        // Each change re-renders the list (the handles' labels follow the names); the second one is processed after
+        // the first render's OnAfterRenderAsync, so that one has asked for the script again by then
+        await names.Nth(0).FillAsync("0,4 l");
+        await names.Nth(0).PressAsync("Tab");
+        await Assertions.Expect(HandleOf(rows.Nth(0))).ToHaveAccessibleNameAsync("Reorder variant 0,4 l");
+        await names.Nth(1).FillAsync("0,2 l");
+        await names.Nth(1).PressAsync("Tab");
+        await Assertions.Expect(HandleOf(rows.Nth(1))).ToHaveAccessibleNameAsync("Reorder variant 0,2 l");
+        release.SetResult();
+
+        // Once the script listens, ↑ on the first row only announces that it is first (a round trip, after which any
+        // further attach that was queued behind the first one would have run too)
+        await FocusHandleAsync(HandleOf(rows.Nth(0)));
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("variant 0,4 l is already first.");
+
+        // One set of listeners: a press on a handle lifts the row once (one placeholder marks its slot)
+        var handle = HandleOf(rows.Nth(1));
+        await handle.ScrollIntoViewIfNeededAsync();
+        var box = (await handle.BoundingBoxAsync())!;
+        await Page.Mouse.MoveAsync(box.X + box.Width / 2, box.Y + box.Height / 2);
+        await Page.Mouse.DownAsync();
+        await Assertions.Expect(Page.GetByTestId("sort-placeholder")).ToHaveCountAsync(1);
+        await Page.Keyboard.PressAsync("Escape");
+        await Page.Mouse.UpAsync();
+        await Assertions.Expect(Page.GetByTestId("sort-placeholder")).ToHaveCountAsync(0);
+
+        // And one ↑ moves the row once
+        await handle.FocusAsync();
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("Moved variant 0,2 l to position 1 of 2.");
+        // The next ↑ finds it at the top (moved twice, it would be second again and move once more)
+        await Page.Keyboard.PressAsync("ArrowUp");
+        await Assertions.Expect(Announcer(Page)).ToHaveTextAsync("variant 0,2 l is already first.");
+        await Assertions.Expect(names.Nth(0)).ToHaveValueAsync("0,2 l");
+        await Assertions.Expect(names.Nth(1)).ToHaveValueAsync("0,4 l");
+    }
+
+    /// <summary>
+    /// The list is left while js/sortable-list.js is still loading: the late script is let go. Attached anyway, the
+    /// list handed JS its disposed .NET reference, the exception ended the circuit, and the next page (here the item
+    /// page) looked fine but no longer reacted — no Save, no Cancel (found on Windows under the parallel test load).
+    /// </summary>
+    [Fact]
+    public async Task LeavingTheList_WhileTheScriptLoads_KeepsTheNextPageWorking()
+    {
+        var (_, _, soupsId) = await SeedAsync("Verlassen Menü");
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var script = new System.Text.RegularExpressions.Regex(@"/js/sortable-list(\.[^/]*)?\.js");
+        await Page.RouteAsync(script, async route =>
+        {
+            await release.Task;
+            await route.ContinueAsync();
+        });
+        await GotoInteractiveAsync($"/MenuItems/Category/{soupsId}");
+        await Assertions.Expect(HandleOf(ItemRows.First)).ToBeVisibleAsync();
+
+        // Off to the item page while the list still waits for its script, then the script arrives
+        await Link("Edit Tomatensuppe", exact: true).ClickAsync();
+        await Assertions.Expect(ItemEditor).ToBeVisibleAsync();
+        var loaded = Page.WaitForResponseAsync(script);
+        release.SetResult();
+        await (await loaded).FinishedAsync();
+
+        // The circuit is alive: the page notices a change and Cancel leaves it
+        await ItemEditor.Locator("#MenuItem\\.Name").FillAsync("Tomatencremesuppe");
+        await ItemEditor.Locator("#MenuItem\\.Name").PressAsync("Tab");
+        await Assertions.Expect(Page.GetByTestId("item-dirty-state")).ToHaveTextAsync("Unsaved changes");
+        await Page.GetByTestId("item-savebar").GetByRole(AriaRole.Button, new() { Name = "Cancel" }).ClickAsync();
+        await Assertions.Expect(Page).ToHaveURLAsync(new System.Text.RegularExpressions.Regex($"/MenuItems/Category/{soupsId}\\?highlight=", System.Text.RegularExpressions.RegexOptions.IgnoreCase));
+        await Assertions.Expect(Page.Locator("#blazor-error-ui")).ToBeHiddenAsync();
     }
 
     [Fact]

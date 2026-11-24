@@ -2,32 +2,35 @@ using SpeiseDirekt.Model;
 
 namespace SpeiseDirekt.ServiceInterface
 {
+    /// <summary>
+    /// Records what guests open, for the analytics page: menu views and item clicks. Since AP15a without a cookie, without
+    /// the IP address and without the user agent: a row carries only the menu, the QR code or item, the time and the
+    /// guest's daily visitor key (<see cref="GetVisitorKey"/>, <see cref="IVisitorKeyService"/>).
+    /// </summary>
     public interface ITrackingService
     {
         /// <summary>
-        /// Records a menu view when a user accesses a menu via QR code
+        /// Records a menu view (a QR code scan, or a page request of a menu)
         /// </summary>
-        /// <param name="sessionId">Session ID from cookie</param>
+        /// <param name="visitorKey">The guest's daily visitor key (<see cref="GetVisitorKey"/>)</param>
         /// <param name="menuId">ID of the viewed menu</param>
         /// <param name="qrCodeId">ID of the QR code used (optional)</param>
-        /// <param name="ipAddress">User's IP address</param>
-        /// <param name="userAgent">User's browser user agent</param>
-        Task RecordMenuViewAsync(string sessionId, Guid menuId, Guid? qrCodeId = null, string? ipAddress = null, string? userAgent = null);
+        Task RecordMenuViewAsync(string visitorKey, Guid menuId, Guid? qrCodeId = null);
 
         /// <summary>
-        /// Records a menu item click when a user clicks on a menu item
+        /// Records a menu item click when a guest opens a menu item
         /// </summary>
-        /// <param name="sessionId">Session ID from cookie</param>
+        /// <param name="visitorKey">The guest's daily visitor key (<see cref="GetVisitorKey"/>)</param>
         /// <param name="menuItemId">ID of the clicked menu item</param>
         /// <param name="menuId">ID of the menu containing the item</param>
-        /// <param name="ipAddress">User's IP address</param>
-        /// <param name="userAgent">User's browser user agent</param>
-        Task RecordMenuItemClickAsync(string sessionId, Guid menuItemId, Guid menuId, string? ipAddress = null, string? userAgent = null);
+        Task RecordMenuItemClickAsync(string visitorKey, Guid menuItemId, Guid menuId);
 
         /// <summary>
-        /// Gets or creates a session ID for tracking
+        /// The daily visitor key of the guest making the current request, for the restaurant <paramref name="tenantId"/>
+        /// (the menu's owner, <c>Menu.ApplicationUserId</c>): computed from the client address (after
+        /// <c>UseForwardedHeaders</c>) and the <c>User-Agent</c> header, which are not kept. Sets no cookie. A page
+        /// request and the item clicks sent from that page compute the same key on the same day.
         /// </summary>
-        /// <returns>Session ID string</returns>
-        string GetOrCreateSessionId();
+        string GetVisitorKey(Guid tenantId);
     }
 }

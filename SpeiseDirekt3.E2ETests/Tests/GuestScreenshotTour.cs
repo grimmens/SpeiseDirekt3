@@ -13,10 +13,10 @@ namespace SpeiseDirekt3.E2ETests.Tests;
 /// info sheet, the footer, an item with price variants, the card grid with label chips and the top bar with the
 /// logo; plus the share fallbacks, a menu without a restaurant profile, one whose name differs from the
 /// restaurant's and the seeded mezze menu (profile without pictures).
-/// Runs only when <c>E2E_SCREENSHOT_DIR</c> is set; guest pages need no
-/// external requests, <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> only matters for the editor shots (Tailwind CDN).
+/// Runs only when <c>E2E_SCREENSHOT_DIR</c> is set; nothing needs external requests (the editor shots' Tailwind is the
+/// app's own css/tailwind.css since AP15b).
 /// <code>
-/// E2E_SCREENSHOT_DIR=/tmp/shots E2E_ALLOW_EXTERNAL_REQUESTS=1 dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~GuestScreenshotTour
+/// E2E_SCREENSHOT_DIR=/tmp/shots dotnet test SpeiseDirekt3.E2ETests --filter FullyQualifiedName~GuestScreenshotTour
 /// </code>
 /// </summary>
 public class GuestScreenshotTour : BackOfficeTestBase
@@ -224,7 +224,7 @@ public class GuestScreenshotTour : BackOfficeTestBase
     /// version in modern, classic and dark — language sheet, the English menu (top, item sheet, filter sheet, favourites
     /// sheet), the language list at the end of the page, the top bar at 360 px with info, language, filter and search
     /// buttons — plus the back office: the "Language versions" card and the editor's phone frame with unsaved changes
-    /// (modern, dark). The back office needs <c>E2E_ALLOW_EXTERNAL_REQUESTS=1</c> for Tailwind.
+    /// (modern, dark).
     /// </summary>
     [Fact]
     public async Task Capture_language_versions()

@@ -4,8 +4,9 @@ namespace SpeiseDirekt3.E2ETests.Infrastructure;
 public static class E2ESettings
 {
     /// <summary>
-    /// Set to <c>1</c>/<c>true</c> to let the browser load external resources (Tailwind CDN, Bootstrap Icons,
-    /// fonts), e.g. for layout screenshots. Default: blocked, so the tests run offline and deterministically.
+    /// Set to <c>1</c>/<c>true</c> to let the browser load resources from other hosts. Default: blocked, so the tests run
+    /// offline and deterministically. Since AP15b the app requests nothing from another host (Tailwind is the local
+    /// css/tailwind.css), so neither the tests nor the screenshot tours need it; it stays as an opt-in.
     /// </summary>
     public const string AllowExternalRequestsEnvVar = "E2E_ALLOW_EXTERNAL_REQUESTS";
 
@@ -31,21 +32,4 @@ public static class E2ESettings
     public static bool AllowExternalRequests =>
         Environment.GetEnvironmentVariable(AllowExternalRequestsEnvVar) is { } v
         && (v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>
-    /// Minimal stand-in for the Tailwind display utilities the app uses to show/hide elements
-    /// (modals use <c>hidden</c>, tables <c>xl:block</c> …). The chrome (top bar, drawer, menu context bar) does not
-    /// need it: css/shell.css is local.
-    /// Only applied when the CDN is blocked, so visibility in the tests matches the real app.
-    /// Icons are capped in size (Tailwind's <c>w-*</c>/<c>h-*</c> are missing, unsized SVGs would fill the page).
-    /// </summary>
-    public const string TailwindVisibilityCss = """
-        svg{width:1.25rem;height:1.25rem}
-        .whitespace-nowrap{white-space:nowrap}
-        .hidden{display:none}
-        @media (min-width:640px){.sm\:flex{display:flex}.sm\:grid{display:grid}}
-        @media (min-width:768px){.md\:grid{display:grid}}
-        @media (min-width:1024px){.lg\:flex{display:flex}.lg\:block{display:block}.lg\:grid{display:grid}.lg\:hidden{display:none}}
-        @media (min-width:1280px){.xl\:block{display:block}.xl\:grid{display:grid}.xl\:hidden{display:none}}
-        """;
 }
