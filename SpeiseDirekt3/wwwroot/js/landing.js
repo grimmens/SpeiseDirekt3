@@ -1,9 +1,9 @@
 /**
  * landing.js — behaviour of the landing page (/, Components/Landing).
  *
- * Plain ES module, no framework, no build step, no network requests. The server renders the complete page and it
- * works without this module (the menu button is a link to the footer navigation, the FAQ is <details>, the theme
- * switcher is radio buttons + CSS). This module only enhances it:
+ * Plain ES module, no framework, no build step, no network requests of its own. The server renders the complete page
+ * and it works without this module (the menu button is a link to the footer navigation, the FAQ is <details>, the
+ * theme switcher is radio buttons + CSS). This module only enhances it:
  *   - header: data-scrolled on [data-lp-header] once the page is scrolled (CSS condenses the bar)
  *   - menu sheet (below 1024 px): the link [data-lp-menu-open] opens <dialog data-lp-menu> as a modal; Escape, the
  *     backdrop, [data-lp-menu-close] and a followed link [data-lp-menu-link] close it, and so does widening the window
@@ -14,6 +14,9 @@
  *   - reveal: [data-reveal] blocks below the first screen fade in when they scroll into view — only when motion is
  *     allowed (prefers-reduced-motion), never before this module ran (CSS keys on data-lp-reveal), and everything is
  *     shown for printing
+ *   - conversion (AP16): a click (or middle click) on a "register for free" link [data-lp-cta="<position>"] — header,
+ *     menu, hero, steps, cta, footer — sends "Kostenlos starten" with that position to the page counter, if the page
+ *     has one (window.plausible, js/site.js: production only); the counter sends it, the link is followed as always
  * When it is done it sets data-landing-ready on <html> (tests wait for it).
  */
 
@@ -152,7 +155,20 @@ function initReveal() {
     root.setAttribute('data-lp-reveal', '');
 }
 
+function initConversion() {
+    const send = event => {
+        if (event.type === 'auxclick' && event.button !== 1) return;
+        const link = event.target instanceof Element ? event.target.closest('a[data-lp-cta]') : null;
+        if (link && typeof window.plausible === 'function') {
+            window.plausible('Kostenlos starten', { props: { position: link.dataset.lpCta } });
+        }
+    };
+    document.addEventListener('click', send);
+    document.addEventListener('auxclick', send);
+}
+
 initHeader();
 initMenu();
 initReveal();
+initConversion();
 root.setAttribute('data-landing-ready', '');

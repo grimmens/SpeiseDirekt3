@@ -14,6 +14,7 @@
 @inject IEmailSender<ApplicationUser> EmailSender
 @inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
+@inject SpeiseDirekt3.Components.Plausible.AccountCreatedMarkers AccountCreatedMarkers
 @inject ILogger<ExternalLogin> Logger
 @inject IStringLocalizer<AccountText> T
 @inject IStringLocalizer<CommonText> C
@@ -144,6 +145,8 @@
                 Logger.LogInformation("User created an account using {Name} provider.", externalLoginInfo.LoginProvider);
 
                 var userId = await UserManager.GetUserIdAsync(user);
+                // "Konto angelegt" (AP16): this path creates an account too
+                AccountCreatedMarkers.AccountCreated(userId);
                 var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
                 code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
 

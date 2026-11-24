@@ -2,10 +2,12 @@
 @inject IStringLocalizer<QrCodesText> T
 
 @* Download PNG + Copy link for one QR code, followed by optional extra buttons (Edit, Delete) in the same
-   wrapping row. "Copy link" is handled client-side by wwwroot/js/qr-codes.js, which the page imports. *@
+   wrapping row. "Copy link" is handled client-side by wwwroot/js/qr-codes.js, which the page imports; it also sends
+   the conversion events of both (AP16: [data-qr-download], a copy that worked) when the page has the counter. *@
 <div class="flex flex-wrap items-center gap-2 @Class">
     <a href="@QrCodeLinks.DownloadPath(QrId, Title)"
        download="@QrCodeLinks.DownloadFileName(Title)"
+       data-qr-download
        data-testid="qr-download"
        class="inline-flex items-center px-3.5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium rounded-lg no-underline hover:no-underline transition-colors duration-200">
         <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

@@ -17,7 +17,7 @@
         </nav>
         <div class="lp-header-actions">
             <a class="lp-text-link lp-header-login" href="/Account/Login" data-testid="landing-login">@T["LogIn"]</a>
-            <a class="lp-button lp-button--primary lp-header-cta" href="/Account/Register" data-testid="landing-register">
+            <a class="lp-button lp-button--primary lp-header-cta" href="/Account/Register" data-lp-cta="header" data-testid="landing-register">
                 <span class="lp-cta-long">@T["RegisterFree"]</span><span class="lp-cta-short" aria-hidden="true">@T["RegisterShort"]</span>
             </a>
             <a class="lp-icon-button lp-menu-button" href="#lp-footer-nav" aria-label="@T["MenuButton"]" data-lp-menu-open
@@ -55,7 +55,7 @@
         </nav>
         <div class="lp-menu-actions">
             <a class="lp-button lp-button--secondary lp-button--lg" href="/Account/Login" data-lp-menu-link>@T["LogIn"]</a>
-            <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-lp-menu-link>@T["RegisterFree"]</a>
+            <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-lp-menu-link data-lp-cta="menu" data-testid="menu-register">@T["RegisterFree"]</a>
         </div>
     </div>
 </dialog>

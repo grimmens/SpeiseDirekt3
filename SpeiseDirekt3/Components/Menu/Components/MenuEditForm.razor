@@ -9,6 +9,7 @@
 @inject IJSRuntime JS
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
+@inject SpeiseDirekt3.Components.Plausible.PlausibleEvents Events
 @inject IStringLocalizer<MenusText> T
 @inject IStringLocalizer<CommonText> C
 @inject IStringLocalizer<ShellText> S
@@ -332,6 +333,9 @@
         }
 
         await Context.SaveChangesAsync();
+        // "Erste Speisekarte" (AP16) when the tenant has exactly this one menu now
+        if (IsNew)
+            await Events.MenuCreatedAsync(Context);
         NavManager.NavigateTo(IsNew ? "/menus" : $"/menudetail/{Menu.Id}");
     }
 
