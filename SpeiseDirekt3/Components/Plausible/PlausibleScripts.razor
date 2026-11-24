@@ -1,0 +1,51 @@
+@using System.Security.Claims
+@inject IConfiguration Configuration
+@inject AccountCreatedMarkers AccountCreatedMarkers
+
+@* AP16: the page counter (Plausible CE) in every document of App.razor — only while it is on (PlausibleSettings: in
+   production; elsewhere this renders nothing) and never in the editor's phone preview /menu/preview/{id} (it reloads on
+   every change and is not a guest). First our own js/site.js (queue, options, URL masking; a classic script, so it
+   runs before the tracker), then the tracker itself, async, from this site (the vhost proxies ScriptPath and Endpoint).
+   No word like "analytics" or "stats" in a served file name, path or attribute: ad blockers match on them. *@
+@if (settings.Enabled)
+{
+    <script src="@Assets.Absolute("js/site.js")" data-endpoint="@settings.Endpoint" data-account-created="@accountCreated"></script>
+    <script async src="@settings.ScriptPath"></script>
+}
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private PlausibleSettings settings = PlausibleSettings.Off;
+
+    /// <summary>The account registered itself just now: js/site.js sends <see cref="PlausibleGoals.AccountCreated"/>.</summary>
+    private bool accountCreated;
+
+    /// <summary>The editor's phone preview: no counter (js/site.js drops its events too, a second fence).</summary>
+    public static bool IsEditorPreview(PathString path) => path.StartsWithSegments("/menu/preview");
+
+    protected override void OnInitialized()
+    {
+        var current = PlausibleSettings.From(Configuration);
+        if (!current.Enabled || IsEditorPreview(HttpContext.Request.Path))
+            return;
+        settings = current;
+
+        if (HttpContext.User.FindFirstValue(ClaimTypes.NameIdentifier) is not { Length: > 0 } userId
+            || AccountCreatedMarkers.Take(userId) is not { } expires)
+            return;
+        accountCreated = true;
+        // A redirect (the landing page sends a signed-in visitor to /dashboard) or an error never reaches the browser
+        // as this page: the marker waits for the next one
+        if (HttpContext.Response.HasStarted)
+            return;
+        var response = HttpContext.Response;
+        response.OnStarting(() =>
+        {
+            if (response.StatusCode is < 200 or >= 300)
+                AccountCreatedMarkers.Restore(userId, expires);
+            return Task.CompletedTask;
+        });
+    }
+}

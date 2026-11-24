@@ -1,4 +1,5 @@
 @using SpeiseDirekt3.Components.Guest
+@using SpeiseDirekt3.Components.Plausible
 @implements IDisposable
 @inject GuestDocument GuestDocument
 <!DOCTYPE html>
@@ -9,7 +10,8 @@
        [AuthPage], AP13). Static SSR, own assets only, no Tailwind, Bootstrap or blazor.web.js. No <base href>: every
        URL on these pages is absolute (fragment and ?item= links must stay on the page).
        lang: the guest menu's language (GuestDocument, set by GuestMenuView; "de" on notice pages — never the browser's),
-       the landing and account pages the request's language (AppCultures: Accept-Language). *@
+       the landing and account pages the request's language (AppCultures: Accept-Language).
+       The page counter (AP16, PlausibleScripts) renders only in production and not in the editor preview. *@
     var guest = Document == PageDocument.Guest;
     var auth = Document == PageDocument.Auth;
     <html lang="@(guest ? GuestDocument.Language : AppCultures.HtmlLang)" data-guest-page="@guest"
@@ -17,6 +19,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <PlausibleScripts />
         <link rel="stylesheet" href="@Assets.Absolute("css/fonts.css")" />
         @if (guest)
         {
@@ -57,6 +60,8 @@ else
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    @* The page counter (AP16): only in production, see Components/Plausible *@
+    <PlausibleScripts />
     <!-- Fonts (self-hosted, wwwroot/fonts) -->
     <link rel="stylesheet" href="@Assets["css/fonts.css"]" />
     <!-- Brand tokens (css/brand.css) before everything that reads them -->

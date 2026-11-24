@@ -63,6 +63,9 @@ namespace SpeiseDirekt3
             builder.Services.AddScoped<IImageResizeService, ImageResizeService>();
             // <html lang> of the guest pages (App.razor, set by GuestMenuView)
             builder.Services.AddScoped<SpeiseDirekt3.Components.Guest.GuestDocument>();
+            // The page counter (AP16, Components/Plausible): on only with the Plausible section of appsettings.Production.json
+            builder.Services.AddSingleton<SpeiseDirekt3.Components.Plausible.AccountCreatedMarkers>();
+            builder.Services.AddScoped<SpeiseDirekt3.Components.Plausible.PlausibleEvents>();
             builder.Services.AddHttpContextAccessor();
             builder.Services.ConfigureServices();
 
