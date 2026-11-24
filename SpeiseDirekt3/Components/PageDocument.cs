@@ -14,7 +14,8 @@ public enum PageDocument
 
     /// <summary>
     /// The anonymous account pages (<c>/Account/Login</c>, <c>/Account/Register</c>, …; not <c>/Account/Manage</c>):
-    /// <c>css/brand.css</c>, <c>css/auth.css</c>, no script at all (plain static SSR forms).
+    /// <c>css/brand.css</c>, <c>css/auth.css</c>, no script at all (plain static SSR forms; in production only the page
+    /// counter's two tags, <c>Plausible/PlausibleScripts</c>, as in every document).
     /// </summary>
     Auth
 }
