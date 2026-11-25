@@ -8,6 +8,12 @@ using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.ServiceImplementation
 {
+    /// <summary>
+    /// Shrinks every uploaded picture (menu item photos, the restaurant's logo and cover — through
+    /// <c>ImageDatabaseUploadService</c> — and the API's <c>POST /api/images</c>) and removes the metadata a photo carries
+    /// about where, when and with what it was taken (<see cref="RemovePrivateMetadata"/>). The privacy policy
+    /// (<c>/datenschutz</c>, point 3) says so: keep it true.
+    /// </summary>
     public class ImageResizeService : IImageResizeService
     {
         private const int MaxIterations = 1;
@@ -18,6 +24,8 @@ namespace SpeiseDirekt.ServiceImplementation
             var targetSizeBytes = targetSizeKb * 1024;
 
             using var image = await Image.LoadAsync(inputStream);
+            // Before anything is encoded: every output below is a clone of this image (Clone copies the metadata)
+            RemovePrivateMetadata(image);
             var originalWidth = image.Width;
             var originalHeight = image.Height;
 
@@ -83,6 +91,32 @@ namespace SpeiseDirekt.ServiceImplementation
             using var outputStream = File.Create(outputPath);
 
             await ResizeImageAsync(inputStream, outputStream, targetSizeKb);
+        }
+
+        /// <summary>
+        /// Turns the pixels upright by the EXIF orientation first (the tag leaves with the EXIF profile, and a portrait
+        /// phone photo would otherwise show on its side), then removes the EXIF (GPS position, time, camera model), IPTC
+        /// and XMP profiles of the image and of every frame, and the text chunks of a PNG. The ICC profile (and CICP)
+        /// stays, so the colours stay right.
+        /// </summary>
+        public static void RemovePrivateMetadata(Image image)
+        {
+            image.Mutate(ctx => ctx.AutoOrient());
+
+            image.Metadata.ExifProfile = null;
+            image.Metadata.IptcProfile = null;
+            image.Metadata.XmpProfile = null;
+            foreach (var frame in image.Frames)
+            {
+                frame.Metadata.ExifProfile = null;
+                frame.Metadata.IptcProfile = null;
+                frame.Metadata.XmpProfile = null;
+            }
+
+            // A PNG may carry free text (tEXt/zTXt/iTXt: author, place, time, software); only a PNG is asked, so no
+            // PNG metadata is attached to the other formats
+            if (image.Metadata.DecodedImageFormat == PngFormat.Instance)
+                image.Metadata.GetPngMetadata().TextData.Clear();
         }
 
         private static double EstimateInitialScaleFactor(Image image, long targetSizeBytes)
