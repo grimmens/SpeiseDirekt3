@@ -21,4 +21,18 @@
   <data name="Imprint_LanguageNote" xml:space="preserve">
     <value>This legal notice is provided in German.</value>
   </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Privacy policy (Datenschutzerklärung) | Speise-Direkt</value>
+    <comment>The page title of /datenschutz (AP16b)</comment>
+  </data>
+  <data name="Privacy_Description" xml:space="preserve">
+    <value>Privacy policy of Speise-Direkt: what is stored, which cookies the customer area sets and how the page counter works, in German.</value>
+  </data>
+  <data name="Privacy_LanguageNote" xml:space="preserve">
+    <value>This privacy policy is provided in German.</value>
+  </data>
+  <data name="Privacy_Contents" xml:space="preserve">
+    <value>Contents</value>
+    <comment>Label of the list of the privacy policy's sections</comment>
+  </data>
 </root>

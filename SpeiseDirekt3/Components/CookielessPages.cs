@@ -6,7 +6,8 @@ namespace SpeiseDirekt3.Components;
 /// <summary>
 /// AP15a: the public pages without a form set <b>no cookie at all</b> — the guest pages (<c>/qr/{id}</c>, <c>/menu/{id}</c>,
 /// <c>/menu/preview/{id}</c>, <c>/demo</c>; <see cref="PageDocument.Guest"/>) and the landing document (<c>/</c>, the
-/// imprint <c>/impressum</c>; <see cref="PageDocument.Landing"/>). Blazor's static SSR generates the antiforgery tokens on
+/// imprint <c>/impressum</c>, the privacy policy <c>/datenschutz</c> — its opt-out switch is a script button, not a form;
+/// <see cref="PageDocument.Landing"/>). The privacy policy says so (point 5): keep both true together. Blazor's static SSR generates the antiforgery tokens on
 /// every page response before it starts (whether the page has a form or not), which stores the antiforgery cookie on a
 /// first visit. These pages have no form that posts (the guests' item clicks are a JSON <c>fetch</c>, which the
 /// antiforgery middleware does not check), so that cookie is removed from their responses again; nothing else changes
