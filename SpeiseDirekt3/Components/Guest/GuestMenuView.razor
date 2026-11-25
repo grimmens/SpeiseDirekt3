@@ -1,5 +1,5 @@
-@* The guest menu (static SSR): top bar, intro, sticky category chips, the sections, and the sheets (categories,
-   search, item, language). Rendered by /qr/{id}, /menu/{id} and /menu/preview/{id}; js/guest-menu.js adds the behaviour.
+@* The guest menu (static SSR): top bar, intro, sticky category chips, the sections, the restaurant and language
+   footers, the legal links, and the sheets (categories, search, item, language). Rendered by /qr/{id}, /menu/{id} and /menu/preview/{id}; js/guest-menu.js adds the behaviour.
    The root carries what the script needs: data-menu-id, data-track-clicks, data-base-path, lang, and the texts of the
    scripts plus the price notation as JSON in data-guest-strings (GuestText.ScriptJson; an attribute value is HTML-encoded
    by the renderer and decoded by the browser, so the JSON arrives intact).
@@ -97,6 +97,8 @@
     {
         <GuestLanguageSection Model="Model" />
     }
+    @* Imprint and privacy policy, the last line of the page (AP16b) *@
+    <GuestLegalLinks />
 
     <GuestCategorySheet Categories="Model.Categories" />
     <GuestSearchSheet Model="Model" />

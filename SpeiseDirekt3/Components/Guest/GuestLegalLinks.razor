@@ -1,0 +1,30 @@
+@using SpeiseDirekt3.Components.Landing
+@inject IConfiguration Configuration
+@* AP16b: a quiet line at the very end of every guest page — the menu (/qr, /menu and the editor preview, which shows
+   the guest page), the live demo and the notice pages — with the imprint and the privacy policy, from LandingSettings
+   (Legal:ImprintUrl, Legal:PrivacyUrl; an empty setting hides its link, both empty hide the line). Labels in the guest
+   UI language (GuestText: German "Impressum" · "Datenschutz", English "Legal notice" · "Privacy"; notice pages German).
+   Plain links: no script, no click recorded, nothing loaded. guest-menu.css styles it from the theme's variables. *@
+@{
+    var settings = LandingSettings.From(Configuration);
+}
+@if (settings.HasLegalLinks)
+{
+    <nav class="gm-legal" aria-label="@T.LegalLinks" data-testid="guest-legal">
+        <ul class="gm-container gm-legal-list" role="list">
+            @if (settings.ImprintUrl is { } imprint)
+            {
+                <li><a href="@imprint" data-testid="guest-imprint">@T.Imprint</a></li>
+            }
+            @if (settings.PrivacyUrl is { } privacy)
+            {
+                <li><a href="@privacy" data-testid="guest-privacy">@T.Privacy</a></li>
+            }
+        </ul>
+    </nav>
+}
+
+@code {
+    /// <summary>UI texts of the menu (cascading from GuestMenuView; German on the notice pages).</summary>
+    [CascadingParameter] public GuestText T { get; set; } = GuestText.German;
+}

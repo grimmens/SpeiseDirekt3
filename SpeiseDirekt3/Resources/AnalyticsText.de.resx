@@ -46,7 +46,7 @@
     <value>Besuche</value>
   </data>
   <data name="Summary_SessionsHint" xml:space="preserve">
-    <value>Ein Besuch ist ein Gerät eines Gastes an einem Tag; Gäste bleiben anonym.</value>
+    <value>Ein Besuch ist ein Gerät eines Gastes an einem Tag; gezählt ohne Cookies und ohne gespeicherte IP-Adresse.</value>
   </data>
   <data name="Menus_Title" xml:space="preserve">
     <value>Aufrufe je Speisekarte</value>
@@ -67,10 +67,10 @@
     <value>{0} Besuche</value>
   </data>
   <data name="Sessions_TextHour" xml:space="preserve">
-    <value>Geräte von Gästen, die eine Speisekarte geöffnet haben, je Stunde. Gäste bleiben anonym.</value>
+    <value>Geräte von Gästen, die eine Speisekarte geöffnet haben, je Stunde. Gezählt ohne Cookies und ohne gespeicherte IP-Adresse.</value>
   </data>
   <data name="Sessions_TextDay" xml:space="preserve">
-    <value>Geräte von Gästen, die eine Speisekarte geöffnet haben, je Tag. Gäste bleiben anonym.</value>
+    <value>Geräte von Gästen, die eine Speisekarte geöffnet haben, je Tag. Gezählt ohne Cookies und ohne gespeicherte IP-Adresse.</value>
   </data>
   <data name="Items_Title" xml:space="preserve">
     <value>Klicks je Gericht</value>
