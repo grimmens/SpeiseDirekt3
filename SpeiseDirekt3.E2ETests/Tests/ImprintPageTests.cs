@@ -117,15 +117,15 @@ public class ImprintPageTests : E2ETestBase
             await Assertions.Expect(note).ToHaveAttributeAsync("lang", "en");
         }
 
-        // Header and footer lead back to the landing page's sections; the footer names the imprint, no privacy page yet,
-        // and no demo note (there are no examples here)
+        // Header and footer lead back to the landing page's sections; the footer names the imprint and the privacy policy
+        // (AP16b), and no demo note (there are no examples here)
         var features = page.GetByTestId("landing-nav").GetByRole(AriaRole.Link, new() { Name = chrome.Features });
         await Assertions.Expect(features).ToHaveAttributeAsync("href", "/#funktionen");
         await Assertions.Expect(page.GetByTestId("footer-nav").GetByRole(AriaRole.Link, new() { Name = chrome.Features }))
             .ToHaveAttributeAsync("href", "/#funktionen");
         await Assertions.Expect(page.GetByTestId("footer-imprint")).ToHaveAttributeAsync("href", "/impressum");
         await Assertions.Expect(page.GetByTestId("footer-imprint")).ToHaveTextAsync(chrome.ImprintLink);
-        await Assertions.Expect(page.GetByTestId("footer-privacy")).ToHaveCountAsync(0);
+        await Assertions.Expect(page.GetByTestId("footer-privacy")).ToHaveAttributeAsync("href", "/datenschutz");
         await Assertions.Expect(page.GetByTestId("footer-demo-note")).ToHaveCountAsync(0);
 
         // Only the landing document's own assets, nothing from another host
@@ -188,14 +188,14 @@ public class ImprintPageTests : E2ETestBase
         var (context, page) = await NewContextAsync(chrome.Locale);
         await using var _ = context;
 
-        // Landing page: "Impressum"/"Imprint" under "Rechtliches"/"Legal", no privacy link yet
+        // Landing page: "Impressum"/"Imprint" under "Rechtliches"/"Legal", next to the privacy policy (AP16b)
         await page.GotoAsync("/");
         await page.Locator("html[data-landing-ready]").WaitForAsync(new() { State = WaitForSelectorState.Attached });
         var imprintLink = page.GetByTestId("footer-imprint");
         await Assertions.Expect(page.GetByTestId("footer-legal")).ToBeVisibleAsync();
         await Assertions.Expect(imprintLink).ToHaveAttributeAsync("href", "/impressum");
         await Assertions.Expect(imprintLink).ToHaveTextAsync(chrome.ImprintLink);
-        await Assertions.Expect(page.GetByTestId("footer-privacy")).ToHaveCountAsync(0);
+        await Assertions.Expect(page.GetByTestId("footer-privacy")).ToHaveAttributeAsync("href", "/datenschutz");
         (await context.CookiesAsync()).Should().BeEmpty("the landing page has no form, so no cookie either");
         await imprintLink.ClickAsync();
         await Assertions.Expect(page).ToHaveURLAsync(new Regex("/impressum$"));
@@ -206,7 +206,7 @@ public class ImprintPageTests : E2ETestBase
         var authImprint = page.GetByTestId("auth-imprint");
         await Assertions.Expect(authImprint).ToHaveAttributeAsync("href", "/impressum");
         await Assertions.Expect(authImprint).ToHaveTextAsync(chrome.ImprintLink);
-        await Assertions.Expect(page.GetByTestId("auth-privacy")).ToHaveCountAsync(0);
+        await Assertions.Expect(page.GetByTestId("auth-privacy")).ToHaveAttributeAsync("href", "/datenschutz");
         await authImprint.ClickAsync();
         await Assertions.Expect(page).ToHaveURLAsync(new Regex("/impressum$"));
         await Assertions.Expect(page.Locator("html")).ToHaveAttributeAsync("lang", chrome.Lang);

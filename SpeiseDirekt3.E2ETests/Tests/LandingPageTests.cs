@@ -609,7 +609,7 @@ public class LandingPageTests : E2ETestBase
     }
 
     [Fact]
-    public async Task SitemapXml_ListsTheLandingPageAndTheImprint()
+    public async Task SitemapXml_ListsTheLandingPageTheImprintAndThePrivacyPolicy()
     {
         var response = await Page.APIRequest.GetAsync("/sitemap.xml", new()
         {
@@ -620,11 +620,13 @@ public class LandingPageTests : E2ETestBase
         var doc = System.Xml.Linq.XDocument.Parse(await response.TextAsync());
         System.Xml.Linq.XNamespace ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
         doc.Root!.Name.Should().Be(ns + "urlset");
-        doc.Descendants(ns + "loc").Select(l => l.Value).Should().Equal("https://speisekarte.example/", "https://speisekarte.example/impressum");
+        doc.Descendants(ns + "loc").Select(l => l.Value).Should().Equal(
+            "https://speisekarte.example/", "https://speisekarte.example/impressum", "https://speisekarte.example/datenschutz");
 
         // Without a proxy: the server's own origin
         var direct = System.Xml.Linq.XDocument.Parse(await (await Page.APIRequest.GetAsync("/sitemap.xml")).TextAsync());
-        direct.Descendants(ns + "loc").Select(l => l.Value).Should().Equal(App.ServerAddress + "/", App.ServerAddress + "/impressum");
+        direct.Descendants(ns + "loc").Select(l => l.Value).Should().Equal(
+            App.ServerAddress + "/", App.ServerAddress + "/impressum", App.ServerAddress + "/datenschutz");
     }
 
     [Theory]
@@ -657,30 +659,31 @@ public class LandingPageTests : E2ETestBase
 
     [Theory]
     [MemberData(nameof(Languages))]
-    public async Task LegalLinks_AndContact_FollowTheSettings_TheImprintIsOnByDefault(string language)
+    public async Task LegalLinks_AndContact_FollowTheSettings_ImprintAndPrivacyAreOnByDefault(string language)
     {
         var copy = CopyOf(language);
         var (context, Page) = await NewContextAsync(copy.Locale);
         await using var _ = context;
         await OpenLandingAsync(Page);
-        // appsettings.json: Legal:ImprintUrl = /impressum (AP15a, the app's own imprint page), no privacy page, no contact
+        // appsettings.json: Legal:ImprintUrl = /impressum (AP15a) and Legal:PrivacyUrl = /datenschutz (AP16b), the app's
+        // own pages; no contact address yet
         await Assertions.Expect(Page.GetByTestId("footer-legal")).ToBeVisibleAsync();
         await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveAttributeAsync("href", "/impressum");
         await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveTextAsync(copy.Imprint);
+        await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveAttributeAsync("href", "/datenschutz");
+        await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveTextAsync(copy.Privacy);
         await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveCountAsync(0);
-        await Assertions.Expect(Page.GetByText(copy.Privacy)).ToHaveCountAsync(0);
 
         var configuration = App.ServerServices.GetRequiredService<IConfiguration>();
         try
         {
             configuration["Legal:ImprintUrl"] = "https://example.com/impressum";
-            configuration["Legal:PrivacyUrl"] = "/datenschutz";
+            configuration["Legal:PrivacyUrl"] = "/datenschutz-neu";
             configuration["Landing:ContactEmail"] = "hallo@example.com";
             await OpenLandingAsync(Page);
             await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveAttributeAsync("href", "https://example.com/impressum");
             await Assertions.Expect(Page.GetByTestId("footer-imprint")).ToHaveTextAsync(copy.Imprint);
-            await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveAttributeAsync("href", "/datenschutz");
+            await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveAttributeAsync("href", "/datenschutz-neu");
             await Assertions.Expect(Page.GetByTestId("footer-privacy")).ToHaveTextAsync(copy.Privacy);
             await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveAttributeAsync("href", "mailto:hallo@example.com");
             await Assertions.Expect(Page.GetByTestId("footer-contact")).ToHaveTextAsync("hallo@example.com");
@@ -700,7 +703,7 @@ public class LandingPageTests : E2ETestBase
         finally
         {
             configuration["Legal:ImprintUrl"] = "/impressum";
-            configuration["Legal:PrivacyUrl"] = "";
+            configuration["Legal:PrivacyUrl"] = "/datenschutz";
             configuration["Landing:ContactEmail"] = "";
         }
     }

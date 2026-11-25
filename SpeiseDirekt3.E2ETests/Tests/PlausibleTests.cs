@@ -210,7 +210,7 @@ public class PlausibleTests : QrCalendarTestBase
         return (ownerId, menuId, qrId);
     }
 
-    private static readonly string[] PublicPages = ["/", "/impressum", "/demo", "/demo/en"];
+    private static readonly string[] PublicPages = ["/", "/impressum", "/datenschutz", "/demo", "/demo/en"];
     private static readonly string[] AuthPages = ["/Account/Login", "/Account/Register", "/Account/ForgotPassword"];
     private static readonly string[] BackOfficePages = ["/dashboard", "/menus", "/qrcodes", "/Account/Manage"];
 
