@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using SpeiseDirekt.Data;
 using SpeiseDirekt.Model;
 
@@ -6,7 +7,21 @@ namespace SpeiseDirekt3.E2ETests.Infrastructure;
 /// <summary>Fixed test data for the public menu pages. Seeded once per factory (= per test class).</summary>
 public static class E2ESeedData
 {
+    /// <summary>Password of every account the tests register or seed (meets the Identity defaults).</summary>
+    public const string Password = "E2e-Passw0rd!";
+
+    /// <summary>The seeded owner of the menus below. A <b>paid</b> tenant (role <c>PaidTenant</c>, set by
+    /// <see cref="E2EAppFactory"/> after the seed): it has more than the free plan's one menu.</summary>
     public static readonly Guid OwnerId = Guid.Parse("e2e00000-0000-0000-0000-000000000001");
+    public const string OwnerEmail = "owner@e2e.test";
+
+    /// <summary>
+    /// The E2E app's only global admin: <c>Admin:GlobalAdminEmails</c> is exactly this address (<see cref="E2EAppFactory"/>),
+    /// so the operator's address of <c>appsettings.json</c> never counts here. An owner account of its own (free, no
+    /// content), signed in with <see cref="Password"/>; the factory runs the role sync after the seed.
+    /// </summary>
+    public static readonly Guid AdminId = Guid.Parse("e2e00000-0000-0000-0000-0000000000ad");
+    public const string AdminEmail = "admin@e2e.test";
     public static readonly Guid MenuId = Guid.Parse("e2e00000-0000-0000-0000-0000000000a1");
     public static readonly Guid MenuWithoutCombosId = Guid.Parse("e2e00000-0000-0000-0000-0000000000a2");
 
@@ -106,13 +121,26 @@ public static class E2ESeedData
         db.Users.Add(new ApplicationUser
         {
             Id = OwnerId.ToString(),
-            UserName = "owner@e2e.test",
-            NormalizedUserName = "OWNER@E2E.TEST",
-            Email = "owner@e2e.test",
-            NormalizedEmail = "OWNER@E2E.TEST",
+            UserName = OwnerEmail,
+            NormalizedUserName = OwnerEmail.ToUpperInvariant(),
+            Email = OwnerEmail,
+            NormalizedEmail = OwnerEmail.ToUpperInvariant(),
             EmailConfirmed = true,
             SecurityStamp = Guid.NewGuid().ToString()
         });
+
+        var admin = new ApplicationUser
+        {
+            Id = AdminId.ToString(),
+            UserName = AdminEmail,
+            NormalizedUserName = AdminEmail.ToUpperInvariant(),
+            Email = AdminEmail,
+            NormalizedEmail = AdminEmail.ToUpperInvariant(),
+            EmailConfirmed = true,
+            SecurityStamp = Guid.NewGuid().ToString()
+        };
+        admin.PasswordHash = new PasswordHasher<ApplicationUser>().HashPassword(admin, Password);
+        db.Users.Add(admin);
 
         var mains = new Category { Id = Guid.NewGuid(), Name = "Hauptspeisen", MenuId = MenuId };
         var sides = new Category { Id = Guid.NewGuid(), Name = "Beilagen", MenuId = MenuId };

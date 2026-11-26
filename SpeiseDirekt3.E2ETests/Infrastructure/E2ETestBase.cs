@@ -11,7 +11,7 @@ namespace SpeiseDirekt3.E2ETests.Infrastructure;
 public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
 {
     /// <summary>Password used for all accounts created by the tests (meets the Identity defaults).</summary>
-    protected const string Password = "E2e-Passw0rd!";
+    protected const string Password = E2ESeedData.Password;
 
     protected E2EFixture Fixture { get; }
     protected E2EAppFactory App => Fixture.App;
@@ -157,8 +157,13 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
     /// <summary>A unique e-mail address: every test works in its own tenant (the class shares one DB).</summary>
     protected static string UniqueEmail(string prefix = "owner") => $"{prefix}-{Guid.NewGuid():N}@e2e.test";
 
-    /// <summary>Registers a new account via <c>/Account/Register</c>; the app signs it in right away.</summary>
-    protected static async Task RegisterAsync(IPage page, string email, string password = Password)
+    /// <summary>
+    /// Registers a new account via <c>/Account/Register</c>; the app signs it in right away. A self-registered owner is on
+    /// the free plan (one menu, one QR code); the tests' owners are made <b>paid</b> right after (role <c>PaidTenant</c>,
+    /// <see cref="E2EAppFactory.SetPaidAsync"/>), so a test can create as many menus and QR codes as it needs.
+    /// <paramref name="paid"/> = false keeps the app's default: a free owner (the plan-limit tests).
+    /// </summary>
+    protected async Task RegisterAsync(IPage page, string email, string password = Password, bool paid = true)
     {
         await page.GotoAsync("/Account/Register");
         await page.Locator("#Input\\.Email").FillAsync(email);
@@ -166,6 +171,9 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         await page.Locator("#Input\\.ConfirmPassword").FillAsync(password);
         // By test id: the button's text depends on the browser language
         await WaitForInteractiveAsync(page, () => page.GetByTestId("register-submit").ClickAsync());
+        // Read from the database at every check: counts from the next page on, no new sign-in
+        if (paid)
+            await SetPaidAsync(await OwnerIdAsync(email), true);
     }
 
     /// <summary>Logs in via <c>/Account/Login</c> and waits for the (interactive) start page.</summary>
@@ -177,12 +185,46 @@ public abstract class E2ETestBase : IClassFixture<E2EFixture>, IAsyncLifetime
         await WaitForInteractiveAsync(page, () => page.GetByTestId("login-submit").ClickAsync());
     }
 
-    /// <summary>Registers a fresh owner account (own tenant) in <see cref="Page"/> and returns its e-mail.</summary>
-    protected async Task<string> RegisterNewOwnerAsync()
+    /// <summary>
+    /// Registers a fresh owner account (own tenant) in <see cref="Page"/> and returns its e-mail. Paid unless
+    /// <paramref name="paid"/> is false (see <see cref="RegisterAsync"/>).
+    /// </summary>
+    protected async Task<string> RegisterNewOwnerAsync(bool paid = true)
     {
         var email = UniqueEmail();
-        await RegisterAsync(Page, email);
+        await RegisterAsync(Page, email, paid: paid);
         return email;
+    }
+
+    /// <summary>The owner <paramref name="ownerId"/> on the paid plan (role <c>PaidTenant</c>) or the free one.</summary>
+    protected Task SetPaidAsync(Guid ownerId, bool paid) => App.SetPaidAsync(ownerId, paid);
+
+    /// <summary>An owner account as <see cref="SeedOwnerAsync"/> created it.</summary>
+    protected sealed record SeededOwner(string Email, Guid OwnerId);
+
+    /// <summary>
+    /// Seeds an owner account (own tenant, no content) straight into the database, with <see cref="Password"/> — faster
+    /// than <see cref="RegisterAsync"/> when the test does not need a signed-in page. Paid unless <paramref name="paid"/>
+    /// is false, like the registered owners. Sign in with <see cref="LoginAsync"/>.
+    /// </summary>
+    protected async Task<SeededOwner> SeedOwnerAsync(string? email = null, bool paid = true)
+    {
+        email ??= UniqueEmail();
+        var account = new SpeiseDirekt.Data.ApplicationUser
+        {
+            Id = Guid.NewGuid().ToString(), UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email,
+            NormalizedEmail = email.ToUpperInvariant(), EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString()
+        };
+        account.PasswordHash = new Microsoft.AspNetCore.Identity.PasswordHasher<SpeiseDirekt.Data.ApplicationUser>().HashPassword(account, Password);
+        var ownerId = Guid.Parse(account.Id);
+        await App.SeedAsync(ownerId, db =>
+        {
+            db.Users.Add(account);
+            return Task.CompletedTask;
+        });
+        if (paid)
+            await SetPaidAsync(ownerId, true);
+        return new SeededOwner(email, ownerId);
     }
 
     /// <summary>A team member as <see cref="SeedTeamMemberAsync"/> created it.</summary>

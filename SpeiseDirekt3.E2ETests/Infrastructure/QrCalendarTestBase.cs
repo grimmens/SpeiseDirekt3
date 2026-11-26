@@ -17,10 +17,10 @@ public abstract class QrCalendarTestBase : BackOfficeTestBase
 
     // --- Seeding ---
 
-    /// <summary>Registers a fresh owner in <see cref="E2ETestBase.Page"/> and returns its tenant id.</summary>
-    protected async Task<Guid> RegisterOwnerAsync()
+    /// <summary>Registers a fresh owner in <see cref="E2ETestBase.Page"/> and returns its tenant id (paid unless <paramref name="paid"/> is false).</summary>
+    protected async Task<Guid> RegisterOwnerAsync(bool paid = true)
     {
-        var email = await RegisterNewOwnerAsync();
+        var email = await RegisterNewOwnerAsync(paid);
         return await OwnerIdAsync(email);
     }
 

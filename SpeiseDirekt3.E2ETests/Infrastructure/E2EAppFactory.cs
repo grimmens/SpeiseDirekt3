@@ -2,13 +2,17 @@ using System.Net;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
+using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt3.E2ETests.Infrastructure;
 
@@ -56,8 +60,52 @@ public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>
         // Accessing Services builds and starts the hosts (see CreateHost)
         _ = Services;
 
-        await using var db = CreateSeedContext();
-        await E2ESeedData.SeedAsync(db);
+        await using (var db = CreateSeedContext())
+            await E2ESeedData.SeedAsync(db);
+
+        // The app's startup sync (RoleSetupHostedService) ran when the hosts started, before the seed, so it found no
+        // account for admin@e2e.test: run the same sync again now that the account exists
+        using (var scope = Services.CreateScope())
+        {
+            var admins = scope.ServiceProvider.GetRequiredService<IOptions<AdminOptions>>().Value.GlobalAdminEmails;
+            await scope.ServiceProvider.GetRequiredService<RoleSetup>().RunAsync(admins);
+        }
+
+        // The seed owner has more than the free plan's one menu: a paying customer
+        await SetPaidAsync(E2ESeedData.OwnerId, true);
+    }
+
+    /// <summary>
+    /// Gives the owner account <paramref name="ownerId"/> the role <c>PaidTenant</c> (unlimited menus and QR codes) or takes
+    /// it away (the free plan: one menu, one QR code). Idempotent. The app reads it from the database at every check, so
+    /// it counts at the next page load of an already signed-in owner or member.
+    /// </summary>
+    public Task SetPaidAsync(Guid ownerId, bool paid) => SetRoleAsync(ownerId.ToString(), AppRoles.PaidTenant, paid);
+
+    /// <summary>
+    /// Adds the Identity role <paramref name="role"/> to the account <paramref name="userId"/> or removes it, straight
+    /// through Identity (no admin check, no startup sync; e.g. a second global admin for one test). Idempotent.
+    /// </summary>
+    public async Task SetRoleAsync(string userId, string role, bool member)
+    {
+        using var scope = Services.CreateScope();
+        var users = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await users.FindByIdAsync(userId)
+            ?? throw new InvalidOperationException($"No account {userId}.");
+        if (await users.IsInRoleAsync(user, role) == member)
+            return;
+
+        var result = member ? await users.AddToRoleAsync(user, role) : await users.RemoveFromRoleAsync(user, role);
+        if (!result.Succeeded)
+            throw new InvalidOperationException(
+                $"Role {role} of {userId} not changed: {string.Join(", ", result.Errors.Select(e => e.Code))}");
+    }
+
+    /// <summary>Whether the owner <paramref name="ownerId"/> is paid, as the app sees it (<see cref="ITenantPlanService"/>).</summary>
+    public async Task<bool> IsPaidAsync(Guid ownerId)
+    {
+        using var scope = Services.CreateScope();
+        return await scope.ServiceProvider.GetRequiredService<ITenantPlanService>().IsPaidAsync(ownerId.ToString());
     }
 
     /// <summary>
@@ -88,11 +136,17 @@ public sealed class E2EAppFactory : WebApplicationFactory<SpeiseDirekt3.Program>
         builder.UseEnvironment(SpeiseDirekt3.Program.E2EEnvironment);
         builder.UseSetting("ConnectionStrings:e2e", ConnectionString);
 
+        // The only global admin is the seeded admin@e2e.test, never the operator's address of appsettings.json. The
+        // setting replaces the array's first entry (configuration arrays merge by index); PostConfigure makes the bound
+        // list exactly this one address, whatever else appsettings.json lists
+        builder.UseSetting($"{AdminOptions.SectionName}:{nameof(AdminOptions.GlobalAdminEmails)}:0", E2ESeedData.AdminEmail);
+
         // Applies to both hosts (TestServer and Kestrel), they are built from this builder
         builder.ConfigureServices(services =>
         {
             services.RemoveAll<TimeProvider>();
             services.AddSingleton<TimeProvider>(Clock);
+            services.PostConfigure<AdminOptions>(o => o.GlobalAdminEmails = [E2ESeedData.AdminEmail]);
         });
     }
 
