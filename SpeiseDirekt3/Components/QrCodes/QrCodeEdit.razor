@@ -11,8 +11,8 @@
 @inject TimeProvider Clock
 @inject IJSRuntime JS
 @inject SpeiseDirekt3.Components.Plausible.PlausibleEvents Events
-@inject IAuthorizationService AuthorizationService
-@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject ITenantPlanService Plans
+@inject IUserIdProvider UserIdProvider
 @inject IStringLocalizer<QrCodesText> T
 @inject IStringLocalizer<CommonText> C
 @inject IStringLocalizer<ShellText> S
@@ -298,7 +298,7 @@
             readOnly = true;
         }
 
-        // Free tier: creating a QR code is limited (PaidTenant policy), also when the URL is opened directly
+        // Free tier: creating a QR code is limited (ITenantPlanService), also when the URL is opened directly
         if (IsNew && !await CanCreateQrCodeAsync())
         {
             NavManager.NavigateTo("/qrcodes");
@@ -358,11 +358,8 @@
     private string ScheduleText() =>
         string.Join(" · ", (Item.TimeTableEntries ?? new()).Select(e => $"{e.StartTime:HH\\:mm}–{e.EndTime:HH\\:mm} {MenuName(e.MenuId)}"));
 
-    private async Task<bool> CanCreateQrCodeAsync()
-    {
-        var user = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
-        return (await AuthorizationService.AuthorizeAsync(user, PolicyNames.PaidTenant)).Succeeded;
-    }
+    // Paid, or below the free limit; read from the database at every call
+    private Task<bool> CanCreateQrCodeAsync() => Plans.CanCreateQrCodeAsync(UserIdProvider.GetUserId());
 
     private async Task HandleValidSubmit()
     {

@@ -8,7 +8,7 @@
 @inject ApplicationDbContext DbContext
 @inject IPermissionService PermissionService
 @inject IUserIdProvider UserIdProvider
-@inject IAuthorizationService AuthorizationService
+@inject ITenantPlanService Plans
 @inject TimeProvider TimeProvider
 @inject NavigationManager NavManager
 @inject IStringLocalizer<DashboardText> T
@@ -308,7 +308,7 @@
         var canCreateMenu = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
         // Same rule as the "Create New QR Code" button on /qrcodes (free tier limit) plus the edit page's permission
         var canCreateQrCode = await PermissionService.HasPermissionAsync(Permission.QrCodesCreate)
-            && (await AuthorizationService.AuthorizeAsync(user, PolicyNames.PaidTenant)).Succeeded;
+            && await Plans.CanCreateQrCodeAsync(UserIdProvider.GetUserId());
         var canViewAnalytics = await PermissionService.HasPermissionAsync(Permission.AnalyticsView);
         var canViewTeam = await PermissionService.HasPermissionAsync(Permission.UsersView);
 

@@ -77,8 +77,8 @@ namespace SpeiseDirekt3
                 .AddIdentityCookies();
             builder.Services.AddAuthorization(options =>
             {
-                options.AddPolicy(PolicyNames.PaidTenant, policy =>
-                    policy.Requirements.Add(new PaidTenantRequirement()));
+                // PaidTenant (the tenant is paid) and GlobalAdmin; both read the roles from the database
+                options.AddRolePolicies();
                 options.AddPermissionPolicies();
             });
 
@@ -139,6 +139,7 @@ namespace SpeiseDirekt3
             builder.Services.AddTransient<IImageUploadService, ImageDatabaseUploadService>();
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
             builder.Services.AddTransient<IAuthorizationHandler, PaidTenantHandler>();
+            builder.Services.AddTransient<IAuthorizationHandler, GlobalAdminHandler>();
             builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
             builder.Services.AddTransient<Microsoft.AspNetCore.Authentication.IClaimsTransformation, TenantClaimsTransformation>();
 

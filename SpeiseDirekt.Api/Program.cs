@@ -35,11 +35,12 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy(PolicyNames.PaidTenant, policy =>
-        policy.Requirements.Add(new PaidTenantRequirement()));
+    // PaidTenant (the tenant is paid) and GlobalAdmin; both read the roles from the database
+    options.AddRolePolicies();
     options.AddPermissionPolicies();
 });
 builder.Services.AddScoped<IAuthorizationHandler, PaidTenantHandler>();
+builder.Services.AddScoped<IAuthorizationHandler, GlobalAdminHandler>();
 builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation, TenantClaimsTransformation>();
 

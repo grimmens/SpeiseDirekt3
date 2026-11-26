@@ -1,69 +1,40 @@
-﻿// PaidTenantHandler.cs
-using System;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.EntityFrameworkCore;
-using SpeiseDirekt.Data;
-using SpeiseDirekt.Model;
+using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.Infrastructure;
 
-
+/// <summary>
+/// <see cref="PolicyNames.PaidTenant"/>: the signed-in account's tenant has the role <see cref="AppRoles.PaidTenant"/>
+/// (read from the database by <see cref="ITenantPlanService"/>), nothing else. Creating menus and QR codes is checked
+/// with <see cref="ITenantPlanService.CanCreateMenuAsync"/> / <see cref="ITenantPlanService.CanCreateQrCodeAsync"/>,
+/// not with this policy.
+/// </summary>
 public class PaidTenantHandler : AuthorizationHandler<PaidTenantRequirement>
 {
-    private readonly ApplicationDbContext _db;
-    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly ITenantPlanService _plans;
 
-    public PaidTenantHandler(ApplicationDbContext db, IHttpContextAccessor httpContextAccessor)
+    public PaidTenantHandler(ITenantPlanService plans)
     {
-        _db = db;
-        _httpContextAccessor = httpContextAccessor;
+        _plans = plans;
     }
 
     protected override async Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         PaidTenantRequirement requirement)
     {
-        // 1) Get the tenant owner’s ID (sub-accounts use TenantOwnerId claim)
-        var tenantId = context.User.FindFirstValue("TenantOwnerId")
-                    ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (string.IsNullOrEmpty(tenantId))
+        if (context.User.Identity?.IsAuthenticated != true)
             return;
 
-        // 2) Load their subscription
-        var sub = await _db.TenantSubscriptions
-                           .AsNoTracking()
-                           .FirstOrDefaultAsync(x => x.TenantId == tenantId);
+        // The tenant owner, as IUserIdProvider.GetUserId(): a member carries the TenantOwnerId claim
+        // (TenantClaimsTransformation), the owner is the account itself
+        var ownerId = context.User.FindFirstValue("TenantOwnerId")
+                      ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(ownerId))
+            return;
 
-        var isPaid = sub?.IsPaid == true
-                     && (sub.SubscriptionEnd == null || sub.SubscriptionEnd > DateTime.UtcNow);
-
-        if (isPaid)
-        {
-            // paid tenants bypass the limit
+        if (await _plans.IsPaidAsync(ownerId))
             context.Succeed(requirement);
-            return;
-        }
-
-        // 3) free tenants: count existing codes.
-        // Compare as Guid: the string form of a GUID column is upper case in the database, the
-        // Identity user id is lower case, so a string comparison never matched and the limit never applied.
-        if (!Guid.TryParse(tenantId, out var tenantGuid))
-            return;
-
-        var count = await _db.QRCodes
-                             .IgnoreQueryFilters()
-                             .AsNoTracking()
-                             .CountAsync(q => q.ApplicationUserId == tenantGuid);
-
-        if (count < 100)
-        {
-            // first QR code always allowed
-            context.Succeed(requirement);
-        }
-        // else: do nothing → authorization fails
     }
 }
 
@@ -71,4 +42,3 @@ public class PaidTenantRequirement : IAuthorizationRequirement
 {
     // marker class — no properties needed
 }
-

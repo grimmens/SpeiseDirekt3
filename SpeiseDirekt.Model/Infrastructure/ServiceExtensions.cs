@@ -30,6 +30,10 @@ namespace SpeiseDirekt.Infrastructure
             services.AddTransient<IRestaurantProfileService, RestaurantProfileService>();
             services.AddTransient<IMenuTranslationService, MenuTranslationService>();
 
+            // Plans (free / paid): the only check of the free limits, Plans:Free:MaxMenus / MaxQrCodes (defaults 1 / 1)
+            services.AddOptions<FreePlanOptions>().BindConfiguration(FreePlanOptions.SectionName);
+            services.AddTransient<ITenantPlanService, TenantPlanService>();
+
             // Identity roles (both hosts call AddRoles<IdentityRole>, so RoleManager and the role-aware UserManager exist):
             // the startup sync of the web app, resolvable in tests
             services.AddTransient<RoleSetup>();

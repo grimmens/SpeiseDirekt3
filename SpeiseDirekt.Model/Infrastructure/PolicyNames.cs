@@ -2,7 +2,12 @@ namespace SpeiseDirekt.Infrastructure;
 
 public static class PolicyNames
 {
+    /// <summary>The tenant has the role <see cref="AppRoles.PaidTenant"/> (<see cref="PaidTenantHandler"/>). Creating
+    /// menus and QR codes is checked with <c>ITenantPlanService</c>, not with this policy.</summary>
     public const string PaidTenant = "PaidTenant";
+
+    /// <summary>The signed-in account has the role <see cref="AppRoles.GlobalAdmin"/> (<see cref="GlobalAdminHandler"/>).</summary>
+    public const string GlobalAdmin = "GlobalAdmin";
 
     // Menus
     public const string CanViewMenus = "CanViewMenus";
