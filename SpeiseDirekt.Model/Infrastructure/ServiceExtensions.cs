@@ -35,8 +35,9 @@ namespace SpeiseDirekt.Infrastructure
             services.AddTransient<ITenantPlanService, TenantPlanService>();
 
             // Identity roles (both hosts call AddRoles<IdentityRole>, so RoleManager and the role-aware UserManager exist):
-            // the startup sync of the web app, resolvable in tests
+            // the startup sync of the web app, resolvable in tests, and the global admin's customer list and paid toggle
             services.AddTransient<RoleSetup>();
+            services.AddTransient<ITenantAdminService, TenantAdminService>();
 
             // Repositories (all depend on ApplicationDbContext)
             services.AddTransient<IMenuRepository, MenuRepository>();
