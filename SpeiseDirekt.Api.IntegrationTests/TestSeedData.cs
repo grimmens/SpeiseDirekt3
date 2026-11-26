@@ -58,17 +58,87 @@ public static class TestSeedData
     }
 
     /// <summary>Gives the account <c>PaidTenant</c> or takes it away (straight in the database; idempotent).</summary>
-    public static async Task SetPaidAsync(IServiceProvider services, string userId, bool paid)
+    public static Task SetPaidAsync(IServiceProvider services, string userId, bool paid) =>
+        SetRoleAsync(services, userId, PaidTenantRoleId, paid);
+
+    /// <summary>Gives the account <c>GlobalAdmin</c> or takes it away (straight in the database; idempotent).</summary>
+    public static Task SetGlobalAdminAsync(IServiceProvider services, string userId, bool admin) =>
+        SetRoleAsync(services, userId, GlobalAdminRoleId, admin);
+
+    private static async Task SetRoleAsync(IServiceProvider services, string userId, string roleId, bool has)
     {
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var row = await db.UserRoles.FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == PaidTenantRoleId);
-        if (paid && row is null)
-            db.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = PaidTenantRoleId });
-        else if (!paid && row is not null)
+        var row = await db.UserRoles.FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == roleId);
+        if (has && row is null)
+            db.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = roleId });
+        else if (!has && row is not null)
             db.UserRoles.Remove(row);
         await db.SaveChangesAsync();
     }
+
+    /// <summary>
+    /// A team member of the owner <paramref name="ownerId"/> (an account with <c>TenantOwnerId</c> plus its
+    /// <see cref="TenantUser"/> row, a manager); returns the account id.
+    /// </summary>
+    public static async Task<string> SeedMemberAsync(IServiceProvider services, string ownerId, string email, bool active = true)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var id = Guid.NewGuid().ToString();
+        db.Users.Add(new ApplicationUser
+        {
+            Id = id, UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email,
+            NormalizedEmail = email.ToUpperInvariant(), SecurityStamp = Guid.NewGuid().ToString(), TenantOwnerId = ownerId
+        });
+        db.TenantUsers.Add(new TenantUser
+        {
+            Id = Guid.NewGuid(), ApplicationUserId = id, TenantOwnerId = ownerId, DisplayName = email, IsActive = active
+        });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    /// <summary>
+    /// <paramref name="menus"/> menus and <paramref name="qrCodes"/> QR codes (pointing to the first menu, if any) of
+    /// the owner <paramref name="ownerId"/>, written through a context of that tenant (the DbContext stamps
+    /// <c>ApplicationUserId</c> from the user id provider). Returns their ids.
+    /// </summary>
+    public static async Task<(List<Guid> Menus, List<Guid> QrCodes)> SeedContentAsync(
+        IServiceProvider services, string ownerId, int menus, int qrCodes)
+    {
+        using var scope = services.CreateScope();
+        await using var db = TenantContext(scope, ownerId);
+        var menuIds = new List<Guid>();
+        for (var i = 0; i < menus; i++)
+        {
+            var menu = new Menu { Id = Guid.NewGuid(), Name = $"Karte {i + 1}", Description = "", Language = MenuLanguage.German };
+            db.Menus.Add(menu);
+            menuIds.Add(menu.Id);
+        }
+        var qrIds = new List<Guid>();
+        for (var i = 0; i < qrCodes; i++)
+        {
+            var qr = new QRCode { Id = Guid.NewGuid(), Title = $"Tisch {i + 1}", MenuId = menuIds.Count > 0 ? menuIds[0] : null, CreatedAt = DateTime.UtcNow };
+            db.QRCodes.Add(qr);
+            qrIds.Add(qr.Id);
+        }
+        await db.SaveChangesAsync();
+        return (menuIds, qrIds);
+    }
+
+    /// <summary>The restaurant profile of the owner <paramref name="ownerId"/> (written as that tenant).</summary>
+    public static async Task SeedRestaurantProfileAsync(IServiceProvider services, string ownerId, string name)
+    {
+        using var scope = services.CreateScope();
+        await using var db = TenantContext(scope, ownerId);
+        db.RestaurantProfiles.Add(new RestaurantProfile { Id = Guid.NewGuid(), Name = name });
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>A context of <paramref name="scope"/> that acts as the tenant <paramref name="ownerId"/> (query filters and stamping).</summary>
+    public static ApplicationDbContext TenantContext(IServiceScope scope, string ownerId) =>
+        new(scope.ServiceProvider.GetRequiredService<DbContextOptions<ApplicationDbContext>>(), new TestUserIdProvider(ownerId));
 
     // Menu combos: not part of SeedAsync, tests opt in via SeedCombosAsync
     public static readonly Guid LunchComboId = Guid.Parse("c0c0c0c0-0000-0000-0000-000000000001");

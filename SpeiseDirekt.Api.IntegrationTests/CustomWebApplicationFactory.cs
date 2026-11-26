@@ -1,5 +1,7 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -37,12 +39,13 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             foreach (var descriptor in descriptorsToRemove)
                 services.Remove(descriptor);
 
-            // Replace IUserIdProvider with a test version that always returns TestUserId
+            // Replace IUserIdProvider with a test version that returns TestUserId (outside requests too), except for a
+            // request sent as another account (TestAuthHandler.UserHeader)
             var userIdDescriptor = services.SingleOrDefault(
                 d => d.ServiceType == typeof(IUserIdProvider));
             if (userIdDescriptor != null)
                 services.Remove(userIdDescriptor);
-            services.AddScoped<IUserIdProvider>(_ => new TestUserIdProvider(TestUserId));
+            services.AddScoped<IUserIdProvider>(sp => new TestUserIdProvider(TestUserId, sp.GetService<IHttpContextAccessor>()));
 
             // Replace TimeProvider with a controllable test clock
             services.RemoveAll<TimeProvider>();
@@ -76,10 +79,37 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     }
 }
 
+/// <summary>
+/// The tenant of the tests: <see cref="CustomWebApplicationFactory.TestUserId"/>, also outside a request (services
+/// resolved in a test's own scope). A request carrying <see cref="TestAuthHandler.UserHeader"/> resolves like the app's
+/// <c>UserIdProvider</c>: a team member's tenant owner (the <c>TenantOwnerId</c> claim of the claims transformation), else
+/// the account itself — so a second owner works on its own tenant.
+/// </summary>
 internal class TestUserIdProvider : IUserIdProvider
 {
     private readonly string _userId;
-    public TestUserIdProvider(string userId) => _userId = userId;
-    public string GetUserId() => _userId;
-    public string GetActualUserId() => _userId;
+    private readonly IHttpContextAccessor? _accessor;
+
+    public TestUserIdProvider(string userId, IHttpContextAccessor? accessor = null)
+    {
+        _userId = userId;
+        _accessor = accessor;
+    }
+
+    public string GetUserId()
+    {
+        var user = OtherAccount();
+        return user?.FindFirstValue("TenantOwnerId") ?? user?.FindFirstValue(ClaimTypes.NameIdentifier) ?? _userId;
+    }
+
+    public string GetActualUserId() => OtherAccount()?.FindFirstValue(ClaimTypes.NameIdentifier) ?? _userId;
+
+    private ClaimsPrincipal? OtherAccount()
+    {
+        var context = _accessor?.HttpContext;
+        return context is not null && context.Request.Headers.ContainsKey(TestAuthHandler.UserHeader)
+               && context.User.Identity?.IsAuthenticated == true
+            ? context.User
+            : null;
+    }
 }
