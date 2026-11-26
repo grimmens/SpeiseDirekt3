@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Title" xml:space="preserve">
+    <value>Kunden</value>
+    <comment>Page title and heading of /admin/kunden (global admins only)</comment>
+  </data>
+  <data name="Eyebrow" xml:space="preserve">
+    <value>Admin</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>Alle Restaurantkonten mit Speisekarten, QR-Codes und Team. „Bezahlt“ hebt die Grenzen des kostenlosen Zugangs sofort auf.</value>
+  </data>
+  <data name="Search_Label" xml:space="preserve">
+    <value>Kunden suchen</value>
+  </data>
+  <data name="Search_Placeholder" xml:space="preserve">
+    <value>E-Mail oder Restaurant</value>
+  </data>
+  <data name="Count_One" xml:space="preserve">
+    <value>{0} Kunde</value>
+  </data>
+  <data name="Count_Other" xml:space="preserve">
+    <value>{0} Kunden</value>
+  </data>
+  <data name="Count_Capped" xml:space="preserve">
+    <value>Es werden nur die ersten {0} angezeigt. Grenzen Sie die Suche ein, um die anderen zu finden.</value>
+    <comment>{0} = the row cap (500)</comment>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Kunden werden geladen …</value>
+  </data>
+  <data name="LoadError" xml:space="preserve">
+    <value>Die Kunden konnten nicht geladen werden. Bitte versuchen Sie es noch einmal.</value>
+  </data>
+  <data name="Column_Restaurant" xml:space="preserve">
+    <value>Restaurant</value>
+  </data>
+  <data name="Column_Email" xml:space="preserve">
+    <value>E-Mail</value>
+  </data>
+  <data name="Column_Menus" xml:space="preserve">
+    <value>Speisekarten</value>
+  </data>
+  <data name="Column_QrCodes" xml:space="preserve">
+    <value>QR-Codes</value>
+  </data>
+  <data name="Column_Team" xml:space="preserve">
+    <value>Team</value>
+  </data>
+  <data name="Column_LastGuestView" xml:space="preserve">
+    <value>Letzter Gästeaufruf</value>
+    <comment>The latest menu view by a guest over the tenant's menus (a date)</comment>
+  </data>
+  <data name="Column_Paid" xml:space="preserve">
+    <value>Bezahlt</value>
+  </data>
+  <data name="NoRestaurant" xml:space="preserve">
+    <value>Kein Restaurantprofil</value>
+  </data>
+  <data name="NoGuestView" xml:space="preserve">
+    <value>Noch keiner</value>
+    <comment>Last guest view: there is none</comment>
+  </data>
+  <data name="GlobalAdminBadge" xml:space="preserve">
+    <value>Globaler Admin</value>
+    <comment>Badge of an account with the role GlobalAdmin</comment>
+  </data>
+  <data name="Team_None" xml:space="preserve">
+    <value>Kein Team</value>
+  </data>
+  <data name="Team_Active" xml:space="preserve">
+    <value>{0} aktiv</value>
+    <comment>{0} = number of active team members</comment>
+  </data>
+  <data name="Team_Inactive" xml:space="preserve">
+    <value>{0} inaktiv</value>
+    <comment>{0} = number of deactivated team members</comment>
+  </data>
+  <data name="Members_Of" xml:space="preserve">
+    <value>Team von {0}</value>
+    <comment>{0} = restaurant name or e-mail; names the team's expand button and list</comment>
+  </data>
+  <data name="Members_Loading" xml:space="preserve">
+    <value>Team wird geladen …</value>
+  </data>
+  <data name="Members_Error" xml:space="preserve">
+    <value>Das Team konnte nicht geladen werden.</value>
+  </data>
+  <data name="Members_None" xml:space="preserve">
+    <value>Keine Teammitglieder.</value>
+  </data>
+  <data name="Member_Active" xml:space="preserve">
+    <value>Aktiv</value>
+  </data>
+  <data name="Member_Inactive" xml:space="preserve">
+    <value>Inaktiv</value>
+  </data>
+  <data name="Paid_SwitchLabel" xml:space="preserve">
+    <value>Bezahlt: {0}</value>
+    <comment>Accessible name of the paid switch, {0} = restaurant name or e-mail</comment>
+  </data>
+  <data name="Paid_Saved" xml:space="preserve">
+    <value>Gespeichert</value>
+    <comment>After the paid switch saved (at once, no dialog)</comment>
+  </data>
+  <data name="Paid_ErrorFailed" xml:space="preserve">
+    <value>Nicht gespeichert. Der vorherige Stand wird wieder angezeigt.</value>
+  </data>
+  <data name="Paid_ErrorNotAllowed" xml:space="preserve">
+    <value>Nicht gespeichert: Nur ein globaler Admin darf das ändern.</value>
+  </data>
+  <data name="Paid_ErrorNotFound" xml:space="preserve">
+    <value>Nicht gespeichert: Dieses Konto gibt es nicht mehr.</value>
+  </data>
+  <data name="Paid_ErrorNotAnOwner" xml:space="preserve">
+    <value>Nicht gespeichert: Dieses Konto ist ein Teammitglied, kein Kunde.</value>
+  </data>
+  <data name="Empty_Title" xml:space="preserve">
+    <value>Keine Kunden gefunden</value>
+  </data>
+  <data name="Empty_Search" xml:space="preserve">
+    <value>Kein Kunde passt zu „{0}“.</value>
+    <comment>{0} = the search text</comment>
+  </data>
+  <data name="Empty_None" xml:space="preserve">
+    <value>Noch hat sich kein Kunde registriert.</value>
+  </data>
+</root>

@@ -1,0 +1,439 @@
+@page "/admin/kunden"
+@using System.Globalization
+@using Microsoft.AspNetCore.Authorization
+@using SpeiseDirekt.ServiceInterface
+@attribute [Authorize]
+@implements IDisposable
+@inject IAuthorizationService Authorization
+@inject ITenantAdminService Admin
+@inject IUserIdProvider UserIdProvider
+@inject TimeProvider Clock
+@inject NavigationManager NavManager
+@inject ILogger<CustomersPage> Logger
+@inject IStringLocalizer<AdminText> T
+@inject IStringLocalizer<CommonText> C
+
+@* The global admin's customer list (spec "global admin and paid tenants", stage 1): every owner account with its
+   numbers (ITenantAdminService, cross-tenant), the team on demand (read-only) and the "Paid" switch, which gives or
+   takes the owner's role PaidTenant at once. Only for the role GlobalAdmin, read from the database before anything of a
+   customer is loaded or rendered (PageAccess.RequireGlobalAdminAsync: everyone else gets /Account/AccessDenied, a
+   signed-out visitor the login page through [Authorize]). A table from 1024 px, cards below. *@
+<PageTitle>@C["PageTitle", T["Title"]]</PageTitle>
+
+@if (allowed)
+{
+    <div data-testid="admin-page">
+        <PageHeader Title="@T["Title"]" Eyebrow="@T["Eyebrow"]" Icon="PageIcons.Admin" Tone="TileTone.Accent" Class="mb-6">
+            <Description>@T["Description"]</Description>
+        </PageHeader>
+
+        <div class="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div class="sd-field w-full sm:max-w-sm">
+                <label for="admin-search" class="sd-label">@T["Search_Label"]</label>
+                <input id="admin-search" type="search" class="sd-input" autocomplete="off" spellcheck="false"
+                       placeholder="@T["Search_Placeholder"]" data-testid="admin-search"
+                       @bind="search" @bind:event="oninput" @bind:after="SearchAsync" />
+            </div>
+            @if (rows is not null)
+            {
+                <p class="m-0 text-sm text-gray-600" role="status" data-testid="admin-count">
+                    @T.Plural(rows.Count, "Count")
+                    @if (rows.Count >= ITenantAdminService.MaxRows)
+                    {
+                        @(" ")<span data-testid="admin-count-capped">@T["Count_Capped", UiFormat.Number(ITenantAdminService.MaxRows)]</span>
+                    }
+                </p>
+            }
+        </div>
+
+        @if (loadError)
+        {
+            <p class="sd-notice sd-notice--danger mb-4" role="alert" data-testid="admin-load-error">@T["LoadError"]</p>
+        }
+
+        @if (rows is null)
+        {
+            @if (!loadError)
+            {
+                <div class="flex items-center justify-center py-12" role="status" data-testid="admin-loading">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-600" aria-hidden="true"></div>
+                    <span class="ml-3 text-gray-600">@T["Loading"]</span>
+                </div>
+            }
+        }
+        else if (rows.Count == 0)
+        {
+            <div class="sd-empty bg-white rounded-xl shadow-sm border border-gray-200" data-testid="admin-empty">
+                <span class="sd-empty-icon" aria-hidden="true">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="@PageIcons.Admin.Path" /></svg>
+                </span>
+                <h2 class="sd-empty-title">@T["Empty_Title"]</h2>
+                <p class="sd-empty-text">@(string.IsNullOrWhiteSpace(searchedFor) ? T["Empty_None"] : T["Empty_Search", searchedFor.Trim()])</p>
+            </div>
+        }
+        else
+        {
+            <!-- A table from 1024 px, cards below (no sideways scrolling on phones) -->
+            <div class="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" data-testid="admin-table">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="sd-thead">
+                        <tr>
+                            <th scope="col" class="px-[1rem] py-[0.75rem] text-left">@T["Column_Restaurant"]</th>
+                            <th scope="col" class="px-[1rem] py-[0.75rem] text-left">@T["Column_Email"]</th>
+                            <th scope="col" class="px-[1rem] py-[0.75rem] text-right whitespace-nowrap">@T["Column_Menus"]</th>
+                            <th scope="col" class="px-[1rem] py-[0.75rem] text-right whitespace-nowrap">@T["Column_QrCodes"]</th>
+                            <th scope="col" class="px-[1rem] py-[0.75rem] text-left">@T["Column_Team"]</th>
+                            <th scope="col" class="px-[1rem] py-[0.75rem] text-left">@T["Column_LastGuestView"]</th>
+                            <th scope="col" class="px-[1rem] py-[0.75rem] text-left">@T["Column_Paid"]</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @foreach (var row in rows)
+                        {
+                            <tr @key="row.OwnerId" class="align-top" data-testid="admin-tenant-row" data-owner-id="@row.OwnerId" data-paid="@(row.IsPaid ? "true" : "false")">
+                                <td class="px-[1rem] py-[0.75rem]">@RestaurantCell(row)</td>
+                                <td class="px-[1rem] py-[0.75rem] text-sm text-gray-700 break-all" data-testid="tenant-email">@row.Data.Email</td>
+                                <td class="px-[1rem] py-[0.75rem] text-right text-sm tabular-nums text-gray-900" data-testid="tenant-menus">@UiFormat.Number(row.Data.MenuCount)</td>
+                                <td class="px-[1rem] py-[0.75rem] text-right text-sm tabular-nums text-gray-900" data-testid="tenant-qrcodes">@UiFormat.Number(row.Data.QrCodeCount)</td>
+                                <td class="px-[1rem] py-[0.75rem] text-sm" data-testid="tenant-team">@TeamButton(row, "t")</td>
+                                <td class="px-[1rem] py-[0.75rem] text-sm text-gray-700 whitespace-nowrap" data-testid="tenant-last-view">@LastGuestView(row)</td>
+                                <td class="px-[1rem] py-[0.75rem]">@PaidSwitch(row)</td>
+                            </tr>
+                            @if (row.Expanded)
+                            {
+                                <tr @key="@($"{row.OwnerId}-members")" data-testid="admin-members-row">
+                                    <td colspan="7" class="px-[1rem] py-[0.75rem] bg-gray-50">@MemberList(row, "t")</td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <ul class="lg:hidden grid gap-3 sm:grid-cols-2 list-none p-0 m-0" data-testid="admin-cards">
+                @foreach (var row in rows)
+                {
+                    <li @key="row.OwnerId" class="min-w-0 bg-white rounded-xl shadow-sm border border-gray-200 p-[1rem]"
+                        data-testid="admin-tenant-card" data-owner-id="@row.OwnerId" data-paid="@(row.IsPaid ? "true" : "false")">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="min-w-0">
+                                @RestaurantCell(row)
+                                <p class="m-0 mt-0.5 text-sm text-gray-600 break-all" data-testid="tenant-email">@row.Data.Email</p>
+                            </div>
+                            <div class="flex flex-shrink-0 items-center gap-2">
+                                <span class="text-sm font-medium text-gray-700" aria-hidden="true">@T["Column_Paid"]</span>
+                                @PaidSwitch(row)
+                            </div>
+                        </div>
+                        <dl class="mt-3 mb-0 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                            <div class="min-w-0">
+                                <dt class="text-xs text-gray-500">@T["Column_Menus"]</dt>
+                                <dd class="m-0 font-semibold tabular-nums text-gray-900" data-testid="tenant-menus">@UiFormat.Number(row.Data.MenuCount)</dd>
+                            </div>
+                            <div class="min-w-0">
+                                <dt class="text-xs text-gray-500">@T["Column_QrCodes"]</dt>
+                                <dd class="m-0 font-semibold tabular-nums text-gray-900" data-testid="tenant-qrcodes">@UiFormat.Number(row.Data.QrCodeCount)</dd>
+                            </div>
+                            <div class="min-w-0">
+                                <dt class="text-xs text-gray-500">@T["Column_Team"]</dt>
+                                <dd class="m-0 text-gray-900" data-testid="tenant-team">@TeamButton(row, "c")</dd>
+                            </div>
+                            <div class="min-w-0">
+                                <dt class="text-xs text-gray-500">@T["Column_LastGuestView"]</dt>
+                                <dd class="m-0 text-gray-900" data-testid="tenant-last-view">@LastGuestView(row)</dd>
+                            </div>
+                        </dl>
+                        @if (row.Expanded)
+                        {
+                            <div class="mt-3 border-t border-gray-100 pt-3">@MemberList(row, "c")</div>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    /// <summary>The signed-in account is a global admin (checked in the database): nothing renders before.</summary>
+    private bool allowed;
+
+    /// <summary>The customers on screen; null while the first list loads.</summary>
+    private List<CustomerRow>? rows;
+    private bool loadError;
+
+    private string search = "";
+    /// <summary>The search the shown list belongs to (the empty state names it).</summary>
+    private string searchedFor = "";
+    private int searchVersion;
+    private bool disposed;
+
+    /// <summary>Typing: one query per pause.</summary>
+    private static readonly TimeSpan SearchDelay = TimeSpan.FromMilliseconds(250);
+
+    /// <summary>
+    /// One call of <see cref="ITenantAdminService"/> at a time: its DbContext belongs to this page, and the search, a
+    /// switch and an expanded team may otherwise overlap.
+    /// </summary>
+    private readonly SemaphoreSlim gate = new(1, 1);
+
+    /// <summary>A customer on screen: the service's numbers plus the page's state (switch, saving, message, team).</summary>
+    private sealed class CustomerRow(TenantRow data)
+    {
+        public TenantRow Data { get; } = data;
+        public string OwnerId => Data.OwnerId;
+        public bool IsPaid { get; set; } = data.IsPaid;
+        public bool Saving { get; set; }
+        /// <summary>"Saved" or the error after the last switch; null before.</summary>
+        public string? Message { get; set; }
+        public bool MessageIsError { get; set; }
+        public bool Expanded { get; set; }
+        public IReadOnlyList<TenantMemberRow>? Members { get; set; }
+        public bool MembersError { get; set; }
+        /// <summary>The restaurant, else the e-mail: names the switch and the team for screen readers.</summary>
+        public string Name => string.IsNullOrWhiteSpace(Data.RestaurantName) ? Data.Email : Data.RestaurantName;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is null) return;
+        var user = (await AuthState).User;
+        // GlobalAdmin from the database before any customer data is read; everyone else: /Account/AccessDenied
+        if (!await Authorization.RequireGlobalAdminAsync(user, NavManager)) return;
+        allowed = true;
+        await LoadAsync(searchVersion);
+    }
+
+    private async Task SearchAsync()
+    {
+        var version = ++searchVersion;
+        await Task.Delay(SearchDelay);
+        if (version != searchVersion || disposed) return;
+        await LoadAsync(version);
+    }
+
+    private async Task LoadAsync(int version)
+    {
+        await gate.WaitAsync();
+        try
+        {
+            if (version != searchVersion || disposed) return;
+            var term = search;
+            var list = await Admin.ListTenantsAsync(term);
+            if (version != searchVersion) return;
+
+            // A customer still on screen keeps its open team (and the team already loaded)
+            var previous = rows?.ToDictionary(r => r.OwnerId) ?? new Dictionary<string, CustomerRow>();
+            rows = list.Select(data =>
+            {
+                var row = new CustomerRow(data);
+                if (previous.TryGetValue(data.OwnerId, out var old))
+                    (row.Expanded, row.Members) = (old.Expanded, old.Members);
+                return row;
+            }).ToList();
+            searchedFor = term;
+            loadError = false;
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            Logger.LogError(e, "Admin customer list could not be loaded");
+            loadError = true;
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    /// <summary>The switch saves at once (no dialog): shown switched right away, back again with a message on an error.</summary>
+    private async Task TogglePaidAsync(CustomerRow row)
+    {
+        if (row.Saving) return;
+        var wanted = !row.IsPaid;
+        row.IsPaid = wanted;
+        row.Saving = true;
+        row.Message = null;
+
+        SetPaidResult result;
+        await gate.WaitAsync();
+        try
+        {
+            result = await Admin.SetPaidAsync(row.OwnerId, wanted, UserIdProvider.GetActualUserId());
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "Admin could not set PaidTenant for tenant {OwnerId}", row.OwnerId);
+            result = new SetPaidResult(SetPaidStatus.Failed, !wanted, !wanted);
+        }
+        finally
+        {
+            gate.Release();
+        }
+
+        row.Saving = false;
+        row.MessageIsError = !result.Succeeded;
+        if (result.Succeeded)
+        {
+            row.IsPaid = result.IsPaid;
+            row.Message = T["Paid_Saved"];
+            return;
+        }
+        row.IsPaid = !wanted;
+        row.Message = result.Status switch
+        {
+            SetPaidStatus.NotAllowed => T["Paid_ErrorNotAllowed"],
+            SetPaidStatus.NotFound => T["Paid_ErrorNotFound"],
+            SetPaidStatus.NotAnOwner => T["Paid_ErrorNotAnOwner"],
+            _ => T["Paid_ErrorFailed"]
+        };
+    }
+
+    /// <summary>Opens or closes the team; loaded on the first opening (read-only).</summary>
+    private async Task ToggleMembersAsync(CustomerRow row)
+    {
+        row.Expanded = !row.Expanded;
+        if (!row.Expanded || row.Members is not null) return;
+
+        await gate.WaitAsync();
+        try
+        {
+            row.Members = await Admin.ListMembersAsync(row.OwnerId);
+            row.MembersError = false;
+        }
+        catch (Exception e)
+        {
+            Logger.LogError(e, "Admin could not load the team of tenant {OwnerId}", row.OwnerId);
+            row.MembersError = true;
+        }
+        finally
+        {
+            gate.Release();
+        }
+    }
+
+    private RenderFragment RestaurantCell(CustomerRow row) => __builder =>
+    {
+        <div class="min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1">
+            @if (string.IsNullOrWhiteSpace(row.Data.RestaurantName))
+            {
+                <span class="text-sm italic text-gray-500" data-testid="tenant-restaurant">@T["NoRestaurant"]</span>
+            }
+            else
+            {
+                <span class="font-semibold text-gray-900 break-words" data-testid="tenant-restaurant">@row.Data.RestaurantName</span>
+            }
+            @if (row.Data.IsGlobalAdmin)
+            {
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-accent-100 text-accent-800 whitespace-nowrap" data-testid="admin-badge">@T["GlobalAdminBadge"]</span>
+            }
+        </div>
+    };
+
+    /// <summary>The team's numbers; with members a button that opens the list (<paramref name="layout"/>: "t" table, "c" cards).</summary>
+    private RenderFragment TeamButton(CustomerRow row, string layout) => __builder =>
+    {
+        if (row.Data.MemberCount == 0)
+        {
+            <span class="text-gray-500">@T["Team_None"]</span>
+            return;
+        }
+        <button type="button" class="inline-flex items-center gap-1 rounded-md text-left font-medium text-brand-700 hover:text-brand-900 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-500"
+                aria-expanded="@(row.Expanded ? "true" : "false")" aria-controls="@MembersId(row, layout)"
+                data-testid="admin-members-toggle" @onclick="() => ToggleMembersAsync(row)">
+            <span class="sr-only">@T["Members_Of", row.Name]:</span>
+            <span class="whitespace-nowrap">@TeamSummary(row)</span>
+            <svg class="h-4 w-4 flex-shrink-0 transition-transform @(row.Expanded ? "rotate-180" : "")" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </button>
+    };
+
+    private string TeamSummary(CustomerRow row) => row.Data.InactiveMembers == 0
+        ? T["Team_Active", UiFormat.Number(row.Data.ActiveMembers)]
+        : row.Data.ActiveMembers == 0
+            ? T["Team_Inactive", UiFormat.Number(row.Data.InactiveMembers)]
+            : $"{T["Team_Active", UiFormat.Number(row.Data.ActiveMembers)]} · {T["Team_Inactive", UiFormat.Number(row.Data.InactiveMembers)]}";
+
+    private static string MembersId(CustomerRow row, string layout) => $"admin-members-{layout}-{row.OwnerId}";
+
+    private RenderFragment MemberList(CustomerRow row, string layout) => __builder =>
+    {
+        <div id="@MembersId(row, layout)" data-testid="admin-members" role="region" aria-label="@T["Members_Of", row.Name]">
+            @if (row.MembersError)
+            {
+                <p class="m-0 text-sm text-red-700" role="alert">@T["Members_Error"]</p>
+            }
+            else if (row.Members is null)
+            {
+                <p class="m-0 text-sm text-gray-600" role="status">@T["Members_Loading"]</p>
+            }
+            else if (row.Members.Count == 0)
+            {
+                <p class="m-0 text-sm text-gray-600" data-testid="admin-members-empty">@T["Members_None"]</p>
+            }
+            else
+            {
+                <ul class="list-none p-0 m-0 divide-y divide-gray-200">
+                    @foreach (var member in row.Members)
+                    {
+                        <li class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 first:pt-0 last:pb-0" data-testid="admin-member" data-user-id="@member.UserId">
+                            <div class="min-w-0 flex-1">
+                                @if (!string.IsNullOrWhiteSpace(member.DisplayName))
+                                {
+                                    <p class="m-0 text-sm font-medium text-gray-900 break-words">@member.DisplayName</p>
+                                }
+                                <p class="m-0 text-sm text-gray-600 break-all">@member.Email</p>
+                            </div>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800" data-testid="admin-member-role">@C[$"Role_{member.Role}"]</span>
+                            @if (member.IsActive)
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800" data-testid="admin-member-status">@T["Member_Active"]</span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" data-testid="admin-member-status">@T["Member_Inactive"]</span>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    };
+
+    private RenderFragment LastGuestView(CustomerRow row) => __builder =>
+    {
+        if (row.Data.LastGuestView is { } utc)
+        {
+            // Stored in UTC; shown as the server's local date (the app's TimeProvider) in the request's culture
+            var local = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(utc, DateTimeKind.Utc), Clock.LocalTimeZone));
+            <time datetime="@local.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)">@UiFormat.Date(local)</time>
+        }
+        else
+        {
+            <span class="text-gray-500">@T["NoGuestView"]</span>
+        }
+    };
+
+    /// <summary>The "Paid" switch (role="switch") and its status: "Saved", or the error after it switched back.</summary>
+    private RenderFragment PaidSwitch(CustomerRow row) => __builder =>
+    {
+        <div class="flex flex-col items-start gap-1">
+            @* Not disabled while saving: the focus stays on it; a second press waits (Saving) *@
+            <button type="button" role="switch" class="sd-switch"
+                    aria-checked="@(row.IsPaid ? "true" : "false")" aria-busy="@(row.Saving ? "true" : null)"
+                    aria-label="@T["Paid_SwitchLabel", row.Name]" data-testid="paid-toggle"
+                    @onclick="() => TogglePaidAsync(row)"></button>
+            <span role="status" class="text-xs font-medium @(row.MessageIsError ? "text-red-700" : "text-green-700")" data-testid="paid-status">
+                @if (row.Message is not null)
+                {
+                    <span data-testid="@(row.MessageIsError ? "paid-error" : "paid-saved")">@row.Message</span>
+                }
+            </span>
+        </div>
+    };
+
+    // The gate is not disposed: a call still running when the page goes away releases it afterwards
+    public void Dispose() => disposed = true;
+}

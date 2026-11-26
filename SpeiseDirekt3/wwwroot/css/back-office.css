@@ -2,8 +2,8 @@
  * back-office.css — shared back-office components in plain CSS, independent of Tailwind's utilities:
  * page headers with icon tiles, card heads, table heads, count pills, empty states, drag-and-drop sorting
  * (Shared/Sortable/SortableList + js/sortable-list.js), inline row editing, the item edit page's sections and sticky
- * save bar, the quiet dialogs (confirmation, combo editor), the "just edited" row highlight and the free plan's
- * hint next to a disabled create action.
+ * save bar, the quiet dialogs (confirmation, combo editor), the "just edited" row highlight, the free plan's hint
+ * next to a disabled create action and the switch of the admin page.
  * Reads only the tokens of css/brand.css (prefix sd-). The chrome (top bar, context bar) is css/shell.css.
  */
 
@@ -1025,4 +1025,64 @@ fieldset:disabled .sd-check {
 
 .sd-plan-hint a:hover {
     color: rgb(var(--sd-brand-900));
+}
+
+/* --- A switch (button role="switch", the admin page's "Paid"): 24 px track, 44 px target --- */
+
+.sd-switch {
+    position: relative;
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    width: 2.75rem;
+    height: 1.5rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--sd-radius-full);
+    background: rgb(var(--sd-gray-400)); /* off: 4.5:1 on white */
+    cursor: pointer;
+    transition: background-color .15s;
+}
+
+.sd-switch::before {
+    content: "";
+    position: absolute;
+    left: .1875rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgb(0 0 0 / .25);
+    transition: transform .15s;
+}
+
+.sd-switch::after {
+    content: "";
+    position: absolute;
+    inset: -.625rem -.25rem;
+}
+
+.sd-switch[aria-checked="true"] {
+    background: rgb(var(--sd-brand-600));
+}
+
+.sd-switch[aria-checked="true"]::before {
+    transform: translateX(1.25rem);
+}
+
+.sd-switch:focus-visible {
+    outline: 2px solid rgb(var(--sd-focus-color));
+    outline-offset: 2px;
+}
+
+.sd-switch:disabled {
+    opacity: .6;
+    cursor: progress;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sd-switch,
+    .sd-switch::before {
+        transition: none;
+    }
 }
