@@ -10,6 +10,7 @@
 @inject IPermissionService PermissionService
 @inject TimeProvider Clock
 @inject IJSRuntime JS
+@inject SpeiseDirekt3.Components.Plausible.PlausibleEvents Events
 @inject IAuthorizationService AuthorizationService
 @inject AuthenticationStateProvider AuthenticationStateProvider
 @inject IStringLocalizer<QrCodesText> T
@@ -387,6 +388,9 @@
         }
 
         await DbContext.SaveChangesAsync();
+        // "Erster QR-Code" (AP16) when the tenant has exactly this one QR code now
+        if (IsNew)
+            await Events.QrCodeCreatedAsync(DbContext);
         NavManager.NavigateTo("/qrcodes");
     }
 

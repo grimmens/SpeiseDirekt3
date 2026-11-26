@@ -1,5 +1,5 @@
 ﻿@* Notice on the guest pages when there is no menu to show: not found, or "no menu right now" (a QR code outside
-   every time window). Uses the guest assets (default look = modern theme). *@
+   every time window). Uses the guest assets (default look = modern theme). The legal links (German) close the page. *@
 <PageTitle>@Title</PageTitle>
 <div class="gm gm-notice-page">
     <main class="gm-notice" data-testid="guest-notice" data-kind="@Kind.ToString().ToLowerInvariant()">
@@ -16,6 +16,7 @@
             <a class="gm-button" href="/">Zur Startseite</a>
         }
     </main>
+    <GuestLegalLinks />
 </div>
 
 @code {

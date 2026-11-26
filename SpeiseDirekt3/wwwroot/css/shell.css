@@ -691,6 +691,40 @@ html.sd-drawer-open {
     padding-block: 1.5rem 3rem;
 }
 
+/* --- Footer: imprint and privacy policy (AP16b, MainLayout) --- */
+/* A quiet line below every page: subtle text on the canvas (5.1:1), the page gutter of .sd-container, 40 px targets.
+   Bootstrap's link colours and list margins do not reach it (own classes, explicit values). */
+.sd-footer {
+    border-top: 1px solid rgb(var(--sd-border));
+    padding-block: .25rem .75rem;
+}
+
+.sd-footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0 1.25rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: var(--sd-text-sm);
+}
+
+.sd-footer-links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.5rem;
+    color: rgb(var(--sd-text-subtle));
+    text-decoration: underline;
+    text-decoration-color: rgb(var(--sd-text-subtle) / .4);
+    text-underline-offset: 3px;
+}
+
+.sd-footer-links a:hover {
+    color: rgb(var(--sd-text));
+    text-decoration-color: currentColor;
+}
+
 /* --- Menu context bar (pages of one menu) --- */
 
 .sd-ctx {

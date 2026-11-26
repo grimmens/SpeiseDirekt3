@@ -1,0 +1,264 @@
+@page "/datenschutz"
+@* The privacy policy (AP16b, operator approval 25.11.2026): the operator's own text, rendered word for word as semantic
+   HTML — not text the app makes up. Change a word only on the operator's word. Rule: any change to what the app
+   stores, logs, sends to the page counter or sets in the browser updates this page in the same PR.
+   Like the imprint: German for every visitor (lang="de" on the article), the legal text in the markup, not in a
+   resource; the chrome follows the browser (LegalText: <title>, description, the contents list's label and, for a
+   non-German visitor, "This privacy policy is provided in German."; the eyebrow is LandingText.Footer_Legal). Static SSR
+   in the landing document ([LandingPage]: css/landing.css, the landing header and footer with SectionBase "/"); no
+   cookie (CookielessPages); indexable, canonical /datenschutz, listed in sitemap.xml; signed-in users are not
+   redirected.
+   The two placeholders of the text:
+   - {E-MAIL} (points 1 and 8): Landing:ContactEmail (LandingSettings) as a mailto link, while it is empty the shortest
+     wording that fits the sentence ("folgt in Kürze" / "(Adresse folgt in Kürze)") — never an invented address;
+   - {SCHALTER} (point 6): the opt-out switch of the page counter, js/legal.js ([data-legal-optout]; its texts are
+     data-* attributes here). Server-rendered without a state: the script fills it in; without JS the <noscript>
+     sentence says the switch needs JavaScript (and so does the counter). *@
+@attribute [ExcludeFromInteractiveRouting]
+@attribute [LandingPage]
+@layout LandingLayout
+@using Microsoft.AspNetCore.Http
+@using SpeiseDirekt3.Components.Landing
+@inject IConfiguration Configuration
+@inject IStringLocalizer<LegalText> T
+@inject IStringLocalizer<LandingText> L
+@{
+    var email = LandingSettings.From(Configuration).ContactEmail;
+    var url = GuestFormat.Absolute(GuestFormat.PublicOrigin(HttpContext?.Request), Path);
+}
+<PageTitle>@T["Privacy_Title"]</PageTitle>
+<HeadContent>
+    <meta name="description" content="@T["Privacy_Description"]" />
+    @if (url is not null)
+    {
+        <link rel="canonical" href="@url" />
+    }
+    <script type="module" src="@Assets.Absolute("js/legal.js")"></script>
+</HeadContent>
+
+<a class="lp-skip" href="#lp-main" data-testid="landing-skip">@L["SkipToContent"]</a>
+<LandingHeader SectionBase="/" />
+
+<main id="lp-main" class="lp-main lp-legal" tabindex="-1" data-testid="privacy-page">
+    <article class="lp-container lp-legal-grid" lang="de" aria-labelledby="privacy-title" data-testid="privacy">
+        <header class="lp-legal-head lp-legal-head--toc">
+            <p class="lp-eyebrow" lang="@AppCultures.HtmlLang"><span class="lp-eyebrow-dot" aria-hidden="true"></span>@L["Footer_Legal"]</p>
+            <h1 id="privacy-title" class="lp-legal-title">Datenschutzerklärung</h1>
+            @if (!AppCultures.IsGerman)
+            {
+                <p class="lp-legal-note" lang="@AppCultures.HtmlLang" data-testid="privacy-language-note">
+                    <LandingIcon Name="globe" /> <span>@T["Privacy_LanguageNote"]</span>
+                </p>
+            }
+            <nav class="lp-legal-toc" aria-labelledby="privacy-toc-title" data-testid="privacy-toc">
+                <p id="privacy-toc-title" class="lp-legal-toc-title" lang="@AppCultures.HtmlLang">@T["Privacy_Contents"]</p>
+                <ul role="list">
+                    @foreach (var (id, title) in Sections)
+                    {
+                        <li><a href="#@id">@title</a></li>
+                    }
+                </ul>
+            </nav>
+        </header>
+
+        <div class="lp-legal-body lp-legal-prose">
+            <p class="lp-legal-intro" data-testid="privacy-intro">Informationen zur Verarbeitung personenbezogener Daten gemäß DSGVO und österreichischem Datenschutzgesetz (DSG) bei der Nutzung der Web-Anwendung Speise-Direkt unter <code>https://app.speisedirekt.de</code>. Das umfasst die Startseite, die Live-Demo, das Impressum, diese Datenschutzerklärung, den Kundenbereich (Registrierung, Anmeldung, Kontoeinstellungen und die Verwaltung von Speisekarten) und die öffentlichen Speisekarten der Restaurants (Gästeseiten).</p>
+
+            <section id="@Sections[0].Id" aria-labelledby="privacy-h1" data-testid="privacy-section">
+                <h2 id="privacy-h1">@Sections[0].Title</h2>
+                <p data-testid="privacy-controller">Verantwortlicher im Sinne der DSGVO ist der im <a href="@ImprintPage.Path" data-testid="privacy-imprint-link">Impressum</a> genannte Inhaber: Bernhard Grimm, Mühlgasse 106, 2500 Baden, Österreich, E-Mail: @if (email is not null)
+                    {<a href="mailto:@email" data-testid="privacy-email">@email</a>}
+                    else
+                    {<span class="lp-legal-placeholder" data-testid="privacy-email-placeholder">folgt in Kürze</span>}. Speise-Direkt ist ein Angebot dieses Einzelunternehmens.</p>
+                <p>Für die Inhalte, die ein Restaurant in seinen Speisekarten und seinem Restaurantprofil veröffentlicht, ist das jeweilige Restaurant verantwortlich (siehe Punkt 3).</p>
+            </section>
+
+            <section id="@Sections[1].Id" aria-labelledby="privacy-h2" data-testid="privacy-section">
+                <h2 id="privacy-h2">@Sections[1].Title</h2>
+                <p>Speise-Direkt wird auf einem Server der <strong>netcup GmbH</strong> (Daimlerstraße 25, 76185 Karlsruhe, Deutschland) betrieben. Server-Standort: Deutschland. Auf diesem Server (im Folgenden „App-Server“) laufen die Anwendung und ihre Datenbank. Die Reichweitenmessung (Punkt 6) läuft auf einem zweiten, ebenfalls von mir selbst betriebenen Server der netcup GmbH in Deutschland.</p>
+                <p>Beim Aufruf jeder Seite protokolliert der App-Server technisch notwendige Daten in Logdateien: IP-Adresse, Datum und Uhrzeit, die aufgerufene Adresse, den Statuscode der Antwort und die übertragene Datenmenge. Das gilt für alle Bereiche, auch für die Gästeseiten und für die Anfragen der Reichweitenmessung, die über diesen Server laufen (Punkt 6). Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Betriebssicherheit und Fehleranalyse). Die Logdateien werden täglich gewechselt und nach spätestens 15 Tagen gelöscht.</p>
+                <p>Die Anwendung schreibt außerdem ein Betriebsprotokoll zur Fehleranalyse. Bei bestimmten sicherheitsrelevanten Kontovorgängen (z. B. Löschung eines Kontos, Änderungen an der Zwei-Faktor-Anmeldung) enthält es die interne Kennung des Benutzerkontos, nie ein Passwort. Es wird automatisch gelöscht, sobald der dafür vorgesehene Speicherplatz voll ist, derzeit nach etwa sechs Wochen.</p>
+                <p><strong>Datensicherung:</strong> Vor jeder Aktualisierung der Anwendung wird eine Sicherungskopie der Datenbank auf dem App-Server angelegt. Aufbewahrt werden die zehn jüngsten dieser Sicherungen; ältere werden automatisch gelöscht. Daten, die Sie löschen, können daher noch eine Zeit lang in diesen Sicherungen enthalten sein.</p>
+                <p><strong>Testumgebung:</strong> Neue Versionen werden vor der Veröffentlichung in einer Testumgebung auf dem App-Server geprüft. Dafür wird eine Kopie der Datenbank verwendet, die diesen Server nicht verlässt.</p>
+            </section>
+
+            <section id="@Sections[2].Id" aria-labelledby="privacy-h3" data-testid="privacy-section">
+                <h2 id="privacy-h3">@Sections[2].Title</h2>
+                <p><strong>Registrierung:</strong> Für ein Konto benötigen Sie eine E-Mail-Adresse und ein Passwort; ohne diese Angaben ist keine Registrierung möglich. Die E-Mail-Adresse ist zugleich Ihr Benutzername. Das Passwort wird nur als kryptografischer Hashwert gespeichert. Zum Konto gehören außerdem technische Angaben, die die Anmeldung absichern, und Angaben zu Ihrem Tarif, soweit vorhanden.</p>
+                <p><strong>Freiwillige Angaben:</strong> In den Kontoeinstellungen können Sie eine Telefonnummer hinterlegen und die Zwei-Faktor-Anmeldung mit einer Authenticator-App einrichten. Dann werden der geheime Schlüssel für die App und Ihre Wiederherstellungscodes gespeichert. Der QR-Code für die Einrichtung wird auf dem Server erzeugt, ohne fremden Dienst.</p>
+                <p><strong>Teammitglieder:</strong> Als Inhaber eines Kontos können Sie Teammitglieder anlegen. Dazu geben Sie deren E-Mail-Adresse, einen Anzeigenamen und ein Startpasswort ein; eine Einladung per E-Mail wird nicht verschickt. Gespeichert werden zusätzlich die Zuordnung zu Ihrem Restaurant, die Rolle (Manager), ob das Mitglied aktiv ist, und der Zeitpunkt der Anlage. Entfernen Sie ein Teammitglied, wird auch sein Benutzerkonto gelöscht. Bitte informieren Sie Ihre Teammitglieder über diese Datenschutzerklärung.</p>
+                <p><strong>Inhalte:</strong> Im Kundenbereich verwalten Sie</p>
+                <ul>
+                    <li>Ihr Restaurantprofil: Name, Beschreibung, Logo und Titelbild, Telefon, E-Mail, Website, Links zu Instagram, Facebook und Google-Bewertungen, Adresse, Öffnungszeiten;</li>
+                    <li>Ihre Speisekarten mit Kategorien, Gerichten, Preisen und Preisvarianten, Kennzeichnungen (z. B. vegan, scharf), Allergenen, Kombi-Angeboten und Fotos;</li>
+                    <li>Ihre QR-Codes mit Zeitplänen und Kalendereinträgen.</li>
+                </ul>
+                <p>Hochgeladene Fotos werden verkleinert und in der Datenbank gespeichert; dabei werden eingebettete Metadaten wie Aufnahmeort, Aufnahmezeit und Kameramodell entfernt. Diese Inhalte sind zur Veröffentlichung bestimmt: Speisekarten, Restaurantprofil und Fotos sind auf den Gästeseiten öffentlich abrufbar. Veröffentlichen Sie personenbezogene Daten anderer Personen (etwa Fotos von Mitarbeitenden oder eine private Telefonnummer) nur, wenn Sie dazu berechtigt sind.</p>
+                <p><strong>Was nicht stattfindet:</strong></p>
+                <ul>
+                    <li>Speise-Direkt versendet derzeit keine E-Mails, auch keine Bestätigungs- oder Passwort-Mails.</li>
+                    <li>Eine Anmeldung über Konten anderer Anbieter (etwa Google oder Microsoft) wird nicht angeboten.</li>
+                    <li>Eine Bezahlfunktion gibt es derzeit nicht; Zahlungsdaten werden nicht verarbeitet.</li>
+                    <li>Ihre Inhalte werden nicht an Übersetzungs- oder KI-Dienste übermittelt.</li>
+                </ul>
+                <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. b DSGVO (Bereitstellung des Kundenbereichs auf Grundlage des Nutzungsverhältnisses); für die Daten von Teammitgliedern Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse des Restaurants, seinem Team Zugang zum Kundenbereich zu geben).</p>
+                <p><strong>Speicherdauer:</strong> Die Daten werden gespeichert, solange Ihr Konto besteht. Unter „Ihr Konto → Persönliche Daten“ können Sie Ihre Kontodaten als Datei herunterladen und Ihr Konto löschen; dabei werden Ihre Anmeldedaten gelöscht. Speisekarten und QR-Codes können Sie vorher im Kundenbereich selbst löschen. Damit auch Ihr Restaurantprofil, Ihre Fotos und alle übrigen Daten Ihres Restaurants gelöscht werden, schreiben Sie mir (Punkt 1).</p>
+            </section>
+
+            <section id="@Sections[3].Id" aria-labelledby="privacy-h4" data-testid="privacy-section">
+                <h2 id="privacy-h4">@Sections[3].Title</h2>
+                <p>Die Speisekarten der Restaurants sind öffentlich erreichbar, über einen QR-Code (<code>/qr/…</code>) oder über einen direkten Link (<code>/menu/…</code>); dazu kommt die Live-Demo (<code>/demo</code>) mit einem erfundenen Restaurant. Gäste brauchen kein Konto. Beim Aufruf entstehen die Server-Logs nach Punkt 2.</p>
+                <p><strong>Zugriffsstatistik für das Restaurant:</strong> Damit ein Restaurant sieht, wie seine Speisekarten genutzt werden, wird gespeichert:</p>
+                <ul>
+                    <li>wenn eine Speisekarte über einen QR-Code aufgerufen wird: welche Speisekarte, über welchen QR-Code und wann;</li>
+                    <li>wenn ein Gericht geöffnet wird: welches Gericht, auf welcher Speisekarte und wann;</li>
+                </ul>
+                <p>dazu jeweils eine <strong>tägliche Besucherkennung</strong>. Diese Kennung berechnet der Server aus der Kennung des Restaurants, Ihrer IP-Adresse und der Kennung Ihres Browsers (User-Agent). Dafür verwendet er das Einwegverfahren HMAC-SHA256 mit einem zufälligen geheimen Schlüssel. Dieser Schlüssel liegt nur im Arbeitsspeicher und wird um Mitternacht (Serverzeit) sowie bei jedem Neustart der Anwendung durch einen neuen ersetzt. Gespeichert werden nur die ersten 16 Zeichen des Ergebnisses. IP-Adresse und User-Agent werden nur für diese Berechnung verwendet und dafür weder gespeichert noch protokolliert. Die Folgen:</p>
+                <ul>
+                    <li>Ihr Gerät erhält bei jedem Restaurant eine andere Kennung und am nächsten Tag eine neue.</li>
+                    <li>Besuche lassen sich nicht über mehrere Tage oder über mehrere Restaurants hinweg verknüpfen.</li>
+                    <li>Nach dem Wechsel des Schlüssels kann auch ich eine Kennung keiner IP-Adresse mehr zuordnen.</li>
+                </ul>
+                <p>Das Restaurant sieht in seinem Kundenbereich nur Zahlen: Aufrufe je Speisekarte, Klicks je Gericht und die Zahl der „Besuche“ (ein Gerät an einem Tag), für die letzten 24 Stunden, 7 oder 30 Tage. Die Besucherkennungen selbst werden ihm nicht angezeigt.</p>
+                <p>Für diese Statistik werden keine Cookies gesetzt und weder IP-Adresse noch User-Agent, Name oder andere Angaben zu Ihrer Person gespeichert. Aufrufe der Live-Demo und der Vorschau im Editor (nur für angemeldete Restaurants) fließen nicht in diese Statistik ein.</p>
+                <p><strong>Keine Anfragen an Dritte:</strong> Schriften, Skripte und Bilder der Gästeseiten kommen von <code>app.speisedirekt.de</code>. Links zu Kartendiensten (Google Maps), sozialen Netzwerken, Bewertungsportalen oder zur Website des Restaurants sind einfache Links. An diese Anbieter werden Daten erst übertragen, wenn Sie einen solchen Link anklicken; dann gelten deren Datenschutzbestimmungen. Die Funktion „Teilen“ nutzt die Teilen-Funktion Ihres Geräts.</p>
+                <p>Merkliste und Filter werden nur auf Ihrem Gerät gespeichert (Punkt 5). Die Gästeseiten werden außerdem mit Plausible gezählt (Punkt 6).</p>
+                <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse der Restaurants und von Speise-Direkt an einer datensparsamen Nutzungsstatistik der Speisekarten).</p>
+                <p><strong>Speicherdauer:</strong> Die Einträge bleiben gespeichert, bis das Restaurant die betreffende Speisekarte, den QR-Code, die Kategorie oder das Gericht löscht oder die Löschung seiner Daten verlangt.</p>
+            </section>
+
+            <section id="@Sections[4].Id" aria-labelledby="privacy-h5" data-testid="privacy-section">
+                <h2 id="privacy-h5">@Sections[4].Title</h2>
+                <p><strong>Ohne Cookies:</strong> Die Startseite, die Live-Demo, das Impressum, diese Datenschutzerklärung und die Gästeseiten setzen <strong>keine</strong> Cookies.</p>
+                <p><strong>Kundenbereich:</strong> Die Seiten zur Registrierung und Anmeldung, die Kontoeinstellungen und die Verwaltung der Speisekarten verwenden nur technisch notwendige Cookies:</p>
+                @* Below 640 px every row is a block with the column names as labels (landing.css); the explicit roles keep
+                   the table semantics in browsers that drop them for display: block. <wbr /> lets a cookie name break only
+                   after a dot *@
+                <div class="lp-legal-table-wrap">
+                    <table class="lp-legal-table" role="table" data-testid="privacy-cookies">
+                        <thead role="rowgroup">
+                            <tr role="row"><th scope="col" role="columnheader">Cookie</th><th scope="col" role="columnheader">Zweck</th><th scope="col" role="columnheader">Gültigkeit</th></tr>
+                        </thead>
+                        <tbody role="rowgroup">
+                            <tr role="row"><th scope="row" role="rowheader"><code>.AspNetCore.<wbr />Identity.<wbr />Application</code></th><td role="cell" data-label="Zweck">hält Sie nach der Anmeldung angemeldet</td><td role="cell" data-label="Gültigkeit">ohne „Angemeldet bleiben“ bis zum Schließen des Browsers; mit „Angemeldet bleiben“ 14 Tage, bei Nutzung verlängert</td></tr>
+                            <tr role="row"><th scope="row" role="rowheader"><code>.AspNetCore.<wbr />Antiforgery.…</code></th><td role="cell" data-label="Zweck">schützt die Formulare gegen gefälschte Übermittlungen (Cross-Site Request Forgery)</td><td role="cell" data-label="Gültigkeit">bis zum Schließen des Browsers</td></tr>
+                            <tr role="row"><th scope="row" role="rowheader"><code>Identity.<wbr />StatusMessage</code></th><td role="cell" data-label="Zweck">überträgt eine Hinweismeldung (z. B. „Passwort geändert“) auf die nächste Seite</td><td role="cell" data-label="Gültigkeit">5 Sekunden, nach dem Anzeigen gelöscht</td></tr>
+                            <tr role="row"><th scope="row" role="rowheader"><code>Identity.<wbr />TwoFactorUserId</code></th><td role="cell" data-label="Zweck">nur bei aktivierter Zwei-Faktor-Anmeldung: merkt sich zwischen Passwort und Code, wer sich gerade anmeldet</td><td role="cell" data-label="Gültigkeit">bis zum Schließen des Browsers, höchstens 5 Minuten wirksam</td></tr>
+                            <tr role="row"><th scope="row" role="rowheader"><code>Identity.<wbr />TwoFactorRememberMe</code></th><td role="cell" data-label="Zweck">nur wenn Sie bei der Zwei-Faktor-Anmeldung „Dieses Gerät merken“ wählen: erspart auf diesem Gerät die Abfrage des Codes</td><td role="cell" data-label="Gültigkeit">14 Tage</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>Diese Cookies dienen nicht der Analyse, dem Tracking oder der Werbung. Weil sie für die von Ihnen gewünschte Anmeldung und für die Formulare unbedingt erforderlich sind, ist dafür keine Einwilligung nötig (§ 165 Abs. 3 TKG 2021). Sind Sie angemeldet, sendet Ihr Browser das Anmelde-Cookie bei jedem Aufruf von <code>app.speisedirekt.de</code> mit, also auch auf der Startseite und den Gästeseiten; dabei kann es wie im Kundenbereich verlängert werden.</p>
+                <p><strong>Lokale Speicherung:</strong> Nur wenn Sie die jeweilige Funktion nutzen, wird in Ihrem Browser abgelegt:</p>
+                <ul>
+                    <li>die <strong>Merkliste</strong> einer Gästeseite im <code>localStorage</code> (Schlüssel <code>sd-merkliste:&lt;Kennung der Speisekarte&gt;</code>: gemerkte Gerichte, gewählte Variante, Anzahl). Sie bleibt, bis Sie die Liste leeren oder Ihre Browserdaten löschen.</li>
+                    <li>der <strong>Filter</strong> einer Gästeseite (Ernährung, Hinweise, Allergene) im <code>sessionStorage</code> (Schlüssel <code>sd-filter:&lt;Kennung der Speisekarte&gt;</code>). Er wird gelöscht, wenn Sie den Tab schließen.</li>
+                    <li>die <strong>Abschaltung der Reichweitenmessung</strong> im <code>localStorage</code> (Schlüssel <code>plausible_ignore</code>), wenn Sie sie in Punkt 6 abschalten. Sie bleibt, bis Sie die Zählung wieder einschalten oder Ihre Browserdaten löschen.</li>
+                </ul>
+                <p>Diese Angaben werden nicht an den Server übertragen. Das Zählskript der Reichweitenmessung liest den Eintrag <code>plausible_ignore</code>, schreibt aber selbst nichts (Punkt 6). Sonst werden keine Daten auf Ihrem Gerät abgelegt.</p>
+            </section>
+
+            <section id="@Sections[5].Id" aria-labelledby="privacy-h6" data-testid="privacy-section">
+                <h2 id="privacy-h6">@Sections[5].Title</h2>
+                <p>Für die Reichweitenmessung wird die Open-Source-Software <strong>Plausible Analytics</strong> eingesetzt. Plausible läuft auf meinem zweiten Server bei der netcup GmbH in Deutschland (<code>stats.webtechsys.de</code>). Es findet <strong>keine Datenübermittlung an Dritte</strong> oder in Drittländer statt. Gezählt wird auf allen Seiten von <code>app.speisedirekt.de</code>, auch auf den Gästeseiten und im Kundenbereich, nicht aber in der Vorschau im Editor.</p>
+                <p><strong>Wie die Daten übertragen werden:</strong></p>
+                <ul>
+                    <li>Ihr Browser lädt das Zählskript von <code>app.speisedirekt.de/_s/script.js</code> und sendet die Ereignisse an <code>app.speisedirekt.de/_s/event</code>.</li>
+                    <li>Der App-Server leitet genau diese beiden Adressen an den Plausible-Server weiter. Dabei entfernt er Cookies und den Referrer-Header.</li>
+                    <li>Ihre IP-Adresse übergibt er in einem eigenen Header. Plausible verwendet sie nur für die tägliche Besucherkennung und für die Bestimmung des Landes (siehe unten).</li>
+                    <li>Das Zugriffsprotokoll des Plausible-Servers enthält daher die Adresse des App-Servers, nicht Ihre.</li>
+                    <li>Im Zugriffsprotokoll des App-Servers stehen diese Anfragen wie jede andere Anfrage (Punkt 2).</li>
+                </ul>
+                <p><strong>Was gemessen wird:</strong></p>
+                <ul>
+                    <li>die aufgerufene Seite. Schon in Ihrem Browser werden Kennungen in der Adresse durch einen Platzhalter ersetzt (aus <code>/qr/3f2a…</code> wird <code>/qr/:id</code>). Von den Parametern bleiben nur <code>utm_source</code>, <code>utm_medium</code>, <code>utm_campaign</code>, <code>utm_content</code>, <code>utm_term</code>, <code>ref</code> und <code>source</code>; alles nach <code>#</code> entfällt. Welche Speisekarte oder welches Restaurant Sie aufrufen, ist daraus nicht erkennbar.</li>
+                    <li>die Herkunft (Referrer): nur wenn Sie von einer anderen Website kommen, und dann nur deren Adresse ohne Parameter.</li>
+                    <li>Browser, Betriebssystem und Gerätetyp, die Plausible aus dem User-Agent ableitet.</li>
+                    <li>das Land, das Plausible aus der IP-Adresse ermittelt; Region und Stadt werden nicht gespeichert.</li>
+                    <li>wie lange eine Seite sichtbar war und wie weit Sie gescrollt haben.</li>
+                    <li>Klicks auf Links zu anderen Websites (Zieladresse ohne Parameter) und auf Datei-Downloads.</li>
+                    <li>dass auf einer Seite ein Formular abgeschickt wurde, nie dessen Inhalt.</li>
+                    <li>
+                        diese eigenen Ereignisse:
+                        <ul>
+                            <li>„Kostenlos starten“: Klick auf einen Registrierungs-Link der Startseite oder des Impressums, mit der Angabe, an welcher Stelle der Seite (Kopfzeile, Menü, oberer Bereich, Schritte, Abschlussbereich, Fußzeile);</li>
+                            <li>„Konto angelegt“: einmal nach einer Registrierung;</li>
+                            <li>„Erste Speisekarte“ und „Erster QR-Code“: wenn ein Restaurant seine erste Speisekarte bzw. seinen ersten QR-Code speichert;</li>
+                            <li>„QR-Code heruntergeladen“ und „QR-Link kopiert“.</li>
+                        </ul>
+                        <p>Diese Ereignisse enthalten keine E-Mail-Adresse, keinen Restaurantnamen und keine Kennung.</p>
+                    </li>
+                </ul>
+                <p><strong>Was nicht passiert:</strong> Plausible setzt <strong>keine Cookies</strong> und speichert <strong>keine IP-Adresse</strong>. Um Besuche eines Tages zusammenzufassen, bildet Plausible eine pseudonyme Besucherkennung aus IP-Adresse, User-Agent, Domain und einem täglich wechselnden Zufallswert (Salt). Der Salt wird täglich gelöscht; Besuche an verschiedenen Tagen lassen sich daher nicht miteinander verknüpfen. Es werden keine Profile über mehrere Websites gebildet.</p>
+                <p><strong>Zugriff auf Ihr Endgerät:</strong> Das Zählskript speichert nichts auf Ihrem Endgerät. Es liest vor dem Zählen einen einzigen Eintrag aus dem <code>localStorage</code> Ihres Browsers (Schlüssel <code>plausible_ignore</code>). Steht dort „true“, wird auf diesem Gerät nicht gezählt; fehlt der Eintrag, wird gezählt.</p>
+                @* {SCHALTER}: js/legal.js fills the state and shows the button; the texts are German like the page *@
+                <div class="lp-legal-optout" data-legal-optout data-testid="privacy-optout"
+                     data-text-on="Die Zählung ist auf diesem Gerät eingeschaltet."
+                     data-text-off="Die Zählung ist auf diesem Gerät abgeschaltet."
+                     data-text-unavailable="Ihr Browser erlaubt dieser Seite keinen Zugriff auf den lokalen Speicher, deshalb lässt sich der Schalter hier nicht verwenden."
+                     data-button-off="Zählung auf diesem Gerät abschalten"
+                     data-button-on="Zählung wieder einschalten">
+                    <p><strong>Zählung abschalten:</strong> <span class="lp-legal-optout-state" role="status" data-legal-optout-state data-testid="privacy-optout-state"></span><noscript><span data-testid="privacy-optout-noscript">Für den Schalter ist JavaScript nötig. Ohne JavaScript läuft auch das Zählskript nicht.</span></noscript></p>
+                    <p class="lp-legal-optout-actions">
+                        <button type="button" class="lp-button lp-button--secondary" data-legal-optout-button data-testid="privacy-optout-button" hidden></button>
+                    </p>
+                </div>
+                <p>Der Schalter legt den Eintrag <code>plausible_ignore</code> an bzw. entfernt ihn wieder. Er gilt nur für diesen Browser auf diesem Gerät. Ist JavaScript abgeschaltet, läuft auch das Zählskript nicht.</p>
+                <p><strong>Rechtsgrundlage:</strong> Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse, Reichweite und Nutzung von Speise-Direkt zu messen und das Angebot zu verbessern). Sie können der Zählung jederzeit widersprechen, indem Sie sie mit dem Schalter oben abschalten.</p>
+                <p><strong>Speicherdauer:</strong> Die Statistik wird ohne feste Frist aufbewahrt. Sie enthält keine IP-Adressen; die tägliche Besucherkennung lässt sich nach dem Löschen des Salts niemandem mehr zuordnen.</p>
+            </section>
+
+            <section id="@Sections[6].Id" aria-labelledby="privacy-h7" data-testid="privacy-section">
+                <h2 id="privacy-h7">@Sections[6].Title</h2>
+                <p>Beide Server, der App-Server mit der Datenbank und der Server der Reichweitenmessung, werden bei der <strong>netcup GmbH</strong> gehostet (siehe Punkt 2). Mit ihr besteht ein Vertrag zur Auftragsverarbeitung nach Art. 28 DSGVO. Plausible ist auf dem eigenen Server selbst gehostet; ein weiterer Dienstleister ist daran nicht beteiligt. Weitere Auftragsverarbeiter, etwa für E-Mail-Versand, Zahlungen, Schriftarten oder Content-Delivery-Netzwerke, werden nicht eingesetzt.</p>
+            </section>
+
+            <section id="@Sections[7].Id" aria-labelledby="privacy-h8" data-testid="privacy-section">
+                <h2 id="privacy-h8">@Sections[7].Title</h2>
+                <p data-testid="privacy-rights">Sie haben jederzeit das Recht auf Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16), Löschung (Art. 17), Einschränkung der Verarbeitung (Art. 18), Datenübertragbarkeit (Art. 20) und Widerspruch (Art. 21). Wenden Sie sich formlos per E-Mail an @if (email is not null)
+                    {<a href="mailto:@email" data-testid="privacy-email">@email</a>}
+                    else
+                    {<span class="lp-legal-placeholder" data-testid="privacy-email-placeholder">(Adresse folgt in Kürze)</span>} oder per Post an die Anschrift in Punkt 1.</p>
+                <p>Ihre Kontodaten können Sie im Kundenbereich unter „Ihr Konto“ selbst ändern, unter „Ihr Konto → Persönliche Daten“ herunterladen und dort auch Ihr Konto löschen (siehe Punkt 3).</p>
+                <p>Gäste der Speisekarten und Besucherinnen und Besucher der Website werden nur über täglich wechselnde, pseudonyme Kennungen gezählt (Punkte 4 und 6). Diese Kennungen kann ich keiner Person zuordnen; Auskunft oder Löschung zu einzelnen Besuchen ist deshalb nicht möglich (Art. 11 DSGVO). Für die Server-Logs (Punkt 2) gilt das nicht.</p>
+                <p>Eine automatisierte Entscheidungsfindung einschließlich Profiling (Art. 22 DSGVO) findet nicht statt.</p>
+            </section>
+
+            <section id="@Sections[8].Id" aria-labelledby="privacy-h9" data-testid="privacy-section">
+                <h2 id="privacy-h9">@Sections[8].Title</h2>
+                <p>Sie haben das Recht auf Beschwerde bei der zuständigen Aufsichtsbehörde: Österreichische Datenschutzbehörde, Barichgasse 40-42, 1030 Wien, <a href="https://www.dsb.gv.at/" rel="noopener noreferrer" data-testid="privacy-dsb-link">www.dsb.gv.at</a>.</p>
+            </section>
+
+            <section id="@Sections[9].Id" aria-labelledby="privacy-h10" data-testid="privacy-section">
+                <h2 id="privacy-h10">@Sections[9].Title</h2>
+                <p>Diese Datenschutzerklärung kann angepasst werden, damit sie den aktuellen rechtlichen Anforderungen entspricht oder Änderungen von Speise-Direkt abbildet, etwa wenn E-Mail-Versand oder eine Bezahlfunktion hinzukommen. Es gilt jeweils die aktuelle, auf dieser Seite veröffentlichte Fassung.</p>
+                <p class="lp-legal-stand" data-testid="privacy-version">Stand: November 2026</p>
+            </section>
+        </div>
+    </article>
+</main>
+
+<LandingFooter SectionBase="/" ShowDemoNote="false" />
+
+@code {
+    /// <summary>The page's path (canonical link, sitemap, <c>Legal:PrivacyUrl</c>).</summary>
+    public const string Path = "/datenschutz";
+
+    /// <summary>The ten sections in the operator's order: anchor and heading (the contents list repeats the headings).</summary>
+    public static readonly IReadOnlyList<(string Id, string Title)> Sections =
+    [
+        ("verantwortlicher", "1. Verantwortlicher"),
+        ("hosting", "2. Hosting und Server-Logs"),
+        ("konto", "3. Konto- und Teamdaten"),
+        ("gaesteseiten", "4. Gästeseiten"),
+        ("cookies", "5. Cookies und lokale Speicherung"),
+        ("reichweitenmessung", "6. Reichweitenmessung mit Plausible Analytics (self-hosted)"),
+        ("auftragsverarbeiter", "7. Auftragsverarbeiter"),
+        ("rechte", "8. Ihre Rechte"),
+        ("aufsichtsbehoerde", "9. Aufsichtsbehörde"),
+        ("aenderungen", "10. Änderungen dieser Erklärung")
+    ];
+
+    /// <summary>The request (static SSR).</summary>
+    [CascadingParameter] public HttpContext? HttpContext { get; set; }
+}

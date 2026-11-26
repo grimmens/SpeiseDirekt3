@@ -46,7 +46,7 @@
     <value>Sessions</value>
   </data>
   <data name="Summary_SessionsHint" xml:space="preserve">
-    <value>A session is one guest device on one day; guests stay anonymous.</value>
+    <value>A session is one guest device on one day; counted without cookies and without a stored IP address.</value>
   </data>
   <data name="Menus_Title" xml:space="preserve">
     <value>Traffic per Menu</value>
@@ -67,10 +67,10 @@
     <value>{0} sessions</value>
   </data>
   <data name="Sessions_TextHour" xml:space="preserve">
-    <value>Guest devices that opened a menu, per hour. Guests stay anonymous.</value>
+    <value>Guest devices that opened a menu, per hour. Counted without cookies and without a stored IP address.</value>
   </data>
   <data name="Sessions_TextDay" xml:space="preserve">
-    <value>Guest devices that opened a menu, per day. Guests stay anonymous.</value>
+    <value>Guest devices that opened a menu, per day. Counted without cookies and without a stored IP address.</value>
   </data>
   <data name="Items_Title" xml:space="preserve">
     <value>Traffic per Menu Item</value>

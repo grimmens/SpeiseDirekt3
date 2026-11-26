@@ -26,7 +26,7 @@
                 <h1 id="lp-hero-title" class="lp-hero-title">@HeadlineMarkup.Highlight(T["Hero_Title"], "lp-mark")</h1>
                 <p class="lp-lead">@T["Hero_Lead"]</p>
                 <div class="lp-actions">
-                    <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-testid="hero-register">
+                    <a class="lp-button lp-button--primary lp-button--lg" href="/Account/Register" data-lp-cta="hero" data-testid="hero-register">
                         @T["RegisterFree"] <LandingIcon Name="arrow-right" StrokeWidth="2" />
                     </a>
                     <a class="lp-button lp-button--secondary lp-button--lg" href="@DemoPath" data-testid="hero-demo">
@@ -272,7 +272,7 @@
                 </li>
             </ol>
             <div class="lp-steps-cta">
-                <a class="lp-button lp-button--accent lp-button--lg" href="/Account/Register" data-testid="steps-register">
+                <a class="lp-button lp-button--accent lp-button--lg" href="/Account/Register" data-lp-cta="steps" data-testid="steps-register">
                     @T["Steps_Cta"] <LandingIcon Name="arrow-right" StrokeWidth="2" />
                 </a>
             </div>
@@ -311,7 +311,7 @@
                     <p>@T["Cta_Text"]</p>
                 </div>
                 <div class="lp-actions">
-                    <a class="lp-button lp-button--accent lp-button--lg" href="/Account/Register" data-testid="cta-register">
+                    <a class="lp-button lp-button--accent lp-button--lg" href="/Account/Register" data-lp-cta="cta" data-testid="cta-register">
                         @T["RegisterFree"] <LandingIcon Name="arrow-right" StrokeWidth="2" />
                     </a>
                     <a class="lp-button lp-button--on-dark lp-button--lg" href="/Account/Login" data-testid="cta-login">@T["LogIn"]</a>

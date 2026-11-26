@@ -64,6 +64,12 @@ public sealed class GuestText
     /// <summary>Its link to the landing page.</summary>
     public string DemoLink { get; private init; } = "";
 
+    // --- Legal links at the end of every guest page (AP16b, GuestLegalLinks) -----------------------------------------
+    /// <summary>aria-label of the line with the two links.</summary>
+    public string LegalLinks { get; private init; } = "";
+    public string Imprint { get; private init; } = "";
+    public string Privacy { get; private init; } = "";
+
     // --- Top bar, restaurant ---------------------------------------------------------------------------------------
     public string RestaurantInfo { get; private init; } = "";
     public string SearchMenu { get; private init; } = "";
@@ -167,6 +173,9 @@ public sealed class GuestText
         Close = "Schließen",
         DemoNote = "Demo: ein erfundenes Restaurant mit Beispieldaten.",
         DemoLink = "Speise-Direkt kennenlernen",
+        LegalLinks = "Rechtliches",
+        Imprint = "Impressum",
+        Privacy = "Datenschutz",
         RestaurantInfo = "Informationen zum Restaurant",
         SearchMenu = "Speisekarte durchsuchen",
         InfoTitle = "Informationen",
@@ -252,6 +261,9 @@ public sealed class GuestText
         Close = "Close",
         DemoNote = "Demo: a made-up restaurant with sample data.",
         DemoLink = "Discover Speise-Direkt",
+        LegalLinks = "Legal",
+        Imprint = "Legal notice",
+        Privacy = "Privacy",
         RestaurantInfo = "About the restaurant",
         SearchMenu = "Search the menu",
         InfoTitle = "Information",

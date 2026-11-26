@@ -1,10 +1,13 @@
 ﻿@inherits LayoutComponentBase
 @using System.Security.Claims
 @using Microsoft.EntityFrameworkCore
+@using SpeiseDirekt3.Components.Landing
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject SpeiseDirekt.ServiceInterface.IPermissionService PermissionService
 @inject IStringLocalizer<ShellText> T
 @inject IStringLocalizer<CommonText> C
+@inject IStringLocalizer<LandingText> L
+@inject IConfiguration Configuration
 
 @* The back-office shell (css/shell.css, js/shell.js): a sticky top bar with the primary navigation and the user menu
    (from 1024 px), a menu button + drawer below; the menu context bar on the pages of one menu; the page gutter.
@@ -54,6 +57,26 @@
     </div>
 </main>
 
+@* Imprint and privacy policy (AP16b), the same links and words as the landing and account pages' footers
+   (LandingSettings, LandingText); a quiet line below every back-office page *@
+@if (legal.HasLegalLinks)
+{
+    <footer class="sd-footer" data-testid="backoffice-footer">
+        <nav class="sd-container" aria-label="@L["Footer_Legal"]">
+            <ul class="sd-footer-links" role="list">
+                @if (legal.ImprintUrl is { } imprint)
+                {
+                    <li><a href="@imprint" data-testid="backoffice-imprint">@L["Footer_Imprint"]</a></li>
+                }
+                @if (legal.PrivacyUrl is { } privacy)
+                {
+                    <li><a href="@privacy" data-testid="backoffice-privacy">@L["Footer_Privacy"]</a></li>
+                }
+            </ul>
+        </nav>
+    </footer>
+}
+
 <SpeiseDirekt3.Components.Shared.ConfirmationModal />
 
 @* Status messages for screen readers (js/sortable-list.js: "Moved Desserts to position 3 of 4.") and the description of
@@ -79,8 +102,12 @@
     /// <summary>The signed-in user for the chrome; null for anonymous visitors (Identity pages).</summary>
     private ShellUser? user;
 
+    /// <summary>The footer's imprint and privacy links (Legal:ImprintUrl, Legal:PrivacyUrl; empty = not shown).</summary>
+    private LandingSettings legal = new(null, null, null);
+
     protected override async Task OnInitializedAsync()
     {
+        legal = LandingSettings.From(Configuration);
         if (AuthState is null) return;
         var principal = (await AuthState).User;
         if (principal.Identity?.IsAuthenticated != true) return;

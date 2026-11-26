@@ -21,4 +21,16 @@
   <data name="Imprint_LanguageNote" xml:space="preserve">
     <value>Dieses Impressum liegt auf Deutsch vor.</value>
   </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Datenschutzerklärung | Speise-Direkt</value>
+  </data>
+  <data name="Privacy_Description" xml:space="preserve">
+    <value>Datenschutzerklärung von Speise-Direkt: was gespeichert wird, welche Cookies der Kundenbereich setzt und wie die Reichweitenmessung funktioniert.</value>
+  </data>
+  <data name="Privacy_LanguageNote" xml:space="preserve">
+    <value>Diese Datenschutzerklärung liegt auf Deutsch vor.</value>
+  </data>
+  <data name="Privacy_Contents" xml:space="preserve">
+    <value>Inhalt</value>
+  </data>
 </root>

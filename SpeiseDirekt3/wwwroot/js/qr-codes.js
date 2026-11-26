@@ -4,6 +4,14 @@
 // (Safari) accept it. Markup: <button data-copy-url="https://…"> with children marked
 // data-copy-state="idle" | "done" | "failed"; the matching child is shown for two seconds.
 // Imported as a module by the QR code pages; the listener is registered once per page load.
+// Conversion events (AP16), sent to the page counter when the page has one (window.plausible, js/site.js:
+// production only): "QR-Code heruntergeladen" on a click (or middle click) on the Download PNG link
+// <a data-qr-download> — the PNG's URL has no file extension, so the counter's own download tracking does not see it —
+// and "QR-Link kopiert" after a copy that worked. No props.
+
+function sendEvent(name) {
+    if (typeof window.plausible === 'function') window.plausible(name);
+}
 
 const RESET_MS = 2000;
 
@@ -52,8 +60,17 @@ document.addEventListener('click', async event => {
 
     const ok = await copyText(button.dataset.copyUrl);
     showState(button, ok ? 'done' : 'failed');
+    if (ok) sendEvent('QR-Link kopiert');
     clearTimeout(button._copyReset);
     button._copyReset = setTimeout(() => showState(button, 'idle'), RESET_MS);
 });
+
+function onDownload(event) {
+    if (event.type === 'auxclick' && event.button !== 1) return;
+    const link = event.target instanceof Element ? event.target.closest('a[data-qr-download]') : null;
+    if (link) sendEvent('QR-Code heruntergeladen');
+}
+document.addEventListener('click', onDownload);
+document.addEventListener('auxclick', onDownload);
 
 document.documentElement.dataset.qrCopy = 'ready';

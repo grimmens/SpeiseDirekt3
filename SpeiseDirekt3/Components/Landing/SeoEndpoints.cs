@@ -7,7 +7,7 @@ namespace SpeiseDirekt3.Components.Landing;
 /// <c>/robots.txt</c> and <c>/sitemap.xml</c> (AP13). Search engines may crawl the landing page and the guest pages
 /// (<c>/menu/{id}</c>, <c>/qr/{id}</c> — crawlable as before, an owner's public menu is meant to be found), but not
 /// the back office or the account pages. The sitemap lists the indexable pages of our own, <see cref="SitemapPaths"/>:
-/// <c>/</c> and the imprint <c>/impressum</c> (the guest pages belong to the restaurants, the demo and the preview are
+/// <c>/</c>, the imprint <c>/impressum</c> and the privacy policy <c>/datenschutz</c> (the guest pages belong to the restaurants, the demo and the preview are
 /// <c>noindex</c>). Absolute URLs use the origin the browser sees (<see cref="GuestFormat.PublicOrigin"/>, after
 /// <c>UseForwardedHeaders</c>).
 /// </summary>
@@ -24,8 +24,8 @@ public static class SeoEndpoints
         "/restaurant", "/users", "/guest/api/", "/api/", "/_blazor", "/_framework/"
     ];
 
-    /// <summary>The pages of <c>/sitemap.xml</c>: the landing page and the imprint (AP15a).</summary>
-    public static readonly IReadOnlyList<string> SitemapPaths = ["/", Legal.ImprintPage.Path];
+    /// <summary>The pages of <c>/sitemap.xml</c>: the landing page, the imprint (AP15a) and the privacy policy (AP16b).</summary>
+    public static readonly IReadOnlyList<string> SitemapPaths = ["/", Legal.ImprintPage.Path, Legal.PrivacyPage.Path];
 
     public static IEndpointRouteBuilder MapSeoEndpoints(this IEndpointRouteBuilder endpoints)
     {
