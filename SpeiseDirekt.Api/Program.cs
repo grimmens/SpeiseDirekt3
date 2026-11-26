@@ -15,8 +15,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(connectionString, o => o.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery));
 });
 
-// Identity API endpoints
+// Identity API endpoints, with the roles GlobalAdmin and PaidTenant (AppRoles; read by the plan service). AddRoles
+// before AddEntityFrameworkStores, so the role-aware stores are registered. The roles themselves are created by the
+// web app's RoleSetup at startup (same database); the API never assigns them.
 builder.Services.AddIdentityApiEndpoints<ApplicationUser>()
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>();
 
 // Application services

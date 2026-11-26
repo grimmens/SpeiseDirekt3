@@ -113,6 +113,9 @@ namespace SpeiseDirekt3
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
             builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = false)
+                // The roles GlobalAdmin and PaidTenant (AppRoles). Before AddEntityFrameworkStores, which registers the
+                // role-aware user store and the role store only when the role type is already known
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddSignInManager()
                 .AddDefaultTokenProviders()
@@ -147,6 +150,11 @@ namespace SpeiseDirekt3
                 // Static web assets (_content/*, scoped CSS) are only enabled automatically in Development
                 builder.WebHost.UseStaticWebAssets();
             }
+
+            // The Identity roles and the global admins of Admin:GlobalAdminEmails, at every start (after the E2E schema:
+            // hosted services start in registration order). A failure is logged, the app starts anyway.
+            builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection(AdminOptions.SectionName));
+            builder.Services.AddHostedService<RoleSetupHostedService>();
 
             if (builder.Environment.IsEnvironment(PreviewEnvironment))
             {

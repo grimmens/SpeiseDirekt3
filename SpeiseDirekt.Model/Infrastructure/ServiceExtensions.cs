@@ -30,6 +30,10 @@ namespace SpeiseDirekt.Infrastructure
             services.AddTransient<IRestaurantProfileService, RestaurantProfileService>();
             services.AddTransient<IMenuTranslationService, MenuTranslationService>();
 
+            // Identity roles (both hosts call AddRoles<IdentityRole>, so RoleManager and the role-aware UserManager exist):
+            // the startup sync of the web app, resolvable in tests
+            services.AddTransient<RoleSetup>();
+
             // Repositories (all depend on ApplicationDbContext)
             services.AddTransient<IMenuRepository, MenuRepository>();
             services.AddTransient<ICategoryRepository, CategoryRepository>();
