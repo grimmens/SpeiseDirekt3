@@ -122,6 +122,8 @@ public class TenantAdminService : ITenantAdminService
     {
         if (string.IsNullOrEmpty(adminUserId) || !await db.HasRoleAsync(adminUserId, AppRoles.GlobalAdmin))
             return Refused(SetPaidStatus.NotAllowed, ownerId, adminUserId);
+        if (string.IsNullOrEmpty(ownerId))
+            return Refused(SetPaidStatus.NotFound, ownerId, adminUserId);
 
         // A fresh UserManager (and DbContext): in a Blazor circuit the scoped one lives as long as the circuit and
         // would hand back an account it tracked earlier, with a stale concurrency stamp
