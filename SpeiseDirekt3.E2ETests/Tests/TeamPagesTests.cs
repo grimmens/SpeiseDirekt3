@@ -116,12 +116,13 @@ public class TeamPagesTests : BackOfficeTestBase
     }
 
     [Fact]
-    public async Task Invite_KeepsTheFreeTierMemberLimit()
+    public async Task Invite_KeepsTheSubscriptionsMemberLimit_AlsoForAPaidTenant()
     {
+        // The registered owner is paid (PaidTenant); TenantSubscription.MaxUsers limits the team all the same
         var ownerId = await OwnerIdAsync(await RegisterNewOwnerAsync());
         await App.SeedAsync(ownerId, db =>
         {
-            db.TenantSubscriptions.Add(new TenantSubscription { TenantId = ownerId.ToString(), IsPaid = false, MaxUsers = 1 });
+            db.TenantSubscriptions.Add(new TenantSubscription { TenantId = ownerId.ToString(), MaxUsers = 1 });
             return Task.CompletedTask;
         });
         await SeedTeamMemberAsync(ownerId, "Max Kellner");
