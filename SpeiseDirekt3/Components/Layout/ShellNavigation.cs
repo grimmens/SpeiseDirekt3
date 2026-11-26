@@ -43,6 +43,15 @@ public static class ShellNavigation
             Permission.UsersView),
     ];
 
+    /// <summary>
+    /// "Admin" (<c>/admin/kunden</c>, the customer list): shown after <see cref="Items"/> only to a global admin
+    /// (<see cref="ShellUser.IsGlobalAdmin"/>, the role read from the database), never through a tenant permission —
+    /// so it is not one of <see cref="Items"/> and <see cref="VisibleFor"/> never returns it.
+    /// </summary>
+    public static readonly ShellNavItem AdminItem = new("admin", nameof(ShellText.Nav_Admin), "admin/kunden",
+        "M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z",
+        Permission.None);
+
     /// <summary>The entries an account with <paramref name="permissions"/> sees (a manager: all but the team).</summary>
     public static IEnumerable<ShellNavItem> VisibleFor(Permission permissions) =>
         Items.Where(item => (permissions & item.Requires) == item.Requires);
@@ -50,7 +59,8 @@ public static class ShellNavigation
     /// <summary>
     /// The primary entry a base-relative URL belongs to (<see cref="ShellNavItem.Key"/>), or null (Identity pages, the
     /// landing page "/", …).
-    /// Every page of a menu counts as "menus", the QR code editor as "qrcodes", the user pages as "team".
+    /// Every page of a menu counts as "menus", the QR code editor as "qrcodes", the user pages as "team", the global
+    /// admin's pages (<c>admin/…</c>) as "admin".
     /// </summary>
     public static string? SectionOf(string relativeUrl)
     {
@@ -65,6 +75,7 @@ public static class ShellNavigation
             "analytics" => "analytics",
             "restaurant" => "restaurant",
             "users" => "team",
+            "admin" => "admin",
             _ => null
         };
     }

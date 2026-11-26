@@ -2,19 +2,20 @@
 @inject NavigationManager NavigationManager
 @inject IStringLocalizer<ShellText> T
 
-@* The primary navigation (ShellNavigation.Items the account may open, ShellNavigation.VisibleFor): the top bar's links
-   from 1024 px (Variant "bar") and the list in the phone drawer (Variant "drawer", with icons). The entry of the current
-   page carries aria-current="page". *@
+@* The primary navigation (ShellNavigation.Items the account may open, ShellNavigation.VisibleFor, and "Admin" for a
+   global admin, ShellNavigation.AdminItem): the top bar's links from 1024 px (Variant "bar") and the list in the phone
+   drawer (Variant "drawer", with icons). The entry of the current page carries aria-current="page". *@
 <nav class="@(Drawer ? "sd-drawer-nav" : "sd-topnav")" aria-label="@T["MainNavLabel"]" data-testid="@(Drawer ? "drawer-nav" : "top-nav")">
     <ul role="list">
-        @foreach (var item in ShellNavigation.VisibleFor(Permissions))
+        @foreach (var item in Entries)
         {
             var active = item.Key == section;
             <li>
                 <a href="@item.Href"
                    class="@(Drawer ? "sd-drawer-link" : "sd-topnav-link")"
                    aria-current="@(active ? "page" : null)"
-                   data-nav="@item.Key">
+                   data-nav="@item.Key"
+                   data-testid="@(item == ShellNavigation.AdminItem ? "nav-admin" : null)">
                     @if (Drawer)
                     {
                         <svg class="sd-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -35,7 +36,14 @@
     /// <summary>The signed-in account's permissions (<see cref="ShellUser.Permissions"/>): a manager sees no "Team".</summary>
     [Parameter] public SpeiseDirekt.Model.Permission Permissions { get; set; }
 
+    /// <summary>The account is a global admin (<see cref="ShellUser.IsGlobalAdmin"/>): "Admin" comes last.</summary>
+    [Parameter] public bool IsGlobalAdmin { get; set; }
+
     private bool Drawer => Variant == "drawer";
+
+    private IEnumerable<ShellNavItem> Entries => IsGlobalAdmin
+        ? ShellNavigation.VisibleFor(Permissions).Append(ShellNavigation.AdminItem)
+        : ShellNavigation.VisibleFor(Permissions);
 
     private string? section;
 

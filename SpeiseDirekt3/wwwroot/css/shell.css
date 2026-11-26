@@ -283,6 +283,17 @@ html.sd-drawer-open {
     .sd-topnav-link { padding: 0 .5rem; }
     .sd-topnav-link[aria-current="page"]::after { left: .5rem; right: .5rem; }
     .sd-user-button .sd-user-name { max-width: 7rem; }
+
+    /* A global admin has one entry more ("Admin"): the user button shows only the avatar here; name and role stay for
+       screen readers, in its title and in the dropdown */
+    .sd-topbar-inner:has(.sd-topnav-link[data-nav="admin"]) .sd-user-button .sd-user-text {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+    }
 }
 
 /* Anonymous visitors (Identity pages) */

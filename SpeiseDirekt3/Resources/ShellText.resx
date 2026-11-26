@@ -76,6 +76,10 @@
   <data name="Nav_Team" xml:space="preserve">
     <value>Team</value>
   </data>
+  <data name="Nav_Admin" xml:space="preserve">
+    <value>Admin</value>
+    <comment>Only global admins see it: the customer list /admin/kunden</comment>
+  </data>
   <data name="Context_BreadcrumbLabel" xml:space="preserve">
     <value>Breadcrumb</value>
     <comment>aria-label of the context bar's "Menus › &lt;menu&gt;" trail</comment>

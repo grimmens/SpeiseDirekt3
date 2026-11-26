@@ -4,6 +4,8 @@
 @using SpeiseDirekt3.Components.Landing
 @inject IDbContextFactory<ApplicationDbContext> DbFactory
 @inject SpeiseDirekt.ServiceInterface.IPermissionService PermissionService
+@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService Authorization
 @inject IStringLocalizer<ShellText> T
 @inject IStringLocalizer<CommonText> C
 @inject IStringLocalizer<LandingText> L
@@ -30,7 +32,7 @@
         </a>
         @if (user is not null)
         {
-            <NavMenu Variant="bar" Permissions="user.Permissions" />
+            <NavMenu Variant="bar" Permissions="user.Permissions" IsGlobalAdmin="user.IsGlobalAdmin" />
             <UserMenu User="user" />
         }
         else
@@ -117,10 +119,13 @@
         var role = await PermissionService.GetCurrentRoleAsync();
         var permissions = await PermissionService.GetCurrentPermissionsAsync();
         var roleName = role is { } r ? RoleName(r) : null;
+        // "Admin" in the navigation: the account's GlobalAdmin role, read from the database (policy GlobalAdmin), so the
+        // startup sync counts without a new sign-in
+        var isGlobalAdmin = (await Authorization.AuthorizeAsync(principal, SpeiseDirekt.Infrastructure.PolicyNames.GlobalAdmin)).Succeeded;
         var tenantOwnerId = principal.FindFirstValue("TenantOwnerId");
         if (string.IsNullOrEmpty(tenantOwnerId))
         {
-            user = new ShellUser(email, null, roleName, permissions);
+            user = new ShellUser(email, null, roleName, permissions, isGlobalAdmin);
             return;
         }
 
@@ -131,7 +136,7 @@
             .Where(tu => tu.ApplicationUserId == userId && tu.TenantOwnerId == tenantOwnerId)
             .Select(tu => tu.DisplayName)
             .FirstOrDefaultAsync();
-        user = new ShellUser(email, string.IsNullOrWhiteSpace(displayName) ? null : displayName, roleName, permissions);
+        user = new ShellUser(email, string.IsNullOrWhiteSpace(displayName) ? null : displayName, roleName, permissions, isGlobalAdmin);
     }
 
     /// <summary>The role's display name (CommonText Role_*, shared with the team pages).</summary>

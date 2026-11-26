@@ -14,14 +14,15 @@ namespace SpeiseDirekt3.Components.Landing;
 public static class SeoEndpoints
 {
     /// <summary>
-    /// Path prefixes crawlers must not visit: the back office (its routes in the casings the app links them with), the
-    /// account pages, the owner preview and the app's own endpoints. Guest pages and the landing page stay allowed.
+    /// Path prefixes crawlers must not visit: the back office (its routes in the casings the app links them with, the
+    /// global admin's <c>/admin/…</c> included), the account pages, the owner preview and the app's own endpoints. Guest
+    /// pages and the landing page stay allowed.
     /// </summary>
     public static readonly IReadOnlyList<string> Disallowed =
     [
         "/Account/", "/dashboard", "/menus", "/menudetail/", "/menu/edit", "/menu/preview/", "/Categories/", "/categories/",
         "/MenuItems/", "/menuitems/", "/allergens/", "/combos/", "/qrcodes", "/qrcode/", "/analytics", "/Analytics",
-        "/restaurant", "/users", "/guest/api/", "/api/", "/_blazor", "/_framework/"
+        "/restaurant", "/users", "/admin", "/guest/api/", "/api/", "/_blazor", "/_framework/"
     ];
 
     /// <summary>The pages of <c>/sitemap.xml</c>: the landing page, the imprint (AP15a) and the privacy policy (AP16b).</summary>

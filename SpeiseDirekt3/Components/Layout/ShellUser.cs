@@ -6,8 +6,11 @@ namespace SpeiseDirekt3.Components.Layout;
 /// The signed-in user as the back-office chrome shows it (user menu, drawer): a sub-account's
 /// <c>TenantUser.DisplayName</c> or the e-mail, plus the role's name ("Owner"/"Besitzer" or "Manager"; none for an
 /// inactive member) and the permissions, which decide the navigation's entries (<see cref="ShellNavigation.VisibleFor"/>).
+/// <paramref name="IsGlobalAdmin"/>: the account itself has the role <c>GlobalAdmin</c> (read from the database when the
+/// layout loads, never from the sign-in cookie): the navigation adds <see cref="ShellNavigation.AdminItem"/>.
 /// </summary>
-public sealed record ShellUser(string Email, string? DisplayName, string? Role, Permission Permissions = Permission.None)
+public sealed record ShellUser(string Email, string? DisplayName, string? Role, Permission Permissions = Permission.None,
+    bool IsGlobalAdmin = false)
 {
     /// <summary>What the chrome shows as the name: the display name, else the e-mail.</summary>
     public string Name => DisplayName ?? Email;
