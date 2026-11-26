@@ -1,7 +1,8 @@
 @* "Language versions" of the menu settings (MenuEditForm): the menus linked as the same menu in other languages
    (Menu.TranslationGroupId, IMenuTranslationService) with a link to edit each, plus
    - "Add translation": copies the menu into a language the group does not have yet and opens the copy's settings, so
-     the owner can translate the texts (needs MenusCreate; no machine translation);
+     the owner can translate the texts (needs MenusCreate; no machine translation). The copy is a menu: on the free
+     plan at its menu limit the button is disabled with the hint (MenuLimitReached; the service refuses it as well);
    - "Link existing menu": another menu of the tenant in a free language that is not linked elsewhere;
    - "Unlink": per version, or this menu itself. A group left with one menu is dissolved.
    The parent loads the versions (Versions) and reloads them through OnChanged after every change. *@
@@ -100,8 +101,9 @@
         <div class="mt-4 flex flex-wrap items-center gap-2">
             @if (CanCreate)
             {
-                <button type="button" class="inline-flex items-center px-3.5 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-                        disabled="@(FreeLanguages.Count == 0)" @onclick="OpenAddPanel">
+                <button type="button" class="inline-flex items-center px-3.5 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled="@(FreeLanguages.Count == 0 || MenuLimitReached)" @onclick="OpenAddPanel"
+                        aria-describedby="@(MenuLimitReached ? "translation-limit-hint" : null)" data-testid="add-translation-button">
                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m-7-7h14" /></svg>
                     @T["Versions_AddTranslation"]
                 </button>
@@ -114,6 +116,10 @@
                         disabled="@busy" @onclick="() => UnlinkAsync(MenuId)">@T["Versions_UnlinkThis"]</button>
             }
         </div>
+        @if (CanCreate && MenuLimitReached)
+        {
+            <PlanLimitHint Text="@T["Plan_MenuLimit"]" Id="translation-limit-hint" TestId="translation-limit-hint" Class="mt-2" />
+        }
     }
 </div>
 
@@ -123,6 +129,8 @@
     [Parameter, EditorRequired] public IReadOnlyList<MenuVersion> Versions { get; set; } = Array.Empty<MenuVersion>();
     /// <summary>"Add translation" creates a menu: needs <see cref="Permission.MenusCreate"/>.</summary>
     [Parameter] public bool CanCreate { get; set; }
+    /// <summary>The free plan's menu limit is reached (a language version counts as a menu): "Add translation" is disabled.</summary>
+    [Parameter] public bool MenuLimitReached { get; set; }
     /// <summary>After a link or unlink: the parent reloads <see cref="Versions"/> (and the preview).</summary>
     [Parameter] public EventCallback OnChanged { get; set; }
 
@@ -141,6 +149,7 @@
 
     private void OpenAddPanel()
     {
+        if (MenuLimitReached) return;
         error = null;
         var free = FreeLanguages;
         if (free.Count == 0) return;

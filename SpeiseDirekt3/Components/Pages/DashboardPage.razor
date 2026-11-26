@@ -26,33 +26,64 @@
         <Actions>
                 @if (d.CanCreateMenu || d.CanCreateQrCode || d.CanViewAnalytics)
                 {
-                    <div class="flex flex-wrap gap-2 lg:flex-shrink-0" data-testid="quick-actions">
-                        @if (d.CanCreateMenu)
+                    @* A create action at the free plan's limit stays (disabled, never followable) with its hint below the row *@
+                    <div class="sd-plan-limit sd-plan-limit--end lg:flex-shrink-0">
+                        <div class="flex flex-wrap gap-2" data-testid="quick-actions">
+                            @if (d.CanCreateMenu && !d.MenuLimitReached)
+                            {
+                                <a href="menu/edit" data-testid="dashboard-create-menu" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                    @T["Action_CreateMenu"]
+                                </a>
+                            }
+                            else if (d.CanCreateMenu)
+                            {
+                                <button type="button" disabled aria-describedby="dashboard-menu-limit-hint" data-testid="dashboard-create-menu"
+                                        class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-brand-600 text-white font-medium rounded-lg shadow-sm opacity-50 cursor-not-allowed">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                    </svg>
+                                    @T["Action_CreateMenu"]
+                                </button>
+                            }
+                            @if (d.CanCreateQrCode && !d.QrCodeLimitReached)
+                            {
+                                <a href="qrcode/edit" data-testid="dashboard-create-qr" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                    </svg>
+                                    @T["Action_CreateQrCode"]
+                                </a>
+                            }
+                            else if (d.CanCreateQrCode)
+                            {
+                                <button type="button" disabled aria-describedby="dashboard-qr-limit-hint" data-testid="dashboard-create-qr"
+                                        class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-white border border-gray-300 text-gray-700 font-medium rounded-lg opacity-50 cursor-not-allowed">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                                    </svg>
+                                    @T["Action_CreateQrCode"]
+                                </button>
+                            }
+                            @if (d.CanViewAnalytics)
+                            {
+                                <a href="analytics" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                    </svg>
+                                    @T["Action_Analytics"]
+                                </a>
+                            }
+                        </div>
+                        @if (d.CanCreateMenu && d.MenuLimitReached)
                         {
-                            <a href="menu/edit" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg shadow-sm transition-colors">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                </svg>
-                                @T["Action_CreateMenu"]
-                            </a>
+                            <PlanLimitHint Text="@T["Plan_MenuLimit"]" Id="dashboard-menu-limit-hint" TestId="dashboard-menu-limit-hint" />
                         }
-                        @if (d.CanCreateQrCode)
+                        @if (d.CanCreateQrCode && d.QrCodeLimitReached)
                         {
-                            <a href="qrcode/edit" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                                </svg>
-                                @T["Action_CreateQrCode"]
-                            </a>
-                        }
-                        @if (d.CanViewAnalytics)
-                        {
-                            <a href="analytics" class="inline-flex items-center px-3.5 py-2 text-sm sm:text-base bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                </svg>
-                                @T["Action_Analytics"]
-                            </a>
+                            <PlanLimitHint Text="@T["Plan_QrCodeLimit"]" Id="dashboard-qr-limit-hint" TestId="dashboard-qr-limit-hint" />
                         }
                     </div>
                 }
@@ -181,6 +212,17 @@
                                             <span class="ml-1" aria-hidden="true">&rarr;</span>
                                         </a>
                                     }
+                                    else if (step.LimitHint is not null)
+                                    {
+                                        <div class="sd-plan-limit mt-3">
+                                            <button type="button" disabled aria-describedby="@($"checklist-limit-hint-{step.Number}")" data-testid="checklist-action"
+                                                    class="inline-flex items-center px-3 py-1.5 text-sm font-medium rounded-lg bg-white border border-gray-300 text-gray-700 opacity-50 cursor-not-allowed">
+                                                @step.ActionLabel
+                                                <span class="ml-1" aria-hidden="true">&rarr;</span>
+                                            </button>
+                                            <PlanLimitHint Text="@step.LimitHint" Id="@($"checklist-limit-hint-{step.Number}")" TestId="checklist-limit-hint" />
+                                        </div>
+                                    }
                                     else if (step.Blocker is not null)
                                     {
                                         <p class="mt-2 text-xs text-gray-400">@step.Blocker</p>
@@ -226,9 +268,18 @@
             {
                 <div class="px-[1rem] sm:px-6 py-8 text-center text-sm text-gray-500">
                     @T["Menus_None"]
-                    @if (d.CanCreateMenu)
+                    @if (d.CanCreateMenu && !d.MenuLimitReached)
                     {
-                        @(" ")<a href="menu/edit" class="font-medium text-brand-600 hover:text-brand-700">@T["Menus_CreateFirst"]</a>
+                        @(" ")<a href="menu/edit" class="font-medium text-brand-600 hover:text-brand-700" data-testid="dashboard-create-first-menu">@T["Menus_CreateFirst"]</a>
+                    }
+                    else if (d.CanCreateMenu)
+                    {
+                        @* Only with a free limit of 0 menus (Plans:Free:MaxMenus) *@
+                        @(" ")<button type="button" disabled aria-describedby="dashboard-menus-limit-hint" data-testid="dashboard-create-first-menu"
+                                     class="font-medium text-brand-600 opacity-50 cursor-not-allowed">@T["Menus_CreateFirst"]</button>
+                        <div class="sd-plan-limit sd-plan-limit--center mt-3">
+                            <PlanLimitHint Text="@T["Plan_MenuLimit"]" Id="dashboard-menus-limit-hint" TestId="dashboard-menus-limit-hint" />
+                        </div>
                     }
                 </div>
             }
@@ -270,7 +321,10 @@
 
     private sealed record MenuSummary(Guid Id, string Name, int Categories, int Items);
 
-    private sealed record ChecklistStep(int Number, string Title, string Description, bool Done, string? Href, string ActionLabel, string? Blocker = null);
+    /// <summary>A step of the checklist. <paramref name="LimitHint"/>: the free plan blocks the step's action (shown
+    /// disabled with the hint instead of the link).</summary>
+    private sealed record ChecklistStep(int Number, string Title, string Description, bool Done, string? Href, string ActionLabel,
+        string? Blocker = null, string? LimitHint = null);
 
     private sealed class Dashboard
     {
@@ -280,8 +334,14 @@
         public int QrCodeCount { get; init; }
         public int ViewsLast7Days { get; init; }
         public int TeamCount { get; init; }
+        /// <summary>The permission to create a menu (MenusCreate).</summary>
         public bool CanCreateMenu { get; init; }
+        /// <summary>The permission to create a QR code (QrCodesCreate).</summary>
         public bool CanCreateQrCode { get; init; }
+        /// <summary>Free plan at its menu limit (ITenantPlanService): the create actions are disabled with the hint.</summary>
+        public bool MenuLimitReached { get; init; }
+        /// <summary>Free plan at its QR code limit: the QR action is disabled with the hint.</summary>
+        public bool QrCodeLimitReached { get; init; }
         public bool CanViewAnalytics { get; init; }
         /// <summary>The owner: the team tile links to /users, which a manager may not open.</summary>
         public bool CanViewTeam { get; init; }
@@ -306,9 +366,9 @@
         if (!await PermissionService.RequireAsync(Permission.MenusView, NavManager)) return;
 
         var canCreateMenu = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
-        // Same rule as the "Create New QR Code" button on /qrcodes (free tier limit) plus the edit page's permission
-        var canCreateQrCode = await PermissionService.HasPermissionAsync(Permission.QrCodesCreate)
-            && await Plans.CanCreateQrCodeAsync(UserIdProvider.GetUserId());
+        var canCreateQrCode = await PermissionService.HasPermissionAsync(Permission.QrCodesCreate);
+        // The free plan's limits (ITenantPlanService, from the database), the same rule as /menus, /qrcodes and the editors
+        var plan = await Plans.GetUsageAsync(UserIdProvider.GetUserId());
         var canViewAnalytics = await PermissionService.HasPermissionAsync(Permission.AnalyticsView);
         var canViewTeam = await PermissionService.HasPermissionAsync(Permission.UsersView);
 
@@ -348,17 +408,23 @@
             TeamCount = teamCount,
             CanCreateMenu = canCreateMenu,
             CanCreateQrCode = canCreateQrCode,
+            MenuLimitReached = !plan.CanCreateMenu,
+            QrCodeLimitReached = !plan.CanCreateQrCode,
             CanViewAnalytics = canViewAnalytics,
             CanViewTeam = canViewTeam,
             Menus = menus,
             SuggestRestaurantProfile = suggestProfile,
-            Steps = BuildChecklist(menus, menuCount, itemCount, qrCodeCount, scanned, canCreateMenu, canCreateQrCode)
+            Steps = BuildChecklist(menus, menuCount, itemCount, qrCodeCount, scanned,
+                canCreateMenu, canCreateMenu && !plan.CanCreateMenu, canCreateQrCode && plan.CanCreateQrCode)
         };
     }
 
     /// <summary>The four steps (texts in the request's language: DashboardText Step*).</summary>
+    /// <param name="menuLimitReached">The free plan blocks a new menu: step 1's action is disabled with the hint.</param>
+    /// <param name="canCreateQrCode">Permission and free limit: step 3 opens the editor, else the list (its hint).</param>
     private List<ChecklistStep> BuildChecklist(
-        List<MenuSummary> menus, int menuCount, int itemCount, int qrCodeCount, bool scanned, bool canCreateMenu, bool canCreateQrCode)
+        List<MenuSummary> menus, int menuCount, int itemCount, int qrCodeCount, bool scanned,
+        bool canCreateMenu, bool menuLimitReached, bool canCreateQrCode)
     {
         // Step 2 goes to the menu that is furthest along: one with categories (add items), else the first one
         var setupMenu = menus.FirstOrDefault(m => m.Categories > 0) ?? menus.FirstOrDefault();
@@ -366,7 +432,8 @@
         return new List<ChecklistStep>
         {
             new(1, T["Step1_Title"], T["Step1_Text"],
-                menuCount > 0, canCreateMenu ? "menu/edit" : null, T["Step1_Action"]),
+                menuCount > 0, canCreateMenu && !menuLimitReached ? "menu/edit" : null, T["Step1_Action"],
+                LimitHint: menuLimitReached ? T["Plan_MenuLimit"].Value : null),
             new(2, T["Step2_Title"], T["Step2_Text"],
                 itemCount > 0,
                 setupMenu is null ? null : setupMenu.Categories == 0 ? $"categories/{setupMenu.Id}" : $"menuitems/{setupMenu.Id}",

@@ -21,8 +21,9 @@
   <data name="List_Create" xml:space="preserve">
     <value>Create New QR Code</value>
   </data>
-  <data name="List_CannotCreate" xml:space="preserve">
-    <value>Cannot create a new QR code at this time</value>
+  <data name="Plan_QrCodeLimit" xml:space="preserve">
+    <value>The free plan includes one QR code. For more, please [contact us].</value>
+    <comment>Free plan at its QR code limit, next to the disabled create buttons of /qrcodes. The [bracketed part] becomes a mailto: link to Landing:ContactEmail when it is set (Shared/PlanLimitHint). Assumes Plans:Free:MaxQrCodes = 1: change the text with the setting.</comment>
   </data>
   <data name="List_Loading" xml:space="preserve">
     <value>Loading QR codes…</value>

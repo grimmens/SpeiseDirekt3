@@ -329,4 +329,8 @@
   <data name="Versions_NothingToLink" xml:space="preserve">
     <value>There is no menu to link: every other menu is in a language this menu already has, or linked to other menus.</value>
   </data>
+  <data name="Plan_MenuLimit" xml:space="preserve">
+    <value>The free plan includes one menu. For more, please [contact us].</value>
+    <comment>Free plan at its menu limit, next to the disabled create action (/menus, the menu editor, "Add translation"). The [bracketed part] becomes a mailto: link to Landing:ContactEmail when it is set (Shared/PlanLimitHint). Assumes Plans:Free:MaxMenus = 1: change the text with the setting.</comment>
+  </data>
 </root>

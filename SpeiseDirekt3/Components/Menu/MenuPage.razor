@@ -7,6 +7,8 @@
 @inject INotificationService NotificationService
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
+@inject ITenantPlanService Plans
+@inject IUserIdProvider UserIdProvider
 @inject IStringLocalizer<MenusText> T
 @inject IStringLocalizer<CommonText> C
 @attribute [Authorize]
@@ -16,14 +18,27 @@
 <PageHeader Title="@T["List_Heading"]" Icon="PageIcons.Menus" Tone="TileTone.Brand">
     <Description>@T["List_Description"]</Description>
     <Actions>
-        @if (canCreate)
+        @if (canCreate && !menuLimitReached)
         {
-            <button type="button" class="sd-btn sd-btn--primary" @onclick="CreateNewMenu">
+            <button type="button" class="sd-btn sd-btn--primary" @onclick="CreateNewMenu" data-testid="menu-create-button">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                 </svg>
                 @T["List_Create"]
             </button>
+        }
+        else if (canCreate)
+        {
+            @* Free plan at its limit: the action stays visible (disabled) with the reason next to it *@
+            <div class="sd-plan-limit sd-plan-limit--end">
+                <button type="button" class="sd-btn sd-btn--primary" disabled aria-describedby="menu-limit-hint" data-testid="menu-create-button">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    @T["List_Create"]
+                </button>
+                <PlanLimitHint Text="@T["Plan_MenuLimit"]" Id="menu-limit-hint" TestId="menu-limit-hint" />
+            </div>
         }
     </Actions>
 </PageHeader>
@@ -52,13 +67,30 @@ else if (!cards.Any())
         @if (canCreate)
         {
             <p class="text-gray-600 mb-6">@T["List_EmptyText"]</p>
-            <button class="inline-flex items-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                    @onclick="CreateNewMenu">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                </svg>
-                @T["List_EmptyCreate"]
-            </button>
+            @if (!menuLimitReached)
+            {
+                <button class="inline-flex items-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
+                        @onclick="CreateNewMenu" data-testid="menu-create-first-button">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    @T["List_EmptyCreate"]
+                </button>
+            }
+            else
+            {
+                @* Only with a free limit of 0 menus (Plans:Free:MaxMenus) — kept like the other create actions *@
+                <div class="sd-plan-limit sd-plan-limit--center">
+                    <button type="button" disabled aria-describedby="menu-limit-hint-empty" data-testid="menu-create-first-button"
+                            class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg opacity-50 cursor-not-allowed">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        @T["List_EmptyCreate"]
+                    </button>
+                    <PlanLimitHint Text="@T["Plan_MenuLimit"]" Id="menu-limit-hint-empty" TestId="menu-limit-hint-empty" />
+                </div>
+            }
         }
         else
         {
@@ -137,6 +169,8 @@ else
 @code {
     private List<MenuCard>? cards;
     private bool canCreate, canEdit, canDelete;
+    /// <summary>Free plan at its menu limit (ITenantPlanService, read from the database): "New menu" is disabled with the hint.</summary>
+    private bool menuLimitReached;
 
     private sealed class MenuCard
     {
@@ -151,9 +185,12 @@ else
     {
         // An inactive or removed team member sees nothing of the tenant (AP14)
         if (!await PermissionService.RequireAsync(Permission.MenusView, NavManager)) return;
-        canCreate = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
+        var create = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
         canEdit = await PermissionService.HasPermissionAsync(Permission.MenusEdit);
         canDelete = await PermissionService.HasPermissionAsync(Permission.MenusDelete);
+        // The action appears together with its state (never enabled first and disabled a moment later)
+        menuLimitReached = create && !await CanCreateMenuAsync();
+        canCreate = create;
 
         // One query: the menus with their counts as correlated subqueries (query filters apply to all of them)
         cards = await DbContext.Menus
@@ -190,10 +227,16 @@ else
 
         await DeleteMenuAsync(DbContext, card.Menu.Id);
 
-        // Remove from local list to update UI instantly
+        // Remove from local list to update UI instantly; one menu fewer may lift the free limit
         cards?.Remove(card);
+        await RefreshMenuLimitAsync();
         StateHasChanged();
     }
+
+    /// <summary>The tenant may create one more menu (paid, or below the free limit); read from the database.</summary>
+    private Task<bool> CanCreateMenuAsync() => Plans.CanCreateMenuAsync(UserIdProvider.GetUserId());
+
+    private async Task RefreshMenuLimitAsync() => menuLimitReached = canCreate && !await CanCreateMenuAsync();
 
 
     private static string ThemeBadgeClass(DesignTheme theme) => theme switch

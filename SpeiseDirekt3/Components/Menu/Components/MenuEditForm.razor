@@ -9,6 +9,8 @@
 @inject IJSRuntime JS
 @inject NavigationManager NavManager
 @inject IPermissionService PermissionService
+@inject ITenantPlanService Plans
+@inject IUserIdProvider UserIdProvider
 @inject SpeiseDirekt3.Components.Plausible.PlausibleEvents Events
 @inject IStringLocalizer<MenusText> T
 @inject IStringLocalizer<CommonText> C
@@ -114,6 +116,14 @@
                     </div>
                 </div>
 
+                @if (IsNew && menuLimitReached)
+                {
+                    @* The free limit was reached after the page opened (another tab, a team member): nothing is saved *@
+                    <div class="sd-notice sd-notice--info mb-5" role="alert" data-testid="menu-editor-limit">
+                        <PlanLimitHint Text="@T["Plan_MenuLimit"]" Id="menu-editor-limit-hint" TestId="menu-editor-limit-hint" Class="max-w-none" />
+                    </div>
+                }
+
                 <!-- Action Buttons -->
                 <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between pt-4 border-t border-gray-200">
                     <button type="button"
@@ -121,8 +131,9 @@
                             @onclick="Cancel">
                         @C["Cancel"]
                     </button>
-                    <button type="submit"
-                            class="inline-flex items-center justify-center whitespace-nowrap px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors">
+                    <button type="submit" disabled="@(IsNew && menuLimitReached)" aria-describedby="@(IsNew && menuLimitReached ? "menu-editor-limit-hint" : null)"
+                            data-testid="menu-save-button"
+                            class="inline-flex items-center justify-center whitespace-nowrap px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand-600">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                         </svg>
@@ -134,7 +145,7 @@
 
         @if (!IsNew && loaded)
         {
-            <MenuLanguageVersions MenuId="Menu.Id" Versions="versions" CanCreate="canCreate" OnChanged="OnVersionsChangedAsync" />
+            <MenuLanguageVersions MenuId="Menu.Id" Versions="versions" CanCreate="canCreate" MenuLimitReached="menuLimitReached" OnChanged="OnVersionsChangedAsync" />
         }
         </div>
 
@@ -192,6 +203,11 @@
     private bool IsNew => !Id.HasValue;
     private bool loaded;
     private bool canCreate;
+    /// <summary>
+    /// Free plan at its menu limit (ITenantPlanService, read from the database): a new menu is not saved (the hint
+    /// instead), "Add translation" is disabled with the hint. Editing an existing menu stays allowed.
+    /// </summary>
+    private bool menuLimitReached;
     private Guid? loadedId;
 
     /// <summary>Language versions of the menu (this one included), for the select and the "Language versions" card.</summary>
@@ -224,6 +240,14 @@
             return;
         }
         canCreate = await PermissionService.HasPermissionAsync(Permission.MenusCreate);
+        menuLimitReached = canCreate && !await CanCreateMenuAsync();
+
+        // Free tier: creating a menu is limited, also when /menu/edit is opened directly (as /qrcode/edit does)
+        if (IsNew && menuLimitReached)
+        {
+            NavManager.NavigateTo("/menus");
+            return;
+        }
 
         // Unsaved edits of a previously shown menu must never be written by a later save
         Context.ChangeTracker.Clear();
@@ -301,8 +325,18 @@
         UpdatePreviewUrl();
     }
 
+    // Paid, or below the free limit (a language version counts as a menu); read from the database at every call
+    private Task<bool> CanCreateMenuAsync() => Plans.CanCreateMenuAsync(UserIdProvider.GetUserId());
+
     private async Task HandleValidSubmit()
     {
+        // Check again on save: the limit may have been reached meanwhile. Show the hint instead of saving.
+        if (IsNew && !await CanCreateMenuAsync())
+        {
+            menuLimitReached = true;
+            return;
+        }
+
         var nameExists = await Context.Menus
             .Where(m => m.Id != Menu.Id)
             .AnyAsync(m => m.Name == Menu.Name);

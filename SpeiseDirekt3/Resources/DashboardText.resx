@@ -150,4 +150,12 @@
   <data name="Items_Other" xml:space="preserve">
     <value>{0} items</value>
   </data>
+  <data name="Plan_MenuLimit" xml:space="preserve">
+    <value>The free plan includes one menu. For more, please [contact us].</value>
+    <comment>Free plan at its menu limit, next to the disabled "Create menu" actions. The [bracketed part] becomes a mailto: link to Landing:ContactEmail when it is set (Shared/PlanLimitHint). Assumes Plans:Free:MaxMenus = 1.</comment>
+  </data>
+  <data name="Plan_QrCodeLimit" xml:space="preserve">
+    <value>The free plan includes one QR code. For more, please [contact us].</value>
+    <comment>Free plan at its QR code limit, next to the disabled "Create QR code" action. The [bracketed part] becomes a mailto: link to Landing:ContactEmail when it is set (Shared/PlanLimitHint). Assumes Plans:Free:MaxQrCodes = 1.</comment>
+  </data>
 </root>

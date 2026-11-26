@@ -20,25 +20,26 @@
 <PageHeader Title="@T["List_Title"]" Icon="PageIcons.QrCodes" Tone="TileTone.Violet">
     <Description>@T["List_Description"]</Description>
     <Actions>
-        @if (CanCreateQrCode)
+        @if (createKnown && canCreateQr && CanCreateQrCode)
         {
-            <button type="button" class="sd-btn sd-btn--primary" @onclick="CreateNew">
+            <button type="button" class="sd-btn sd-btn--primary" @onclick="CreateNew" data-testid="qr-create-button">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                 </svg>
                 @T["List_Create"]
             </button>
         }
-        else
+        else if (createKnown && canCreateQr)
         {
-            <div class="text-center">
-                <button type="button" class="sd-btn sd-btn--primary" disabled>
+            @* Free plan at its QR code limit: the action stays visible (disabled) with the reason next to it *@
+            <div class="sd-plan-limit sd-plan-limit--end">
+                <button type="button" class="sd-btn sd-btn--primary" disabled aria-describedby="qr-limit-hint" data-testid="qr-create-button">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                     </svg>
                     @T["List_Create"]
                 </button>
-                <p class="mt-2 mb-0 text-sm text-gray-500">@T["List_CannotCreate"]</p>
+                <PlanLimitHint Text="@T["Plan_QrCodeLimit"]" Id="qr-limit-hint" TestId="qr-limit-hint" />
             </div>
         }
     </Actions>
@@ -66,15 +67,29 @@
             </div>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">@T["List_EmptyTitle"]</h3>
             <p class="text-gray-600 mb-6">@T["List_EmptyText"]</p>
-            @if (CanCreateQrCode)
+            @if (canCreateQr && CanCreateQrCode)
             {
                 <button class="inline-flex items-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
-                        @onclick="CreateNew">
+                        @onclick="CreateNew" data-testid="qr-create-first-button">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
                     </svg>
                     @T["List_EmptyCreate"]
                 </button>
+            }
+            else if (canCreateQr)
+            {
+                @* Only with a free limit of 0 QR codes (Plans:Free:MaxQrCodes), kept like the header's action *@
+                <div class="sd-plan-limit sd-plan-limit--center">
+                    <button type="button" disabled aria-describedby="qr-limit-hint-empty" data-testid="qr-create-first-button"
+                            class="inline-flex items-center px-6 py-3 bg-brand-600 text-white font-semibold rounded-lg opacity-50 cursor-not-allowed">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
+                        </svg>
+                        @T["List_EmptyCreate"]
+                    </button>
+                    <PlanLimitHint Text="@T["Plan_QrCodeLimit"]" Id="qr-limit-hint-empty" TestId="qr-limit-hint-empty" />
+                </div>
             }
         </div>
     }
@@ -150,7 +165,10 @@
 
 @code {
     private List<QRCode>? codes;
-    private bool canEditQr, canDeleteQr;
+    private bool canCreateQr, canEditQr, canDeleteQr;
+    /// <summary>The free limit (<see cref="PaidTenantComponentBase.CanCreateQrCode"/>) is loaded: the create action
+    /// appears together with its state, never enabled first and disabled a moment later.</summary>
+    private bool createKnown;
 
     private enum QrMode { Direct, Schedule, Calendar }
 
@@ -162,16 +180,18 @@
             return;
         }
 
+        canCreateQr = await PermissionService.HasPermissionAsync(Permission.QrCodesCreate);
         canEditQr = await PermissionService.HasPermissionAsync(Permission.QrCodesEdit);
         canDeleteQr = await PermissionService.HasPermissionAsync(Permission.QrCodesDelete);
+        // Free tier: CanCreateQrCode (paid, or below the free limit), read from the database
+        await base.OnInitializedAsync();
+        createKnown = true;
         codes = await DbContext.QRCodes
             .Include(q => q.Menu)
             .Include(q => q.TimeTableEntries!).ThenInclude(e => e.Menu)
             .Include(q => q.CalendarEntries)
             .OrderByDescending(q => q.CreatedAt)
             .ToListAsync();
-        await base.OnInitializedAsync();
-        InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -204,9 +224,10 @@
             DbContext.QRCodes.Remove(code);
             await DbContext.SaveChangesAsync();
             codes!.RemoveAll(q => q.Id == id);
-            StateHasChanged();
         }
+        // One code fewer may lift the free limit
         await base.ReloadAuthState();
+        StateHasChanged();
     }
 
     // Calendar wins over the schedule, as in MenuService

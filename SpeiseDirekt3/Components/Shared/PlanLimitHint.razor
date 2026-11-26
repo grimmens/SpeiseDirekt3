@@ -1,0 +1,53 @@
+@using SpeiseDirekt3.Components.Landing
+@inject IConfiguration Configuration
+
+@* The free plan's hint next to a create action that is disabled at the limit (ITenantPlanService; shown only to a free
+   tenant at its limit, never with a price). Text is one resource string — the spec's two sentences — whose
+   [bracketed part] ("wenden Sie sich an uns" / "contact us") becomes a mailto: link to Landing:ContactEmail when that
+   is set (LandingSettings, read per render) and stays plain text otherwise: no sentence is cut into keys. The disabled
+   button points here with aria-describedby="@Id". *@
+<p class="sd-plan-hint @Class" id="@Id" data-testid="@TestId">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    <span>@Sentence</span>
+</p>
+
+@code {
+    /// <summary>The hint (e.g. <c>MenusText.Plan_MenuLimit</c>): "… Für mehr [wenden Sie sich an uns]."</summary>
+    [Parameter, EditorRequired] public string Text { get; set; } = "";
+
+    /// <summary>The element id, for the disabled action's <c>aria-describedby</c>.</summary>
+    [Parameter] public string? Id { get; set; }
+
+    [Parameter] public string? TestId { get; set; }
+
+    [Parameter] public string? Class { get; set; }
+
+    /// <summary>The text with its bracketed part as a <c>mailto:</c> link (contact address set) or as plain text.</summary>
+    private RenderFragment Sentence => builder =>
+    {
+        var open = Text.IndexOf('[');
+        var close = open < 0 ? -1 : Text.IndexOf(']', open + 1);
+        if (close < 0)
+        {
+            builder.AddContent(0, Text);
+            return;
+        }
+        builder.AddContent(1, Text[..open]);
+        var part = Text[(open + 1)..close];
+        if (LandingSettings.From(Configuration).ContactEmail is { } contact)
+        {
+            builder.OpenElement(2, "a");
+            builder.AddAttribute(3, "href", "mailto:" + contact);
+            builder.AddAttribute(4, "data-testid", "plan-limit-contact");
+            builder.AddContent(5, part);
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.AddContent(6, part);
+        }
+        builder.AddContent(7, Text[(close + 1)..]);
+    };
+}

@@ -2,7 +2,8 @@
  * back-office.css — shared back-office components in plain CSS, independent of Tailwind's utilities:
  * page headers with icon tiles, card heads, table heads, count pills, empty states, drag-and-drop sorting
  * (Shared/Sortable/SortableList + js/sortable-list.js), inline row editing, the item edit page's sections and sticky
- * save bar, the quiet dialogs (confirmation, combo editor) and the "just edited" row highlight.
+ * save bar, the quiet dialogs (confirmation, combo editor), the "just edited" row highlight and the free plan's
+ * hint next to a disabled create action.
  * Reads only the tokens of css/brand.css (prefix sd-). The chrome (top bar, context bar) is css/shell.css.
  */
 
@@ -975,4 +976,53 @@ fieldset:disabled .sd-check {
     flex: 1 1 auto;
     flex-direction: column;
     min-height: 0;
+}
+
+/* --- Free plan (ITenantPlanService): a create action disabled at the limit with the hint next to it
+       (Shared/PlanLimitHint; the button stays visible, so the reason does too) --- */
+
+.sd-plan-limit {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .5rem;
+    min-width: 0;
+}
+
+@media (min-width: 640px) {
+    /* In a page header's actions: button and hint at the right edge */
+    .sd-plan-limit--end { align-items: flex-end; }
+}
+
+.sd-plan-limit--center { align-items: center; }
+
+.sd-plan-hint {
+    display: flex;
+    align-items: flex-start;
+    gap: .375rem;
+    max-width: 22rem;
+    margin: 0;
+    color: rgb(var(--sd-text-muted));
+    font-size: .8125rem;
+    line-height: 1.45;
+    text-align: left;
+}
+
+.sd-plan-hint svg {
+    flex-shrink: 0;
+    width: 1rem;
+    height: 1rem;
+    margin-top: .0625rem;
+    color: rgb(var(--sd-brand-600));
+}
+
+.sd-plan-hint a {
+    color: rgb(var(--sd-brand-700));
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.sd-plan-hint a:hover {
+    color: rgb(var(--sd-brand-900));
 }
