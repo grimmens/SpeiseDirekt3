@@ -9,10 +9,11 @@
 @inject INotificationService NotificationService
 @inject IMenuItemGenerator MenuItemGenerator
 @inject IPermissionService PermissionService
+@inject ITenantPlanService Plans
+@inject IUserIdProvider UserIdProvider
 @inject IJSRuntime JS
 @inject IStringLocalizer<QrCodesText> T
 @inject IStringLocalizer<CommonText> C
-@inherits PaidTenantComponentBase
 @attribute [Authorize]
 
 <PageTitle>@C["PageTitle", T["List_Title"]]</PageTitle>
@@ -20,7 +21,7 @@
 <PageHeader Title="@T["List_Title"]" Icon="PageIcons.QrCodes" Tone="TileTone.Violet">
     <Description>@T["List_Description"]</Description>
     <Actions>
-        @if (createKnown && canCreateQr && CanCreateQrCode)
+        @if (createKnown && canCreateQr && !qrLimitReached)
         {
             <button type="button" class="sd-btn sd-btn--primary" @onclick="CreateNew" data-testid="qr-create-button">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -67,7 +68,7 @@
             </div>
             <h3 class="text-xl font-semibold text-gray-900 mb-2">@T["List_EmptyTitle"]</h3>
             <p class="text-gray-600 mb-6">@T["List_EmptyText"]</p>
-            @if (canCreateQr && CanCreateQrCode)
+            @if (canCreateQr && !qrLimitReached)
             {
                 <button class="inline-flex items-center px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200"
                         @onclick="CreateNew" data-testid="qr-create-first-button">
@@ -166,8 +167,11 @@
 @code {
     private List<QRCode>? codes;
     private bool canCreateQr, canEditQr, canDeleteQr;
-    /// <summary>The free limit (<see cref="PaidTenantComponentBase.CanCreateQrCode"/>) is loaded: the create action
-    /// appears together with its state, never enabled first and disabled a moment later.</summary>
+    /// <summary>Free plan at its QR code limit (ITenantPlanService, read from the database): "Create New QR Code" is
+    /// disabled with the hint.</summary>
+    private bool qrLimitReached;
+    /// <summary>The limit is loaded: the create action appears together with its state, never enabled first and disabled
+    /// a moment later.</summary>
     private bool createKnown;
 
     private enum QrMode { Direct, Schedule, Calendar }
@@ -183,8 +187,7 @@
         canCreateQr = await PermissionService.HasPermissionAsync(Permission.QrCodesCreate);
         canEditQr = await PermissionService.HasPermissionAsync(Permission.QrCodesEdit);
         canDeleteQr = await PermissionService.HasPermissionAsync(Permission.QrCodesDelete);
-        // Free tier: CanCreateQrCode (paid, or below the free limit), read from the database
-        await base.OnInitializedAsync();
+        await RefreshQrLimitAsync();
         createKnown = true;
         codes = await DbContext.QRCodes
             .Include(q => q.Menu)
@@ -226,9 +229,13 @@
             codes!.RemoveAll(q => q.Id == id);
         }
         // One code fewer may lift the free limit
-        await base.ReloadAuthState();
+        await RefreshQrLimitAsync();
         StateHasChanged();
     }
+
+    /// <summary>The tenant may not create one more QR code (free, at its limit); read from the database at every call.</summary>
+    private async Task RefreshQrLimitAsync() =>
+        qrLimitReached = canCreateQr && !await Plans.CanCreateQrCodeAsync(UserIdProvider.GetUserId());
 
     // Calendar wins over the schedule, as in MenuService
     private static QrMode ModeOf(QRCode q) =>
