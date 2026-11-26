@@ -200,18 +200,19 @@ public class PlanLimitTests : QrCalendarTestBase
             (await db.QRCodes.CountAsync()).Should().Be(2);
         }
 
-        // Guests: every menu page and every printed QR code answer as before
+        // Guests: every menu page and every printed QR code answer 200 with their menu, as before
         var (guestContext, guest) = await NewContextAsync();
         await using var _ = guestContext;
-        for (var i = 0; i < menuIds.Count; i++)
+        var guestPages = menuIds.Select((id, i) => ($"/menu/{id}", $"{menus[i]} Gericht"))
+            .Append(($"/qr/{qrIds[0]}", "Mittag Gericht"))
+            .Append(($"/qr/{qrIds[1]}", "Abend Gericht"));
+        foreach (var (url, dish) in guestPages)
         {
-            await OpenGuestPageAsync(guest, $"/menu/{menuIds[i]}");
-            await Assertions.Expect(ItemEntry(guest, $"{menus[i]} Gericht")).ToBeVisibleAsync();
+            var response = await guest.GotoAsync(url);
+            response!.Status.Should().Be(200, url);
+            await WaitForGuestReadyAsync(guest);
+            await Assertions.Expect(ItemEntry(guest, dish)).ToBeVisibleAsync();
         }
-        await OpenGuestPageAsync(guest, $"/qr/{qrIds[0]}");
-        await Assertions.Expect(ItemEntry(guest, "Mittag Gericht")).ToBeVisibleAsync();
-        await OpenGuestPageAsync(guest, $"/qr/{qrIds[1]}");
-        await Assertions.Expect(ItemEntry(guest, "Abend Gericht")).ToBeVisibleAsync();
 
         // Creating stays blocked through the URLs as well
         await GotoInteractiveAsync("/menu/edit");
