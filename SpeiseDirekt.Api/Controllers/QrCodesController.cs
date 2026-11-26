@@ -4,6 +4,7 @@ using SpeiseDirekt.Api.Dtos;
 using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 using SpeiseDirekt.Repository;
+using SpeiseDirekt.ServiceInterface;
 
 namespace SpeiseDirekt.Api.Controllers;
 
@@ -13,10 +14,14 @@ namespace SpeiseDirekt.Api.Controllers;
 public class QrCodesController : ControllerBase
 {
     private readonly IQrCodeRepository _qrCodeRepository;
+    private readonly ITenantPlanService _plans;
+    private readonly IUserIdProvider _userIdProvider;
 
-    public QrCodesController(IQrCodeRepository qrCodeRepository)
+    public QrCodesController(IQrCodeRepository qrCodeRepository, ITenantPlanService plans, IUserIdProvider userIdProvider)
     {
         _qrCodeRepository = qrCodeRepository;
+        _plans = plans;
+        _userIdProvider = userIdProvider;
     }
 
     [HttpGet]
@@ -43,6 +48,11 @@ public class QrCodesController : ControllerBase
     [Authorize(Policy = PolicyNames.CanCreateQrCodes)]
     public async Task<ActionResult<QRCode>> Create(QrCodeDto dto)
     {
+        // Free tier: at most Plans:Free:MaxQrCodes QR codes; paid tenants have no limit
+        var plan = await _plans.GetUsageAsync(_userIdProvider.GetUserId());
+        if (!plan.CanCreateQrCode)
+            return BadRequest($"QR code limit reached ({plan.MaxQrCodes}). Upgrade your plan to add more QR codes.");
+
         if (dto.MenuId.HasValue)
         {
             var menuExists = await _qrCodeRepository.MenuExistsAsync(dto.MenuId.Value);

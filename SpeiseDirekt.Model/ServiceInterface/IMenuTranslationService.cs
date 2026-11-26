@@ -38,7 +38,8 @@ public interface IMenuTranslationService
     /// reference and allergen link, the menu's allergens (EU allergens named in the target language) and combos — and
     /// links both menus (creating the group when needed). One transaction; the copy shares no rows with the original
     /// except the read-only <see cref="Image"/> rows of the photos. No QR code. Fails when the group already has that
-    /// language.
+    /// language, and when the tenant may not create another menu (<see cref="ITenantPlanService.CanCreateMenuAsync"/>:
+    /// the copy counts as a menu; the error is <c>ModelText.Plan_MenuLimitReached</c>).
     /// </summary>
     Task<MenuTranslationResult> CreateTranslationAsync(Guid menuId, MenuLanguage language);
 

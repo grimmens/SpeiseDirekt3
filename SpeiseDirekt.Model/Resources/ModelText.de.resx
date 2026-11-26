@@ -36,6 +36,9 @@
   <data name="Translation_LanguageTaken" xml:space="preserve">
     <value>Diese Speisekarte hat bereits eine Version auf {0}: „{1}“. Trennen Sie sie zuerst oder wählen Sie eine andere Sprache.</value>
   </data>
+  <data name="Plan_MenuLimitReached" xml:space="preserve">
+    <value>Im kostenlosen Zugang ist eine Speisekarte enthalten. Für mehr wenden Sie sich an uns.</value>
+  </data>
   <data name="Name_Required" xml:space="preserve">
     <value>Bitte geben Sie einen Namen ein.</value>
   </data>

@@ -1,5 +1,8 @@
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SpeiseDirekt.Data;
+using SpeiseDirekt.Infrastructure;
 using SpeiseDirekt.Model;
 
 namespace SpeiseDirekt.Api.IntegrationTests;
@@ -29,6 +32,43 @@ public static class TestSeedData
     public static readonly Guid MenuItemClick2Id = Guid.Parse("22222222-2222-2222-2222-222222222222");
     public static readonly Guid DirectQrCodeId = Guid.Parse("dddddddd-dddd-dddd-dddd-ddddddddddde");
     public static readonly string TestSessionId = "test-session-001";
+
+    // Identity roles (AppRoles), seeded with the database
+    public const string GlobalAdminRoleId = "0a000000-0000-0000-0000-000000000001";
+    public const string PaidTenantRoleId = "0a000000-0000-0000-0000-000000000002";
+
+    /// <summary>
+    /// Another owner account (no <c>TenantOwnerId</c>, a tenant of its own, nothing in it), free unless
+    /// <paramref name="paid"/>; returns its id. Send requests as it with <see cref="TestAuthHandler.UserHeader"/>.
+    /// </summary>
+    public static async Task<string> SeedOwnerAsync(IServiceProvider services, string email, bool paid = false, string? id = null)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        id ??= Guid.NewGuid().ToString();
+        db.Users.Add(new ApplicationUser
+        {
+            Id = id, UserName = email, NormalizedUserName = email.ToUpperInvariant(), Email = email,
+            NormalizedEmail = email.ToUpperInvariant(), EmailConfirmed = true, SecurityStamp = Guid.NewGuid().ToString()
+        });
+        if (paid)
+            db.UserRoles.Add(new IdentityUserRole<string> { UserId = id, RoleId = PaidTenantRoleId });
+        await db.SaveChangesAsync();
+        return id;
+    }
+
+    /// <summary>Gives the account <c>PaidTenant</c> or takes it away (straight in the database; idempotent).</summary>
+    public static async Task SetPaidAsync(IServiceProvider services, string userId, bool paid)
+    {
+        using var scope = services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var row = await db.UserRoles.FirstOrDefaultAsync(ur => ur.UserId == userId && ur.RoleId == PaidTenantRoleId);
+        if (paid && row is null)
+            db.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = PaidTenantRoleId });
+        else if (!paid && row is not null)
+            db.UserRoles.Remove(row);
+        await db.SaveChangesAsync();
+    }
 
     // Menu combos: not part of SeedAsync, tests opt in via SeedCombosAsync
     public static readonly Guid LunchComboId = Guid.Parse("c0c0c0c0-0000-0000-0000-000000000001");
@@ -83,6 +123,15 @@ public static class TestSeedData
             SecurityStamp = Guid.NewGuid().ToString()
         };
         context.Users.Add(user);
+
+        // The Identity roles (the web app's RoleSetup creates them at startup; every test here recreates the database),
+        // and the test tenant is paid, so tests may create any number of menus and QR codes. Tests of the free tier use
+        // another owner (SeedOwnerAsync) or take the role away (SetPaidAsync(…, false)).
+        var paidTenantRole = new IdentityRole(AppRoles.PaidTenant) { Id = PaidTenantRoleId, NormalizedName = AppRoles.Normalized(AppRoles.PaidTenant) };
+        context.Roles.AddRange(
+            new IdentityRole(AppRoles.GlobalAdmin) { Id = GlobalAdminRoleId, NormalizedName = AppRoles.Normalized(AppRoles.GlobalAdmin) },
+            paidTenantRole);
+        context.UserRoles.Add(new IdentityUserRole<string> { UserId = userId, RoleId = paidTenantRole.Id });
 
         // Menus
         var menu1 = new Menu

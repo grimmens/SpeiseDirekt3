@@ -15,11 +15,16 @@ public class MenusController : ControllerBase
 {
     private readonly IMenuRepository _menuRepository;
     private readonly IMenuTranslationService _translations;
+    private readonly ITenantPlanService _plans;
+    private readonly IUserIdProvider _userIdProvider;
 
-    public MenusController(IMenuRepository menuRepository, IMenuTranslationService translations)
+    public MenusController(IMenuRepository menuRepository, IMenuTranslationService translations,
+        ITenantPlanService plans, IUserIdProvider userIdProvider)
     {
         _menuRepository = menuRepository;
         _translations = translations;
+        _plans = plans;
+        _userIdProvider = userIdProvider;
     }
 
     [HttpGet]
@@ -61,6 +66,11 @@ public class MenusController : ControllerBase
     [Authorize(Policy = PolicyNames.CanCreateMenus)]
     public async Task<ActionResult<Menu>> Create(MenuDto dto)
     {
+        // Free tier: at most Plans:Free:MaxMenus menus (language versions included); paid tenants have no limit
+        var plan = await _plans.GetUsageAsync(_userIdProvider.GetUserId());
+        if (!plan.CanCreateMenu)
+            return BadRequest($"Menu limit reached ({plan.MaxMenus}). Upgrade your plan to add more menus.");
+
         var menu = new Menu
         {
             Id = Guid.NewGuid(),

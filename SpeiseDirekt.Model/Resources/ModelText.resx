@@ -36,6 +36,9 @@
   <data name="Translation_LanguageTaken" xml:space="preserve">
     <value>This menu already has a {0} version: "{1}". Unlink it first or pick another language.</value>
   </data>
+  <data name="Plan_MenuLimitReached" xml:space="preserve">
+    <value>The free plan includes one menu. For more, please contact us.</value>
+  </data>
   <data name="Name_Required" xml:space="preserve">
     <value>The Name field is required.</value>
   </data>

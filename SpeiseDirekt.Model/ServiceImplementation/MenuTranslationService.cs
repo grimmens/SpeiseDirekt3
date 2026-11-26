@@ -16,8 +16,15 @@ namespace SpeiseDirekt.ServiceImplementation;
 public class MenuTranslationService : IMenuTranslationService
 {
     private readonly ApplicationDbContext db;
+    private readonly IUserIdProvider userIdProvider;
+    private readonly ITenantPlanService plans;
 
-    public MenuTranslationService(ApplicationDbContext db) => this.db = db;
+    public MenuTranslationService(ApplicationDbContext db, IUserIdProvider userIdProvider, ITenantPlanService plans)
+    {
+        this.db = db;
+        this.userIdProvider = userIdProvider;
+        this.plans = plans;
+    }
 
     public async Task<IReadOnlyList<MenuVersion>> GetVersionsAsync(Guid menuId)
     {
@@ -72,6 +79,11 @@ public class MenuTranslationService : IMenuTranslationService
             .FirstOrDefaultAsync(m => m.Id == menuId);
         if (source is null)
             return MenuTranslationResult.Fail(ModelText.Menu_NotFound);
+
+        // A language version is a menu of its own: the free tier's menu limit applies (the tenant as the query filters
+        // see it, so a member's copy counts for the owner)
+        if (!await plans.CanCreateMenuAsync(userIdProvider.GetUserId()))
+            return MenuTranslationResult.Fail(ModelText.Plan_MenuLimitReached);
 
         var target = MenuLanguages.Of(language);
         if (source.Language == language)
